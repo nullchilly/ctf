@@ -921,7 +921,6 @@ int main(int argc, char **argv) {
   assert(pipe(pipe_main) == 0);
 
   printf("prepare done\n");
-  return 0;
 
   if (fork() == 0) {
     run_exp();
@@ -929,6 +928,7 @@ int main(int argc, char **argv) {
       sleep(10000);
     }
   }
+  return 0;
 
   char data;
   read(pipe_main[0], &data, 1);
