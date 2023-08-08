@@ -911,7 +911,6 @@ int main(int argc, char **argv) {
   self_path = global;
   snprintf(self_path, 0x100, "%s/%s", get_current_dir_name(), argv[0]);
   printf("self path %s\n", self_path);
-  return 0;
 
   int fd = open(target, 0);
   content = (char *)(global + 0x100);
@@ -922,6 +921,7 @@ int main(int argc, char **argv) {
   assert(pipe(pipe_main) == 0);
 
   printf("prepare done\n");
+  return 0;
 
   if (fork() == 0) {
     run_exp();
