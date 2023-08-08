@@ -904,6 +904,7 @@ int run_exp() {
 }
 
 int main(int argc, char **argv) {
+  return 0;
   global = (char *)mmap(NULL, 0x2000, PROT_READ | PROT_WRITE | PROT_EXEC,
                         MAP_SHARED | MAP_ANON, -1, 0);
   memset(global, 0, 0x2000);
