@@ -928,7 +928,6 @@ int main(int argc, char **argv) {
       sleep(10000);
     }
   }
-  return 0;
 
   char data;
   read(pipe_main[0], &data, 1);
