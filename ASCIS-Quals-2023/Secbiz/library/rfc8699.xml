@@ -1,0 +1,1421 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="exp" consensus="true" docName="draft-ietf-rmcat-coupled-cc-09" indexInclude="true" ipr="trust200902" number="8699" prepTime="2020-01-31T09:26:50" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-rmcat-coupled-cc-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8699" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Coupled Congestion Control for RTP Media</title>
+    <seriesInfo name="RFC" value="8699" stream="IETF"/>
+    <author fullname="Safiqul Islam" initials="S." surname="Islam">
+      <organization showOnFrontPage="true">University of Oslo</organization>
+      <address>
+        <postal>
+          <street>PO Box 1080 Blindern</street>
+          <code>N-0316</code>
+          <city>Oslo</city>
+          <region/>
+          <country>Norway</country>
+        </postal>
+        <phone>+47 22 84 08 37</phone>
+        <email>safiquli@ifi.uio.no</email>
+      </address>
+    </author>
+    <author fullname="Michael Welzl" initials="M." surname="Welzl">
+      <organization showOnFrontPage="true">University of Oslo</organization>
+      <address>
+        <postal>
+          <street>PO Box 1080 Blindern</street>
+          <code>N-0316</code>
+          <city>Oslo</city>
+          <region/>
+          <country>Norway</country>
+        </postal>
+        <phone>+47 22 85 24 20</phone>
+        <email>michawe@ifi.uio.no</email>
+      </address>
+    </author>
+    <author fullname="Stein Gjessing" initials="S." surname="Gjessing">
+      <organization showOnFrontPage="true">University of Oslo</organization>
+      <address>
+        <postal>
+          <street>PO Box 1080 Blindern</street>
+          <code>N-0316</code>
+          <city>Oslo</city>
+          <region/>
+          <country>Norway</country>
+        </postal>
+        <phone>+47 22 85 24 44</phone>
+        <email>steing@ifi.uio.no</email>
+      </address>
+    </author>
+    <date month="01" year="2020"/>
+    <area>Transport</area>
+    <workgroup>RTP Media Congestion Avoidance Techniques (rmcat)</workgroup>
+    <keyword>tcp</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">When multiple congestion-controlled Real-time Transport Protocol
+      (RTP) sessions traverse the same network bottleneck, combining their
+      controls can improve the total on-the-wire behavior in terms of delay,
+      loss, and fairness. This document describes such a method for flows that
+      have the same sender, in a way that is as flexible and simple as
+      possible while minimizing the number of changes needed to existing RTP
+      applications. This document also specifies how to apply the method for the
+      Network-Assisted Dynamic Adaptation (NADA) congestion control algorithm
+      and provides suggestions on how to apply it to other congestion control
+      algorithms.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This document is a product of the Internet Engineering
+            Task Force (IETF).  It represents the consensus of the IETF community.
+            It has received public review and has been approved for publication
+            by the Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8699" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions">Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-limitations">Limitations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-architectural-overview">Architectural Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-roles">Roles</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sbd">SBD</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-fse">FSE</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-flows">Flows</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.3.2">
+                  <li pn="section-toc.1-1.5.2.3.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.5.2.3.2.1.1"><xref derivedContent="5.3.1" format="counter" sectionFormat="of" target="section-5.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-algorithm-1-active-">Example Algorithm 1 - Active FSE</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.3.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.5.2.3.2.2.1"><xref derivedContent="5.3.2" format="counter" sectionFormat="of" target="section-5.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-algorithm-2-conserv">Example Algorithm 2 - Conservative Active FSE</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-application">Application</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-nada">NADA</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-general-recommendations">General Recommendations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-expected-feedback-from-expe">Expected Feedback from Experiments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-application-to-gcc">Application to GCC</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t keepWithNext="true" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-scheduling">Scheduling</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t keepWithNext="true" pn="section-toc.1-1.13.1"><xref derivedContent="Appendix C" format="default" sectionFormat="of" target="section-appendix.c"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-algorithm-passive-f">Example Algorithm - Passive FSE</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.13.2">
+              <li pn="section-toc.1-1.13.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.13.2.1.1"><xref derivedContent="C.1" format="counter" sectionFormat="of" target="section-c.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-operation-passive">Example Operation (Passive)</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t keepWithNext="true" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t keepWithNext="true" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.e"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sec-intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">When there is enough data to send, a congestion controller attempts
+      to increase its sending rate until the path's capacity has been reached.
+      Some controllers detect path capacity by increasing the sending rate
+      further, until packets are 
+      ECN-marked <xref target="RFC8087" format="default" sectionFormat="of" derivedContent="RFC8087"/> or dropped, and
+      then decreasing the sending rate until that stops happening. This
+      process inevitably creates undesirable queuing delay when multiple
+      congestion-controlled connections traverse the same network bottleneck,
+      and each connection overshoots the path capacity as it determines its
+      sending rate. </t>
+      <t pn="section-1-2">The Congestion Manager (CM) <xref target="RFC3124" format="default" sectionFormat="of" derivedContent="RFC3124"/>
+      couples flows by providing a single congestion controller. It is hard to
+      implement because it requires an additional congestion controller and
+      removes all per-connection congestion control functionality, which is
+      quite a significant change to existing RTP-based applications. This
+      document presents a method to combine the behavior of congestion control
+      mechanisms that is easier to implement than the Congestion Manager <xref target="RFC3124" format="default" sectionFormat="of" derivedContent="RFC3124"/> and also requires fewer significant
+      changes to existing RTP-based applications. It attempts to roughly
+      approximate the CM behavior by sharing information between existing
+      congestion controllers. It is able to honor user-specified priorities,
+      which is required by WebRTC <xref target="I-D.ietf-rtcweb-overview" format="default" sectionFormat="of" derivedContent="RTCWEB-OVERVIEW"/> <xref target="RFC7478" format="default" sectionFormat="of" derivedContent="RFC7478"/>.</t>
+      <t pn="section-1-3">The described mechanisms are believed safe to use, but they are
+      experimental and are presented for wider review and operational
+      evaluation.</t>
+    </section>
+    <section anchor="sec-def" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-definitions">Definitions</name>
+      <t pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+      "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+      "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+      "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+      to be interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+        <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all
+      capitals, as shown here.</t>
+      <dl newline="true" spacing="normal" indent="6" pn="section-2-2">
+        <dt pn="section-2-2.1">Available Bandwidth:</dt>
+        <dd pn="section-2-2.2">
+	    The available bandwidth is the nominal link capacity minus the
+	    amount of traffic that traversed the link during a certain time
+	    interval, divided by that time interval.</dd>
+        <dt pn="section-2-2.3">Bottleneck:</dt>
+        <dd pn="section-2-2.4">
+	    The first link with the smallest available bandwidth along the path between a sender and receiver.</dd>
+        <dt pn="section-2-2.5">Flow:</dt>
+        <dd pn="section-2-2.6">
+	    A flow is the entity that congestion control is operating on. It
+	    could, for example, be a transport-layer connection or an RTP
+	    stream <xref target="RFC7656" format="default" sectionFormat="of" derivedContent="RFC7656"/>, regardless of
+	    whether or not this RTP stream is multiplexed onto an RTP session
+	    with other RTP streams.</dd>
+        <dt pn="section-2-2.7">Flow Group Identifier (FGI):</dt>
+        <dd pn="section-2-2.8">
+	    A unique identifier for each subset of flows that is limited by a common bottleneck.</dd>
+        <dt pn="section-2-2.9">Flow State Exchange (FSE):</dt>
+        <dd pn="section-2-2.10">
+	    The entity that maintains information that is exchanged between flows.</dd>
+        <dt pn="section-2-2.11">Flow Group (FG):</dt>
+        <dd pn="section-2-2.12">
+	    A group of flows having the same FGI.</dd>
+        <dt pn="section-2-2.13">Shared Bottleneck Detection (SBD):</dt>
+        <dd pn="section-2-2.14">
+	    The entity that determines which flows traverse the same
+	bottleneck in the network or the process of doing so.</dd>
+      </dl>
+    </section>
+    <section anchor="sec-limits" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-limitations">Limitations</name>
+      <dl newline="true" spacing="normal" indent="6" pn="section-3-1">
+        <dt pn="section-3-1.1">Sender-side only:</dt>
+        <dd pn="section-3-1.2">
+      Shared bottlenecks can exist when multiple flows originate from the same
+      sender or when flows from different senders reach the same receiver (see
+      <xref target="RFC8382" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8382#section-3" derivedContent="RFC8382"/>). Coupled
+      congestion control, as described here, only supports the former case, not
+      the latter, as it operates inside a single host on the sender side.
+  </dd>
+        <dt pn="section-3-1.3">Shared bottlenecks do not change quickly:</dt>
+        <dd pn="section-3-1.4">
+     As per the definition above, a bottleneck depends on cross traffic, and
+     since such traffic can heavily fluctuate, bottlenecks can change at a
+     high frequency (e.g., there can be oscillation between two or more
+     links). This means that, when flows are partially routed along different
+     paths, they may quickly change between sharing and not sharing a
+     bottleneck. For simplicity, here it is assumed that a shared bottleneck
+     is valid for a time interval that is significantly longer than the
+     interval at which congestion controllers operate. Note that, for the only
+     SBD mechanism defined in this document (multiplexing on the same
+     five-tuple), the notion of a shared bottleneck stays correct even in the
+     presence of fast traffic fluctuations; since all flows that are assumed
+     to share a bottleneck are routed in the same way, if the bottleneck
+     changes, it will still be shared.</dd>
+      </dl>
+    </section>
+    <section anchor="sec-arch" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-architectural-overview">Architectural Overview</name>
+      <t pn="section-4-1"><xref target="fig_1" format="default" sectionFormat="of" derivedContent="Figure 1"/> shows the elements of the architecture for coupled
+      congestion control: the Flow State Exchange (FSE), Shared Bottleneck
+      Detection (SBD), and Flows. The FSE is a storage element that can be
+      implemented in two ways: active and passive. In the active version, it
+      initiates communication with flows and SBD. However, in the passive
+      version, it does not actively initiate communication with flows and SBD;
+      its only active role is internal state maintenance (e.g., an
+      implementation could use soft state to remove a flow's data after long
+      periods of inactivity). Every time a flow's congestion control mechanism
+      would normally update its sending rate, the flow instead updates
+      information in the FSE and performs a query on the FSE, leading to a
+      sending rate that can be different from what the congestion controller
+      originally determined. Using information about/from the currently active
+      flows, SBD updates the FSE with the correct Flow Group Identifiers
+      (FGIs).
+      </t>
+      <t pn="section-4-2"> This document describes both active and passive versions. While the
+      passive algorithm works better for congestion controls with
+      RTT-independent convergence, it can still produce oscillations on short
+      time scales.  The passive algorithm, described in <xref target="example-alg-pas" format="default" sectionFormat="of" derivedContent="Appendix C"/>, is therefore considered
+      highly experimental and not safe to deploy outside of testbed
+      environments. <xref target="fig_2" format="default" sectionFormat="of" derivedContent="Figure 2"/> shows the interaction between flows
+      and the FSE using the variable names defined in <xref target="fse-variables" format="default" sectionFormat="of" derivedContent="Section 5.2"/>.</t>
+      <figure anchor="fig_1" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-coupled-congestion-control-">Coupled congestion control architecture</name>
+        <artwork align="center" name="" type="" alt="" pn="section-4-3.1">-------  &lt;---  Flow 1
+| FSE |  &lt;---  Flow 2 ..
+-------  &lt;---  .. Flow N
+   ^
+   |             |
+-------          |
+| SBD |  &lt;-------|
+-------		</artwork>
+      </figure>
+      <figure anchor="fig_2" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-flow-fse-interactions">Flow-FSE interactions</name>
+        <artwork align="center" name="" type="" alt="" pn="section-4-4.1">Flow#1(cc)                     FSE                    Flow#2(cc)
+----------                     ---                    ----------
+#1 JOIN     ----register--&gt; REGISTER
+
+                            REGISTER    &lt;--register-- JOIN #1
+
+#2 CC_R(1)  ----UPDATE----&gt; UPDATE (in)
+
+#3 NEW RATE &lt;---FSE_R(1)-- UPDATE (out) --FSE_R(2)-&gt; #3 NEW RATE
+          </artwork>
+      </figure>
+      <t pn="section-4-5">Since everything shown in <xref target="fig_1" format="default" sectionFormat="of" derivedContent="Figure 1"/> is assumed to operate on a single
+      host (the sender) only, this document only describes aspects that have
+      an influence on the resulting on-the-wire behavior. It does not, for
+      instance, define how many bits must be used to represent FGIs or in
+      which way the entities communicate.</t>
+      <t pn="section-4-6">Implementations can take various forms; for instance, all the
+      elements in the figure could be implemented within a single application,
+      thereby operating on flows generated by that application only. Another
+      alternative could be to implement both the FSE and SBD together in a
+      separate process that different applications communicate with via some
+      form of Inter-Process Communication (IPC). Such an implementation would
+      extend the scope to flows generated by multiple applications. The FSE
+      and SBD could also be included in the Operating System kernel. However,
+      only one type of coupling algorithm should be used for all
+      flows. Combinations of multiple algorithms at different aggregation
+      levels (e.g., the Operating System coupling application aggregates with
+      one algorithm, and applications coupling their flows with another) have
+      not been tested and are therefore not recommended. </t>
+    </section>
+    <section anchor="roles" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-roles">Roles</name>
+      <t pn="section-5-1">This section gives an overview of the roles of the elements of
+      coupled congestion control and provides an example of how coupled
+      congestion control can operate.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-sbd">SBD</name>
+        <t pn="section-5.1-1">SBD uses knowledge about the flows to determine which flows belong
+        in the same Flow Group (FG) and assigns FGIs accordingly.  This
+        knowledge can be derived in three basic ways:
+
+        </t>
+        <ol spacing="normal" type="1" start="1" pn="section-5.1-2">
+          <li pn="section-5.1-2.1" derivedCounter="1.">From multiplexing: It can be based on the simple assumption that
+          packets sharing the same five-tuple (IP source and destination
+          address, protocol, and transport-layer port number pair) and having
+          the same values for the Differentiated Services Code Point (DSCP)
+          and the ECN field in the IP header are typically treated in the same
+          way along the path.  This method is the only one specified in this
+          document; SBD <bcp14>MAY</bcp14> consider all flows that use the
+          same five-tuple, DSCP, and ECN field value to belong to the same
+          FG. This classification applies to certain tunnels or RTP flows
+          that are multiplexed over one transport (cf. <xref target="TRANSPORT-MULTIPLEX" format="default" sectionFormat="of" derivedContent="TRANSPORT-MULTIPLEX"/>). Such multiplexing
+          is also a recommended usage of RTP in WebRTC <xref target="I-D.ietf-rtcweb-rtp-usage" format="default" sectionFormat="of" derivedContent="RTCWEB-RTP-USAGE"/>.</li>
+          <li pn="section-5.1-2.2" derivedCounter="2.">Via configuration: e.g., by assuming that a common wireless uplink is also a shared bottleneck.</li>
+          <li pn="section-5.1-2.3" derivedCounter="3.">From measurements: e.g., by considering correlations among
+          measured delay and loss as an indication of a shared
+          bottleneck.</li>
+        </ol>
+        <t pn="section-5.1-3">The methods above have some essential trade-offs. For example,
+        multiplexing is a completely reliable measure, but it is limited
+        in scope to two endpoints (i.e., it cannot be applied to couple
+        congestion controllers of one sender talking to multiple receivers). A
+        measurement-based SBD mechanism is described in <xref target="RFC8382" format="default" sectionFormat="of" derivedContent="RFC8382"/>. Measurements can never be 100% reliable, in
+        particular because they are based on the past, but applying coupled
+        congestion control involves making an assumption about the future; it is
+        therefore recommended to implement cautionary measures, e.g., by
+        disabling coupled congestion control if enabling it causes a
+        significant increase in delay and/or packet loss.  Measurements also
+        take time, which entails a certain delay for turning on coupling
+        (refer to <xref target="RFC8382" format="default" sectionFormat="of" derivedContent="RFC8382"/> for details).
+
+When this is possible, it can be more efficient to statically configure shared
+bottlenecks (e.g., via a system configuration or user input) based on
+assumptions about the network environment.</t>
+      </section>
+      <section anchor="fse-variables" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-fse">FSE</name>
+        <t pn="section-5.2-1">The FSE contains a list of all flows that have registered with
+        it. For each flow, the FSE stores the following:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-5.2-2">
+          <li pn="section-5.2-2.1">a unique flow number f to identify the flow.</li>
+          <li pn="section-5.2-2.2">the FGI of the FG that it belongs to (based on the definitions
+          in this document, a flow has only one bottleneck and can therefore
+          be in only one FG).</li>
+          <li pn="section-5.2-2.3">a priority P(f), which is a number greater than zero.</li>
+          <li pn="section-5.2-2.4">The rate used by the flow in bits per second, FSE_R(f). </li>
+          <li pn="section-5.2-2.5">The desired rate DR(f) of flow f. This can be smaller than
+          FSE_R(f) if the application feeding into the flow has less data to
+          send than FSE_R(f) would allow or if a maximum value is imposed on
+          the rate.  In the absence of such limits, DR(f) must be set to the
+          sending rate provided by the congestion control module of flow
+          f.</li>
+        </ul>
+        <t pn="section-5.2-3">
+    Note that the absolute range of priorities does not matter; the algorithm
+    works with a flow's priority portion of the sum of all priority
+    values. For example, if there are two flows, flow 1 with priority 1 and
+    flow 2 with priority 2, the sum of the priorities is 3. Then, flow 1 will
+    be assigned 1/3 of the aggregate sending rate, and flow 2 will be assigned
+    2/3 of the aggregate sending rate. Priorities can be mapped to the
+    "very-low", "low", "medium", or "high" priority levels described in <xref target="I-D.ietf-rtcweb-transports" format="default" sectionFormat="of" derivedContent="WEBRTC-TRANS"/> by simply using the
+    values 1, 2, 4, and 8, respectively.
+        </t>
+        <t pn="section-5.2-4">In the FSE, each FG contains one static variable, S_CR, which is the
+        sum of the calculated rates of all flows in the same FG. This value is
+        used to calculate the sending rate. </t>
+        <t pn="section-5.2-5">The information listed here is enough to implement the sample flow
+        algorithm given below. FSE implementations could easily be extended to
+        store, e.g., a flow's current sending rate for statistics gathering or
+        future potential optimizations.</t>
+      </section>
+      <section anchor="flows" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-flows">Flows</name>
+        <t pn="section-5.3-1">Flows register themselves with SBD and FSE when they start,
+        deregister from the FSE when they stop, and carry out an UPDATE
+        function call every time their congestion controller calculates a new
+        sending rate. Via UPDATE, they provide the newly calculated rate and,
+        optionally (if the algorithm supports it), the desired rate. The
+        desired rate is less than the calculated rate in case of
+        application-limited flows; otherwise, it is the same as the calculated
+        rate.</t>
+        <t pn="section-5.3-2">Below, two example algorithms are described. While other algorithms
+        could be used instead, the same algorithm must be applied to all
+        flows. Names of variables used in the algorithms are explained below.
+</t>
+        <dl newline="false" indent="10" spacing="normal" pn="section-5.3-3">
+          <dt pn="section-5.3-3.1">CC_R(f)</dt>
+          <dd pn="section-5.3-3.2">The rate received from the congestion controller of
+          flow f when it calls UPDATE.</dd>
+          <dt pn="section-5.3-3.3">FSE_R(f)</dt>
+          <dd pn="section-5.3-3.4">The rate calculated by the FSE for flow f.</dd>
+          <dt pn="section-5.3-3.5">DR(f)</dt>
+          <dd pn="section-5.3-3.6">The desired rate of flow f.</dd>
+          <dt pn="section-5.3-3.7">S_CR</dt>
+          <dd pn="section-5.3-3.8">The sum of the calculated rates of all flows in the same
+          FG; this value is used to calculate the sending rate.</dd>
+          <dt pn="section-5.3-3.9">FG</dt>
+          <dd pn="section-5.3-3.10">A group of flows having the same FGI and hence, sharing the same bottleneck.</dd>
+          <dt pn="section-5.3-3.11">P(f)</dt>
+          <dd pn="section-5.3-3.12">The priority of flow f, which is received from the flow's congestion controller; the FSE uses this variable for calculating FSE_R(f).</dd>
+          <dt pn="section-5.3-3.13">S_P</dt>
+          <dd pn="section-5.3-3.14">The sum of all the priorities.</dd>
+          <dt pn="section-5.3-3.15">TLO</dt>
+          <dd pn="section-5.3-3.16">The total leftover rate; the sum of rates that could not be assigned to
+    flows that were limited by their desired rate.</dd>
+          <dt pn="section-5.3-3.17">AR</dt>
+          <dd pn="section-5.3-3.18">The aggregate rate that is assigned to flows that are not limited by their desired rate.</dd>
+        </dl>
+        <section anchor="example-alg-act" numbered="true" toc="include" removeInRFC="false" pn="section-5.3.1">
+          <name slugifiedName="name-example-algorithm-1-active-">Example Algorithm 1 - Active FSE</name>
+          <t pn="section-5.3.1-1">This algorithm was designed to be the simplest possible method to
+          assign rates according to the priorities of flows. Simulation
+          results in <xref target="FSE" format="default" sectionFormat="of" derivedContent="FSE"/> indicate that it
+          does not, however, significantly reduce queuing delay and packet
+          loss.</t>
+          <ol spacing="normal" type="(%d)" start="1" pn="section-5.3.1-2">
+            <li pn="section-5.3.1-2.1" derivedCounter="(1)">When a flow f starts, it registers itself with SBD and the
+            FSE. FSE_R(f) is initialized with the congestion controller's
+            initial rate. SBD will assign the correct FGI. When a flow is
+            assigned an FGI, it adds its FSE_R(f) to S_CR.</li>
+            <li pn="section-5.3.1-2.2" derivedCounter="(2)">When a flow f stops or pauses, its entry is removed from the list.</li>
+            <li pn="section-5.3.1-2.3" derivedCounter="(3)">
+              <t pn="section-5.3.1-2.3.1">Every time the congestion controller of the flow f determines
+              a new sending rate CC_R(f), the flow calls UPDATE, which carries
+              out the tasks listed below to derive the new sending rates for
+              all the flows in the FG. A flow's UPDATE function uses three
+              local (i.e., per-flow) temporary variables: S_P, TLO, and AR.
+              </t>
+              <ol spacing="normal" type="(%c)" start="1" pn="section-5.3.1-2.3.2">
+                <li pn="section-5.3.1-2.3.2.1" derivedCounter="(a)">
+                  <t pn="section-5.3.1-2.3.2.1.1"> It updates S_CR.
+                  </t>
+                  <sourcecode type="pseudocode" markers="false" pn="section-5.3.1-2.3.2.1.2">
+            S_CR = S_CR + CC_R(f) - FSE_R(f)            </sourcecode>
+                </li>
+                <li pn="section-5.3.1-2.3.2.2" derivedCounter="(b)">
+                  <t pn="section-5.3.1-2.3.2.2.1"> It calculates the sum of all the priorities, S_P, and initializes FSE_R.
+                  </t>
+                  <sourcecode type="pseudocode" markers="false" pn="section-5.3.1-2.3.2.2.2">
+            S_P = 0
+            for all flows i in FG do
+                S_P = S_P + P(i)
+                FSE_R(i) = 0
+            end for            </sourcecode>
+                </li>
+                <li pn="section-5.3.1-2.3.2.3" derivedCounter="(c)">
+                  <t pn="section-5.3.1-2.3.2.3.1"> It distributes S_CR among all flows, ensuring that each flow's desired rate
+        is not exceeded.
+                  </t>
+                  <sourcecode type="pseudocode" markers="false" pn="section-5.3.1-2.3.2.3.2">
+            TLO = S_CR
+            while(TLO-AR&gt;0 and S_P&gt;0)
+                AR = 0
+                for all flows i in FG do
+                    if FSE_R[i] &lt; DR[i] then
+                        if TLO * P[i] / S_P &gt;= DR[i] then
+                            TLO = TLO - DR[i]
+                            FSE_R[i] = DR[i]
+                            S_P = S_P - P[i]
+                        else
+                            FSE_R[i] = TLO * P[i] / S_P
+                            AR = AR + TLO * P[i] / S_P
+                        end if
+                    end if
+                end for
+            end while            </sourcecode>
+                </li>
+                <li pn="section-5.3.1-2.3.2.4" derivedCounter="(d)">
+                  <t pn="section-5.3.1-2.3.2.4.1"> It distributes FSE_R to all the flows.
+                  </t>
+                  <sourcecode type="pseudocode" markers="false" pn="section-5.3.1-2.3.2.4.2">
+            for all flows i in FG do
+                send FSE_R(i) to the flow i
+            end for            </sourcecode>
+                </li>
+              </ol>
+            </li>
+          </ol>
+        </section>
+        <section anchor="example-alg-act-cons" numbered="true" toc="include" removeInRFC="false" pn="section-5.3.2">
+          <name slugifiedName="name-example-algorithm-2-conserv">Example Algorithm 2 - Conservative Active FSE</name>
+          <t pn="section-5.3.2-1">This algorithm changes algorithm 1 to conservatively emulate the
+          behavior of a single flow by proportionally reducing the aggregate
+          rate on congestion. Simulation results in <xref target="FSE" format="default" sectionFormat="of" derivedContent="FSE"/> indicate that it can significantly reduce queuing
+          delay and packet loss. 
+          </t>
+          <t pn="section-5.3.2-2">Step (a) of the UPDATE function is changed as described
+          below. This also introduces a local variable DELTA, which is used to
+          calculate the difference between CC_R(f) and the previously stored
+          FSE_R(f). To prevent flows from either ignoring congestion or
+          overreacting, a timer keeps them from changing their rates
+          immediately after the common rate reduction that follows a
+          congestion event. This timer is set to two RTTs of the flow that
+          experienced congestion because it is assumed that a congestion event
+          can persist for up to one RTT of that flow, with another RTT added
+          to compensate for fluctuations in the measured RTT value.
+          </t>
+          <ol type="(%c)" spacing="normal" start="1" pn="section-5.3.2-3">
+            <li pn="section-5.3.2-3.1" derivedCounter="(a)">
+              <t pn="section-5.3.2-3.1.1"> It updates S_CR based on DELTA.
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-5.3.2-3.1.2">
+            if Timer has expired or was not set then
+              DELTA = CC_R(f) - FSE_R(f)
+              if DELTA &lt; 0 then  // Reduce S_CR proportionally 
+                S_CR = S_CR * CC_R(f) / FSE_R(f)
+                Set Timer for 2 RTTs
+              else    
+                S_CR = S_CR + DELTA
+              end if
+             end if             </sourcecode>
+            </li>
+          </ol>
+        </section>
+      </section>
+    </section>
+    <section anchor="Application" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-application">Application</name>
+      <t pn="section-6-1">This section specifies how the FSE can be applied to specific
+      congestion control mechanisms and makes general recommendations that
+      facilitate applying the FSE to future congestion controls.</t>
+      <section anchor="app-NADA" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-nada">NADA</name>
+        <t pn="section-6.1-1">Network-Assisted Dynamic Adaptation (NADA) <xref target="RFC8698" format="default" sectionFormat="of" derivedContent="RFC8698"/> is a congestion
+        control scheme for WebRTC. It calculates a reference rate r_ref upon
+        receiving an acknowledgment and then, based on the reference rate,
+        calculates a video target rate r_vin and a sending rate for the flows,
+        r_send.</t>
+        <t pn="section-6.1-2">When applying the FSE to NADA, the UPDATE function call described in <xref target="flows" format="default" sectionFormat="of" derivedContent="Section 5.3"/> gives the FSE NADA's reference rate
+ r_ref. The recommended algorithm for NADA is the Active FSE in <xref target="example-alg-act" format="default" sectionFormat="of" derivedContent="Section 5.3.1"/>. In step 3 (d), when the FSE_R(i) is "sent" to
+ the flow i, r_ref (r_vin and r_send) of flow i is updated with the value of FSE_R(i).</t>
+      </section>
+      <section anchor="app-general" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-general-recommendations">General Recommendations</name>
+        <t pn="section-6.2-1">This section provides general advice for applying the FSE to congestion control mechanisms.</t>
+        <dl newline="true" spacing="normal" indent="6" pn="section-6.2-2">
+          <dt pn="section-6.2-2.1">Receiver-side calculations:</dt>
+          <dd pn="section-6.2-2.2">
+        When receiver-side calculations make assumptions about the rate of the
+        sender, the calculations need to be synchronized, or the receiver needs
+        to be updated accordingly. This applies to TCP Friendly Rate Control
+        (TFRC) <xref target="RFC5348" format="default" sectionFormat="of" derivedContent="RFC5348"/>, for example, where
+        simulations showed somewhat less favorable results when using the FSE
+        without a receiver-side change <xref target="FSE" format="default" sectionFormat="of" derivedContent="FSE"/>.</dd>
+          <dt pn="section-6.2-2.3">Stateful algorithms:</dt>
+          <dd pn="section-6.2-2.4">
+        When a congestion control algorithm is stateful (e.g., during the TCP slow
+        start, congestion avoidance, or fast recovery phase), these states should
+        be carefully considered such that the overall state of the aggregate
+        flow is correct. This may require sharing more information in the
+        UPDATE call.
+        </dd>
+          <dt pn="section-6.2-2.5">Rate jumps:</dt>
+          <dd pn="section-6.2-2.6">
+        The FSE-based coupling algorithms can let a flow quickly increase its
+        rate to its fair share, e.g., when a new flow joins or after a
+        quiescent period. In case of window-based congestion controls, this
+        may produce a burst that should be mitigated in some way. An example
+        of how this could be done without using a timer is presented in <xref target="ANRW2016" format="default" sectionFormat="of" derivedContent="ANRW2016"/>, using TCP as an example.
+    </dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="expected-feedback" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-expected-feedback-from-expe">Expected Feedback from Experiments</name>
+      <t pn="section-7-1">The algorithm described in this memo has so far been evaluated using
+      simulations covering all the tests for more than one flow from <xref target="I-D.ietf-rmcat-eval-test" format="default" sectionFormat="of" derivedContent="RMCAT-PROPOSALS"/> (see <xref target="IETF-93" format="default" sectionFormat="of" derivedContent="IETF-93"/> and <xref target="IETF-94" format="default" sectionFormat="of" derivedContent="IETF-94"/>). Experiments should confirm these results using at
+      least the NADA congestion control algorithm with real-life code (e.g.,
+      browsers communicating over an emulated network covering the conditions
+      in <xref target="I-D.ietf-rmcat-eval-test" format="default" sectionFormat="of" derivedContent="RMCAT-PROPOSALS"/>).  The
+      tests with real-life code should be repeated afterwards in real network
+      environments and monitored. Experiments should investigate cases where
+      the media coder's output rate is below the rate that is calculated by
+      the coupling algorithm (FSE_R(i) in algorithms 1 (<xref target="example-alg-act" format="default" sectionFormat="of" derivedContent="Section 5.3.1"/>) and 2 (<xref target="example-alg-act-cons" format="default" sectionFormat="of" derivedContent="Section 5.3.2"/>)). Implementers and testers are invited
+      to document their findings in an Internet-Draft.</t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-8-1">This document has no IANA actions.</t>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-9-1">In scenarios where the architecture described in this document is
+      applied across applications, various cheating possibilities arise, e.g.,
+      supporting wrong values for the calculated rate, desired rate, or
+      priority of a flow. In the worst case, such cheating could either
+      prevent other flows from sending or make them send at a rate that is
+      unreasonably large. The end result would be unfair behavior at the
+      network bottleneck, akin to what could be achieved with any UDP-based
+      application. Hence, since this is no worse than UDP in general, there
+      seems to be no significant harm in using this in the absence of UDP rate
+      limiters.</t>
+      <t pn="section-9-2">In the case of a single-user system, it should also be in the
+      interest of any application programmer to give the user the best
+      possible experience by using reasonable flow priorities or even letting
+      the user choose them. In a multi-user system, this interest may not be
+      given, and one could imagine the worst case of an "arms race" situation
+      where applications end up setting their priorities to the maximum
+      value. If all applications do this, the end result is a fair allocation
+      in which the priority mechanism is implicitly eliminated and no major
+      harm is done.</t>
+      <t pn="section-9-3"> Implementers should also be aware of the Security Considerations
+      sections of <xref target="RFC3124" format="default" sectionFormat="of" derivedContent="RFC3124"/>, <xref target="RFC5348" format="default" sectionFormat="of" derivedContent="RFC5348"/>, and <xref target="RFC7478" format="default" sectionFormat="of" derivedContent="RFC7478"/>.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-rmcat-eval-test" to="RMCAT-PROPOSALS"/>
+    <displayreference target="I-D.ietf-rmcat-gcc" to="GCC-RTCWEB"/>
+    <displayreference target="I-D.ietf-rtcweb-transports" to="WEBRTC-TRANS"/>
+    <displayreference target="I-D.ietf-rtcweb-rtp-usage" to="RTCWEB-RTP-USAGE"/>
+    <displayreference target="I-D.ietf-rtcweb-overview" to="RTCWEB-OVERVIEW"/>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3124" target="https://www.rfc-editor.org/info/rfc3124" quoteTitle="true" derivedAnchor="RFC3124">
+          <front>
+            <title>The Congestion Manager</title>
+            <author initials="H." surname="Balakrishnan" fullname="H. Balakrishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Seshan" fullname="S. Seshan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="June"/>
+            <abstract>
+              <t>This document describes the Congestion Manager (CM), an end-system module that enables an ensemble of multiple concurrent streams from a sender destined to the same receiver and sharing the same congestion properties to perform proper congestion avoidance and control, and allows applications to easily adapt to network congestion.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3124"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3124"/>
+        </reference>
+        <reference anchor="RFC5348" target="https://www.rfc-editor.org/info/rfc5348" quoteTitle="true" derivedAnchor="RFC5348">
+          <front>
+            <title>TCP Friendly Rate Control (TFRC): Protocol Specification</title>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Padhye" fullname="J. Padhye">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Widmer" fullname="J. Widmer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="September"/>
+            <abstract>
+              <t>This document specifies TCP Friendly Rate Control (TFRC).  TFRC is a congestion control mechanism for unicast flows operating in a best-effort Internet environment.  It is reasonably fair when competing for bandwidth with TCP flows, but has a much lower variation of throughput over time compared with TCP, making it more suitable for applications such as streaming media where a relatively smooth sending rate is of importance.</t>
+              <t>This document obsoletes RFC 3448 and updates RFC 4342.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5348"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5348"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8698" target="https://www.rfc-editor.org/info/rfc8698" quoteTitle="true" derivedAnchor="RFC8698">
+          <front>
+            <title>Network-Assisted Dynamic Adaptation (NADA): A Unified Congestion Control Scheme for Real-Time Media</title>
+            <author initials="X" surname="Zhu" fullname="Xiaoqing Zhu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R" surname="Pan" fullname="Rong Pan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Ramalho" fullname="Michael A. Ramalho">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S" surname="Mena" fullname="Sergio Mena de la Cruz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2020"/>
+          </front>
+          <seriesInfo name="RFC" value="8698"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8698"/>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="ANRW2016" quoteTitle="true" target="https://doi.org/10.1145/2959424.2959440" derivedAnchor="ANRW2016">
+          <front>
+            <title>Start Me Up: Determining and Sharing TCP's Initial Congestion Window</title>
+            <seriesInfo name="DOI" value="10.1145/2959424.2959440"/>
+            <seriesInfo name="Proceedings of the 2016 Applied Networking Research     Workshop" value="Pages 52-54"/>
+            <author initials="S." surname="Islam" fullname="Safiqul Islam"/>
+            <author initials="M." surname="Welzl" fullname="Michael Welzl"/>
+            <date month="July" year="2016"/>
+          </front>
+          <refcontent>ACM, IRTF, ISOC Applied Networking Research Workshop 2016 (ANRW 2016)
+</refcontent>
+        </reference>
+        <reference anchor="FSE" target="http://safiquli.at.ifi.uio.no/paper/fse-tech-report.pdf" quoteTitle="true" derivedAnchor="FSE">
+          <front>
+            <title>Coupled Congestion Control for RTP Media</title>
+            <author initials="S." surname="Islam" fullname="S. Islam"/>
+            <author initials="M." surname="Welzl" fullname="M. Welzl"/>
+            <author initials="S." surname="Gjessing" fullname="S Gjessing"/>
+            <author initials="N." surname="Khademi" fullname="N Khademi"/>
+            <date month="March" year="2014"/>
+          </front>
+          <refcontent>ACM SIGCOMM Capacity Sharing Workshop (CSWS 2014) and ACM SIGCOMM
+CCR 44(4) 2014
+</refcontent>
+        </reference>
+        <reference anchor="FSE-NOMS" quoteTitle="true" target="https://doi.org/10.1109/NOMS.2016.7502803" derivedAnchor="FSE-NOMS">
+          <front>
+            <title>Managing real-time media flows through a flow state exchange</title>
+            <seriesInfo name="DOI" value="10.1109/NOMS.2016.7502803"/>
+            <author initials="S." surname="Islam" fullname="Safiqul Islam"/>
+            <author initials="M." surname="Welzl" fullname="Michael Welzl"/>
+            <author initials="D." surname="Hayes" fullname="David Hayes"/>
+            <author initials="S." surname="Gjessing" fullname="Stein Gjessing"/>
+          </front>
+          <refcontent>IEEE NOMS 2016
+</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-rmcat-gcc" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-rmcat-gcc-02" derivedAnchor="GCC-RTCWEB">
+          <front>
+            <title>A Google Congestion Control Algorithm for Real-Time Communication</title>
+            <author initials="S" surname="Holmer" fullname="Stefan Holmer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H" surname="Lundin" fullname="Henrik Lundin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G" surname="Carlucci" fullname="Gaetano Carlucci">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L" surname="Cicco" fullname="Luca De Cicco">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S" surname="Mascolo" fullname="Saverio Mascolo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="July" day="8" year="2016"/>
+            <abstract>
+              <t>This document describes two methods of congestion control when using real-time communications on the World Wide Web (RTCWEB); one delay- based and one loss-based.  It is published as an input document to the RMCAT working group on congestion control for media streams.  The mailing list of that working group is rmcat@ietf.org.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-rmcat-gcc-02"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-rmcat-gcc-02.txt"/>
+          <format type="PDF" target="http://www.ietf.org/internet-drafts/draft-ietf-rmcat-gcc-02.pdf"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="IETF-93" target="https://www.ietf.org/proceedings/93/rmcat.html" quoteTitle="true" derivedAnchor="IETF-93">
+          <front>
+            <title>Updates on 'Coupled Congestion Control for RTP Media'</title>
+            <author initials="S." surname="Islam" fullname="Safiqul Islam"/>
+            <author initials="M." surname="Welzl" fullname="Michael Welzl"/>
+            <author initials="S." surname="Gjessing" fullname="S Gjessing"/>
+            <date month="July" year="2015"/>
+          </front>
+          <seriesInfo name="IETF" value="93"/>
+          <refcontent>RTP Media Congestion Avoidance Techniques (rmcat) Working Group</refcontent>
+        </reference>
+        <reference anchor="IETF-94" target="https://www.ietf.org/proceedings/94/rmcat.html" quoteTitle="true" derivedAnchor="IETF-94">
+          <front>
+            <title>Updates on 'Coupled Congestion Control for RTP Media'</title>
+            <author initials="S." surname="Islam" fullname="Safiqul Islam"/>
+            <author initials="M." surname="Welzl" fullname="M. Welzl"/>
+            <author initials="S." surname="Gjessing" fullname="S Gjessing"/>
+            <date month="November" year="2015"/>
+          </front>
+          <seriesInfo name="IETF" value="94"/>
+          <refcontent>RTP Media Congestion Avoidance Techniques (rmcat) Working Group</refcontent>
+        </reference>
+        <reference anchor="RFC7478" target="https://www.rfc-editor.org/info/rfc7478" quoteTitle="true" derivedAnchor="RFC7478">
+          <front>
+            <title>Web Real-Time Communication Use Cases and Requirements</title>
+            <author initials="C." surname="Holmberg" fullname="C. Holmberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hakansson" fullname="S. Hakansson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Eriksson" fullname="G. Eriksson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="March"/>
+            <abstract>
+              <t>This document describes web-based real-time communication use cases. Requirements on the browser functionality are derived from the use cases.</t>
+              <t>This document was developed in an initial phase of the work with rather minor updates at later stages.  It has not really served as a tool in deciding features or scope for the WG's efforts so far.  It is being published to record the early conclusions of the WG.  It will not be used as a set of rigid guidelines that specifications and implementations will be held to in the future.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7478"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7478"/>
+        </reference>
+        <reference anchor="RFC7656" target="https://www.rfc-editor.org/info/rfc7656" quoteTitle="true" derivedAnchor="RFC7656">
+          <front>
+            <title>A Taxonomy of Semantics and Mechanisms for Real-Time Transport Protocol (RTP) Sources</title>
+            <author initials="J." surname="Lennox" fullname="J. Lennox">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Gross" fullname="K. Gross">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Nandakumar" fullname="S. Nandakumar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Salgueiro" fullname="G. Salgueiro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Burman" fullname="B. Burman" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="November"/>
+            <abstract>
+              <t>The terminology about, and associations among, Real-time Transport Protocol (RTP) sources can be complex and somewhat opaque.  This document describes a number of existing and proposed properties and relationships among RTP sources and defines common terminology for discussing protocol entities and their relationships.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7656"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7656"/>
+        </reference>
+        <reference anchor="RFC8087" target="https://www.rfc-editor.org/info/rfc8087" quoteTitle="true" derivedAnchor="RFC8087">
+          <front>
+            <title>The Benefits of Using Explicit Congestion Notification (ECN)</title>
+            <author initials="G." surname="Fairhurst" fullname="G. Fairhurst">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Welzl" fullname="M. Welzl">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="March"/>
+            <abstract>
+              <t>The goal of this document is to describe the potential benefits of applications using a transport that enables Explicit Congestion Notification (ECN).  The document outlines the principal gains in terms of increased throughput, reduced delay, and other benefits when ECN is used over a network path that includes equipment that supports Congestion Experienced (CE) marking.  It also discusses challenges for successful deployment of ECN.  It does not propose new algorithms to use ECN nor does it describe the details of implementation of ECN in endpoint devices (Internet hosts), routers, or other network devices.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8087"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8087"/>
+        </reference>
+        <reference anchor="RFC8382" target="https://www.rfc-editor.org/info/rfc8382" quoteTitle="true" derivedAnchor="RFC8382">
+          <front>
+            <title>Shared Bottleneck Detection for Coupled Congestion Control for RTP Media</title>
+            <author initials="D." surname="Hayes" fullname="D. Hayes" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Ferlin" fullname="S. Ferlin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Welzl" fullname="M. Welzl">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Hiorth" fullname="K. Hiorth">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="June"/>
+            <abstract>
+              <t>This document describes a mechanism to detect whether end-to-end data flows share a common bottleneck.  This mechanism relies on summary statistics that are calculated based on continuous measurements and used as input to a grouping algorithm that runs wherever the knowledge is needed.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8382"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8382"/>
+        </reference>
+        <reference anchor="I-D.ietf-rmcat-eval-test" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-rmcat-eval-test-10" derivedAnchor="RMCAT-PROPOSALS">
+          <front>
+            <title>Test Cases for Evaluating RMCAT Proposals</title>
+            <author initials="Z" surname="Sarker" fullname="Zaheduzzaman Sarker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V" surname="Singh" fullname="Varun Singh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="X" surname="Zhu" fullname="Xiaoqing Zhu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Ramalho" fullname="Michael Ramalho">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="May" day="23" year="2019"/>
+            <abstract>
+              <t>The Real-time Transport Protocol (RTP) is used to transmit media in multimedia telephony applications.  These applications are typically required to implement congestion control.  This document describes the test cases to be used in the performance evaluation of such congestion control algorithms in a controlled environment.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-rmcat-eval-test-10"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-rmcat-eval-test-10.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-rtcweb-overview" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-rtcweb-overview-19" derivedAnchor="RTCWEB-OVERVIEW">
+          <front>
+            <title>Overview: Real Time Protocols for Browser-based Applications</title>
+            <author initials="H" surname="Alvestrand" fullname="Harald Alvestrand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="November" day="11" year="2017"/>
+            <abstract>
+              <t>This document gives an overview and context of a protocol suite intended for use with real-time applications that can be deployed in browsers - "real time communication on the Web".  It intends to serve as a starting and coordination point to make sure all the parts that are needed to achieve this goal are findable, and that the parts that belong in the Internet protocol suite are fully specified and on the right publication track.  This document is an Applicability Statement - it does not itself specify any protocol, but specifies which other specifications WebRTC compliant implementations are supposed to follow.  This document is a work item of the RTCWEB working group.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-rtcweb-overview-19"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-rtcweb-overview-19.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-rtcweb-rtp-usage" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-rtcweb-rtp-usage-26" derivedAnchor="RTCWEB-RTP-USAGE">
+          <front>
+            <title>Web Real-Time Communication (WebRTC): Media Transport and Use of RTP</title>
+            <author initials="C" surname="Perkins" fullname="Colin Perkins">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Westerlund" fullname="Magnus Westerlund">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J" surname="Ott" fullname="Joerg Ott">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" day="17" year="2016"/>
+            <abstract>
+              <t>The Web Real-Time Communication (WebRTC) framework provides support for direct interactive rich communication using audio, video, text, collaboration, games, etc. between two peers' web-browsers.  This memo describes the media transport aspects of the WebRTC framework. It specifies how the Real-time Transport Protocol (RTP) is used in the WebRTC context, and gives requirements for which RTP features, profiles, and extensions need to be supported.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-rtcweb-rtp-usage-26"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-rtcweb-rtp-usage-26.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="TRANSPORT-MULTIPLEX" target="https://tools.ietf.org/html/draft-westerlund-avtcore-transport-multiplexing-07" quoteTitle="true" derivedAnchor="TRANSPORT-MULTIPLEX">
+          <front>
+            <title>Multiple RTP Sessions on a Single Lower-Layer Transport</title>
+            <author initials="M." surname="Westerlund" fullname="Magnus Westerlund">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Perkins" fullname="Colin Perkins">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" year="2013"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-westerlund-avtcore-transport-multiplexing-07"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-rtcweb-transports" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-rtcweb-transports-17" derivedAnchor="WEBRTC-TRANS">
+          <front>
+            <title>Transports for WebRTC</title>
+            <author initials="H" surname="Alvestrand" fullname="Harald Alvestrand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" day="26" year="2016"/>
+            <abstract>
+              <t>This document describes the data transport protocols used by WebRTC, including the protocols used for interaction with intermediate boxes such as firewalls, relays and NAT boxes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-rtcweb-transports-17"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-rtcweb-transports-17.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="app-GCC" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-application-to-gcc">Application to GCC</name>
+      <t pn="section-appendix.a-1">Google Congestion Control (GCC) <xref target="I-D.ietf-rmcat-gcc" format="default" sectionFormat="of" derivedContent="GCC-RTCWEB"/> is another congestion control scheme for RTP flows
+      that is under development. GCC is not yet finalized, but at the time of
+      this writing, the rate control of GCC employs two parts: controlling the
+      bandwidth estimate based on delay and controlling the bandwidth
+      estimate based on loss. Both are designed to estimate the available
+      bandwidth, A_hat. </t>
+      <t pn="section-appendix.a-2">When applying the FSE to GCC, the UPDATE function call described in
+      <xref target="flows" format="default" sectionFormat="of" derivedContent="Section 5.3"/> gives the FSE GCC's estimate of
+      available bandwidth A_hat. The recommended algorithm for GCC is the
+      Active FSE in <xref target="example-alg-act" format="default" sectionFormat="of" derivedContent="Section 5.3.1"/>. In
+      step 3 (d) of this algorithm, when the FSE_R(i) is "sent" to the flow i,
+      A_hat of flow i is updated with the value of FSE_R(i).</t>
+    </section>
+    <section anchor="scheduling" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-scheduling">Scheduling</name>
+      <t pn="section-appendix.b-1"> When flows originate from the same host, it would be possible to use
+      only one sender-side congestion controller that determines the
+      overall allowed sending rate and then use a local scheduler to assign a
+      proportion of this rate to each RTP session. This way, priorities could
+      also be implemented as a function of the scheduler. The Congestion
+      Manager (CM) <xref target="RFC3124" format="default" sectionFormat="of" derivedContent="RFC3124"/> also uses such a
+      scheduling function.</t>
+    </section>
+    <section anchor="example-alg-pas" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-example-algorithm-passive-f">Example Algorithm - Passive FSE</name>
+      <t pn="section-appendix.c-1">Active algorithms calculate the rates for all the flows in the FG and
+      actively distribute them. In a passive algorithm, UPDATE returns a rate
+      that should be used instead of the rate that the congestion controller
+      has determined. This can make a passive algorithm easier to implement;
+      however, when round-trip times of flows are unequal, flows with shorter RTTs
+      may (depending on the congestion control algorithm) update and react to
+      the overall FSE state more often than flows with longer RTTs, which can
+      produce unwanted side effects. This problem is more significant when the
+      congestion control convergence depends on the RTT. While the passive
+      algorithm works better for congestion controls with RTT-independent
+      convergence, it can still produce oscillations on short time scales. The
+      algorithm described below is therefore considered highly experimental
+      and not safe to deploy outside of testbed environments. Results of a
+      simplified passive FSE algorithm with both NADA and GCC can be found in
+      <xref target="FSE-NOMS" format="default" sectionFormat="of" derivedContent="FSE-NOMS"/>.</t>
+      <t pn="section-appendix.c-2">In the passive version of the FSE, TLO (Total Leftover Rate) is a
+      static variable per FG that is initialized to 0. Additionally, S_CR is
+      limited to increase or decrease as conservatively as a flow's congestion
+      controller decides in order to prohibit sudden rate jumps.
+
+      </t>
+      <ol spacing="normal" type="(%d)" start="1" pn="section-appendix.c-3">
+        <li pn="section-appendix.c-3.1" derivedCounter="(1)">When a flow f starts, it registers itself with SBD and the
+        FSE. FSE_R(f) and DR(f) are initialized with the congestion
+        controller's initial rate. SBD will assign the correct FGI. When a
+        flow is assigned an FGI, it adds its FSE_R(f) to S_CR.</li>
+        <li pn="section-appendix.c-3.2" derivedCounter="(2)">When a flow f stops or pauses, it sets its DR(f) to 0 and sets P(f) to -1.</li>
+        <li pn="section-appendix.c-3.3" derivedCounter="(3)">
+          <t pn="section-appendix.c-3.3.1">Every time the congestion controller of the flow f determines a
+          new sending rate CC_R(f), assuming the flow's new desired rate
+          new_DR(f) to be "infinity" in case of a bulk data transfer with an
+          unknown maximum rate, the flow calls UPDATE, which carries out the
+          tasks listed below to derive the flow's new sending rate, Rate(f). A
+          flow's UPDATE function uses a few local (i.e., per-flow) temporary
+          variables, which are all initialized to 0: DELTA, new_S_CR, and S_P.
+          </t>
+          <ol spacing="normal" type="(%c)" start="1" pn="section-appendix.c-3.3.2">
+            <li pn="section-appendix.c-3.3.2.1" derivedCounter="(a)">
+              <t pn="section-appendix.c-3.3.2.1.1">For all the flows in its FG (including itself), it calculates
+              the sum of all the calculated rates, new_S_CR. Then, it
+              calculates DELTA: the difference between FSE_R(f) and CC_R(f).
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-appendix.c-3.3.2.1.2">
+          for all flows i in FG do
+              new_S_CR = new_S_CR + FSE_R(i)
+          end for
+          DELTA =  CC_R(f) - FSE_R(f)                  </sourcecode>
+            </li>
+            <li pn="section-appendix.c-3.3.2.2" derivedCounter="(b)">
+              <t pn="section-appendix.c-3.3.2.2.1">It updates S_CR, FSE_R(f), and DR(f).
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-appendix.c-3.3.2.2.2">
+          FSE_R(f) = CC_R(f)
+          if DELTA &gt; 0 then  // the flow's rate has increased
+              S_CR = S_CR + DELTA
+          else if DELTA &lt; 0 then
+              S_CR = new_S_CR + DELTA
+          end if 
+          DR(f) = min(new_DR(f),FSE_R(f))                  </sourcecode>
+            </li>
+            <li pn="section-appendix.c-3.3.2.3" derivedCounter="(c)">
+              <t pn="section-appendix.c-3.3.2.3.1">It calculates the leftover rate TLO, removes the terminated
+              flows from the FSE, and calculates the sum of all the priorities,
+              S_P.
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-appendix.c-3.3.2.3.2">
+            for all flows i in FG do
+               if P(i)&lt;0 then
+                  delete flow
+               else
+                  S_P = S_P + P(i)
+               end if
+            end for
+            if DR(f) &lt; FSE_R(f) then
+               TLO = TLO + (P(f)/S_P) * S_CR - DR(f))
+            end if                  </sourcecode>
+            </li>
+            <li pn="section-appendix.c-3.3.2.4" derivedCounter="(d)">
+              <t pn="section-appendix.c-3.3.2.4.1">It calculates the sending rate, Rate(f).
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-appendix.c-3.3.2.4.2">
+            Rate(f) = min(new_DR(f), (P(f)*S_CR)/S_P + TLO)
+                          
+            if Rate(f) != new_DR(f) and TLO &gt; 0 then
+                TLO = 0  // f has 'taken' TLO
+            end if                  </sourcecode>
+            </li>
+            <li pn="section-appendix.c-3.3.2.5" derivedCounter="(e)">
+              <t pn="section-appendix.c-3.3.2.5.1">It updates DR(f) and FSE_R(f) with Rate(f).
+              </t>
+              <sourcecode type="pseudocode" markers="false" pn="section-appendix.c-3.3.2.5.2">
+            if Rate(f) &gt; DR(f) then
+                DR(f) = Rate(f)
+            end if
+            FSE_R(f)  = Rate(f)                </sourcecode>
+            </li>
+          </ol>
+        </li>
+      </ol>
+      <t pn="section-appendix.c-4">The goals of the flow algorithm are to achieve prioritization,
+      improve network utilization in the face of application-limited flows,
+      and impose limits on the increase behavior such that the negative impact
+      of multiple flows trying to increase their rate together is
+      minimized. It does that by assigning a flow a sending rate that may not
+      be what the flow's congestion controller expected. It therefore builds
+      on the assumption that no significant inefficiencies arise from
+      temporary application-limited behavior or from quickly jumping to a rate
+      that is higher than the congestion controller intended. How problematic
+      these issues really are depends on the controllers in use and requires
+      careful per-controller experimentation. The coupled congestion control
+      mechanism described here also does not require all controllers to be
+      equal; effects of heterogeneous controllers, or homogeneous controllers
+      being in different states, are also subject to experimentation.</t>
+      <t pn="section-appendix.c-5">This algorithm gives the leftover rate of application-limited
+      flows to the first flow that updates its sending rate, provided that
+      this flow needs it all (otherwise, its own leftover rate can be taken by
+      the next flow that updates its rate).  Other policies could be applied,
+      e.g., to divide the leftover rate of a flow equally among all other flows
+      in the FGI.</t>
+      <section anchor="example-op" numbered="true" toc="include" removeInRFC="false" pn="section-c.1">
+        <name slugifiedName="name-example-operation-passive">Example Operation (Passive)</name>
+        <t pn="section-c.1-1">In order to illustrate the operation of the passive coupled
+        congestion control algorithm, this section presents a toy example of
+        two flows that use it. Let us assume that both flows traverse a common
+        10 Mbit/s bottleneck and use a simplistic congestion controller that
+        starts out with 1 Mbit/s, increases its rate by 1 Mbit/s in the
+        absence of congestion, and decreases it by 2 Mbit/s in the presence of
+        congestion. For simplicity, flows are assumed to always operate in a
+        round-robin fashion. Rate numbers below without units are assumed to
+        be in Mbit/s. For illustration purposes, the actual sending rate is
+        also shown for every flow in FSE diagrams even though it is not really
+        stored in the FSE.</t>
+        <t pn="section-c.1-2">Flow #1 begins. It is a bulk data transfer and considers itself to
+        have top priority.  This is the FSE after the flow algorithm's step
+        1:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-3">----------------------------------------
+| # | FGI |  P  | FSE_R  |  DR  | Rate |
+|   |     |     |        |      |      |
+| 1 |  1  |  1  |   1    |   1  |   1  |
+----------------------------------------
+S_CR = 1, TLO = 0                  </artwork>
+        <t pn="section-c.1-4">Its congestion controller gradually increases its rate. Eventually,
+        at some point, the FSE should look like this:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-5">-----------------------------------------
+| # | FGI |  P  |  FSE_R  |  DR  | Rate |
+|   |     |     |         |      |      |
+| 1 |  1  |  1  |   10    |  10  |  10  |
+-----------------------------------------
+S_CR = 10, TLO = 0    </artwork>
+        <t pn="section-c.1-6">Now, another flow joins. It is also a bulk data transfer and has a
+        lower priority (0.5):</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-7">------------------------------------------
+| # | FGI |   P   | FSE_R  |  DR  | Rate |
+|   |     |       |        |      |      |
+| 1 |  1  |   1   |   10   |  10  |  10  |
+| 2 |  1  |  0.5  |    1   |   1  |   1  |
+------------------------------------------
+S_CR = 11, TLO = 0    </artwork>
+        <t pn="section-c.1-8">Now, assume that the first flow updates its rate to 8, because the
+        total sending rate of 11 exceeds the total capacity.  Let us take a
+        closer look at what happens in step 3 of the flow algorithm.</t>
+        <t pn="section-c.1-9">CC_R(1) = 8. new_DR(1) = infinity.</t>
+        <ol spacing="normal" type="(3%c)" start="1" pn="section-c.1-10">
+          <li pn="section-c.1-10.1" derivedCounter="(3a)">new_S_CR = 11; DELTA = 8 - 10 = -2.</li>
+          <li pn="section-c.1-10.2" derivedCounter="(3b)">FSE_R(1) = 8. DELTA is negative, hence S_CR = 9; DR(1) = 8</li>
+          <li pn="section-c.1-10.3" derivedCounter="(3c)">S_P = 1.5.</li>
+          <li pn="section-c.1-10.4" derivedCounter="(3d)">new sending rate Rate(1) = min(infinity, 1/1.5 * 9 + 0) = 6.</li>
+          <li pn="section-c.1-10.5" derivedCounter="(3e)">FSE_R(1) = 6.</li>
+        </ol>
+        <t pn="section-c.1-11">The resulting FSE looks as follows:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-12">
+-------------------------------------------
+| # | FGI |   P   |  FSE_R  |  DR  | Rate |
+|   |     |       |         |      |      |
+| 1 |  1  |   1   |    6    |   8  |   6  |
+| 2 |  1  |  0.5  |    1    |   1  |   1  |
+-------------------------------------------
+S_CR = 9, TLO = 0    </artwork>
+        <t pn="section-c.1-13">The effect is that flow #1 is sending with 6 Mbit/s instead of the
+        8 Mbit/s that the congestion controller derived. Let us now assume
+        that flow #2 updates its rate. Its congestion controller detects that
+        the network is not fully saturated (the actual total sending rate is
+        6+1=7) and increases its rate.</t>
+        <t pn="section-c.1-14">CC_R(2) = 2. new_DR(2) = infinity.</t>
+        <ol spacing="normal" type="(3%c)" start="1" pn="section-c.1-15">
+          <li pn="section-c.1-15.1" derivedCounter="(3a)">new_S_CR = 7; DELTA = 2 - 1 = 1.</li>
+          <li pn="section-c.1-15.2" derivedCounter="(3b)">FSE_R(2) = 2. DELTA is positive, hence S_CR = 9 + 1 = 10; DR(2) = 2.</li>
+          <li pn="section-c.1-15.3" derivedCounter="(3c)">S_P = 1.5.</li>
+          <li pn="section-c.1-15.4" derivedCounter="(3d)">Rate(2) = min(infinity, 0.5/1.5 * 10 + 0) = 3.33.</li>
+          <li pn="section-c.1-15.5" derivedCounter="(3e)">DR(2) = FSE_R(2) = 3.33.</li>
+        </ol>
+        <t pn="section-c.1-16">The resulting FSE looks as follows:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-17">
+-------------------------------------------
+| # | FGI |   P   |  FSE_R  |  DR  | Rate |
+|   |     |       |         |      |      |
+| 1 |  1  |   1   |    6    |   8  |   6  |
+| 2 |  1  |  0.5  |   3.33  | 3.33 | 3.33 |
+-------------------------------------------
+S_CR = 10, TLO = 0    </artwork>
+        <t pn="section-c.1-18">The effect is that flow #2 is now sending with 3.33 Mbit/s, which
+        is close to half of the rate of flow #1 and leads to a total
+        utilization of 6(#1) + 3.33(#2) = 9.33 Mbit/s. Flow #2's congestion
+        controller has increased its rate faster than the controller actually
+        expected. Now, flow #1 updates its rate. Its congestion controller
+        detects that the network is not fully saturated and increases its
+        rate. Additionally, the application feeding into flow #1 limits the
+        flow's sending rate to at most 2 Mbit/s.</t>
+        <t pn="section-c.1-19">CC_R(1) = 7. new_DR(1) = 2.</t>
+        <ol spacing="normal" type="(3%c)" start="1" pn="section-c.1-20">
+          <li pn="section-c.1-20.1" derivedCounter="(3a)">new_S_CR = 9.33; DELTA = 1.</li>
+          <li pn="section-c.1-20.2" derivedCounter="(3b)">FSE_R(1) = 7, DELTA is positive, hence S_CR = 10 + 1 = 11; DR(1) = min(2, 7) = 2. </li>
+          <li pn="section-c.1-20.3" derivedCounter="(3c)">S_P = 1.5; DR(1) &lt; FSE_R(1), hence TLO = 1/1.5 * 11 - 2 = 5.33.</li>
+          <li pn="section-c.1-20.4" derivedCounter="(3d)">Rate(1) = min(2, 1/1.5 * 11 + 5.33) = 2.</li>
+          <li pn="section-c.1-20.5" derivedCounter="(3e)">FSE_R(1) = 2.</li>
+        </ol>
+        <t pn="section-c.1-21">The resulting FSE looks as follows:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-22">
+-------------------------------------------
+| # | FGI |   P   |  FSE_R  |  DR  | Rate |
+|   |     |       |         |      |      |
+| 1 |  1  |   1   |    2    |   2  |   2  |
+| 2 |  1  |  0.5  |   3.33  | 3.33 | 3.33 |
+-------------------------------------------
+S_CR = 11, TLO = 5.33                  </artwork>
+        <t pn="section-c.1-23">Now, the total rate of the two flows is 2 + 3.33 = 5.33 Mbit/s,
+        i.e., the network is significantly underutilized due to the limitation
+        of flow #1. Flow #2 updates its rate. Its congestion controller
+        detects that the network is not fully saturated and increases its
+        rate.</t>
+        <t pn="section-c.1-24">CC_R(2) = 4.33. new_DR(2) = infinity.</t>
+        <ol spacing="normal" type="(3%c)" start="1" pn="section-c.1-25">
+          <li pn="section-c.1-25.1" derivedCounter="(3a)">new_S_CR = 5.33; DELTA = 1.</li>
+          <li pn="section-c.1-25.2" derivedCounter="(3b)">FSE_R(2) = 4.33. DELTA is positive, hence S_CR = 12; DR(2) = 4.33.</li>
+          <li pn="section-c.1-25.3" derivedCounter="(3c)">S_P = 1.5.</li>
+          <li pn="section-c.1-25.4" derivedCounter="(3d)">Rate(2) = min(infinity, 0.5/1.5 * 12 + 5.33 ) = 9.33.</li>
+          <li pn="section-c.1-25.5" derivedCounter="(3e)">FSE_R(2) = 9.33, DR(2) = 9.33.</li>
+        </ol>
+        <t pn="section-c.1-26">The resulting FSE looks as follows:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-27">
+-------------------------------------------
+| # | FGI |   P   |  FSE_R  |  DR  | Rate |
+|   |     |       |         |      |      |
+| 1 |  1  |   1   |    2    |   2  |   2  |
+| 2 |  1  |  0.5  |   9.33  | 9.33 | 9.33 |
+-------------------------------------------
+S_CR = 12, TLO = 0    </artwork>
+        <t pn="section-c.1-28">Now, the total rate of the two flows is 2 + 9.33 = 11.33
+        Mbit/s. Finally, flow #1 terminates. It sets P(1) to -1 and DR(1) to
+        0. Let us assume that it terminated late enough for flow #2 to still
+        experience the network in a congested state, i.e., flow #2 decreases
+        its rate in the next iteration.</t>
+        <t pn="section-c.1-29">CC_R(2) = 7.33. new_DR(2) = infinity.</t>
+        <ol spacing="normal" type="(3%c)" start="1" pn="section-c.1-30">
+          <li pn="section-c.1-30.1" derivedCounter="(3a)">new_S_CR = 11.33; DELTA = -2.</li>
+          <li pn="section-c.1-30.2" derivedCounter="(3b)">FSE_R(2) = 7.33. DELTA is negative, hence S_CR = 9.33; DR(2) = 7.33.</li>
+          <li pn="section-c.1-30.3" derivedCounter="(3c)">Flow 1 has P(1) = -1, hence it is deleted from the FSE. S_P = 0.5.</li>
+          <li pn="section-c.1-30.4" derivedCounter="(3d)">Rate(2) = min(infinity, 0.5/0.5*9.33 + 0) = 9.33.</li>
+          <li pn="section-c.1-30.5" derivedCounter="(3e)">FSE_R(2) = DR(2) = 9.33.</li>
+        </ol>
+        <t pn="section-c.1-31">The resulting FSE looks as follows:</t>
+        <artwork align="left" name="" type="" alt="" pn="section-c.1-32">
+-------------------------------------------
+| # | FGI |   P   |  FSE_R  |  DR  | Rate |
+|   |     |       |         |      |      |
+| 2 |  1  |  0.5  |   9.33  | 9.33 | 9.33 |
+-------------------------------------------
+S_CR = 9.33, TLO = 0        </artwork>
+      </section>
+    </section>
+    <section anchor="Acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.d">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.d-1">This document benefited from discussions with and feedback from
+      <contact fullname="Andreas Petlund"/>,
+      <contact fullname="Anna Brunstrom"/>,
+      <contact fullname="Colin Perkins"/>,
+      <contact fullname="David Hayes"/>,
+      <contact fullname="David Ros"/>
+      (who also gave the FSE its name), 
+      <contact fullname="Ingemar Johansson"/>,
+      <contact fullname="Karen Nielsen"/>,
+      <contact fullname="Kristian Hiorth"/>,
+      <contact fullname="Martin Stiemerling"/>,
+      <contact fullname="Mirja Kühlewind"/>,
+      <contact fullname="Spencer Dawkins"/>,
+      <contact fullname="Varun Singh"/>,
+      <contact fullname="Xiaoqing Zhu"/>, and
+      <contact fullname="Zaheduzzaman Sarker"/>. The authors would
+      like to especially thank <contact fullname="Xiaoqing Zhu"/> and <contact fullname="Stefan Holmer"/> for helping with
+      NADA and GCC, and <contact fullname="Anna Brunstrom"/> as well as <contact fullname="Julius Flohr"/> for helping us
+      correct the active algorithm for the case of application-limited
+      flows.</t>
+      <t pn="section-appendix.d-2">This work was partially funded by the European Community under its
+      Seventh Framework Program through the Reducing Internet Transport
+      Latency (RITE) project (ICT-317700).</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.e">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Safiqul Islam" initials="S." surname="Islam">
+        <organization showOnFrontPage="true">University of Oslo</organization>
+        <address>
+          <postal>
+            <street>PO Box 1080 Blindern</street>
+            <code>N-0316</code>
+            <city>Oslo</city>
+            <region/>
+            <country>Norway</country>
+          </postal>
+          <phone>+47 22 84 08 37</phone>
+          <email>safiquli@ifi.uio.no</email>
+        </address>
+      </author>
+      <author fullname="Michael Welzl" initials="M." surname="Welzl">
+        <organization showOnFrontPage="true">University of Oslo</organization>
+        <address>
+          <postal>
+            <street>PO Box 1080 Blindern</street>
+            <code>N-0316</code>
+            <city>Oslo</city>
+            <region/>
+            <country>Norway</country>
+          </postal>
+          <phone>+47 22 85 24 20</phone>
+          <email>michawe@ifi.uio.no</email>
+        </address>
+      </author>
+      <author fullname="Stein Gjessing" initials="S." surname="Gjessing">
+        <organization showOnFrontPage="true">University of Oslo</organization>
+        <address>
+          <postal>
+            <street>PO Box 1080 Blindern</street>
+            <code>N-0316</code>
+            <city>Oslo</city>
+            <region/>
+            <country>Norway</country>
+          </postal>
+          <phone>+47 22 85 24 44</phone>
+          <email>steing@ifi.uio.no</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

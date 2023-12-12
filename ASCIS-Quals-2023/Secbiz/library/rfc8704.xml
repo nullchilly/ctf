@@ -1,0 +1,1165 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="bcp" consensus="true" docName="draft-ietf-opsec-urpf-improvements-04" indexInclude="true" ipr="trust200902" number="8704" prepTime="2020-02-07T09:29:36" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="3704" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-opsec-urpf-improvements-04" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8704" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Enhanced FP-uRPF">Enhanced Feasible-Path Unicast Reverse Path Forwarding</title>
+    <seriesInfo name="RFC" value="8704" stream="IETF"/>
+    <seriesInfo name="BCP" value="84" stream="IETF"/>
+    <author fullname="Kotikalapudi Sriram" initials="K." surname="Sriram">
+      <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+      <address>
+        <postal>
+          <street>100 Bureau Drive</street>
+          <city>Gaithersburg</city>
+          <region>MD</region>
+          <code>20899</code>
+          <country>United States of America</country>
+        </postal>
+        <email>ksriram@nist.gov</email>
+      </address>
+    </author>
+    <author fullname="Doug Montgomery" initials="D." surname="Montgomery">
+      <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+      <address>
+        <postal>
+          <street>100 Bureau Drive</street>
+          <city>Gaithersburg</city>
+          <region>MD</region>
+          <code>20899</code>
+          <country>United States of America</country>
+        </postal>
+        <email>dougm@nist.gov</email>
+      </address>
+    </author>
+    <author fullname="Jeffrey Haas" initials="J." surname="Haas">
+      <organization showOnFrontPage="true">Juniper Networks, Inc.</organization>
+      <address>
+        <postal>
+          <street>1133 Innovation Way</street>
+          <city>Sunnyvale</city>
+          <region>CA</region>
+          <code>94089</code>
+          <country>United States of America</country>
+        </postal>
+        <email>jhaas@juniper.net</email>
+      </address>
+    </author>
+    <date month="02" year="2020"/>
+    <area>Operations</area>
+    <workgroup>OPSEC Working Group</workgroup>
+    <keyword>BGP, source address spoofing, source address validation (SAV), Reverse Path Forwarding (RPF), unicast RPF (uRPF), DDoS mitigation, BCP 38, BCP 84</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+This document identifies a need for and proposes improvement of the unicast
+Reverse Path Forwarding (uRPF) techniques (see RFC 3704) for detection and
+mitigation of source address spoofing (see BCP 38). Strict uRPF is
+inflexible about directionality, the loose uRPF is oblivious to
+directionality, and the current feasible-path uRPF attempts to strike a
+balance between the two (see RFC 3704). However, as shown in this document,
+the existing feasible-path uRPF still has shortcomings. This document
+describes enhanced feasible-path uRPF (EFP-uRPF) techniques that are more flexible (in a meaningful way) about directionality than the feasible-path uRPF (RFC 3704). The proposed EFP-uRPF methods aim to significantly reduce false positives regarding invalid detection in source address validation (SAV). Hence, they can potentially alleviate ISPs' concerns about the possibility of disrupting service for their customers and encourage greater deployment of uRPF techniques. This document updates RFC 3704.      
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This memo documents an Internet Best Current Practice.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further information
+            on BCPs is available in Section 2 of RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8704" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-review-of-existing-source-a">Review of Existing Source Address Validation Techniques</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-access-control-li">SAV Using Access Control List</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-strict-unicast-re">SAV Using Strict Unicast Reverse Path Forwarding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-feasible-path-uni">SAV Using Feasible-Path Unicast Reverse Path Forwarding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-loose-unicast-rev">SAV Using Loose Unicast Reverse Path Forwarding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.5.1"><xref derivedContent="2.5" format="counter" sectionFormat="of" target="section-2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-vrf-table">SAV Using VRF Table</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sav-using-enhanced-feasible">SAV Using Enhanced Feasible-Path uRPF</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-description-of-the-method">Description of the Method</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-a-enhanced-feasib">Algorithm A: Enhanced Feasible-Path uRPF</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-recommendations">Operational Recommendations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-a-challenging-scenario">A Challenging Scenario</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-b-enhanced-feasib">Algorithm B: Enhanced Feasible-Path uRPF with Additional Flexibility across Customer Cone</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.5.1"><xref derivedContent="3.5" format="counter" sectionFormat="of" target="section-3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-augmenting-rpf-lists-with-r">Augmenting RPF Lists with ROA and IRR Data</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.6">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.6.1"><xref derivedContent="3.6" format="counter" sectionFormat="of" target="section-3.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implementation-and-operatio">Implementation and Operations Considerations</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.6.2">
+                  <li pn="section-toc.1-1.3.2.6.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.3.2.6.2.1.1"><xref derivedContent="3.6.1" format="counter" sectionFormat="of" target="section-3.6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-impact-on-fib-memory-size-r">Impact on FIB Memory Size Requirement</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.6.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.3.2.6.2.2.1"><xref derivedContent="3.6.2" format="counter" sectionFormat="of" target="section-3.6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coping-with-bgps-transient-">Coping with BGP's Transient Behavior</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.7">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.7.1"><xref derivedContent="3.7" format="counter" sectionFormat="of" target="section-3.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-summary-of-recommendations">Summary of Recommendations</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.7.2">
+                  <li pn="section-toc.1-1.3.2.7.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.3.2.7.2.1.1"><xref derivedContent="3.7.1" format="counter" sectionFormat="of" target="section-3.7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-applicability-of-the-efp-ur">Applicability of the EFP-uRPF Method with Algorithm A</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+Source address validation (SAV) refers to the detection and mitigation of source address (SA) spoofing <xref target="RFC2827" format="default" sectionFormat="of" derivedContent="RFC2827"/>. This document identifies a need for and proposes improvement of the unicast Reverse Path Forwarding (uRPF) techniques <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/> for SAV. Strict uRPF is inflexible about directionality (see <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/> for definitions), the loose uRPF is oblivious to directionality, and the current feasible-path uRPF attempts to strike a balance between the two <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/>. However, as shown in this document, the existing feasible-path uRPF still has shortcomings. Even with the feasible-path uRPF, ISPs are often apprehensive that they may be dropping customers' data packets with legitimate source addresses. 
+</t>
+      <t pn="section-1-2">
+
+This document describes enhanced feasible-path uRPF (EFP-uRPF)
+techniques that aim to be more flexible (in a meaningful way) about
+directionality than the feasible-path uRPF. It is based on the
+principle that if BGP updates for multiple prefixes with the same
+origin AS were received on different interfaces (at border routers), then incoming data packets with source addresses in any of those prefixes should be accepted on any of those interfaces (presented in <xref target="newtech" format="default" sectionFormat="of" derivedContent="Section 3"/>). For some challenging ISP-customer scenarios (see <xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>), this document also describes a more relaxed version of the enhanced feasible-path uRPF technique (presented in <xref target="algB" format="default" sectionFormat="of" derivedContent="Section 3.4"/>). Implementation and operations considerations are discussed in <xref target="impl" format="default" sectionFormat="of" derivedContent="Section 3.6"/>.     
+</t>
+      <t pn="section-1-3">
+Throughout this document, the routes under consideration are assumed to have been vetted based on prefix filtering <xref target="RFC7454" format="default" sectionFormat="of" derivedContent="RFC7454"/> and possibly origin validation <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/>.
+</t>
+      <t pn="section-1-4">
+The EFP-uRPF methods aim to significantly reduce false positives regarding invalid detection in SAV. They are expected to add greater operational robustness and efficacy to uRPF while minimizing ISPs' concerns about accidental service disruption for their customers. It is expected that this will encourage more deployment of uRPF to help realize its Denial of Service (DoS) and Distributed DoS (DDoS) prevention benefits network wide.
+</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t pn="section-1.1-1">
+The Reverse Path Forwarding (RPF) list is the list of permissible source-address prefixes for incoming data packets on a given interface.  
+</t>
+        <t pn="section-1.1-2">
+Peering relationships considered in this document are provider-to-customer
+(P2C), customer-to-provider (C2P), and peer-to-peer (P2P). Here,
+"provider" refers to a transit provider. The first two are transit relationships. A peer connected via a P2P link is known as a lateral peer (non-transit). 
+</t>
+        <t pn="section-1.1-3">
+AS A's customer cone is A plus all the ASes that can be reached from A following only P2C links <xref target="Luckie" format="default" sectionFormat="of" derivedContent="Luckie"/>.    
+</t>
+        <t pn="section-1.1-4">
+A stub AS is an AS that does not have any customers or lateral peers. In this document, a single-homed stub AS is one that has a single transit provider and a multihomed stub AS is one that has multiple (two or more) transit providers.    
+</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t pn="section-1.2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="review" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-review-of-existing-source-a">Review of Existing Source Address Validation Techniques</name>
+      <t pn="section-2-1">
+There are various existing techniques for the mitigation of DoS/DDoS
+attacks with spoofed addresses <xref target="RFC2827" format="default" sectionFormat="of" derivedContent="RFC2827"/> <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/>.  SAV is performed in network edge devices, such as
+border routers, Cable Modem Termination Systems (CMTS) <xref target="RFC4036" format="default" sectionFormat="of" derivedContent="RFC4036"/>, and Packet Data Network Gateways (PDN-GWs) in mobile
+networks <xref target="Firmin" format="default" sectionFormat="of" derivedContent="Firmin"/>.  Ingress Access Control List (ACL) and uRPF are techniques employed for implementing SAV <xref target="RFC2827" format="default" sectionFormat="of" derivedContent="RFC2827"/> <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/> <xref target="ISOC" format="default" sectionFormat="of" derivedContent="ISOC"/>.
+</t>
+      <section anchor="acl" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-sav-using-access-control-li">SAV Using Access Control List</name>
+        <t pn="section-2.1-1">
+Ingress/egress ACLs are maintained to list acceptable
+(or alternatively, unacceptable) prefixes for the source addresses in the
+incoming/outgoing Internet Protocol (IP) packets. Any packet with a source
+address that fails the filtering criteria is dropped. The ACLs for the
+ingress/egress filters need to be maintained to keep them up to
+date. Updating the ACLs is an operator-driven manual process; hence,
+it is operationally difficult or infeasible.   </t>
+        <t pn="section-2.1-2">
+Typically, the egress ACLs in access aggregation devices (e.g., CMTS, PDN-GW)
+permit source addresses only from the address spaces (prefixes) that are
+associated with the interface on which the customer network is connected. Ingress ACLs are typically deployed on border routers and drop ingress packets when the source address is spoofed (e.g., belongs to obviously disallowed prefix blocks, IANA special-purpose prefixes <xref target="SPAR-v4" format="default" sectionFormat="of" derivedContent="SPAR-v4"/><xref target="SPAR-v6" format="default" sectionFormat="of" derivedContent="SPAR-v6"/>, provider's own prefixes, etc.).  
+</t>
+      </section>
+      <section anchor="surpf" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-sav-using-strict-unicast-re">SAV Using Strict Unicast Reverse Path Forwarding</name>
+        <t pn="section-2.2-1">
+Note: In the figures (scenarios) in this section and the subsequent sections,
+the following terminology is used: 
+        </t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-2.2-2">
+          <li pn="section-2.2-2.1">
+"fails" means drops packets with legitimate
+source addresses.
+	  </li>
+          <li pn="section-2.2-2.2">
+ "works (but not desirable)" means passes all packets with
+legitimate source addresses but is oblivious to directionality.
+</li>
+          <li pn="section-2.2-2.3">
+"works best" means passes all packets with legitimate source addresses with no
+(or minimal) compromise of directionality.
+</li>
+          <li pn="section-2.2-2.4">
+The notation Pi[ASn ASm ...] denotes a BGP update with prefix Pi and an
+AS_PATH as shown in the square brackets.
+</li>
+        </ul>
+        <t pn="section-2.2-3">
+In the strict uRPF method, an ingress packet
+at a border router is accepted only if the Forwarding Information Base (FIB)
+contains a prefix that encompasses the source address and forwarding
+information for that prefix points back to the interface over which the packet
+was received. In other words, the reverse path for routing to the source
+address (if it were used as a destination address) should use the same
+interface over which the packet was received. It is well known that this
+method has limitations when networks are multihomed, routes are not
+symmetrically announced to all transit providers, and there is asymmetric
+routing of data packets. Asymmetric routing occurs (see <xref target="fig1" format="default" sectionFormat="of" derivedContent="Figure 1"/>) when a customer AS announces one prefix (P1) to one
+transit provider (ISP-a) and a different prefix (P2) to another transit
+provider (ISP-b) but routes data packets with source addresses in the second
+prefix (P2) to the first transit provider (ISP-a) or vice versa. Then, data
+packets with a source address in prefix P2 that are received at AS2
+directly from AS1
+will get dropped.  Further, data packets with a source address in prefix P1 that originate from AS1 and traverse via AS3 to AS2 will also get dropped at AS2.
+
+</t>
+        <figure anchor="fig1" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-scenario-1-for-illustration">Scenario 1 for Illustration of Efficacy of uRPF Schemes</name>
+          <artwork align="left" name="" type="" alt="" pn="section-2.2-4.1">
+           +------------+ ---- P1[AS2 AS1] ---&gt; +------------+
+           | AS2(ISP-a) | &lt;----P2[AS3 AS1] ---- | AS3(ISP-b) |
+           +------------+                       +------------+ 
+                    /\                             /\
+                     \                             /
+                      \                           /
+                       \                         /
+                 P1[AS1]\                       /P2[AS1]
+                         \                     /
+                        +-----------------------+
+                        |      AS1(customer)    |
+                        +-----------------------+
+                          P1, P2 (prefixes originated)
+
+          Consider data packets received at AS2
+          (1) from AS1 with a source address (SA) in P2, or
+          (2) from AS3 that originated from AS1 with a SA in P1:
+                    * Strict uRPF fails
+                    * Feasible-path uRPF fails
+                    * Loose uRPF works (but not desirable)
+                    * Enhanced feasible-path uRPF works best 
+</artwork>
+        </figure>
+      </section>
+      <section anchor="fp-urpf" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-sav-using-feasible-path-uni">SAV Using Feasible-Path Unicast Reverse Path Forwarding</name>
+        <t pn="section-2.3-1">
+The feasible-path uRPF technique helps partially overcome the problem
+identified with the strict uRPF in the multihoming case. The feasible-path
+uRPF is similar to the strict uRPF, but in addition to inserting the best-path
+prefix, additional prefixes from alternative announced routes are also
+included in the RPF list. This method relies on either (a) announcements for
+the same prefixes (albeit some may be prepended to effect lower
+preference) propagating to all transit providers performing feasible-path uRPF checks or
+(b) announcement of an aggregate less-specific prefix to all transit providers
+while announcing more-specific prefixes (covered by the less-specific prefix)
+to different transit providers as needed for traffic engineering.</t>
+        <t pn="section-2.3-2">As an
+example, in the multihoming scenario (see Scenario 2 in <xref target="fig2" format="default" sectionFormat="of" derivedContent="Figure 2"/>), if the customer AS announces routes for both prefixes
+(P1, P2) to both transit providers (with suitable prepends if needed for
+traffic engineering), then the feasible-path uRPF method works. It should be
+mentioned that the feasible-path uRPF works in this scenario only if customer
+routes are preferred at AS2 and AS3 over a shorter non-customer
+route. However, the feasible-path uRPF method has limitations as well. One
+form of limitation naturally occurs when the recommendation (a) or (b)
+mentioned above regarding propagation of prefixes is not followed.</t>
+        <t pn="section-2.3-3">Another
+form of limitation can be described as follows. In Scenario 2 (described here,
+illustrated in <xref target="fig2" format="default" sectionFormat="of" derivedContent="Figure 2"/>), it is possible that
+the second transit provider (ISP-b or AS3) does not propagate the prepended
+route for prefix P1 to the first transit provider (ISP-a or AS2). This is
+because AS3's decision policy permits giving priority to a shorter route to
+prefix P1 via a lateral peer (AS2) over a longer route learned directly from
+the customer (AS1). In such a scenario, AS3 would not send any route
+announcement for prefix P1 to AS2 (over the P2P link). Then, a data packet
+with a source address in prefix P1 that originates from AS1 and traverses via AS3 to AS2 will get dropped at AS2.
+
+</t>
+        <figure anchor="fig2" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-scenario-2-for-illustration">Scenario 2 for Illustration of Efficacy of uRPF Schemes</name>
+          <artwork align="left" name="" type="" alt="" pn="section-2.3-4.1">                   
+          +------------+  routes for P1, P2   +------------+
+          | AS2(ISP-a) |&lt;--------------------&gt;| AS3(ISP-b) |
+          +------------+        (P2P)         +------------+
+                    /\                            /\
+                     \                            /
+               P1[AS1]\                          /P2[AS1]
+                       \                        /
+         P2[AS1 AS1 AS1]\                      /P1[AS1 AS1 AS1]
+                         \                    /
+                        +-----------------------+
+                        |      AS1(customer)    |
+                        +-----------------------+
+                          P1, P2 (prefixes originated)
+
+        Consider data packets received at AS2 via AS3
+        that originated from AS1 and have a source address in P1:
+        * Feasible-path uRPF works (if the customer route to P1
+          is preferred at AS3 over the shorter path)
+        * Feasible-path uRPF fails (if the shorter path to P1
+          is preferred at AS3 over the customer route)
+        * Loose uRPF works (but not desirable)
+        * Enhanced feasible-path uRPF works best
+</artwork>
+        </figure>
+      </section>
+      <section anchor="lurpf" numbered="true" toc="include" removeInRFC="false" pn="section-2.4">
+        <name slugifiedName="name-sav-using-loose-unicast-rev">SAV Using Loose Unicast Reverse Path Forwarding</name>
+        <t pn="section-2.4-1">
+In the loose uRPF method, an ingress packet
+at the border router is accepted only if the FIB has one or more prefixes that
+encompass the source address. That is, a packet is dropped if no route exists
+in the FIB for the source address. Loose uRPF sacrifices directionality.  It only drops packets if the source address is unreachable in the current FIB (e.g., IANA special-purpose prefixes <xref target="SPAR-v4" format="default" sectionFormat="of" derivedContent="SPAR-v4"/><xref target="SPAR-v6" format="default" sectionFormat="of" derivedContent="SPAR-v6"/>, unallocated, allocated but currently not routed).
+</t>
+      </section>
+      <section anchor="vrf" numbered="true" toc="include" removeInRFC="false" pn="section-2.5">
+        <name slugifiedName="name-sav-using-vrf-table">SAV Using VRF Table</name>
+        <t pn="section-2.5-1">
+The Virtual Routing and Forwarding (VRF) technology <xref target="RFC4364" format="default" sectionFormat="of" derivedContent="RFC4364"/> <xref target="Juniper" format="default" sectionFormat="of" derivedContent="Juniper"/> allows a router
+to maintain multiple routing table instances separate from the global Routing
+Information Base (RIB). External BGP (eBGP) peering sessions send specific
+routes to be stored in a dedicated VRF table. The uRPF process queries the VRF
+table (instead of the FIB) for source address validation. A VRF table can be dedicated per eBGP peer and used for uRPF for only that peer, resulting in strict mode operation.  For implementing loose uRPF on an interface, the corresponding VRF table would be global, i.e., contains the same routes as in the FIB.  
+</t>
+      </section>
+    </section>
+    <section anchor="newtech" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-sav-using-enhanced-feasible">SAV Using Enhanced Feasible-Path uRPF</name>
+      <section anchor="descrip" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-description-of-the-method">Description of the Method</name>
+        <t pn="section-3.1-1"> 
+The enhanced feasible-path uRPF (EFP-uRPF) method adds greater operational robustness and efficacy to existing uRPF methods discussed in <xref target="review" format="default" sectionFormat="of" derivedContent="Section 2"/>. That is because it avoids dropping legitimate data packets and compromising directionality. The method is based on the principle that if BGP updates for multiple prefixes with the same origin AS were received on different interfaces (at border routers), then incoming data packets with source addresses in any of those prefixes should be accepted on any of those interfaces. The EFP-uRPF method can be best explained with an example, as follows: 
+</t>
+        <t pn="section-3.1-2">
+Let us say, in its Adj-RIBs-In <xref target="RFC4271" format="default" sectionFormat="of" derivedContent="RFC4271"/>, a border router of ISP-A has the set of prefixes {Q1, Q2, Q3}, each of which has AS-x as its origin and AS-x is in ISP-A's customer cone. In this set, the border router received the route for prefix Q1 over a customer-facing interface while it learned the routes for prefixes Q2 and Q3 from a lateral peer and an upstream transit provider, respectively. In this example scenario, the enhanced feasible-path uRPF method requires Q1, Q2, and Q3 be included in the RPF list for the customer interface under consideration. 
+</t>
+        <t pn="section-3.1-3">
+Thus, the EFP-uRPF method gathers feasible paths
+for customer interfaces in a more precise way (as compared to the feasible-path uRPF) so that all legitimate packets are accepted while the directionality property is not compromised. 
+</t>
+        <t pn="section-3.1-4">
+The above-described EFP-uRPF method is recommended to be applied on customer
+interfaces. It can also 
+be extended to create the RPF lists for lateral peer
+interfaces. That is, the EFP-uRPF method can be applied (and loose uRPF
+avoided) on lateral peer interfaces. That will help to avoid compromising directionality for lateral peer interfaces (which is inevitable with loose uRPF; see <xref target="lurpf" format="default" sectionFormat="of" derivedContent="Section 2.4"/>). 
+</t>
+        <t pn="section-3.1-5"> 
+Looking back at Scenarios 1 and 2 (Figures <xref target="fig1" format="counter" sectionFormat="of" derivedContent="1"/> and <xref target="fig2" format="counter" sectionFormat="of" derivedContent="2"/>), the EFP-uRPF method works better than the other uRPF
+methods. Scenario 3 (<xref target="fig3" format="default" sectionFormat="of" derivedContent="Figure 3"/>) further
+illustrates the enhanced feasible-path uRPF method with a more concrete
+example. In this scenario, the focus is on operation of the EFP-uRPF
+at ISP4 (AS4). ISP4 learns a route for prefix P1 via a
+C2P interface from customer ISP2 (AS2). This route for P1 has origin
+AS1. ISP4 also learns a route for P2 via another C2P interface from customer
+ISP3 (AS3). Additionally, AS4 learns a route for P3 via a lateral P2P interface from ISP5 (AS5). Routes for all three prefixes have the same
+origin AS (i.e., AS1). Using the enhanced feasible-path uRPF scheme and given the
+commonality of the origin AS across the routes for P1, P2, and P3, AS4 includes
+all of these prefixes in the RPF list for the customer interfaces (from AS2
+and AS3).
+</t>
+        <figure anchor="fig3" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-scenario-3-for-illustration">Scenario 3 for Illustration of Efficacy of uRPF Schemes</name>
+          <artwork align="left" name="" type="" alt="" pn="section-3.1-6.1">
+                 +----------+   P3[AS5 AS1]  +------------+
+                 | AS4(ISP4)|&lt;---------------|  AS5(ISP5) |
+                 +----------+      (P2P)     +------------+
+                     /\   /\                        /\
+                     /     \                        /
+         P1[AS2 AS1]/       \P2[AS3 AS1]           /
+              (C2P)/         \(C2P)               /
+                  /           \                  /
+           +----------+    +----------+         /
+           | AS2(ISP2)|    | AS3(ISP3)|        /
+           +----------+    +----------+       /
+                    /\           /\          /
+                     \           /          /
+               P1[AS1]\         /P2[AS1]   /P3[AS1]
+                  (C2P)\       /(C2P)     /(C2P)
+                        \     /          /
+                     +----------------+ /
+                     |  AS1(customer) |/
+                     +----------------+
+                          P1, P2, P3 (prefixes originated)
+
+         Consider that data packets (sourced from AS1)
+         may be received at AS4 with a source address
+         in P1, P2, or P3 via any of the neighbors (AS2, AS3, AS5):
+         * Feasible-path uRPF fails
+         * Loose uRPF works (but not desirable)
+         * Enhanced feasible-path uRPF works best
+</artwork>
+        </figure>
+        <section anchor="algA" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.1">
+          <name slugifiedName="name-algorithm-a-enhanced-feasib">Algorithm A: Enhanced Feasible-Path uRPF</name>
+          <t pn="section-3.1.1-1">
+The underlying algorithm in the solution method described above (<xref target="descrip" format="default" sectionFormat="of" derivedContent="Section 3.1"/>) can be specified as follows (to be implemented in a transit AS):
+</t>
+          <ol spacing="normal" type="1" start="1" pn="section-3.1.1-2">
+            <li pn="section-3.1.1-2.1" derivedCounter="1.">
+Create the set of unique origin ASes considering only the routes in the Adj-RIBs-In of customer interfaces. Call it Set A = {AS1, AS2, ...,  ASn}.
+</li>
+            <li pn="section-3.1.1-2.2" derivedCounter="2.">
+Considering all routes in Adj-RIBs-In for all interfaces (customer, lateral peer, and transit provider), form the set of unique prefixes that have a common origin AS1. Call it Set X1. 
+
+
+
+</li>
+            <li pn="section-3.1.1-2.3" derivedCounter="3.">
+Include Set X1 in the RPF list on all customer interfaces on which one or more of the prefixes in Set X1 were received.
+</li>
+            <li pn="section-3.1.1-2.4" derivedCounter="4.">
+Repeat Steps 2 and 3 for each of the remaining ASes in Set A (i.e., for ASi, where i = 2, ..., n). 
+</li>
+          </ol>
+          <t pn="section-3.1.1-3">
+The above algorithm can also be extended to apply the EFP-uRPF method to
+lateral peer interfaces. However, it is left up to the operator to decide
+whether they should apply the EFP-uRPF or loose uRPF method on lateral peer interfaces. The loose uRPF method is recommended to be applied on transit provider interfaces.
+</t>
+        </section>
+      </section>
+      <section anchor="recomm" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-operational-recommendations">Operational Recommendations</name>
+        <t pn="section-3.2-1">
+The following operational recommendations will make the operation of the enhanced feasible-path uRPF robust:
+</t>
+        <t pn="section-3.2-2"> 
+For multihomed stub AS:
+</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-3.2-3">
+          <li pn="section-3.2-3.1"> 
+A multihomed stub AS should announce at least one of the prefixes it originates to each of its transit provider ASes. 
+(It is understood that a single-homed stub AS would announce all prefixes it originates to its sole transit provider AS.) 
+</li>
+        </ul>
+        <t pn="section-3.2-4"> 
+For non-stub AS:
+</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-3.2-5">
+          <li pn="section-3.2-5.1"> 
+A non-stub AS should also announce at least one of the prefixes it originates to each of its transit provider ASes.
+</li>
+          <li pn="section-3.2-5.2"> 
+Additionally, from the routes it has learned from customers, a non-stub AS <bcp14>SHOULD</bcp14> announce at least one route per origin AS to each of its transit provider ASes. 
+</li>
+        </ul>
+      </section>
+      <section anchor="challenge" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-a-challenging-scenario">A Challenging Scenario</name>
+        <t pn="section-3.3-1"> 
+It should be observed that in the absence of ASes adhering to above
+recommendations, the following example scenario, which poses
+a challenge for the enhanced feasible-path uRPF (as well as for traditional
+feasible-path uRPF), may be constructed. In the scenario illustrated in <xref target="fig4" format="default" sectionFormat="of" derivedContent="Figure 4"/>, since routes for neither P1 nor P2 are propagated on the AS2-AS4 interface (due to the presence of NO_EXPORT Community), the enhanced feasible-path uRPF at AS4 will reject data packets received on that interface with source addresses in P1 or P2. (For a little more complex example scenario, see slide #10 in <xref target="Sriram-URPF" format="default" sectionFormat="of" derivedContent="Sriram-URPF"/>.)    
+</t>
+        <figure anchor="fig4" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-illustration-of-a-challengi">Illustration of a Challenging Scenario</name>
+          <artwork align="left" name="" type="" alt="" pn="section-3.3-2.1">
+                 +----------+  
+                 | AS4(ISP4)|                       
+                 +----------+       
+                     /\   /\                        
+                     /     \  P1[AS3 AS1]                                  
+      P1 and P2 not /       \ P2[AS3 AS1]           
+        propagated /         \ (C2P)                
+          (C2P)   /           \                  
+           +----------+    +----------+         
+           | AS2(ISP2)|    | AS3(ISP3)|                        
+           +----------+    +----------+       
+                    /\           /\          
+                     \           / P1[AS1]          
+    P1[AS1] NO_EXPORT \         / P2[AS1]              
+    P2[AS1] NO_EXPORT  \       / (C2P)     
+                 (C2P)  \     /          
+                     +----------------+ 
+                     |  AS1(customer) |
+                     +----------------+
+                          P1, P2 (prefixes originated)
+         
+       Consider that data packets (sourced from AS1) 
+       may be received at AS4 with a source address 
+       in P1 or P2 via AS2:       
+       * Feasible-path uRPF fails
+       * Loose uRPF works (but not desirable)
+       * Enhanced feasible-path uRPF with Algorithm A fails
+       * Enhanced feasible-path uRPF with Algorithm B works best
+</artwork>
+        </figure>
+      </section>
+      <section anchor="algB" numbered="true" toc="include" removeInRFC="false" pn="section-3.4">
+        <name slugifiedName="name-algorithm-b-enhanced-feasib">Algorithm B: Enhanced Feasible-Path uRPF with Additional Flexibility across Customer Cone</name>
+        <t pn="section-3.4-1">
+Adding further flexibility to the enhanced feasible-path uRPF method can help address the potential limitation identified above using the scenario in <xref target="fig4" format="default" sectionFormat="of" derivedContent="Figure 4"/> (<xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>). In the following, "route" refers to a route currently existing in the Adj-RIBs-In. Including the additional degree of flexibility, the modified algorithm called Algorithm B (implemented in a transit AS) can be described as follows:
+</t>
+        <ol spacing="normal" type="1" start="1" pn="section-3.4-2">
+          <li pn="section-3.4-2.1" derivedCounter="1."> 
+Create the set of all directly connected customer interfaces. Call it Set I = {I1, I2, ..., Ik}.
+</li>
+          <li pn="section-3.4-2.2" derivedCounter="2."> 
+Create the set of all unique prefixes for which routes exist in Adj-RIBs-In for the interfaces in Set I. Call it Set P = {P1, P2, ..., Pm}.  
+</li>
+          <li pn="section-3.4-2.3" derivedCounter="3."> 
+Create the set of all unique origin ASes seen in the routes that exist in Adj-RIBs-In for the interfaces in Set I. Call it Set A = {AS1, AS2, ..., ASn}.
+</li>
+          <li pn="section-3.4-2.4" derivedCounter="4."> 
+Create the set of all unique prefixes for which routes exist in Adj-RIBs-In of all lateral peer and transit provider interfaces such that each of the routes has its origin AS belonging in Set A. Call it Set Q = {Q1, Q2, ..., Qj}. 
+</li>
+          <li pn="section-3.4-2.5" derivedCounter="5."> 
+Then, Set Z = Union(P,Q) is the RPF list that is applied for every customer interface in Set I. 
+</li>
+        </ol>
+        <t pn="section-3.4-3"> 
+When Algorithm B (which is more flexible than Algorithm A) is employed on
+customer interfaces, the type of limitation identified in <xref target="fig4" format="default" sectionFormat="of" derivedContent="Figure 4"/> (<xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>) is overcome
+and the method works. The directionality property is minimally compromised,
+but the proposed EFP-uRPF method with Algorithm B is still a much better choice (for the scenario under consideration) than applying the loose uRPF method, which is oblivious to directionality. 
+</t>
+        <t pn="section-3.4-4"> 
+So, applying the EFP-uRPF method with Algorithm B is recommended on customer interfaces for the challenging scenarios, such as those described in <xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>. 
+
+
+
+</t>
+      </section>
+      <section anchor="augment" numbered="true" toc="include" removeInRFC="false" pn="section-3.5">
+        <name slugifiedName="name-augmenting-rpf-lists-with-r">Augmenting RPF Lists with ROA and IRR Data</name>
+        <t pn="section-3.5-1">
+It is worth emphasizing that an indirect part of the proposal in this document
+is that RPF filters may be augmented from secondary sources. Hence, the
+construction of RPF lists using a method proposed in this document (Algorithm
+A or B) can be augmented with data from Route Origin Authorization (ROA) <xref target="RFC6482" format="default" sectionFormat="of" derivedContent="RFC6482"/>, as well as Internet Routing Registry
+(IRR) data. Special care should be exercised when using IRR data because it is
+not always accurate or trusted.  In the EFP-uRPF method with Algorithm A (see <xref target="algA" format="default" sectionFormat="of" derivedContent="Section 3.1.1"/>), if a ROA includes prefix Pi and ASj, then augment
+the RPF list of each customer interface on which at least one route with
+origin ASj was received with prefix Pi. In the EFP-uRPF method with Algorithm B, if ASj
+belongs in Set A (see Step #3 <xref target="algB" format="default" sectionFormat="of" derivedContent="Section 3.4"/>) and if a ROA includes prefix Pi and ASj,
+then augment the RPF list Z in Step 5 of Algorithm B with prefix Pi. Similar procedures can be followed with reliable IRR data as well. This will help make the RPF lists more robust about source addresses that may be legitimately used by customers of the ISP.
+</t>
+      </section>
+      <section anchor="impl" numbered="true" toc="include" removeInRFC="false" pn="section-3.6">
+        <name slugifiedName="name-implementation-and-operatio">Implementation and Operations Considerations</name>
+        <section anchor="rpfsize" numbered="true" toc="include" removeInRFC="false" pn="section-3.6.1">
+          <name slugifiedName="name-impact-on-fib-memory-size-r">Impact on FIB Memory Size Requirement</name>
+          <t pn="section-3.6.1-1">
+The existing RPF checks in edge routers take advantage of existing
+line card implementations to perform the RPF functions. For
+implementation of the enhanced feasible-path uRPF, the general
+necessary feature would be to extend the line cards to take arbitrary
+RPF lists that are not necessarily the same as the existing FIB
+contents. In the algorithms (Sections <xref target="algA" format="counter" sectionFormat="of" derivedContent="3.1.1"/> and <xref target="algB" format="counter" sectionFormat="of" derivedContent="3.4"/>) described here, the RPF lists are constructed by applying a set of rules to all received BGP routes (not just those selected as best path and installed in the FIB). The concept of uRPF querying an RPF list (instead of the FIB) is similar to uRPF querying a VRF table (see <xref target="vrf" format="default" sectionFormat="of" derivedContent="Section 2.5"/>).   
+</t>
+          <t pn="section-3.6.1-2">
+The techniques described in this document require that there should be additional memory (i.e., ternary content-addressable memory (TCAM)) available to store the RPF lists in line cards. For an ISP's AS, the RPF list size for each line card will roughly equal the total number of originated prefixes from ASes in its customer cone (assuming Algorithm B in <xref target="algB" format="default" sectionFormat="of" derivedContent="Section 3.4"/> is used). (Note: EFP-uRPF with Algorithm A (see <xref target="algA" format="default" sectionFormat="of" derivedContent="Section 3.1.1"/>) requires much less memory than EFP-uRPF with Algorithm B.)
+</t>
+          <t pn="section-3.6.1-3">
+The following table shows the measured customer cone sizes in number of prefixes originated (from all ASes in the customer cone) for various types of ISPs <xref target="Sriram-RIPE63" format="default" sectionFormat="of" derivedContent="Sriram-RIPE63"/>:
+</t>
+          <table anchor="ccsize" align="center" pn="table-1">
+            <name slugifiedName="name-customer-cone-sizes-prefixe">Customer Cone Sizes (# Prefixes) for Various Types of ISPs</name>
+            <thead>
+              <tr>
+                <th align="left" colspan="1" rowspan="1">Type of ISP</th>
+                <th align="left" colspan="1" rowspan="1">Measured Customer Cone Size in # Prefixes (in turn this is an
+      estimate for RPF list size on the line card)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Very Large Global ISP #1</td>
+                <td align="left" colspan="1" rowspan="1">32393</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Very Large Global ISP #2</td>
+                <td align="left" colspan="1" rowspan="1">29528</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Large Global ISP</td>
+                <td align="left" colspan="1" rowspan="1">20038</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Mid-size Global ISP</td>
+                <td align="left" colspan="1" rowspan="1">8661</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Regional ISP (in Asia)</td>
+                <td align="left" colspan="1" rowspan="1">1101</td>
+              </tr>
+            </tbody>
+          </table>
+          <t pn="section-3.6.1-5">
+For some super large global ISPs that are at the core of the Internet, the customer cone size (# prefixes) can be as high as a few hundred thousand <xref target="CAIDA" format="default" sectionFormat="of" derivedContent="CAIDA"/>, but uRPF is most effective when deployed at ASes at the edges of the Internet where the customer cone sizes are smaller, as shown in <xref target="ccsize" format="default" sectionFormat="of" derivedContent="Table 1"/>.
+</t>
+          <t pn="section-3.6.1-6">
+A very large global ISP's router line card is likely to have a FIB size large enough to accommodate 2 million routes <xref target="Cisco1" format="default" sectionFormat="of" derivedContent="Cisco1"/>. Similarly, the line cards in routers corresponding to a large global ISP, a midsize global ISP, and a regional ISP are likely to have FIB sizes large enough to accommodate about 1 million, 0.5 million, and 100k routes, respectively <xref target="Cisco2" format="default" sectionFormat="of" derivedContent="Cisco2"/>. Comparing these FIB size numbers with the corresponding RPF list size numbers in <xref target="ccsize" format="default" sectionFormat="of" derivedContent="Table 1"/>, it can be surmised that the conservatively estimated RPF list size is only a small fraction of the anticipated FIB memory size under relevant ISP scenarios. What is meant here by relevant ISP scenarios is that only smaller ISPs (and possibly some midsize and regional ISPs) are expected to implement the proposed EFP-uRPF method since it is most effective closer to the edges of the Internet.     
+</t>
+        </section>
+        <section anchor="hyst" numbered="true" toc="include" removeInRFC="false" pn="section-3.6.2">
+          <name slugifiedName="name-coping-with-bgps-transient-">Coping with BGP's Transient Behavior</name>
+          <t pn="section-3.6.2-1">
+BGP routing announcements can exhibit transient behavior. Routes may be
+withdrawn temporarily and then reannounced due to transient conditions, such
+as BGP session reset or link failure recovery. To cope with this, hysteresis should be introduced in the maintenance of the RPF lists. Deleting entries from the RPF lists <bcp14>SHOULD</bcp14> be delayed by a predetermined amount (the value based on operational experience) when responding to route withdrawals. This should help suppress the effects due to the transients in BGP.
+</t>
+        </section>
+      </section>
+      <section anchor="summ_recomm" numbered="true" toc="include" removeInRFC="false" pn="section-3.7">
+        <name slugifiedName="name-summary-of-recommendations">Summary of Recommendations</name>
+        <t pn="section-3.7-1">
+Depending on the scenario, an ISP or enterprise AS operator should follow one of the following recommendations concerning uRPF/SAV:
+</t>
+        <ol spacing="normal" type="1" start="1" pn="section-3.7-2">
+          <li pn="section-3.7-2.1" derivedCounter="1."> 
+For directly connected networks, i.e., subnets directly connected to the AS, the AS under consideration <bcp14>SHOULD</bcp14> perform ACL-based SAV.
+</li>
+          <li pn="section-3.7-2.2" derivedCounter="2."> 
+For a directly connected single-homed stub AS (customer), the AS under consideration <bcp14>SHOULD</bcp14> perform SAV based on the strict uRPF method.   
+</li>
+          <li pn="section-3.7-2.3" derivedCounter="3.">
+            <t pn="section-3.7-2.3.1"> 
+For all other scenarios:
+</t>
+            <ul spacing="normal" bare="false" empty="false" pn="section-3.7-2.3.2">
+              <li pn="section-3.7-2.3.2.1">
+The EFP-uRPF method with Algorithm B (see <xref target="algB" format="default" sectionFormat="of" derivedContent="Section 3.4"/>) <bcp14>SHOULD</bcp14> be applied on customer interfaces.  
+</li>
+              <li pn="section-3.7-2.3.2.2">
+The loose uRPF method <bcp14>SHOULD</bcp14> be applied on lateral peer and transit provider interfaces.
+   
+</li>
+            </ul>
+          </li>
+        </ol>
+        <t pn="section-3.7-3">
+It is also recommended that prefixes from registered ROAs and IRR route objects that include ASes in an ISP's customer cone <bcp14>SHOULD</bcp14> be used to augment the pertaining RPF lists (see <xref target="augment" format="default" sectionFormat="of" derivedContent="Section 3.5"/> for details).
+</t>
+        <section anchor="discuss" numbered="true" toc="include" removeInRFC="false" pn="section-3.7.1">
+          <name slugifiedName="name-applicability-of-the-efp-ur">Applicability of the EFP-uRPF Method with Algorithm A</name>
+          <t pn="section-3.7.1-1">The EFP-uRPF method with Algorithm A is not mentioned in the above set of recommendations. It is an alternative to EFP-uRPF with Algorithm B and can be used in limited circumstances. The EFP-uRPF method with Algorithm A is expected to work fine if an ISP deploying it has only multihomed stub customers. It is trivially equivalent to strict uRPF if an ISP deploys it for a single-homed stub customer. More generally, it is also expected to work fine when there is absence of limitations, such as those described in <xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>. However, caution is required for use of EFP-uRPF with Algorithm A because even if the limitations are not expected at the time of deployment, the vulnerability to change in conditions exists. It may be difficult for an ISP to know or track the extent of use of NO_EXPORT (see <xref target="challenge" format="default" sectionFormat="of" derivedContent="Section 3.3"/>) on routes within its customer cone. If an ISP decides to use EFP-uRPF with Algorithm A, it should make its direct customers aware of the operational recommendations in <xref target="recomm" format="default" sectionFormat="of" derivedContent="Section 3.2"/>. This means that the ISP notifies direct customers that at least one prefix originated by each AS in the direct customer's customer cone must propagate to the ISP. 
+</t>
+          <t pn="section-3.7.1-2">
+On a lateral peer interface, an ISP may choose to apply the EFP-uRPF method with Algorithm A (with appropriate modification of the algorithm). This is because stricter forms of uRPF (than the loose uRPF) may be considered applicable by some ISPs on interfaces with lateral peers.
+</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="seccon" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-4-1">
+The security considerations in BCP 38 <xref target="RFC2827" format="default" sectionFormat="of" derivedContent="RFC2827"/> and RFC 3704 <xref target="RFC3704" format="default" sectionFormat="of" derivedContent="RFC3704"/> apply
+for this document as well. In addition, if considering using the EFP-uRPF method with Algorithm A, an ISP or AS operator should be aware of the applicability considerations and potential vulnerabilities discussed in <xref target="discuss" format="default" sectionFormat="of" derivedContent="Section 3.7.1"/>.   
+
+</t>
+      <t pn="section-4-2"> 
+In augmenting RPF lists with ROA (and possibly reliable IRR) information (see
+<xref target="augment" format="default" sectionFormat="of" derivedContent="Section 3.5"/>), a trade-off is made in favor of
+reducing false positives (regarding invalid detection in SAV) at the expense
+of another slight risk. The other risk being that a malicious actor at another
+AS in the neighborhood within the customer cone might take advantage (of the
+augmented prefix) to some extent. This risk also exists even with normal
+announced prefixes (i.e., without ROA augmentation) for any uRPF method other
+than the strict uRPF. However, the risk is mitigated if the transit provider of the other AS in question is performing SAV. 
+</t>
+      <t pn="section-4-3"> 
+Though not within the scope of this document, security hardening of routers and other supporting systems (e.g., Resource PKI (RPKI) and ROA management systems) against compromise is extremely important. The compromise of those systems can affect the operation and performance of the SAV methods described in this document. 
+</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-5-1">This document has no IANA actions.
+</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-6">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-6.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC2827" target="https://www.rfc-editor.org/info/rfc2827" quoteTitle="true" derivedAnchor="RFC2827">
+          <front>
+            <title>Network Ingress Filtering: Defeating Denial of Service Attacks which employ IP Source Address Spoofing</title>
+            <author initials="P." surname="Ferguson" fullname="P. Ferguson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Senie" fullname="D. Senie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="May"/>
+            <abstract>
+              <t>This paper discusses a simple, effective, and straightforward method for using ingress traffic filtering to prohibit DoS (Denial of Service) attacks which use forged IP addresses to be propagated from 'behind' an Internet Service Provider's (ISP) aggregation point.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="38"/>
+          <seriesInfo name="RFC" value="2827"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2827"/>
+        </reference>
+        <reference anchor="RFC3704" target="https://www.rfc-editor.org/info/rfc3704" quoteTitle="true" derivedAnchor="RFC3704">
+          <front>
+            <title>Ingress Filtering for Multihomed Networks</title>
+            <author initials="F." surname="Baker" fullname="F. Baker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Savola" fullname="P. Savola">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="March"/>
+            <abstract>
+              <t>BCP 38, RFC 2827, is designed to limit the impact of distributed denial of service attacks, by denying traffic with spoofed addresses access to the network, and to help ensure that traffic is traceable to its correct source network.  As a side effect of protecting the Internet against such attacks, the network implementing the solution also protects itself from this and other attacks, such as spoofed management access to networking equipment.  There are cases when this may create problems, e.g., with multihoming.  This document describes the current ingress filtering operational mechanisms, examines generic issues related to ingress filtering, and delves into the effects on multihoming in particular.  This memo updates RFC 2827.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="84"/>
+          <seriesInfo name="RFC" value="3704"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3704"/>
+        </reference>
+        <reference anchor="RFC4271" target="https://www.rfc-editor.org/info/rfc4271" quoteTitle="true" derivedAnchor="RFC4271">
+          <front>
+            <title>A Border Gateway Protocol 4 (BGP-4)</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Li" fullname="T. Li" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hares" fullname="S. Hares" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="January"/>
+            <abstract>
+              <t>This document discusses the Border Gateway Protocol (BGP), which is an inter-Autonomous System routing protocol.</t>
+              <t>The primary function of a BGP speaking system is to exchange network reachability information with other BGP systems.  This network reachability information includes information on the list of Autonomous Systems (ASes) that reachability information traverses. This information is sufficient for constructing a graph of AS connectivity for this reachability from which routing loops may be pruned, and, at the AS level, some policy decisions may be enforced.</t>
+              <t>BGP-4 provides a set of mechanisms for supporting Classless Inter-Domain Routing (CIDR).  These mechanisms include support for advertising a set of destinations as an IP prefix, and eliminating the concept of network "class" within BGP.  BGP-4 also introduces mechanisms that allow aggregation of routes, including aggregation of AS paths.</t>
+              <t>This document obsoletes RFC 1771.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4271"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4271"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-6.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="CAIDA" target="https://spoofer.caida.org/as.php?asn=174" quoteTitle="true" derivedAnchor="CAIDA">
+          <front>
+            <title>Information for AS 174 (COGENT-174)</title>
+            <author>
+              <organization showOnFrontPage="true">CAIDA</organization>
+            </author>
+            <date month="October" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="Cisco1" target="https://www.cisco.com/c/en/us/support/docs/routers/asr-9000-series-aggregation-services-routers/116999-problem-line-card-00.html" quoteTitle="true" derivedAnchor="Cisco1">
+          <front>
+            <title>Internet Routing Table Growth Causes %ROUTING-FIB-4-RSRC_LOW Message on Trident-Based Line Cards</title>
+            <author initials="" surname="">
+              <organization showOnFrontPage="true">Cisco</organization>
+            </author>
+            <date month="January" year="2014"/>
+          </front>
+        </reference>
+        <reference anchor="Cisco2" target="https://www.cisco.com/c/en/us/td/docs/switches/datacenter/sw/5_x/nx-os/unicast/configuration/guide/l3_cli_nxos/l3_NewChange.html" quoteTitle="true" derivedAnchor="Cisco2">
+          <front>
+            <title>Cisco Nexus 7000 Series NX-OS Unicast Routing Configuration Guide, Release 5.x (Chapter 15: 'Managing the Unicast RIB and FIB')</title>
+            <author>
+              <organization showOnFrontPage="true">Cisco</organization>
+            </author>
+            <date month="March" year="2018"/>
+          </front>
+        </reference>
+        <reference anchor="Firmin" target="https://www.3gpp.org/technologies/keywords-acronyms/100-the-evolved-packet-core" quoteTitle="true" derivedAnchor="Firmin">
+          <front>
+            <title>The Evolved Packet Core</title>
+            <author initials="F" surname="Firmin">
+              <organization showOnFrontPage="true"/>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="ISOC" target="https://www.internetsociety.org/resources/doc/2015/addressing-the-challenge-of-ip-spoofing/" quoteTitle="true" derivedAnchor="ISOC">
+          <front>
+            <title>Addressing the challenge of IP spoofing</title>
+            <author>
+              <organization showOnFrontPage="true">Internet Society</organization>
+            </author>
+            <date month="September" year="2015"/>
+          </front>
+        </reference>
+        <reference anchor="Juniper" target="https://www.juniper.net/documentation/en_US/junos/topics/topic-map/l3-vpns-routes-vrf-tables.html#id-understanding-virtual-routing-and-forwarding-tables" quoteTitle="true" derivedAnchor="Juniper">
+          <front>
+            <title>Creating Unique VPN Routes Using VRF Tables</title>
+            <author>
+              <organization showOnFrontPage="true">Juniper Networks</organization>
+            </author>
+            <date month="May" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="Luckie" target="https://dl.acm.org/doi/10.1145/2504730.2504735" quoteTitle="true" derivedAnchor="Luckie">
+          <front>
+            <title>AS Relationships, customer cones, and validation</title>
+            <seriesInfo name="DOI" value="10.1145/2504730.2504735"/>
+            <author initials="M." surname="Luckie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Huffaker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Dhamdhere">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Giotsas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="kc" surname="claffy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" year="2013"/>
+          </front>
+          <refcontent>In Proceedings of the 2013 Internet Measurement Conference</refcontent>
+        </reference>
+        <reference anchor="RFC4036" target="https://www.rfc-editor.org/info/rfc4036" quoteTitle="true" derivedAnchor="RFC4036">
+          <front>
+            <title>Management Information Base for Data Over Cable Service Interface Specification (DOCSIS) Cable Modem Termination Systems for Subscriber Management</title>
+            <author initials="W." surname="Sawyer" fullname="W. Sawyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="April"/>
+            <abstract>
+              <t>This memo defines a portion of the Management Information Base (MIB) for use with network management protocols in the Internet community. In particular, it defines a set of managed objects for Simple Network Management Protocol (SNMP)-based management of Data-over-Cable Service Interface Specification (DOCSIS)-compliant Cable Modem Termination Systems.  These managed objects facilitate protection of the cable network from misuse by subscribers.  The Differentiated Services MIB (RFC 3289) provides the filtering functions needed here, making use of classification items defined in this specification.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4036"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4036"/>
+        </reference>
+        <reference anchor="RFC4364" target="https://www.rfc-editor.org/info/rfc4364" quoteTitle="true" derivedAnchor="RFC4364">
+          <front>
+            <title>BGP/MPLS IP Virtual Private Networks (VPNs)</title>
+            <author initials="E." surname="Rosen" fullname="E. Rosen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="February"/>
+            <abstract>
+              <t>This document describes a method by which a Service Provider may use an IP backbone to provide IP Virtual Private Networks (VPNs) for its customers.  This method uses a "peer model", in which the customers' edge routers (CE routers) send their routes to the Service Provider's edge routers (PE routers); there is no "overlay" visible to the customer's routing algorithm, and CE routers at different sites do not peer with each other.  Data packets are tunneled through the backbone, so that the core routers do not need to know the VPN routes.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4364"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4364"/>
+        </reference>
+        <reference anchor="RFC6482" target="https://www.rfc-editor.org/info/rfc6482" quoteTitle="true" derivedAnchor="RFC6482">
+          <front>
+            <title>A Profile for Route Origin Authorizations (ROAs)</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Kong" fullname="D. Kong">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t>This document defines a standard profile for Route Origin Authorizations (ROAs).  A ROA is a digitally signed object that provides a means of verifying that an IP address block holder has authorized an Autonomous System (AS) to originate routes to one or more prefixes within the address block.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6482"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6482"/>
+        </reference>
+        <reference anchor="RFC6811" target="https://www.rfc-editor.org/info/rfc6811" quoteTitle="true" derivedAnchor="RFC6811">
+          <front>
+            <title>BGP Prefix Origin Validation</title>
+            <author initials="P." surname="Mohapatra" fullname="P. Mohapatra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ward" fullname="D. Ward">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bush" fullname="R. Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t>To help reduce well-known threats against BGP including prefix mis- announcing and monkey-in-the-middle attacks, one of the security requirements is the ability to validate the origination Autonomous System (AS) of BGP routes.  More specifically, one needs to validate that the AS number claiming to originate an address prefix (as derived from the AS_PATH attribute of the BGP route) is in fact authorized by the prefix holder to do so.  This document describes a simple validation mechanism to partially satisfy this requirement. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6811"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6811"/>
+        </reference>
+        <reference anchor="RFC7454" target="https://www.rfc-editor.org/info/rfc7454" quoteTitle="true" derivedAnchor="RFC7454">
+          <front>
+            <title>BGP Operations and Security</title>
+            <author initials="J." surname="Durand" fullname="J. Durand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Pepelnjak" fullname="I. Pepelnjak">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Doering" fullname="G. Doering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="February"/>
+            <abstract>
+              <t>The Border Gateway Protocol (BGP) is the protocol almost exclusively used in the Internet to exchange routing information between network domains.  Due to this central nature, it is important to understand the security measures that can and should be deployed to prevent accidental or intentional routing disturbances.</t>
+              <t>This document describes measures to protect the BGP sessions itself such as Time to Live (TTL), the TCP Authentication Option (TCP-AO), and control-plane filtering.  It also describes measures to better control the flow of routing information, using prefix filtering and automation of prefix filters, max-prefix filtering, Autonomous System (AS) path filtering, route flap dampening, and BGP community scrubbing.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="194"/>
+          <seriesInfo name="RFC" value="7454"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7454"/>
+        </reference>
+        <reference anchor="SPAR-v4" target="https://www.iana.org/assignments/iana-ipv4-special-registry/" quoteTitle="true" derivedAnchor="SPAR-v4">
+          <front>
+            <title>IANA IPv4 Special-Purpose Address Registry</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="SPAR-v6" target="https://www.iana.org/assignments/iana-ipv6-special-registry/" quoteTitle="true" derivedAnchor="SPAR-v6">
+          <front>
+            <title>IANA IPv6 Special-Purpose Address Registry</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="Sriram-RIPE63" target="http://www.ietf.org/proceedings/83/slides/slides-83-sidr-7.pdf" quoteTitle="true" derivedAnchor="Sriram-RIPE63">
+          <front>
+            <title>Estimating CPU Cost of BGPSEC on a Router</title>
+            <author initials="K" surname="Sriram">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R" surname="Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="2012"/>
+          </front>
+          <refcontent>Presented at RIPE 63 and at the SIDR WG meeting at
+	    IETF 83</refcontent>
+        </reference>
+        <reference anchor="Sriram-URPF" target="https://datatracker.ietf.org/meeting/101/materials/slides-101-opsec-draft-sriram-opsec-urpf-improvements-00" quoteTitle="true" derivedAnchor="Sriram-URPF">
+          <front>
+            <title>Enhanced Feasible-Path Unicast Reverse Path Filtering</title>
+            <author initials="K" surname="Sriram">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Montgomery">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J" surname="Haas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="2018"/>
+          </front>
+          <refcontent>Presented at the OPSEC WG meeting at IETF 101</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.a-1">The authors would like to thank 
+<contact fullname="Sandy Murphy"/>,
+<contact fullname="Alvaro Retana"/>,
+<contact fullname="Job Snijders"/>,
+<contact fullname="Marco Marzetti"/>,
+<contact fullname="Marco d'Itri"/>,
+<contact fullname="Nick Hilliard"/>,
+<contact fullname="Gert Doering"/>,
+<contact fullname="Fred Baker"/>,
+<contact fullname="Igor Gashinsky"/>,
+<contact fullname="Igor Lubashev"/>,
+<contact fullname="Andrei Robachevsky"/>,
+<contact fullname="Barry Greene"/>,
+<contact fullname="Amir Herzberg"/>,
+<contact fullname="Ruediger Volk"/>,
+<contact fullname="Jared Mauch"/>,
+<contact fullname="Oliver Borchert"/>,
+<contact fullname="Mehmet Adalier"/>, and
+<contact fullname="Joel Jaeggli"/> for comments and suggestions. The comments and suggestions received from the IESG reviewers are also much appreciated. 
+</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Kotikalapudi Sriram" initials="K." surname="Sriram">
+        <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+        <address>
+          <postal>
+            <street>100 Bureau Drive</street>
+            <city>Gaithersburg</city>
+            <region>MD</region>
+            <code>20899</code>
+            <country>United States of America</country>
+          </postal>
+          <email>ksriram@nist.gov</email>
+        </address>
+      </author>
+      <author fullname="Doug Montgomery" initials="D." surname="Montgomery">
+        <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+        <address>
+          <postal>
+            <street>100 Bureau Drive</street>
+            <city>Gaithersburg</city>
+            <region>MD</region>
+            <code>20899</code>
+            <country>United States of America</country>
+          </postal>
+          <email>dougm@nist.gov</email>
+        </address>
+      </author>
+      <author fullname="Jeffrey Haas" initials="J." surname="Haas">
+        <organization showOnFrontPage="true">Juniper Networks, Inc.</organization>
+        <address>
+          <postal>
+            <street>1133 Innovation Way</street>
+            <city>Sunnyvale</city>
+            <region>CA</region>
+            <code>94089</code>
+            <country>United States of America</country>
+          </postal>
+          <email>jhaas@juniper.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

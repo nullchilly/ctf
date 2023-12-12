@@ -1,0 +1,815 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-lisp-6834bis-14" indexInclude="true" ipr="trust200902" number="9302" obsoletes="6834" prepTime="2022-10-19T13:59:02" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-lisp-6834bis-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9302" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="LISP Map-Versioning">Locator/ID Separation Protocol (LISP) Map-Versioning</title>
+    <seriesInfo name="RFC" value="9302" stream="IETF"/>
+    <author fullname="Luigi Iannone" initials="L." surname="Iannone">
+      <organization showOnFrontPage="true">Huawei Technologies France</organization>
+      <address>
+        <email>luigi.iannone@huawei.com</email>
+      </address>
+    </author>
+    <author fullname="Damien Saucez" initials="D." surname="Saucez">
+      <organization showOnFrontPage="true">Inria</organization>
+      <address>
+        <postal>
+          <street>2004 route des Lucioles - BP 93</street>
+          <city>Sophia Antipolis</city>
+          <country>France</country>
+        </postal>
+        <email>damien.saucez@inria.fr</email>
+      </address>
+    </author>
+    <author fullname="Olivier Bonaventure" initials="O." surname="Bonaventure">
+      <organization showOnFrontPage="true">Universite catholique de Louvain</organization>
+      <address>
+        <email>olivier.bonaventure@uclouvain.be</email>
+      </address>
+    </author>
+    <date month="10" year="2022"/>
+    <area>rtg</area>
+    <workgroup>lisp</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+    This document describes the Locator/ID Separation Protocol (LISP) Map-Versioning mechanism, which provides in-packet information about Endpoint-ID-to-Routing-Locator (EID-to-RLOC) mappings used to encapsulate LISP data packets.
+    This approach is based on associating a version number to EID-to-RLOC mappings and transporting such a version number in the LISP-specific header of LISP-encapsulated packets.
+    LISP Map-Versioning is particularly useful to inform communicating Ingress Tunnel Routers (ITRs) and Egress Tunnel Routers (ETRs) about modifications of the mappings used to encapsulate packets.
+
+    The mechanism is optional and transparent to implementations not supporting this feature, since in the LISP-specific header and in the Map Records, bits used for Map-Versioning can be safely ignored by ITRs and ETRs that do not support or do not want to use the mechanism.
+      </t>
+      <t indent="0" pn="section-abstract-2">
+    This document obsoletes RFC 6834, which is the initial experimental specifications of the mechanisms updated by this document.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9302" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-notation">Requirements Notation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions-of-terms">Definitions of Terms</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-lisp-specific-header-and-ma">LISP-Specific Header and Map-Version Numbers</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-record-and-map-version">Map Record and Map-Version</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-eid-to-rloc-map-version-num">EID-to-RLOC Map-Version Number</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-null-map-version">The Null Map-Version</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dealing-with-map-version-nu">Dealing with Map-Version Numbers</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-dest-map-version-n">Handling Dest Map-Version Number</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-source-map-version">Handling Source Map-Version Number</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deployment-considerations">Deployment Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-benefits-and-case-studies-f">Benefits and Case Studies for Map-Versioning</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-appendix.a.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-versioning-and-unidirec">Map-Versioning and Unidirectional Traffic</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="A.2" format="counter" sectionFormat="of" target="section-appendix.a.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-versioning-and-interwor">Map-Versioning and Interworking</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2.2.2">
+                  <li pn="section-toc.1-1.12.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.12.2.2.2.1.1"><xref derivedContent="A.2.1" format="counter" sectionFormat="of" target="section-appendix.a.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-versioning-and-proxy-it">Map-Versioning and Proxy-ITRs</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.12.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.12.2.2.2.2.1"><xref derivedContent="A.2.2" format="counter" sectionFormat="of" target="section-appendix.a.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-versioning-and-lisp-nat">Map-Versioning and LISP-NAT</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.12.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.12.2.2.2.3.1"><xref derivedContent="A.2.3" format="counter" sectionFormat="of" target="section-appendix.a.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-versioning-and-proxy-et">Map-Versioning and Proxy-ETRs</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.12.2.3">
+                <t indent="0" pn="section-toc.1-1.12.2.3.1"><xref derivedContent="A.3" format="counter" sectionFormat="of" target="section-appendix.a.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rloc-shutdown-withdraw">RLOC Shutdown/Withdraw</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+    This document describes the Map-Versioning mechanism used to provide information on changes in the Endpoint-ID-to-Routing-Locator (EID-to-RLOC) mappings used in the Locator/ID Separation Protocol (LISP) <xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/> <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/> context to perform packet encapsulation.
+    The mechanism is totally transparent to Ingress and Egress Tunnel Routers (xTRs) not supporting or not using such functionality.
+   The architecture of LISP is described in <xref target="RFC9299" format="default" sectionFormat="of" derivedContent="RFC9299"/>.  The reader is expected to be familiar with this introductory document.
+      </t>
+      <t indent="0" pn="section-1-2">
+    This document obsoletes <xref target="RFC6834" format="default" sectionFormat="of" derivedContent="RFC6834"/>, which is the initial experimental specification that describes the mechanisms updated by this document.
+      </t>
+      <t indent="0" pn="section-1-3">
+    The basic mechanism is to associate a Map-Version number to each LISP EID-to-RLOC mapping and transport such a version number in the LISP-specific header.
+    When a mapping changes, a new version number is assigned to the updated mapping.
+    A change in an EID-to-RLOC mapping can be a modification in the RLOCs set, such as addition of, removal of, or change in the priority or weight of one or more RLOCs.
+      </t>
+      <t indent="0" pn="section-1-4">
+	   When Map-Versioning is used, LISP-encapsulated data packets contain
+   the version number of the two mappings used to select the RLOCs in
+   the outer header (i.e., both source and destination RLOCs).  This
+   information has two uses:  
+      </t>
+      <ol spacing="normal" indent="adaptive" start="1" type="1" pn="section-1-5">
+	<li pn="section-1-5.1" derivedCounter="1.">Map-Versioning enables the Egress Tunnel Router (ETR) receiving 
+       the packet to know if the Ingress Tunnel Router (ITR) is using the latest 
+       mapping version for the destination EID.  If this is not the case, the ETR 
+       can directly send a Map-Request containing the updated mapping to 
+       the ITR to notify it of the latest version.  The ETR can also solicit the 
+       ITR to trigger a Map-Request to obtain the latest mapping by sending 
+       a Solicit Map-Request (SMR) message.  Both options are defined in
+	<xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.</li>
+        <li pn="section-1-5.2" derivedCounter="2.">Map-Versioning enables an ETR  receiving the packet to know if it 
+      has in its EID-to-RLOC Map-Cache the latest mapping for the 
+	source EID.  If this is not the case, a Map-Request can be sent.</li>
+      </ol>
+      <t indent="0" pn="section-1-6">
+    Considerations about the deployment of LISP Map-Versioning are discussed in <xref target="considerations" format="default" sectionFormat="of" derivedContent="Section 9"/>.
+      </t>
+      <t indent="0" pn="section-1-7">
+The benefits of Map-Versioning in some common LISP-related use cases are discussed in <xref target="benefits" format="default" sectionFormat="of" derivedContent="Appendix A"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-notation">Requirements Notation</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+      </t>
+    </section>
+    <section anchor="terms" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-definitions-of-terms">Definitions of Terms</name>
+      <t indent="0" pn="section-3-1">
+    This document uses terms already defined in the main LISP specifications (<xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/> and <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>).
+    Here, we define the terms that are specific to the Map-Versioning mechanism. Throughout the whole document, big-endian bit ordering is used.
+      </t>
+      <dl newline="false" spacing="normal" indent="2" pn="section-3-2">
+        <dt pn="section-3-2.1">Map-Version number:</dt>
+        <dd pn="section-3-2.2"> An unsigned 12-bit integer is assigned to an EID-to-RLOC mapping, indicating its version number (<xref target="vnum" format="default" sectionFormat="of" derivedContent="Section 6"/>).</dd>
+        <dt pn="section-3-2.3">Null Map-Version:</dt>
+        <dd pn="section-3-2.4"> A Map-Version number with a value of 0x000 (zero), which is used to signal that the Map-Version feature is not used and no Map-Version number is assigned to the EID-to-RLOC mapping (<xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>).</dd>
+        <dt pn="section-3-2.5">Dest Map-Version number:</dt>
+        <dd pn="section-3-2.6"> Map-Version of the mapping in the EID-to-RLOC Map-Cache used by the ITR to select the RLOC present in the 'Destination Routing Locator' field of the outer IP header of LISP-encapsulated packets (<xref target="dmvn" format="default" sectionFormat="of" derivedContent="Section 7.1"/>).</dd>
+        <dt pn="section-3-2.7">Source Map-Version number:</dt>
+        <dd pn="section-3-2.8"> Map-Version of the mapping in the EID-to-RLOC Database used by the ITR to select the RLOC present in the 'Source Routing Locator' field of the outer IP header of LISP-encapsulated packets (<xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/>).</dd>
+      </dl>
+    </section>
+    <section anchor="lisphdr" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-lisp-specific-header-and-ma">LISP-Specific Header and Map-Version Numbers</name>
+      <t indent="0" pn="section-4-1">
+    In order for the versioning approach to work, the LISP-specific header has to carry both the Source Map-Version number and Dest Map-Version number.
+    This is done by setting the V-bit in the LISP-specific header as specified in <xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/> and shown in the example in  <xref target="lispshimhdr" format="default" sectionFormat="of" derivedContent="Figure 1"/>.
+    All permissible combinations of the flags when the V-bit is set to 1 are described in <xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/>.
+    Not all of the LISP-encapsulated packets need to carry version numbers.
+    When the V-bit is set, the LISP-specific header has the following encoding:
+      </t>
+      <figure anchor="lispshimhdr" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-lisp-specific-header-exampl">LISP-Specific Header Example When Map-Versioning Is in Use</name>
+        <artwork name="" type="" align="left" alt="" pn="section-4-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|N|L|E|V|I|R|K|K|  Source Map-Version   |   Dest Map-Version    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Instance ID/Locator-Status-Bits               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+      </figure>
+      <dl newline="false" spacing="normal" indent="2" pn="section-4-3">
+        <dt pn="section-4-3.1">Source Map-Version number (12 bits):</dt>
+        <dd pn="section-4-3.2"> See <xref target="terms" format="default" sectionFormat="of" derivedContent="Section 3"/>.</dd>
+        <dt pn="section-4-3.3">Dest Map-Version number (12 bits):</dt>
+        <dd pn="section-4-3.4"> See <xref target="terms" format="default" sectionFormat="of" derivedContent="Section 3"/>.</dd>
+      </dl>
+    </section>
+    <section anchor="vnumpkt" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-map-record-and-map-version">Map Record and Map-Version</name>
+      <t indent="0" pn="section-5-1">
+    To accommodate the mechanism, the Map Records that are transported in Map-Request/Map-Reply/Map-Register messages need to carry the Map-Version number as well. For reference, the Map Record (specified  in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>) is reported here as an example in <xref target="maprecord" format="default" sectionFormat="of" derivedContent="Figure 2"/>. This memo does not change the operation of Map-Request/Map-Reply/Map-Register messages; they continue to be used as specified in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.
+      </t>
+      <figure anchor="maprecord" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-map-record-format-example">Map-Record Format Example</name>
+        <artwork name="" type="" align="left" alt="" pn="section-5-2.1">
+     0                   1                   2                   3
+     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   |                          Record TTL                           |
+|   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+R   | Locator Count | EID mask-len  | ACT |A|      Reserved         |
+e   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+c   | Rsvd  |  Map-Version Number   |       EID-Prefix-AFI          |
+o   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+r   |                          EID-Prefix                           |
+d   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  /|    Priority   |    Weight     |  M Priority   |   M Weight    |
+| L +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| o |        Unused Flags     |L|p|R|           Loc-AFI             |
+| c +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  \|                             Locator                           |
++-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+      </figure>
+      <dl newline="false" spacing="normal" indent="2" pn="section-5-3">
+        <dt pn="section-5-3.1">Map-Version Number:</dt>
+        <dd pn="section-5-3.2">Map-Version of the mapping contained in the Record.
+        As explained in <xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>, this field can be zero (0), meaning that no Map-Version is associated to the mapping. </dd>
+      </dl>
+      <t indent="0" pn="section-5-4">
+    This packet format is backward compatible with xTRs that do not support Map-Versioning, since they can simply ignore those bits.
+      </t>
+      <t indent="0" pn="section-5-5">
+    A Map-Server receiving a message with an unexpected Map-Version number, for instance an old one, <bcp14>MUST</bcp14> silently drop the message
+    and an appropriate log action <bcp14>SHOULD</bcp14> be taken.
+      </t>
+    </section>
+    <section anchor="vnum" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-eid-to-rloc-map-version-num">EID-to-RLOC Map-Version Number</name>
+      <t indent="0" pn="section-6-1">
+    The EID-to-RLOC Map-Version number consists of an unsigned 12-bit integer.
+    The version number is assigned on a per-mapping basis, meaning that different mappings have  different version numbers, which are updated independently.
+    An update in the version number (i.e., a newer version) <bcp14>MUST</bcp14> consist of an increment of the older version number (the only exception is for the Null Map-Version as explained in at the end of <xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>).
+      </t>
+      <t indent="0" pn="section-6-2">
+	The space of version numbers has a circular order where half of the version numbers are considered greater (i.e., newer) than the current Map-Version number and the other half of the version numbers are considered smaller (i.e., older) than the current Map-Version number. This is basically a serial number on which the arithmetic described in <xref target="RFC1982" format="default" sectionFormat="of" derivedContent="RFC1982"/> applies.    The ordering enables different reactions to "older" and "newer" Map-Version numbers, whereby
+"older" numbers are discarded and "newer" numbers trigger Map-Requests (see <xref target="dealing" format="default" sectionFormat="of" derivedContent="Section 7"/> for further details).
+    In a formal way, assuming that we have two version numbers (V1 and V2), both different from the special value Null Map-Version (see <xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>), and that the numbers are expressed on 12 bits, the following steps <bcp14>MUST</bcp14> be performed (in the same order shown below) to strictly define their order:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-6-3">
+	<li pn="section-6-3.1" derivedCounter="1."> V1 = V2 : The Map-Version numbers are the same.
+	</li>
+        <li pn="section-6-3.2" derivedCounter="2.">
+          <t indent="0" pn="section-6-3.2.1"> V2 &gt; V1 : if and only if
+          </t>
+          <t indent="2" pn="section-6-3.2.2"> V2 &gt; V1   AND  (V2 - V1)  &lt;= 2<sup>(12-1)</sup></t>
+          <t indent="2" pn="section-6-3.2.3"> OR</t>
+          <t indent="2" pn="section-6-3.2.4"> V1 &gt; V2   AND    (V1 - V2) &gt; 2<sup>(12-1)</sup></t>
+        </li>
+        <li pn="section-6-3.3" derivedCounter="3."> V1 &gt; V2 : otherwise.
+      </li>
+      </ol>
+      <t indent="0" pn="section-6-4">
+    Using 12 bits and assuming a Map-Version value of 69, Map-Version numbers in the range [70; 69 + 2048] are greater than 69, while Map-Version numbers in the range [69 + 2049; (69 + 4095) mod 4096] are smaller than 69.
+      </t>
+      <t indent="0" pn="section-6-5">
+    The initial Map-Version number of a new EID-to-RLOC mapping <bcp14>SHOULD</bcp14> be assigned randomly, but it <bcp14>MUST NOT</bcp14> be set to the Null Map-Version value (0x000), because the Null Map-Version number has a special meaning (see <xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>). Optionally, the initial Map-version number may be configured.
+      </t>
+      <t indent="0" pn="section-6-6">
+    Upon reboot, an ETR will use mappings configured in its EID-to-RLOC Database.
+    If those mappings have a Map-Version number, it will be used according to the mechanisms described in this document.
+    ETRs <bcp14>MUST NOT</bcp14> automatically generate and assign Map-Version numbers to mappings in the EID-to-RLOC Database.
+      </t>
+      <section anchor="sec_null" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-the-null-map-version">The Null Map-Version</name>
+        <t indent="0" pn="section-6.1-1">
+      The value 0x000 (zero) is a special Map-Version number indicating that there is actually no version number associated to the EID-to-RLOC mapping.
+      Such a value is used for special purposes and is named the Null Map-Version number.
+        </t>
+        <t indent="0" pn="section-6.1-2">
+      Map Records that have a Null Map-Version number indicate that there is no Map-Version number associated with the mapping.
+      This means that LISP-encapsulated packets destined to the EID-Prefix referred to by the Map Record <bcp14>MUST NOT</bcp14> contain any Map-Version numbers (V-bit set to 0).
+      If an ETR receives LISP-encapsulated packets with the V-bit set, when the original mapping in the EID-to-RLOC Database has the version number set to the Null Map-Version value, then those packets <bcp14>MUST</bcp14> be silently dropped.
+        </t>
+        <t indent="0" pn="section-6.1-3">
+      The Null Map-Version may appear in the LISP-specific header as a Source Map-Version number (<xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/>).
+      When the Source Map-Version number is set to the Null Map-Version value, it means that no map version information is conveyed for the source site.
+      This means that if a mapping exists for the source EID in the EID-to-RLOC Map-Cache, then the ETR <bcp14>MUST NOT</bcp14> compare the received Null Map-Version with the content of the EID-to-RLOC Map-Cache (<xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/>).
+        </t>
+        <t indent="0" pn="section-6.1-4">
+      The fact that the 0 value has a special meaning for the Map-Version number implies that, when updating a Map-Version number because of a change in the mapping, if the next value is 0, then the Map-Version number <bcp14>MUST</bcp14> be incremented by 2 (i.e., set to 1 (0x001), which is the next valid value).
+        </t>
+      </section>
+    </section>
+    <section anchor="dealing" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-dealing-with-map-version-nu">Dealing with Map-Version Numbers</name>
+      <t indent="0" pn="section-7-1">
+     The main idea of using Map-Version numbers is that whenever there is
+   a change in the mapping (e.g., adding/removing RLOCs, a change in the
+   weights due to Traffic Engineering policies, or a change in the
+   priorities) or a LISP site realizes that one or more of its own RLOCs
+   are no longer reachable from a local perspective (e.g., through IGP
+   or policy changes), the LISP site updates the mapping and also assigns
+   a new Map-Version number.
+    Only the latest Map-Version number has to be considered valid. Mapping updates and their corresponding Map-Version Number must be managed so that a very old version number will not be confused as a new version number (because of the circular numbering space). To this end, simple measures can be taken, like
+   updating a mapping only when all active traffic is using the latest
+   version, or waiting a sufficient amount of time to be sure that the
+   mapping in LISP caches expires, which means waiting at least as long
+   as the mapping Time To Live (TTL) (as defined in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>).
+      </t>
+      <t indent="0" pn="section-7-2">
+    An ETR receiving a LISP packet with Map-Version numbers checks the following predicates:
+
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-7-3">
+	<li pn="section-7-3.1" derivedCounter="1.">The ITR that has sent the packet has an up-to-date mapping in its EID-to-RLOC Map-Cache for the destination EID and is performing encapsulation correctly. See <xref target="dmvn" format="default" sectionFormat="of" derivedContent="Section 7.1"/> for details.</li>
+        <li pn="section-7-3.2" derivedCounter="2.">In the case of bidirectional traffic, the mapping in the local ETR EID-to-RLOC Map-Cache for the source EID is up to date. See <xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/> for details.</li>
+      </ol>
+      <section anchor="dmvn" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-handling-dest-map-version-n">Handling Dest Map-Version Number</name>
+        <t indent="0" pn="section-7.1-1">
+      When an ETR receives a packet, the Dest Map-Version number relates to the mapping for the destination EID for which the ETR is an RLOC.
+      This mapping is part of the ETR EID-to-RLOC Database.
+      Since the ETR is authoritative for the mapping, it has the correct and up-to-date Dest Map-Version number.
+      A check on this version number <bcp14>MUST</bcp14> be done, where the following cases can arise:
+
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-7.1-2">
+	  <li pn="section-7.1-2.1" derivedCounter="1.">The packet arrives with the same Dest Map-Version number stored in the EID-to-RLOC Database.
+          This is the regular case.
+          The ITR sending the packet has, in its EID-to-RLOC Map-Cache, an up-to-date mapping. No further actions are needed.</li>
+          <li pn="section-7.1-2.2" derivedCounter="2.">The packet arrives with a Dest Map-Version number newer (as defined in <xref target="vnum" format="default" sectionFormat="of" derivedContent="Section 6"/>) than the one stored in the EID-to-RLOC Database.
+          Since the ETR is authoritative on the mapping, meaning that the Map-Version number of its mapping is the correct one,
+           the packet carries a version number that is not considered valid. Therefore, the packet <bcp14>MUST</bcp14> be silently dropped and an appropriate log action <bcp14>SHOULD</bcp14> be taken.</li>
+          <li pn="section-7.1-2.3" derivedCounter="3.">The packet arrives with a Dest Map-Version number older (as defined in <xref target="vnum" format="default" sectionFormat="of" derivedContent="Section 6"/>) than the one stored in the EID-to-RLOC Database.
+          This means that the ITR sending the packet has an old mapping in its EID-to-RLOC Map-Cache containing stale information.
+          The ETR <bcp14>MAY</bcp14> choose to normally process the encapsulated datagram according to <xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/>; however, the ITR sending the packet <bcp14>MUST</bcp14> be informed that a newer mapping is
+          available, respecting rate-limitation policies described in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.
+          This is done with a Map-Request message sent back to the ITR,
+          as specified in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.
+          One feature introduced by Map-Version numbers is the possibility of blocking traffic not using the latest mapping. This can happen if an ITR is not updating the mapping for which the ETR is authoritative, or it might be some form of attack.
+          According to the rate-limitation policy defined in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/> for Map-Request messages, after 10 retries, Map-Requests are sent every 30 seconds; if after the first 10 retries the Dest Map-Version number in the packets is not updated, the ETR <bcp14>SHOULD</bcp14> drop packets with a stale Map-Version number. Operators can configure exceptions to this recommendation, which are outside the scope of this document.</li>
+        </ol>
+        <t indent="0" pn="section-7.1-3">
+      The rule in the third case <bcp14>MAY</bcp14> be more restrictive.
+      If the Record TTL of the previous mapping has already expired, all packets arriving with an old Map-Version <bcp14>MUST</bcp14> be silently dropped right away without issuing any Map-Request.
+      Such action is permitted because, if the new mapping with the updated version number has been unchanged for at least the same amount of time as the Record TTL of the older mapping, all the entries in the EID-to-RLOC Map-Caches of ITRs must have expired.
+      Indeed, all ITRs sending traffic should have refreshed the mapping according to <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.
+      
+        </t>
+        <t indent="0" pn="section-7.1-4">
+      It is a protocol violation for LISP-encapsulated packets to contain a Dest Map-Version number equal to the Null Map-Version number (see <xref target="sec_null" format="default" sectionFormat="of" derivedContent="Section 6.1"/>).
+        </t>
+      </section>
+      <section anchor="smvn" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-handling-source-map-version">Handling Source Map-Version Number</name>
+        <t indent="0" pn="section-7.2-1">
+      When an ETR receives a packet, the Source Map-Version number relates to the mapping for the source EID for which the ITR that sent the packet is authoritative.
+      If the ETR has an entry in its EID-to-RLOC Map-Cache for the source EID, then a check <bcp14>MUST</bcp14> be performed, and the following cases can arise:
+
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-7.2-2">
+	  <li pn="section-7.2-2.1" derivedCounter="1.">The packet arrives with the same Source Map-Version number as that stored in the EID-to-RLOC Map-Cache. This is the regular case. The ETR has in its EID-to-RLOC Map-Cache an up-to-date copy of the mapping. No further actions are needed.</li>
+          <li pn="section-7.2-2.2" derivedCounter="2.">The packet arrives with a Source Map-Version number newer (as defined in <xref target="vnum" format="default" sectionFormat="of" derivedContent="Section 6"/>) than the one stored in the local EID-to-RLOC Map-Cache.
+          This means that the ETR has in its EID-to-RLOC Map-Cache a mapping that is stale and needs to be updated.
+          A Map-Request <bcp14>MUST</bcp14> be sent to get the new mapping for the source EID, respecting rate-limitation policies described in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.</li>
+          <li pn="section-7.2-2.3" derivedCounter="3.">The packet arrives with a Source Map-Version number older (as defined in <xref target="vnum" format="default" sectionFormat="of" derivedContent="Section 6"/>) than the one stored in the local EID-to-RLOC Map-Cache.
+          Note that if the mapping is already present in the EID-to-RLOC Map-Cache, this means that an explicit Map-Request has been sent and a Map-Reply has been received from an authoritative source.
+          In this situation, the packet <bcp14>SHOULD</bcp14> be silently dropped.
+          Operators can configure exceptions to this recommendation, which are outside the scope of this document.</li>
+        </ol>
+        <t indent="0" pn="section-7.2-3">
+      If the ETR does not have an entry in the EID-to-RLOC Map-Cache for the source EID, then the Source Map-Version number <bcp14>MUST</bcp14> be ignored. See <xref target="utrf" format="default" sectionFormat="of" derivedContent="Appendix A.1"/> for an example of when this situation can arise.
+        </t>
+      </section>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">
+    This document builds on the specification and operation of the
+    LISP control and data planes. The Security Considerations of <xref target="RFC9300" format="default" sectionFormat="of" derivedContent="RFC9300"/> and <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/> apply. As such, Map-Versioning <bcp14>MUST NOT</bcp14> be used over the public Internet and <bcp14>MUST</bcp14> only be used in trusted and closed deployments.
+    A thorough security analysis of LISP is documented in <xref target="RFC7835" format="default" sectionFormat="of" derivedContent="RFC7835"/>.
+      </t>
+      <t indent="0" pn="section-8-2">
+    Attackers can try to trigger a large number of Map-Requests by simply forging packets with random Map-Versions.
+    The Map-Requests are rate limited as described in <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>.
+    With Map-Versioning, it is possible to filter packets carrying  invalid version numbers before triggering a Map-Request, thus helping to reduce the effects of DoS attacks.
+    However, it might not be enough to really protect against a DDoS attack.
+      </t>
+      <t indent="0" pn="section-8-3">
+    The present memo includes log action to be taken upon certain events. It is recommended that implementations include mechanisms (which are beyond the scope of this document) to avoid log resource exhaustion attacks.
+      </t>
+      <t indent="0" pn="section-8-4">
+    The specifications in the present memo are relatively conservative in the sense that, in several cases, the packets are dropped. Such an approach is the outcome of considerations made about the possible risks that control plane actions that are triggered by the data plane can be used to carry out attacks. There exists corner cases where, even with an invalid Map-Version number, forwarding the packet might be potentially considered safe; however, system manageability has been given priority with respect to having to put in place more machinery to be able to identify legitimate traffic.
+      </t>
+    </section>
+    <section anchor="considerations" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-deployment-considerations">Deployment Considerations</name>
+      <t indent="0" pn="section-9-1">
+    LISP requires multiple ETRs within the same site to provide identical mappings for a given EID-Prefix.
+    Map-Versioning does not require additional synchronization mechanisms. Clearly, all the ETRs have to reply with the same mapping, including the same Map-Version number; otherwise, there can be an inconsistency that creates additional control traffic, instabilities, and traffic disruptions.
+      </t>
+      <t indent="0" pn="section-9-2">
+    There are two ways Map-Versioning is helpful with respect to synchronization.
+    On the one hand, assigning version numbers to mappings helps in debugging, since quick checks on the consistency of the mappings on different ETRs can be done by looking at the Map-Version number.
+    On the other hand, Map-Versioning can be used to control the traffic toward ETRs that announce the latest mapping.
+      </t>
+      <t indent="0" pn="section-9-3">
+    As an example, let's consider the topology of <xref target="vtraffic" format="default" sectionFormat="of" derivedContent="Figure 3"/> where ITR A.1 of Domain A is sending unidirectional traffic to Domain B, while A.2 of Domain A exchanges bidirectional traffic with Domain B.
+    In particular, ITR A.2 sends traffic to ETR B, and ETR A.2 receives traffic from ITR B.
+      </t>
+      <figure anchor="vtraffic" align="left" suppress-title="false" pn="figure-3">
+        <name slugifiedName="name-example-topology">Example Topology</name>
+        <artwork name="" type="" align="left" alt="" pn="section-9-4.1">
+ +-----------------+              +-----------------+
+ | Domain A        |              | Domain B        |
+ |       +---------+              |                 |
+ |       | ITR A.1 |---           |                 |
+ |       +---------+    \         +---------+       |
+ |                 |      -------&gt;| ETR B   |       |
+ |                 |      -------&gt;|         |       |
+ |       +---------+    /         |         |       |
+ |       | ITR A.2 |---      -----| ITR B   |       |
+ |       |         |       /      +---------+       |
+ |       | ETR A.2 |&lt;-----        |                 |
+ |       +---------+              |                 |
+ |                 |              |                 |
+ +-----------------+              +-----------------+
+</artwork>
+      </figure>
+      <t indent="0" pn="section-9-5">
+    Obviously, in the case of Map-Versioning, both ITR A.1 and ITR A.2 of Domain A must use the same value; otherwise, the ETR of Domain B will start to send Map-Requests.
+      </t>
+      <t indent="0" pn="section-9-6">
+    The same problem can, however, arise without Map-Versioning, for instance, if the two ITRs of Domain A send different Locator-Status-Bits. In this case, either the traffic is disrupted if ETR B does not verify reachability or if ETR B will start sending Map-Requests to confirm each change in reachability.
+      </t>
+      <t indent="0" pn="section-9-7">
+    So far, LISP does not provide any specific synchronization mechanism but assumes that synchronization is provided by configuring the different xTRs consistently.
+    The same applies for Map-Versioning. If in the future any synchronization mechanism is provided, Map-Versioning will take advantage of it automatically, since it is included in the Map Record format, as described in <xref target="vnumpkt" format="default" sectionFormat="of" derivedContent="Section 5"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-10-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-11">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-11.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC9300" target="https://www.rfc-editor.org/info/rfc9300" quoteTitle="true" derivedAnchor="RFC9300">
+          <front>
+            <title>The Locator/ID Separation Protocol (LISP)</title>
+            <author initials="D" surname="Farinacci" fullname="Dino Farinacci">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V" surname="Fuller" fullname="Vince Fuller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Meyer" fullname="David Meyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Lewis" fullname="Darrel Lewis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A" surname="Cabellos" fullname="Albert Cabellos" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="9300"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9300"/>
+        </reference>
+        <reference anchor="RFC9301" target="https://www.rfc-editor.org/info/rfc9301" quoteTitle="true" derivedAnchor="RFC9301">
+          <front>
+            <title>Locator/ID Separation Protocol (LISP) Control Plane</title>
+            <author initials="D" surname="Farinacci" fullname="Dino Farinacci">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F" surname="Maino" fullname="Fabio Maino">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V" surname="Fuller" fullname="Vince Fuller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A" surname="Cabellos" fullname="Albert Cabellos" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="9301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9301"/>
+        </reference>
+      </references>
+      <references pn="section-11.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC1982" target="https://www.rfc-editor.org/info/rfc1982" quoteTitle="true" derivedAnchor="RFC1982">
+          <front>
+            <title>Serial Number Arithmetic</title>
+            <author fullname="R. Elz" initials="R." surname="Elz"/>
+            <author fullname="R. Bush" initials="R." surname="Bush"/>
+            <date month="August" year="1996"/>
+            <abstract>
+              <t indent="0">The DNS has long relied upon serial number arithmetic, a concept which has never really been defined, certainly not in an IETF document, though which has been widely understood.  This memo supplies the missing definition.  It is intended to update RFC1034 and RFC1035. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="1982"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1982"/>
+        </reference>
+        <reference anchor="RFC6832" target="https://www.rfc-editor.org/info/rfc6832" quoteTitle="true" derivedAnchor="RFC6832">
+          <front>
+            <title>Interworking between Locator/ID Separation Protocol (LISP) and Non-LISP Sites</title>
+            <author fullname="D. Lewis" initials="D." surname="Lewis"/>
+            <author fullname="D. Meyer" initials="D." surname="Meyer"/>
+            <author fullname="D. Farinacci" initials="D." surname="Farinacci"/>
+            <author fullname="V. Fuller" initials="V." surname="Fuller"/>
+            <date month="January" year="2013"/>
+            <abstract>
+              <t indent="0">This document describes techniques for allowing sites running the Locator/ID Separation Protocol (LISP) to interoperate with Internet sites that may be using either IPv4, IPv6, or both but that are not running LISP.  A fundamental property of LISP-speaking sites is that they use Endpoint Identifiers (EIDs), rather than traditional IP addresses, in the source and destination fields of all traffic they emit or receive.  While EIDs are syntactically identical to IPv4 or IPv6 addresses, normally routes to them are not carried in the global routing system, so an interoperability mechanism is needed for non- LISP-speaking sites to exchange traffic with LISP-speaking sites.  This document introduces three such mechanisms.  The first uses a new network element, the LISP Proxy Ingress Tunnel Router (Proxy-ITR), to act as an intermediate LISP Ingress Tunnel Router (ITR) for non-LISP- speaking hosts.  Second, this document adds Network Address Translation (NAT) functionality to LISP ITRs and LISP Egress Tunnel Routers (ETRs) to substitute routable IP addresses for non-routable EIDs.  Finally, this document introduces the Proxy Egress Tunnel Router (Proxy-ETR) to handle cases where a LISP ITR cannot send packets to non-LISP sites without encapsulation.  This document defines an Experimental Protocol for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6832"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6832"/>
+        </reference>
+        <reference anchor="RFC6834" target="https://www.rfc-editor.org/info/rfc6834" quoteTitle="true" derivedAnchor="RFC6834">
+          <front>
+            <title>Locator/ID Separation Protocol (LISP) Map-Versioning</title>
+            <author fullname="L. Iannone" initials="L." surname="Iannone"/>
+            <author fullname="D. Saucez" initials="D." surname="Saucez"/>
+            <author fullname="O. Bonaventure" initials="O." surname="Bonaventure"/>
+            <date month="January" year="2013"/>
+            <abstract>
+              <t indent="0">This document describes the LISP (Locator/ID Separation Protocol) Map-Versioning mechanism, which provides in-packet information about Endpoint ID to Routing Locator (EID-to-RLOC) mappings used to encapsulate LISP data packets.  The proposed approach is based on associating a version number to EID-to-RLOC mappings and the transport of such a version number in the LISP-specific header of LISP-encapsulated packets.  LISP Map-Versioning is particularly useful to inform communicating Ingress Tunnel Routers (ITRs) and Egress Tunnel Routers (ETRs) about modifications of the mappings used to encapsulate packets.  The mechanism is transparent to implementations not supporting this feature, since in the LISP- specific header and in the Map Records, bits used for Map-Versioning can be safely ignored by ITRs and ETRs that do not support the mechanism.  This document defines an Experimental Protocol for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6834"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6834"/>
+        </reference>
+        <reference anchor="RFC7835" target="https://www.rfc-editor.org/info/rfc7835" quoteTitle="true" derivedAnchor="RFC7835">
+          <front>
+            <title>Locator/ID Separation Protocol (LISP) Threat Analysis</title>
+            <author fullname="D. Saucez" initials="D." surname="Saucez"/>
+            <author fullname="L. Iannone" initials="L." surname="Iannone"/>
+            <author fullname="O. Bonaventure" initials="O." surname="Bonaventure"/>
+            <date month="April" year="2016"/>
+            <abstract>
+              <t indent="0">This document provides a threat analysis of the Locator/ID Separation Protocol (LISP).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7835"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7835"/>
+        </reference>
+        <reference anchor="RFC9299" target="https://www.rfc-editor.org/info/rfc9299" quoteTitle="true" derivedAnchor="RFC9299">
+          <front>
+            <title>An Architectural Introduction to the Locator/ID Separation Protocol (LISP)</title>
+            <author initials="A" surname="Cabellos" fullname="Albert Cabellos">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Saucez" fullname="Damien Saucez" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="9299"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9299"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="benefits" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-benefits-and-case-studies-f">Benefits and Case Studies for Map-Versioning</name>
+      <t indent="0" pn="section-appendix.a-1">
+    In the following sections, we provide more discussion on various aspects and uses of Map-Versioning. Security observations are grouped in <xref target="security" format="default" sectionFormat="of" derivedContent="Section 8"/>.
+      </t>
+      <section anchor="utrf" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.1">
+        <name slugifiedName="name-map-versioning-and-unidirec">Map-Versioning and Unidirectional Traffic</name>
+        <t indent="0" pn="section-appendix.a.1-1">
+      When using Map-Versioning, the LISP-specific header carries two Map-Version numbers for both source and destination mappings.
+      This can raise the question on what will happen in the case of unidirectional flows, for instance, in the case presented in <xref target="utraffic" format="default" sectionFormat="of" derivedContent="Figure 4"/>, since the LISP specifications do not mandate that the ETR have a mapping from the source EID.
+
+        </t>
+        <figure anchor="utraffic" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-unidirectional-traffic-betw">Unidirectional Traffic between LISP Domains</name>
+          <artwork name="" type="" align="left" alt="" pn="section-appendix.a.1-2.1">
+ +-----------------+            +-----------------+
+ | Domain A        |            | Domain B        |
+ |       +---------+            +---------+       |
+ |       | ITR A   |-----------&gt;| ETR B   |       |
+ |       +---------+            +---------+       |
+ |                 |            |                 |
+ +-----------------+            +-----------------+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-appendix.a.1-3">
+      An ITR is able to put both the source and destination version numbers in the LISP-specific header since the Source Map-Version number is in its database, while the Dest Map-Version number is in its cache.
+        </t>
+        <t indent="0" pn="section-appendix.a.1-4">
+      The ETR checks only the Dest Map-Version number, ignoring the Source Map-Version number as specified in the final sentence of  <xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/>.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.2">
+        <name slugifiedName="name-map-versioning-and-interwor">Map-Versioning and Interworking</name>
+        <t indent="0" pn="section-appendix.a.2-1">
+      Map-Versioning is compatible with the LISP interworking between LISP and non-LISP sites as defined in <xref target="RFC6832" format="default" sectionFormat="of" derivedContent="RFC6832"/>.
+      LISP interworking defines three techniques to allow communication LISP sites and non-LISP sites, namely: Proxy-ITR, LISP-NAT, and Proxy-ETR.
+      The following text describes how Map-Versioning relates to these three mechanisms.
+        </t>
+        <section anchor="pitr" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.2.1">
+          <name slugifiedName="name-map-versioning-and-proxy-it">Map-Versioning and Proxy-ITRs</name>
+          <t indent="0" pn="section-appendix.a.2.1-1">
+        The purpose of the Proxy-ITR (PITR) is to encapsulate traffic originating in a non-LISP site in order to deliver the packet to one of the ETRs of the LISP site (cf. <xref target="fpitr" format="default" sectionFormat="of" derivedContent="Figure 5"/>).
+        This case is very similar to the unidirectional traffic case described in <xref target="utrf" format="default" sectionFormat="of" derivedContent="Appendix A.1"/>; hence, similar rules apply.
+
+          </t>
+          <figure anchor="fpitr" align="left" suppress-title="false" pn="figure-5">
+            <name slugifiedName="name-unidirectional-traffic-from">Unidirectional Traffic from Non-LISP Domain to LISP Domain</name>
+            <artwork name="" type="" align="left" alt="" pn="section-appendix.a.2.1-2.1">
+ +----------+                             +-------------+
+ | LISP     |                             | non-LISP    |
+ | Domain A |                             | Domain B    |
+ |  +-------+        +-----------+        |             |
+ |  | ETR A |&lt;-------| Proxy-ITR |&lt;-------|             |
+ |  +-------+        +-----------+        |             |
+ |          |                             |             |
+ +----------+                             +-------------+
+</artwork>
+          </figure>
+          <t indent="0" pn="section-appendix.a.2.1-3">
+        The main difference is that a Proxy-ITR does not have any mapping, since it just encapsulates packets arriving from the non-LISP site, and thus cannot provide a Source Map-Version.
+        In this case, the Proxy-ITR will just put the Null Map-Version value as the Source Map-Version number, while the receiving ETR will ignore the field.
+          </t>
+          <t indent="0" pn="section-appendix.a.2.1-4">
+        With this setup, LISP Domain A is able to check whether the PITR is using the latest mapping. In the Dest Map-Version Number of the LISP-specific header, the Proxy-ITR will put the version number of the mapping it is using for encapsulation; the ETR A can use such value as defined in <xref target="dmvn" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.
+          </t>
+        </section>
+        <section anchor="lispnat" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.2.2">
+          <name slugifiedName="name-map-versioning-and-lisp-nat">Map-Versioning and LISP-NAT</name>
+          <t indent="0" pn="section-appendix.a.2.2-1">
+        The LISP-NAT mechanism is based on address translation from non-routable EIDs to routable EIDs and does not involve any form of encapsulation. As such, Map-Versioning does not apply in this case.
+          </t>
+        </section>
+        <section anchor="petr" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.2.3">
+          <name slugifiedName="name-map-versioning-and-proxy-et">Map-Versioning and Proxy-ETRs</name>
+          <t indent="0" pn="section-appendix.a.2.3-1">
+        The purpose of the Proxy-ETR (PETR) is to decapsulate traffic originating in a LISP site in order to deliver the packet to the non-LISP site (cf. <xref target="fpetr" format="default" sectionFormat="of" derivedContent="Figure 6"/>).
+        One of the main reasons to deploy PETRs is to bypass Unicast Reverse Path Forwarding checks on the domain.
+
+          </t>
+          <figure anchor="fpetr" align="left" suppress-title="false" pn="figure-6">
+            <name slugifiedName="name-unidirectional-traffic-from-">Unidirectional Traffic from LISP Domain to Non-LISP Domain</name>
+            <artwork name="" type="" align="left" alt="" pn="section-appendix.a.2.3-2.1">
+ +----------+                             +-------------+
+ | LISP     |                             | non-LISP    |
+ | Domain A |                             | Domain B    |
+ |  +-------+        +-----------+        |             |
+ |  | ITR A |-------&gt;| Proxy-ETR |-------&gt;|             |
+ |  +-------+        +-----------+        |             |
+ |          |                             |             |
+ +----------+                             +-------------+
+</artwork>
+          </figure>
+          <t indent="0" pn="section-appendix.a.2.3-3">
+        A Proxy-ETR does not have any mapping, since it just decapsulates packets arriving from the LISP site.
+        In this case, the ITR can interchangeably put a Map-Version value or the Null Map-Version value as the Dest Map-Version number, since the receiving Proxy-ETR will ignore the field.
+          </t>
+          <t indent="0" pn="section-appendix.a.2.3-4">
+        With this setup, the Proxy-ETR, by looking at the Source Map-Version Number, is able to check whether the mapping of the source EID has changed. This is useful to perform source RLOC validation. In the example above, traffic coming from the LISP domain has to be LISP encapsulated with a source address being an RLOC of the domain. The Proxy-ETR can retrieve the mapping associated to the LISP domain and check if incoming LISP-encapsulated traffic is arriving from a valid RLOC. A change in the RLOC-Set that can be used as source addresses can be signaled via the version number, with the Proxy-ETR able to request the latest mapping if necessary as described in <xref target="smvn" format="default" sectionFormat="of" derivedContent="Section 7.2"/>.
+          </t>
+        </section>
+      </section>
+      <section anchor="shutdown" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.3">
+        <name slugifiedName="name-rloc-shutdown-withdraw">RLOC Shutdown/Withdraw</name>
+        <t indent="0" pn="section-appendix.a.3-1">
+      Map-Versioning can also be used to perform a graceful shutdown or to withdraw a specific RLOC.
+      This is achieved by simply issuing a new mapping, with an updated Map-Version number where the specific RLOC to be shut down is withdrawn or announced as unreachable (via the R-bit in the Map Record; see <xref target="RFC9301" format="default" sectionFormat="of" derivedContent="RFC9301"/>) but without actually turning it off.
+        </t>
+        <t indent="0" pn="section-appendix.a.3-2">
+      Upon updating the mapping, the RLOC will receive less and less traffic because remote LISP sites will request the updated mapping and see that it is disabled. At least one TTL, plus a little time for traffic transit, after the mapping is updated, it should be safe to shut down the RLOC gracefully, because all sites actively using the mapping should have been updated.
+        </t>
+        <t indent="0" pn="section-appendix.a.3-3">
+      Note that a change in ETR for a flow can result in the reordering of the packet in the flow just as any other routing change could cause reordering.
+        </t>
+      </section>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Luigi Iannone" initials="L." surname="Iannone">
+        <organization showOnFrontPage="true">Huawei Technologies France</organization>
+        <address>
+          <email>luigi.iannone@huawei.com</email>
+        </address>
+      </author>
+      <author fullname="Damien Saucez" initials="D." surname="Saucez">
+        <organization showOnFrontPage="true">Inria</organization>
+        <address>
+          <postal>
+            <street>2004 route des Lucioles - BP 93</street>
+            <city>Sophia Antipolis</city>
+            <country>France</country>
+          </postal>
+          <email>damien.saucez@inria.fr</email>
+        </address>
+      </author>
+      <author fullname="Olivier Bonaventure" initials="O." surname="Bonaventure">
+        <organization showOnFrontPage="true">Universite catholique de Louvain</organization>
+        <address>
+          <email>olivier.bonaventure@uclouvain.be</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

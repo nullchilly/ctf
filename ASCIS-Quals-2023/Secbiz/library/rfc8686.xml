@@ -1,0 +1,2782 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-alto-xdom-disc-06" indexInclude="true" ipr="trust200902" number="8686" prepTime="2020-02-06T13:57:15" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="2" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-alto-xdom-disc-06" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8686" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="ALTO Cross-Domain Server Discovery">Application-Layer Traffic Optimization (ALTO) Cross‑Domain Server Discovery</title>
+    <seriesInfo name="RFC" value="8686" stream="IETF"/>
+    <author fullname="Sebastian Kiesel" initials="S." surname="Kiesel">
+      <organization abbrev="University of Stuttgart" showOnFrontPage="true">University of Stuttgart Information Center</organization>
+      <address>
+        <postal>
+          <street>Allmandring 30</street>
+          <city>Stuttgart</city>
+          <code>70550</code>
+          <country>Germany</country>
+        </postal>
+        <email>ietf-alto@skiesel.de</email>
+        <uri>http://www.izus.uni-stuttgart.de</uri>
+      </address>
+    </author>
+    <author fullname="Martin Stiemerling" initials="M." surname="Stiemerling">
+      <organization abbrev="H-DA" showOnFrontPage="true">University of Applied Sciences Darmstadt, Computer Science Dept.</organization>
+      <address>
+        <postal>
+          <street>Haardtring 100</street>
+          <code>64295</code>
+          <city>Darmstadt</city>
+          <country>Germany</country>
+        </postal>
+        <phone>+49 6151 16 37938</phone>
+        <email>mls.ietf@gmail.com</email>
+        <uri>https://danet.fbi.h-da.de</uri>
+      </address>
+    </author>
+    <date month="02" year="2020"/>
+    <area>TSV</area>
+    <workgroup>ALTO</workgroup>
+    <keyword>Application-Layer Traffic Optimization (ALTO)</keyword>
+    <keyword>ALTO cross-domain server discovery</keyword>
+    <keyword>ALTO third-party server discovery</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">The goal of Application-Layer Traffic Optimization (ALTO) is to
+        provide guidance to applications that have to select one or several
+        hosts from a set of candidates capable of providing a desired
+        resource.  ALTO is realized by a client-server protocol.  Before an
+        ALTO client can ask for guidance, it needs to discover one or more
+        ALTO servers that can provide suitable guidance.</t>
+      <t pn="section-abstract-2">In some deployment scenarios, in particular if the information
+	about the network topology is partitioned and distributed over several
+	ALTO servers, it may be necessary to discover an ALTO server outside
+	of the ALTO client's own network domain, in order to get appropriate
+	guidance.  This document details applicable scenarios, itemizes
+	requirements, and specifies a procedure for ALTO cross-domain server
+	discovery.</t>
+      <t pn="section-abstract-3">Technically, the procedure specified in this document takes one
+        IP address or prefix and a U-NAPTR Service Parameter
+        (typically, "ALTO:https") as parameters. It performs DNS lookups (for
+        NAPTR resource records in the "in-addr.arpa." or "ip6.arpa." trees)
+        and returns one or more URIs of information resources related 
+        to that IP address or prefix.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8686" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology-and-requirement">Terminology and Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-cross-domain-server-di">ALTO Cross-Domain Server Discovery Procedure: Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-cross-domain-server-dis">ALTO Cross-Domain Server             Discovery Procedure: Specification</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interface">Interface</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-step-1-prepare-domain-name-">Step 1: Prepare Domain Name for Reverse DNS Lookup</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-step-2-prepare-shortened-do">Step 2: Prepare Shortened Domain Names</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-step-3-perform-dns-u-naptr-">Step 3: Perform DNS U-NAPTR Lookups</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.5.1"><xref derivedContent="3.5" format="counter" sectionFormat="of" target="section-3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-error-handling">Error Handling</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-the-alto-protocol-wit">Using the ALTO Protocol with Cross-Domain Server Discovery</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-network-and-cost-map-servic">Network and Cost Map Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-map-filtering-service">Map-Filtering Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-endpoint-property-service">Endpoint Property Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-endpoint-cost-service">Endpoint Cost Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.5.1"><xref derivedContent="4.5" format="counter" sectionFormat="of" target="section-4.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-summary-and-further-extensi">Summary and Further Extensions</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implementation-deployment-a">Implementation, Deployment, and Operational Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-alto-cli">Considerations for ALTO Clients</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-network-">Considerations for Network Operators</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-integrity-of-the-alto-serve">Integrity of the ALTO Server's URI</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-availability-of-the-alto-se">Availability of the ALTO Server Discovery Procedure</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-confidentiality-of-the-alto">Confidentiality of the ALTO Server's URI</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-for-alto-clients">Privacy for ALTO Clients</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-solution-approaches-for-par">Solution Approaches for Partitioned ALTO Knowledge</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-a.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-classification-of-solution-">Classification of Solution Approaches</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="A.2" format="counter" sectionFormat="of" target="section-a.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-discussion-of-solution-appr">Discussion of Solution Approaches</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.3.1"><xref derivedContent="A.3" format="counter" sectionFormat="of" target="section-a.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-need-for-cross-domain-a">The Need for Cross-Domain ALTO Server Discovery</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.4.1"><xref derivedContent="A.4" format="counter" sectionFormat="of" target="section-a.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-our-solution-approach">Our Solution Approach</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.5.1"><xref derivedContent="A.5" format="counter" sectionFormat="of" target="section-a.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relation-to-the-alto-requir">Relation to the ALTO Requirements</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-for-cross-doma">Requirements for Cross-Domain Server Discovery</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="B.1" format="counter" sectionFormat="of" target="section-b.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-discovery-client-applicatio">Discovery Client Application Programming Interface</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="B.2" format="counter" sectionFormat="of" target="section-b.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-data-storage-and-authority-">Data Storage and Authority Requirements</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.3.1"><xref derivedContent="B.3" format="counter" sectionFormat="of" target="section-b.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cross-domain-operations-req">Cross-Domain Operations Requirements</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.4.1"><xref derivedContent="B.4" format="counter" sectionFormat="of" target="section-b.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-requirements">Protocol Requirements</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.5.1"><xref derivedContent="B.5" format="counter" sectionFormat="of" target="section-b.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-further-requirements">Further Requirements</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="Appendix C" format="default" sectionFormat="of" target="section-appendix.c"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-and-tracker-based-peer">ALTO and Tracker-Based Peer-to-Peer Applications</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="C.1" format="counter" sectionFormat="of" target="section-c.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-a-generic-tracker-based-pee">A Generic Tracker-Based Peer-to-Peer Application</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="C.2" format="counter" sectionFormat="of" target="section-c.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-architectural-options-for-p">Architectural Options for Placing the ALTO Client</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.11.2.3.1"><xref derivedContent="C.3" format="counter" sectionFormat="of" target="section-c.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-evaluation">Evaluation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.11.2.4.1"><xref derivedContent="C.4" format="counter" sectionFormat="of" target="section-c.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example">Example</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t keepWithNext="true" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t keepWithNext="true" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.e"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+            The goal of Application-Layer Traffic Optimization (ALTO) is to
+            provide guidance to applications that have to select one or several
+            hosts from a set of candidates capable of providing a desired
+            resource <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/>. ALTO is realized by an
+            HTTP-based client-server protocol <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>,
+            which can be used in various scenarios
+            <xref target="RFC7971" format="default" sectionFormat="of" derivedContent="RFC7971"/>.
+      </t>
+      <t pn="section-1-2">
+            The ALTO base protocol document <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/> specifies
+            the communication between an ALTO client and one ALTO server.
+            In principle, the client may send any ALTO query.
+            For example, it might ask for the routing cost between any two IP
+            addresses, or it might request network and
+            cost maps for the whole network, which might be the worldwide
+            Internet. It is assumed that the server can answer any query,
+            possibly with some kind of default value if no exact data is
+            known.
+      </t>
+      <t pn="section-1-3">
+            No special provisions were made for deployment scenarios with
+            multiple ALTO servers, with some servers having more accurate
+            information about some parts of the network topology while others
+            have better information about other parts of the network
+            ("partitioned knowledge"). Various ALTO use cases have been
+            studied in the context of such scenarios. In some cases, one
+            cannot assume that a topologically nearby ALTO server (e.g., a
+            server discovered with the procedure specified in
+            <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>) will always provide useful information
+            to the client. One such scenario is detailed in
+            <xref target="apx.alto_p2p" format="default" sectionFormat="of" derivedContent="Appendix C"/>.  Several solution
+            approaches, such as redirecting a client to a server that has more
+            accurate information or forwarding the request to such a server on behalf
+            of the client, have been proposed and analyzed (see
+            <xref target="sec.multiplesources" format="default" sectionFormat="of" derivedContent="Appendix A"/>), but no
+	    solution has been specified so far.
+      </t>
+      <t pn="section-1-4">
+            <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/> of this document specifies
+            the "ALTO Cross-Domain Server Discovery Procedure"
+            for client-side usage in these scenarios.
+            An ALTO client that wants to send an ALTO query related to a
+            specific IP address or prefix X may call this procedure
+            with X as a parameter.
+            It will use Domain Name System (DNS) lookups to find one or
+            more ALTO servers that can provide a competent answer.
+            The above wording "related to" was intentionally kept somewhat
+            unspecific, as the exact semantics depends on the ALTO service to
+            be used; see <xref target="sec.xdom-usage" format="default" sectionFormat="of" derivedContent="Section 4"/>.
+      </t>
+      <t pn="section-1-5">
+            Those who are in control of the "reverse DNS"
+            for a given IP address or prefix
+            (i.e., the corresponding subdomain of "in-addr.arpa." or "ip6.arpa.")
+            -- typically an Internet Service Provider (ISP), a
+            corporate IT department, or a university's computing center --
+            may add resource records to the DNS that point to one or more
+            relevant ALTO servers.  In many cases, it may be
+            an ALTO server run by that ISP or IT department, as they
+            naturally have good insight into routing costs from and
+            to their networks.  However, they may also refer to an
+            ALTO server provided by someone else, e.g., their upstream ISP.
+      </t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-terminology-and-requirement">Terminology and Requirements Language</name>
+        <t pn="section-1.1-1">This document makes use of the ALTO terminology defined in
+        RFC 5693 <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/>.</t>
+        <t pn="section-1.1-2">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="sec.3pdisc-overview" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-alto-cross-domain-server-di">ALTO Cross-Domain Server Discovery Procedure: Overview</name>
+      <t pn="section-2-1">This section gives a non-normative overview of the
+        ALTO Cross-Domain Server Discovery Procedure. The detailed
+        specification will follow in the next section.</t>
+      <t pn="section-2-2">This procedure was inspired by "Location Information
+        Server (LIS) Discovery Using IP Addresses and Reverse DNS"
+        <xref target="RFC7216" format="default" sectionFormat="of" derivedContent="RFC7216"/> and reuses parts of the basic
+        ALTO Server Discovery Procedure <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>.</t>
+      <t pn="section-2-3">The basic idea is to use the Domain Name System (DNS),
+        more specifically the "in-addr.arpa." or "ip6.arpa." trees,
+        which are mostly used for "reverse mapping" of IP addresses
+        to host names by means of PTR resource records.
+        There, URI-enabled Naming Authority Pointer (U-NAPTR)
+        resource records <xref target="RFC4848" format="default" sectionFormat="of" derivedContent="RFC4848"/>,
+        which allow the mapping of domain names to 
+        Uniform Resource Identifiers (URIs), are installed
+        as needed. Thereby, it is possible to store a mapping from
+        an IP address or prefix to one or more ALTO server URIs in the DNS.
+      </t>
+      <t pn="section-2-4">The ALTO Cross-Domain Server Discovery Procedure is called
+        with one IP address or prefix and a U-NAPTR Service
+        Parameter <xref target="RFC4848" format="default" sectionFormat="of" derivedContent="RFC4848"/> as parameters. </t>
+      <t pn="section-2-5">The service parameter is usually set to "ALTO:https".
+        However, other parameter values may be used in some scenarios -- e.g.,
+        "ALTO:http" to search for a server that supports unencrypted
+        transmission for debugging purposes, or other application protocol
+        or service tags if applicable.</t>
+      <t pn="section-2-6">The procedure performs DNS lookups and returns one or more
+        URIs of information resources related to said IP address or
+        prefix, usually the URIs of one or more ALTO Information
+        Resource Directories (IRDs; see <xref target="RFC7285" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>).
+        The U-NAPTR records also provide preference values, which should
+        be considered if more than one URI is returned.
+      </t>
+      <t pn="section-2-7">The discovery procedure sequentially tries two different lookup
+        strategies. First, an ALTO-specific U-NAPTR record is searched in the "reverse
+        tree" -- i.e., in subdomains of "in-addr.arpa." or "ip6.arpa." corresponding
+        to the given IP address or prefix.
+        If this lookup does not yield a usable result, the procedure
+        tries further lookups with truncated domain names, which correspond
+        to shorter prefix lengths.  The goal is to allow deployment
+        scenarios that require fine-grained discovery on a per-IP basis, as
+        well as large-scale scenarios where discovery is to be enabled for a
+        large number of IP addresses with a small number of additional DNS
+        resource records.</t>
+    </section>
+    <section anchor="sec.3pdisc-spec" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-alto-cross-domain-server-dis">ALTO Cross-Domain Server             Discovery Procedure: Specification</name>
+      <section anchor="sec.3pdisc-spec-interface" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-interface">Interface</name>
+        <t pn="section-3.1-1">The procedure specified in this document takes two
+            parameters, X and SP, where X is an IP address or prefix
+            and SP is a U-NAPTR Service Parameter.</t>
+        <t pn="section-3.1-2">The parameter X may be an IPv4 or an IPv6 address
+            or prefix in Classless Inter-Domain Routing (CIDR) notation (see
+	    <xref target="RFC4632" format="default" sectionFormat="of" derivedContent="RFC4632"/>
+            for the IPv4 CIDR notation and <xref target="RFC4291" format="default" sectionFormat="of" derivedContent="RFC4291"/> for IPv6).
+            Consequently, the address type AT is either "IPv4" or "IPv6".
+            In both cases, X consists of an IP address A and a
+            prefix length L.
+            From the definitions of IPv4 and IPv6, it follows that 
+            syntactically valid values for L are
+            0 &lt;= L &lt;= 32 when AT=IPv4 and
+            0 &lt;= L &lt;= 128 when AT=IPv6.
+            However, not all syntactically valid values of L are actually
+            supported by this procedure; Step 1 (see below) will
+            check for unsupported values and report an error if
+            necessary.</t>
+        <t pn="section-3.1-3">For example, for X=198.51.100.0/24, we get AT=IPv4,
+            A=198.51.100.0, and L=24.  Similarly, for X=2001:0DB8::20/128,
+            we get AT=IPv6, A=2001:0DB8::20, and L=128.</t>
+        <t pn="section-3.1-4">In the intended usage scenario, the procedure is normally
+            always called with the parameter SP set to "ALTO:https".
+            However, for general applicability and in order to support
+            future extensions, the procedure <bcp14>MUST</bcp14> support being called
+            with any valid U-NAPTR Service Parameter
+            (see <xref target="RFC4848" sectionFormat="of" section="4.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4848#section-4.5" derivedContent="RFC4848"/> for the
+            syntax of U-NAPTR Service Parameters and Section <xref target="RFC4848" sectionFormat="bare" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4848#section-5" derivedContent="RFC4848"/> of the
+            same document for information about the IANA registries).</t>
+        <t pn="section-3.1-5">The procedure performs DNS lookups and returns one or more
+            URIs of information resources related to that IP address or
+            prefix, usually the URIs of one or more ALTO Information
+            Resource Directories (IRDs; see <xref target="RFC7285" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>).
+            For each URI, the procedure also returns order and preference values
+            (see <xref target="RFC3403" sectionFormat="of" section="4.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3403#section-4.1" derivedContent="RFC3403"/>),
+	    which
+            should be considered if more than one URI is returned.</t>
+        <t pn="section-3.1-6">During execution of this procedure, various
+            error conditions may occur and have to be reported to
+            the caller; see
+            <xref target="sec.3pdisc-spec-errorhandling" format="default" sectionFormat="of" derivedContent="Section 3.5"/>.</t>
+        <t pn="section-3.1-7">For the remainder of the document, we use the following
+            notation for calling the ALTO Cross-Domain Server Discovery
+            Procedure:
+             
+               IRD_URIS_X = XDOMDISC(X,"ALTO:https")
+        </t>
+      </section>
+      <section anchor="sec.3pdisc-spec-step1" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-step-1-prepare-domain-name-">Step 1: Prepare Domain Name for Reverse DNS Lookup</name>
+        <t pn="section-3.2-1">First, the procedure checks the prefix length L for unsupported
+            values: If AT=IPv4 (i.e., if A is an IPv4 address) and L &lt; 8,
+            the procedure aborts and indicates an "unsupported prefix length"
+            error to the caller. Similarly, if AT=IPv6
+            and L &lt; 32, the procedure aborts and indicates an
+            "unsupported prefix length" error to the caller. Otherwise,
+            the procedure continues.</t>
+        <t pn="section-3.2-2">If AT=IPv4, the procedure will then produce a 
+            DNS domain name,
+            which will be referred to as R32. This domain name is
+            constructed according to the rules specified in
+            <xref target="RFC1035" format="default" sectionFormat="of" section="3.5" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.5" derivedContent="RFC1035"/>, and it is rooted in
+            the special domain "IN-ADDR.ARPA.".</t>
+        <t pn="section-3.2-3">For example, A=198.51.100.3 yields
+            R32="3.100.51.198.IN-ADDR.ARPA.". </t>
+        <t pn="section-3.2-4">If AT=IPv6, a domain name, which will be called R128,
+            is constructed according to the rules specified in
+            <xref target="RFC3596" format="default" sectionFormat="of" section="2.5" derivedLink="https://rfc-editor.org/rfc/rfc3596#section-2.5" derivedContent="RFC3596"/>, and the
+            special domain "IP6.ARPA." is used.
+        </t>
+        <t pn="section-3.2-5">
+For example (note: a line break was added after the second line),
+</t>
+        <sourcecode type="pseudocode" markers="false" pn="section-3.2-6">
+A = 2001:0DB8::20    yields
+R128 = "0.2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.B.D.0.
+        1.0.0.2.IP6.ARPA."
+</sourcecode>
+      </section>
+      <section anchor="sec.3pdisc-spec-step2" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-step-2-prepare-shortened-do">Step 2: Prepare Shortened Domain Names</name>
+        <t pn="section-3.3-1">For this step, an auxiliary function, "skip", is defined as
+            follows:
+            skip(str,n) will skip all characters in the string str, up to
+            and including the n-th dot, and return the remaining
+            part of str.  For example, skip("foo.bar.baz.qux.quux.",2) will
+            return "baz.qux.quux.".
+        </t>
+        <t pn="section-3.3-2">If AT=IPv4, the following additional
+            domain names are generated from the result of the previous step:
+        </t>
+        <ul empty="true" spacing="normal" bare="false" pn="section-3.3-3">
+          <li pn="section-3.3-3.1">R24=skip(R32,1),</li>
+          <li pn="section-3.3-3.2">R16=skip(R32,2), and</li>
+          <li pn="section-3.3-3.3">R8=skip(R32,3).</li>
+        </ul>
+        <t pn="section-3.3-4">
+            Removing one label from a domain name (i.e., one number of the
+            "dotted quad notation") corresponds to shortening the prefix length
+            by 8 bits.</t>
+        <t pn="section-3.3-5">For example,</t>
+        <sourcecode type="pseudocode" markers="false" pn="section-3.3-6">
+R32="3.100.51.198.IN-ADDR.ARPA." yields
+R24="100.51.198.IN-ADDR.ARPA."
+R16="51.198.IN-ADDR.ARPA."
+R8="198.IN-ADDR.ARPA."
+</sourcecode>
+        <t pn="section-3.3-7">If AT=IPv6, the following additional
+            domain names are generated from the result of the previous step:
+        </t>
+        <ul empty="true" spacing="normal" bare="false" pn="section-3.3-8">
+          <li pn="section-3.3-8.1">R64=skip(R128,16),</li>
+          <li pn="section-3.3-8.2">R56=skip(R128,18),</li>
+          <li pn="section-3.3-8.3">R48=skip(R128,20),</li>
+          <li pn="section-3.3-8.4">R40=skip(R128,22), and</li>
+          <li pn="section-3.3-8.5">R32=skip(R128,24).</li>
+        </ul>
+        <t pn="section-3.3-9">
+            Removing one label from a domain name (i.e., one hex digit)
+            corresponds to shortening the prefix length by 4 bits.
+        </t>
+        <t pn="section-3.3-10">
+For example (note: a line break was added after the first line),
+</t>
+        <sourcecode type="pseudocode" markers="false" pn="section-3.3-11">
+R128 = "0.2.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.B.D.0.
+        1.0.0.2.IP6.ARPA."    yields
+R64  = "0.0.0.0.0.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R56  = "0.0.0.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R48  = "0.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R40  = "0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R32  = "8.B.D.0.1.0.0.2.IP6.ARPA."
+</sourcecode>
+      </section>
+      <section anchor="sec.3pdisc-spec-step3" numbered="true" toc="include" removeInRFC="false" pn="section-3.4">
+        <name slugifiedName="name-step-3-perform-dns-u-naptr-">Step 3: Perform DNS U-NAPTR Lookups</name>
+        <t pn="section-3.4-1">The address type and the prefix length of X
+            are matched against the first and the second column of the
+            following table, respectively:</t>
+        <table anchor="U-NAPTR" align="center" pn="table-1">
+          <name slugifiedName="name-perform-dns-u-naptr-lookups">Perform DNS U-NAPTR lookups</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">1: Address Type AT</th>
+              <th align="left" colspan="1" rowspan="1">2: Prefix Length L</th>
+              <th align="left" colspan="1" rowspan="1">3: MUST do 1st lookup</th>
+              <th align="left" colspan="1" rowspan="1">4: SHOULD do further lookups in that order</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv4</td>
+              <td align="left" colspan="1" rowspan="1">32</td>
+              <td align="left" colspan="1" rowspan="1">R32</td>
+              <td align="left" colspan="1" rowspan="1">R24, R16, R8</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv4</td>
+              <td align="left" colspan="1" rowspan="1">24 .. 31</td>
+              <td align="left" colspan="1" rowspan="1">R24</td>
+              <td align="left" colspan="1" rowspan="1">R16, R8</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv4</td>
+              <td align="left" colspan="1" rowspan="1">16 .. 23</td>
+              <td align="left" colspan="1" rowspan="1">R16</td>
+              <td align="left" colspan="1" rowspan="1">R8</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv4</td>
+              <td align="left" colspan="1" rowspan="1">8 .. 15</td>
+              <td align="left" colspan="1" rowspan="1">R8</td>
+              <td align="left" colspan="1" rowspan="1">(none)</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv4</td>
+              <td align="left" colspan="1" rowspan="1">0 .. 7</td>
+              <td colspan="2" align="left" rowspan="1">(none, abort: unsupported prefix length)</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">128</td>
+              <td align="left" colspan="1" rowspan="1">R128</td>
+              <td align="left" colspan="1" rowspan="1">R64, R56, R48, R40, R32</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">64 (..127)</td>
+              <td align="left" colspan="1" rowspan="1">R64</td>
+              <td align="left" colspan="1" rowspan="1">R56, R48, R40, R32</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">56 .. 63</td>
+              <td align="left" colspan="1" rowspan="1">R56</td>
+              <td align="left" colspan="1" rowspan="1">R48, R40, R32</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">48 .. 55</td>
+              <td align="left" colspan="1" rowspan="1">R48</td>
+              <td align="left" colspan="1" rowspan="1">R40, R32</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">40 .. 47</td>
+              <td align="left" colspan="1" rowspan="1">R40</td>
+              <td align="left" colspan="1" rowspan="1">R32</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">32 .. 39</td>
+              <td align="left" colspan="1" rowspan="1">R32</td>
+              <td align="left" colspan="1" rowspan="1">(none)</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">IPv6</td>
+              <td align="left" colspan="1" rowspan="1">0 .. 31</td>
+              <td colspan="2" align="left" rowspan="1">(none, abort: unsupported prefix length)</td>
+            </tr>
+          </tbody>
+        </table>
+        <t pn="section-3.4-3">Then, the domain name given in the 3rd column and the
+            U-NAPTR Service Parameter SP with which the procedure was called
+            (usually "ALTO:https") <bcp14>MUST</bcp14> be used for a
+            U-NAPTR <xref target="RFC4848" format="default" sectionFormat="of" derivedContent="RFC4848"/> lookup, in order
+            to obtain one or more URIs (indicating protocol, host, and
+            possibly path elements) for the ALTO server's Information Resource
+            Directory (IRD).  If such URIs can be found, the
+            ALTO Cross-Domain Server Discovery Procedure returns that
+            information to the caller and terminates successfully.</t>
+        <t pn="section-3.4-4">For example, the following two U-NAPTR resource records can be
+            used for mapping "100.51.198.IN-ADDR.ARPA." (i.e., R24 from the
+            example in the previous step) to the HTTPS URIs
+            "https://alto1.example.net/ird" and
+            "https://alto2.example.net/ird", with the former being preferred.
+</t>
+        <sourcecode type="dns-rr" markers="false" pn="section-3.4-5">
+    100.51.198.IN-ADDR.ARPA.  IN NAPTR 100  10  "u"  "ALTO:https"
+         "!.*!https://alto1.example.net/ird!"  ""
+
+    100.51.198.IN-ADDR.ARPA.  IN NAPTR 100  20  "u"  "ALTO:https"
+         "!.*!https://alto2.example.net/ird!"  ""
+</sourcecode>
+        <t pn="section-3.4-6">If no matching U-NAPTR records can be found,
+            the procedure <bcp14>SHOULD</bcp14> try further lookups, using the domain
+            names from the fourth column in the indicated order, until one
+            lookup
+            succeeds.  If no IRD URI can be found after looking up
+            all domain names from the 3rd and 4th columns, the procedure
+            terminates unsuccessfully, returning an empty URI list.
+        </t>
+      </section>
+      <section anchor="sec.3pdisc-spec-errorhandling" numbered="true" toc="include" removeInRFC="false" pn="section-3.5">
+        <name slugifiedName="name-error-handling">Error Handling</name>
+        <t pn="section-3.5-1">The ALTO Cross-Domain Server Discovery Procedure may fail
+            for several reasons.</t>
+        <t pn="section-3.5-2">If the procedure is called with syntactically invalid
+            parameters or unsupported parameter values (in particular, the 
+            prefix length L; see <xref target="sec.3pdisc-spec-step1" format="default" sectionFormat="of" derivedContent="Section 3.2"/>),
+            the procedure aborts, no URI list will be returned, and 
+            the error has to be reported to the caller.</t>
+        <t pn="section-3.5-3">The procedure performs one or more DNS lookups in a
+            well-defined order (corresponding to descending prefix lengths,
+            see <xref target="sec.3pdisc-spec-step3" format="default" sectionFormat="of" derivedContent="Section 3.4"/>) until one produces
+            a usable result.  Each of these DNS
+            lookups might fail to produce a usable result, due to either a
+            normal condition (e.g., a domain name exists, but no ALTO-specific
+            NAPTR resource records are associated with it), a permanent error
+            (e.g., nonexistent domain name), or a temporary error
+            (e.g., timeout).  In all three
+            cases, and as long as there are further domain names that can be
+            looked up, the procedure <bcp14>SHOULD</bcp14> immediately try to
+	    look up the
+            next domain name (from Column 4 in the table given in 
+            <xref target="sec.3pdisc-spec-step3" format="default" sectionFormat="of" derivedContent="Section 3.4"/>).
+            Only after all domain names have been tried at least once, the
+            procedure <bcp14>MAY</bcp14> retry those domain names that had caused temporary
+            lookup errors.</t>
+        <t pn="section-3.5-4">Generally speaking, ALTO provides advisory
+            information for the optimization of applications (peer-to-peer
+	    applications, overlay networks, etc.), but 
+            applications should not rely on the availability of such 
+            information for their basic functionality (see
+            <xref target="RFC7285" sectionFormat="of" section="8.3.4.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-8.3.4.3" derivedContent="RFC7285"/>).
+
+            Consequently, the speedy detection of an ALTO server, even
+            though it may give less accurate answers than other servers, or
+            the quick realization that there is no suitable ALTO server, is
+            in general preferable to causing long delays by retrying
+            failed queries. 
+
+      Nevertheless, if DNS queries have failed due to temporary errors, the
+      ALTO Cross-Domain Server Discovery Procedure SHOULD inform its caller
+      that DNS queries have failed for that reason and that retrying the
+      discovery at a later point in time might give more accurate results.
+
+        </t>
+      </section>
+    </section>
+    <section anchor="sec.xdom-usage" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-using-the-alto-protocol-wit">Using the ALTO Protocol with Cross-Domain Server Discovery</name>
+      <t pn="section-4-1">Based on a modular design principle, ALTO provides several ALTO
+        services, each consisting of a set of information resources
+        that can be accessed using the ALTO protocol.
+        The information resources that are available at a specific 
+        ALTO server are listed in its Information Resource Directory 
+        (IRD, see <xref target="RFC7285" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>).
+        The ALTO protocol specification defines the following ALTO
+        services and their corresponding information resources:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-4-2">
+        <li pn="section-4-2.1">Network and Cost Map Service, see <xref target="RFC7285" sectionFormat="of" section="11.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.2" derivedContent="RFC7285"/>
+        </li>
+        <li pn="section-4-2.2">Map-Filtering Service, see <xref target="RFC7285" sectionFormat="of" section="11.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.3" derivedContent="RFC7285"/>
+        </li>
+        <li pn="section-4-2.3">Endpoint Property Service,
+                    see <xref target="RFC7285" sectionFormat="of" section="11.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.4" derivedContent="RFC7285"/>
+        </li>
+        <li pn="section-4-2.4">Endpoint Cost Service,
+                    see <xref target="RFC7285" sectionFormat="of" section="11.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.5" derivedContent="RFC7285"/>
+        </li>
+      </ul>
+      <t pn="section-4-3">
+        The ALTO Cross-Domain Server Discovery Procedure is
+        most useful in conjunction with the Endpoint Property Service and
+        the Endpoint Cost Service.  However, for the sake of completeness,
+        possible interaction with all four services is discussed below.
+        Extension documents may specify further information resources;
+        however, these are out of scope of this document. 
+      </t>
+      <section anchor="sec.mapservice" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-network-and-cost-map-servic">Network and Cost Map Service</name>
+        <t pn="section-4.1-1"> An ALTO client may invoke the ALTO Cross-Domain Server
+                Discovery Procedure (as specified in
+                <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/>) for an IP address
+                or prefix X
+                and get a list of one or more IRD URIs, including
+                order and preference values:
+                IRD_URIS_X = XDOMDISC(X,"ALTO:https"). The IRD(s)
+                referenced by these URIs
+                will always contain a network and a cost map, as these
+                are mandatory information resources (see <xref target="RFC7285" sectionFormat="of" section="11.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.2" derivedContent="RFC7285"/>).
+		However, the cost matrix
+                may be very sparse. If, according to the network map,
+                PID_X is the Provider-defined Identifier (PID; see <xref target="RFC7285" sectionFormat="of" section="5.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-5.1" derivedContent="RFC7285"/>) that contains the IP address or prefix X, and
+                PID_1, PID_2, PID_3, ... are other PIDs, the cost map
+                may look like this:
+</t>
+        <table anchor="PID" align="center" pn="table-2">
+          <name slugifiedName="name-cost-map">Cost Map</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">From</th>
+              <th align="left" colspan="1" rowspan="1">To PID_1</th>
+              <th align="left" colspan="1" rowspan="1">PID_2</th>
+              <th align="left" colspan="1" rowspan="1">PID_X</th>
+              <th align="left" colspan="1" rowspan="1">PID_3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">PID_1</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">92</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">PID_2</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">6</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">PID_X</td>
+              <td align="left" colspan="1" rowspan="1">46</td>
+              <td align="left" colspan="1" rowspan="1">3</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">19</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">PID_3</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">38</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+          </tbody>
+        </table>
+        <t pn="section-4.1-3">
+          In this example, all cells outside Column X and Row X are
+          unspecified. A cost map with this structure contains the same
+          information as what could be retrieved using the Endpoint Cost
+          Service, Cases 1 and 2 in <xref target="sec.ecs" format="default" sectionFormat="of" derivedContent="Section 4.4"/>.
+          Accessing cells that are neither in Column X nor Row X
+          may not yield useful results.
+        </t>
+        <t pn="section-4.1-4">Trying to assemble a more densely populated cost map from several
+          cost maps with this very sparse structure may be a nontrivial
+          task, as different ALTO servers may use different PID definitions
+          (i.e., network maps) and incompatible scales for the costs,
+          in particular for the "routingcost" metric.
+        </t>
+      </section>
+      <section anchor="sec.mfs" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-map-filtering-service">Map-Filtering Service</name>
+        <t pn="section-4.2-1"> An ALTO client may invoke the ALTO Cross-Domain Server
+                Discovery Procedure (as specified in
+                <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/>) for an IP address
+                or prefix X
+                and get a list of one or more IRD URIs, including
+                order and preference values:
+                IRD_URIS_X = XDOMDISC(X,"ALTO:https"). These IRDs
+                may provide the optional Map-Filtering Service
+                (see <xref target="RFC7285" sectionFormat="of" section="11.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.3" derivedContent="RFC7285"/>).
+                This service returns a subset of the full map,
+                as specified by the client. As discussed in
+                <xref target="sec.mapservice" format="default" sectionFormat="of" derivedContent="Section 4.1"/>, a cost map may
+                be very sparse in the envisioned deployment scenario.
+                Therefore, depending on the filtering criteria provided
+                by the client, this service may return results similar
+                to the Endpoint Cost Service, or it may not return any
+                useful result.
+        </t>
+      </section>
+      <section anchor="sec.eps" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-endpoint-property-service">Endpoint Property Service</name>
+        <t pn="section-4.3-1">
+                If an ALTO client wants to query an Endpoint Property Service
+                (see <xref target="RFC7285" sectionFormat="of" section="11.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.4" derivedContent="RFC7285"/>)
+                about an endpoint with IP address X or a group of endpoints
+                within IP prefix X, respectively, it has to 
+                invoke the ALTO Cross-Domain Server Discovery Procedure 
+                (as specified in <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/>):
+                IRD_URIS_X = XDOMDISC(X,"ALTO:https").
+                The result, IRD_URIS_X, is a list of one or more URIs of
+                Information Resource Directories 
+                (IRDs, see <xref target="RFC7285" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>).
+                Considering the order and preference values, the client has
+                to check these IRDs for a suitable Endpoint Property Service 
+                and query it. 
+        </t>
+        <t pn="section-4.3-2">
+                If the ALTO client wants to do a similar Endpoint Property
+                query for a different IP address or prefix "Y", the whole
+                procedure has to be repeated, as IRD_URIS_Y =
+                XDOMDISC(Y,"ALTO:https") may yield a different list of IRD
+                URIs.  Of course, the results of individual DNS queries may
+                be cached as indicated by their respective time-to-live
+                (TTL) values.
+        </t>
+      </section>
+      <section anchor="sec.ecs" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-endpoint-cost-service">Endpoint Cost Service</name>
+        <t pn="section-4.4-1">
+                The optional ALTO Endpoint Cost Service (ECS;
+                see <xref target="RFC7285" sectionFormat="of" section="11.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.5" derivedContent="RFC7285"/>)
+                provides information about costs between individual endpoints
+                and also supports ranking.
+                The ECS allows endpoints to be denoted by IP
+                addresses or prefixes.
+                The ECS is called with a list of
+                one or more source IP addresses or prefixes, which we will call
+                (S1, S2, S3, ...), and a list of one or more destination
+                IP addresses or prefixes, called (D1, D2, D3, ...).
+        </t>
+        <t pn="section-4.4-2">This specification distinguishes several cases, regarding
+            the number of elements in the list of source and destination
+            addresses, respectively:
+        </t>
+        <ol spacing="normal" type="1" start="1" pn="section-4.4-3">
+          <li pn="section-4.4-3.1" derivedCounter="1.">
+            <t pn="section-4.4-3.1.1">Exactly one source address S1 and more than one
+                    destination addresses (D1, D2, D3, ...).  In this case,
+                    the ALTO client has to invoke the ALTO Cross-Domain
+                    Server Discovery Procedure (as specified in
+                    <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/>) with that single
+                    source address as a parameter:
+                    IRD_URIS_S1 = XDOMDISC(S1,"ALTO:https").
+                    The result, IRD_URIS_S1, is a list of one or more URIs of
+                    Information Resource Directories 
+                    (IRDs, see <xref target="RFC7285" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>).
+                    Considering the order and preference values, the client has
+                    to check these IRDs for a suitable Endpoint Cost Service
+                    and query it. The ECS is an optional service (see 
+                    <xref target="RFC7285" sectionFormat="of" section="11.5.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.5.1" derivedContent="RFC7285"/>), and therefore, it may well be that an IRD does not
+                    refer to an ECS.
+            </t>
+            <t pn="section-4.4-3.1.2">
+                    Calling the Cross-Domain Server Discovery Procedure
+                    only once with the single source address as a parameter
+                    -- as opposed to multiple calls, e.g., one for each
+                    destination address -- is not only a matter of efficiency.
+                    In the given scenario, it is advisable to send all
+                    ECS queries to the same ALTO server. This ensures that
+                    the results can be compared (e.g., for sorting
+                    candidate resource providers), even when 
+                    cost metrics lack a well-defined base unit -- e.g.,
+                    the "routingcost" metric.
+            </t>
+          </li>
+          <li pn="section-4.4-3.2" derivedCounter="2.">More than one source address (S1, S2, S3, ...)
+                    and exactly one destination address D1.  In this case,
+                    the ALTO client has to invoke the ALTO Cross-Domain
+                    Server Discovery Procedure with that single
+                    destination address as a parameter:
+                    IRD_URIS_D1 = XDOMDISC(D1,"ALTO:https").
+                    The result, IRD_URIS_D1, is a list of one or more URIs of
+                    IRDs.
+                    Considering the order and preference values, the client has
+                    to check these IRDs for a suitable ECS and query it.
+                    </li>
+          <li pn="section-4.4-3.3" derivedCounter="3.">Exactly one source address S1
+                    and exactly one destination address D1.
+                    The ALTO client may perform the same steps as in
+                    Case 1, as specified above. As an alternative,
+                    it may also perform the same steps as in
+                    Case 2, as specified above.
+                    </li>
+          <li pn="section-4.4-3.4" derivedCounter="4.">More than one source address (S1, S2, S3, ...)
+                    and more than one destination address (D1, D2, D3, ...).
+                    In this case, the ALTO client should split the
+                    list of desired queries based on source addresses and perform separately
+                    for each source address the same steps as in Case 1,
+                    as specified above.  As an alternative, the ALTO
+                    client may also group the list based on destination
+                    addresses and perform separately for each destination
+                    address the same steps as in Case 2, as specified
+                    above.  However, comparing results between these
+                    subqueries may be difficult, in particular if
+                    the cost metric is a relative preference without
+                    a well-defined base unit (e.g., the "routingcost"
+                    metric).
+                    </li>
+        </ol>
+        <t pn="section-4.4-4">
+
+                See <xref target="apx.alto_p2p" format="default" sectionFormat="of" derivedContent="Appendix C"/> for a
+                detailed example showing the interaction of a
+                tracker-based peer-to-peer application, the ALTO
+                Endpoint Cost Service, and the ALTO Cross-Domain 
+                Server Discovery Procedure.
+
+        </t>
+      </section>
+      <section anchor="sec.ext" numbered="true" toc="include" removeInRFC="false" pn="section-4.5">
+        <name slugifiedName="name-summary-and-further-extensi">Summary and Further Extensions</name>
+        <t pn="section-4.5-1">Considering the four services defined in the ALTO base
+            protocol specification <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>, the
+            ALTO Cross-Domain Server Discovery Procedure works
+            best with the Endpoint Property Service (EPS) and the 
+            Endpoint Cost Service (ECS). Both the EPS and the ECS
+            take one or more IP addresses as a parameter. The previous
+            sections specify how the parameter for calling the
+            ALTO Cross-Domain Server Discovery Procedure has to be 
+            derived from these IP addresses.</t>
+        <t pn="section-4.5-2">In contrast, the ALTO Cross-Domain Server Discovery Procedure
+            seems less useful if the goal is to retrieve network and cost
+            maps that cover the whole network topology. However, the
+            procedure may be useful if a map centered at a specific
+            IP address is desired (i.e., a map detailing the vicinity
+            of said IP address or a map giving costs from said IP address
+            to all potential destinations).</t>
+        <t pn="section-4.5-3">The interaction between further ALTO services (and their
+            corresponding information resources) needs to be investigated
+            and defined once such further ALTO services are specified
+            in an extension document.</t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-implementation-deployment-a">Implementation, Deployment, and Operational Considerations</name>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-considerations-for-alto-cli">Considerations for ALTO Clients</name>
+        <section anchor="sec.rcid" numbered="true" toc="exclude" removeInRFC="false" pn="section-5.1.1">
+          <name slugifiedName="name-resource-consumer-initiated">Resource-Consumer-Initiated Discovery</name>
+          <t pn="section-5.1.1-1">Resource-consumer-initiated
+                ALTO server discovery
+                (cf. ALTO requirement AR-32 <xref target="RFC6708" format="default" sectionFormat="of" derivedContent="RFC6708"/>)
+                can be seen as a special case of
+                cross-domain ALTO server discovery.  To that end, an ALTO
+                client embedded in a resource consumer would have to
+                perform the ALTO Cross-Domain Server Discovery Procedure 
+                with its own IP address as a parameter.
+                However, due to the widespread deployment of Network Address
+                Translators (NATs), additional protocols and mechanisms such
+                as Session Traversal Utilities for NAT (STUN) <xref target="RFC5389" format="default" sectionFormat="of" derivedContent="RFC5389"/> are usually needed to
+                detect the client's "public" IP address before it can
+                be used as a parameter for the discovery procedure.
+                Note that a different approach for
+                resource-consumer-initiated ALTO server discovery,
+                which is based on DHCP, is
+                specified in
+                <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>.</t>
+        </section>
+        <section numbered="true" toc="exclude" removeInRFC="false" pn="section-5.1.2">
+          <name slugifiedName="name-ipv4-v6-dual-stack-multihom">IPv4/v6 Dual Stack, Multihoming and                 Host Mobility</name>
+          <t pn="section-5.1.2-1">The procedure specified in this document can discover
+                ALTO server URIs for a given IP address or prefix.
+                The intention is that a third party (e.g., a
+                resource directory) that receives query messages from
+                a resource consumer can use the source address in
+                these messages to discover suitable ALTO servers for this
+                specific resource consumer.</t>
+          <t pn="section-5.1.2-2">However, resource consumers (as defined in
+                <xref target="RFC5693" format="default" sectionFormat="of" section="2" derivedLink="https://rfc-editor.org/rfc/rfc5693#section-2" derivedContent="RFC5693"/>) may reside on hosts with more than
+                one IP address -- for example, due to IPv4/v6 dual stack operation
+                and/or multihoming.
+                IP packets sent with different source addresses may be
+                subject to different routing policies and path costs.  In
+                some deployment scenarios, it may even be required to ask
+                different sets of ALTO servers for guidance.
+                Furthermore, source addresses in IP packets may be modified
+                en route by Network Address Translators (NATs).
+          </t>
+          <t pn="section-5.1.2-3">If a resource consumer queries a resource directory for
+                candidate resource providers, the locally selected (and
+                possibly en-route-translated) source address of the query
+		message -- as
+                observed by the resource directory -- will become the
+                basis for the ALTO server discovery and the subsequent
+                optimization of the resource directory's reply.  If,
+                however, the resource consumer then selects different source
+                addresses to contact returned resource providers, the
+                desired better-than-random "ALTO effect" may not
+                occur.</t>
+          <t pn="section-5.1.2-4">One solution approach for this problem is that
+                a dual-stack or multihomed resource consumer could
+                always use the same address for contacting the 
+                resource directory and all resource providers, thus
+                overriding the operating system's automatic selection of
+		source IP addresses.
+		For example, when using the
+                BSD socket API, one could always bind() the socket to one of
+                the local IP addresses before trying to connect() to the
+                resource directory or the resource providers, respectively.
+                Another solution approach is to perform ALTO-influenced 
+                resource provider selection (and source-address selection)
+                locally in the resource consumer,
+                in addition to, or instead of, performing it in the resource
+                directory. See <xref target="sec.rcid" format="default" sectionFormat="of" derivedContent="Section 5.1.1"/> for
+		a discussion of
+                how to discover ALTO servers for local usage in the
+                resource consumer.</t>
+          <t pn="section-5.1.2-5">Similarly, resource
+                consumers on mobile hosts <bcp14>SHOULD</bcp14> query the resource
+                directory again after a change of IP address, in order to
+                get a list of candidate resource providers that is optimized
+                for the new IP address.
+          </t>
+        </section>
+        <section numbered="true" toc="exclude" removeInRFC="false" pn="section-5.1.3">
+          <name slugifiedName="name-interaction-with-network-ad">Interaction with Network Address Translation</name>
+          <t pn="section-5.1.3-1">The ALTO Cross-Domain Server Discovery Procedure has
+                been designed to enable the ALTO-based optimization
+                of applications such as large-scale overlay networks, that
+                span -- on the IP layer -- multiple administrative domains,
+                possibly the whole Internet. 
+                Due to the widespread usage of Network Address Translators
+                (NATs), it may well be that nodes of the overlay network
+                (i.e., resource consumers or resource providers) are located
+                behind a NAT, maybe even behind several cascaded NATs.</t>
+          <t pn="section-5.1.3-2">If a resource directory is located in the public Internet
+                (i.e., not behind a NAT) and
+                receives a message from a resource consumer behind one or
+                more NATs, the message's source address will be the
+                public IP address of the outermost NAT in front of the
+                resource consumer. The same applies if the resource
+                directory is behind a different NAT than the resource 
+                consumer. The resource directory may call the
+                ALTO Cross-Domain Server Discovery Procedure with the
+                message's source address as a parameter. In effect,
+                not the resource consumer's (private) IP address, but
+                the public IP address of the outermost NAT in front of it,
+                will be used as a basis for ALTO optimization. This will 
+                work fine as long as the network behind the NAT is not too
+                big (e.g., if the NAT is in a residential gateway).
+          </t>
+          <t pn="section-5.1.3-3">If a resource directory receives a message from a resource
+                consumer and the message's source address is a "private"
+                IP address <xref target="RFC1918" format="default" sectionFormat="of" derivedContent="RFC1918"/>, this may be a sign
+                that both of them are behind the same NAT. An invocation
+                of the ALTO Cross-Domain Server Discovery Procedure with
+                this private address may be problematic, as this will only
+                yield usable results if a DNS "split horizon" and DNSSEC
+                trust anchors are configured correctly. In this situation,
+                it may be more advisable to query an ALTO server that has
+                been discovered using <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/> or any
+                other local configuration.
+                The interaction between intradomain ALTO for
+                large private domains (e.g., behind a "carrier-grade NAT")
+                and cross-domain, Internet-wide optimization, is beyond
+                the scope of this document.
+          </t>
+        </section>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-considerations-for-network-">Considerations for Network Operators</name>
+        <section numbered="true" toc="exclude" removeInRFC="false" pn="section-5.2.1">
+          <name slugifiedName="name-flexibility-vs-load-on-the-">Flexibility vs. Load on the DNS</name>
+          <t pn="section-5.2.1-1">The ALTO Cross-Domain Server Discovery Procedure, as
+				specified in <xref target="sec.3pdisc-spec" format="default" sectionFormat="of" derivedContent="Section 3"/>, first
+                produces a list of domain names (Steps 1 and 2) and
+                then looks for relevant NAPTR records associated with 
+                these names, until a useful result can be found (Step 3).
+                The number of candidate domain names on this
+                list is a compromise between flexibility when installing
+                NAPTR records and avoiding excess load on the DNS.
+          </t>
+          <t pn="section-5.2.1-2">A single invocation of the ALTO Cross-Domain Server
+                Discovery Procedure, with an IPv6 address as a parameter, may
+                cause up to, but no more than, six DNS lookups for NAPTR
+                records. For IPv4, the maximum is four lookups.
+                Should the load on the DNS infrastructure caused by these
+                lookups become a problem, one solution approach is to
+                populate the DNS with ALTO-specific NAPTR records.
+                If such records can be found for individual IP addresses
+                (possibly installed using a wildcarding mechanism in
+                the name server) or long prefixes, the
+                procedure will terminate successfully and not perform
+                lookups for shorter prefix lengths, thus reducing the
+                total number of DNS queries.
+                Another approach for reducing the load on the DNS
+                infrastructure is to increase the TTL for caching negative
+                answers.</t>
+          <t pn="section-5.2.1-3">On the other hand, the ALTO Cross-Domain Server Discovery
+                Procedure trying to look up truncated domain names allows for
+                efficient configuration of large-scale scenarios, where
+                discovery is to be enabled for a large number of IP
+                addresses with a small number of additional DNS resource
+                records.  
+                Note that it expressly has not been a design goal of this
+                procedure to give clients a means of understanding the IP
+                prefix delegation structure. Furthermore, this specification
+                does not assume or recommend that prefix delegations should
+                preferably occur at those prefix lengths that are used
+                in Step 2 of this procedure 
+                (see <xref target="sec.3pdisc-spec-step2" format="default" sectionFormat="of" derivedContent="Section 3.3"/>).
+                A network operator that uses, for example, an IPv4 /18
+                prefix and wants to install the NAPTR records efficiently
+                could either install 64 NAPTR records (one for each of the
+                /24 prefixes contained within the /18 prefix), or they could
+                try to team up with the owners of the other fragments of the
+                enclosing /16 prefix, in order to run a common ALTO server
+                to which only one NAPTR would point.</t>
+        </section>
+        <section numbered="true" toc="exclude" removeInRFC="false" pn="section-5.2.2">
+          <name slugifiedName="name-bcp-20-and-missing-delegati">BCP 20 and Missing Delegations of the Reverse DNS</name>
+          <t pn="section-5.2.2-1"><xref target="RFC2317" format="default" sectionFormat="of" derivedContent="RFC2317"/>, also known as BCP 20,
+                describes a way to delegate the "reverse DNS" (i.e.,
+                subdomains of "in-addr.arpa.") for IPv4 address ranges
+                with fewer than 256 addresses (i.e., less than a whole
+                /24 prefix). The ALTO Cross-Domain Server Discovery Procedure
+                is compatible with this method.</t>
+          <t pn="section-5.2.2-2">In some deployment scenarios -- e.g., residential Internet
+                access -- where customers often dynamically receive a single
+                IPv4 address (and/or a small IPv6 address block) from a pool
+                of addresses, ISPs typically will not delegate the "reverse
+                DNS" to their customers. This practice makes it impossible
+                for these customers to populate the DNS with NAPTR resource
+                records that point to an ALTO server of their choice. Yet,
+                the ISP may publish NAPTR resource records in the
+                "reverse DNS" for individual addresses or larger
+                address pools (i.e., shorter prefix lengths).</t>
+          <t pn="section-5.2.2-3">While ALTO is by no means technologically tied
+                to the Border Gateway Protocol (BGP),
+                it is anticipated that BGP will be an important
+                source of information for ALTO and that the operator of the
+                outermost BGP-enabled router will have a strong incentive to
+                publish a digest of their routing policies and costs through
+                ALTO.  In contrast, an individual user or an organization
+                that has been assigned only a small address range 
+                (i.e., an IPv4 prefix with a prefix length longer than /24)
+                will typically connect to the Internet using only a single ISP,
+                and they might not be interested in publishing their
+                own ALTO information. Consequently, they might wish to leave
+                the operation of an ALTO server up to their ISP.
+                This ISP may install NAPTR resource records, which are
+                needed for the ALTO Cross-Domain Server Discovery Procedure,
+                in the subdomain of "in-addr.arpa." that corresponds to 
+                the whole /24 prefix (cf. R24 in 
+                <xref target="sec.3pdisc-spec-step2" format="default" sectionFormat="of" derivedContent="Section 3.3"/> of this document),
+                even if delegations in the style of BCP 20 or no delegations
+	  at all are in use.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="seccons" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-6-1">A high-level discussion of security issues related to ALTO
+            is part of the ALTO problem statement
+            <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/>.  A classification of unwanted
+            information disclosure risks, as well as specific
+            security-related requirements, can be found in the ALTO
+            requirements document <xref target="RFC6708" format="default" sectionFormat="of" derivedContent="RFC6708"/>.
+      </t>
+      <t pn="section-6-2">The remainder of this section focuses on security threats
+            and protection mechanisms for the Cross-Domain ALTO Server Discovery
+            Procedure as such.  Once the ALTO server's URI has been
+            discovered, and the communication between the ALTO client and
+            the ALTO server starts, the security threats and protection
+            mechanisms discussed in the ALTO protocol specification
+            <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/> apply.
+      </t>
+      <section anchor="sec.sec.integrity" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-integrity-of-the-alto-serve">Integrity of the ALTO Server's URI</name>
+        <dl newline="true" spacing="normal" pn="section-6.1-1">
+          <dt pn="section-6.1-1.1">Scenario Description</dt>
+          <dd pn="section-6.1-1.2">
+            An attacker could compromise the ALTO server
+            discovery procedure or the underlying infrastructure
+            in such a way that ALTO clients would discover a "wrong"
+            ALTO server URI.
+          </dd>
+          <dt pn="section-6.1-1.3">Threat Discussion</dt>
+          <dd pn="section-6.1-1.4">
+            The Cross-Domain ALTO Server Discovery Procedure
+            relies on a series of DNS lookups, in order to
+            produce one or more URIs.
+            If an attacker were able to modify or spoof any of
+            the DNS records, the resulting
+            URIs could be replaced by forged URIs.
+            This is probably the most serious security
+            concern related to ALTO server discovery. The
+            discovered "wrong" ALTO server might not be able
+            to give guidance to a given ALTO client at all,
+            or it might give suboptimal or forged
+            information. In the latter case, an attacker
+            could try to use ALTO to affect the traffic
+            distribution in the network or the performance
+            of applications (see also
+            <xref target="RFC7285" format="default" sectionFormat="of" section="15.1" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.1" derivedContent="RFC7285"/>).
+            Furthermore, a hostile ALTO server could
+            threaten user privacy (see also Case (5a) in <xref target="RFC6708" sectionFormat="of" section="5.2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6708#section-5.2.1" derivedContent="RFC6708"/>).
+          </dd>
+          <dt pn="section-6.1-1.5">Protection Strategies and Mechanisms</dt>
+          <dd pn="section-6.1-1.6">                       
+            The application of DNS security (DNSSEC)
+            <xref target="RFC4033" format="default" sectionFormat="of" derivedContent="RFC4033"/> provides a means of
+            detecting and averting attacks that rely on modification
+            of the DNS records while in transit. All
+            implementations of the Cross-Domain ALTO Server
+            Discovery Procedure <bcp14>MUST</bcp14> support DNSSEC or be able to
+            use such functionality provided by the underlying
+            operating system. Network operators that publish
+            U-NAPTR resource records to be used for the
+            Cross-Domain ALTO Server Discovery Procedure
+            <bcp14>SHOULD</bcp14> use DNSSEC to protect their subdomains
+            of "in-addr.arpa." and/or "ip6.arpa.", respectively.
+            Additional operational precautions for safely operating
+            the DNS infrastructure are required in order
+            to ensure that name servers do not sign forged
+            (or otherwise "wrong") resource records.
+            Security considerations specific to U-NAPTR are
+            described in more detail in <xref target="RFC4848" format="default" sectionFormat="of" derivedContent="RFC4848"/>.
+          </dd>
+          <dt pn="section-6.1-1.7"/>
+          <dd pn="section-6.1-1.8">
+            In addition to active protection mechanisms,
+            users and network operators can monitor
+            application performance and network traffic
+            patterns for poor performance or
+            abnormalities.  If it turns out that relying on
+            the guidance of a specific ALTO server does not
+            result in better-than-random results, the usage
+            of the ALTO server may be discontinued (see also
+            <xref target="RFC7285" format="default" sectionFormat="of" section="15.2" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.2" derivedContent="RFC7285"/>).
+          </dd>
+          <dt pn="section-6.1-1.9">Note</dt>
+          <dd pn="section-6.1-1.10">
+            <t pn="section-6.1-1.10.1">
+            The Cross-Domain ALTO Server Discovery Procedure
+            finishes successfully when it has discovered one
+            or more URIs. Once an ALTO server's URI has been
+            discovered and the communication between the ALTO
+            client and the ALTO server starts, the security
+            threats and protection mechanisms discussed in the
+            ALTO protocol specification <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>
+            apply.</t>
+            <t pn="section-6.1-1.10.2">
+            A threat related to the one considered above is the
+            impersonation of an ALTO server after its correct
+            URI has been discovered.  This threat and protection
+            strategies are discussed in
+            <xref target="RFC7285" format="default" sectionFormat="of" section="15.1" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.1" derivedContent="RFC7285"/>.
+	    
+            The ALTO protocol's primary mechanism for protecting
+            authenticity and integrity (as well as confidentiality)
+            is the use of
+            HTTPS-based transport -- i.e., HTTP over TLS
+            <xref target="RFC2818" format="default" sectionFormat="of" derivedContent="RFC2818"/>.
+	    
+            Typically, when the URI's host component is a host
+            name, a further DNS lookup is needed to map it to an
+            IP address before the communication with the server
+            can begin.  This last DNS lookup (for A or AAAA
+            resource records) does not necessarily have to be
+            protected by DNSSEC, as the server identity checks
+            specified in <xref target="RFC2818" format="default" sectionFormat="of" derivedContent="RFC2818"/> are able to
+            detect DNS spoofing or similar attacks after the
+            connection to the (possibly wrong) host has been 
+            established.  
+            However, this validation, which is based on the
+            server certificate, can only protect the steps that
+            occur after the server URI has been discovered.
+            It cannot detect attacks against the authenticity
+            of the U-NAPTR lookups needed for the
+            Cross-Domain ALTO Server Discovery Procedure,
+            and therefore, these resource records have to
+            be secured using DNSSEC.</t>
+          </dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-availability-of-the-alto-se">Availability of the ALTO Server Discovery Procedure</name>
+        <dl newline="true" spacing="normal" pn="section-6.2-1">
+          <dt pn="section-6.2-1.1">Scenario Description</dt>
+          <dd pn="section-6.2-1.2">
+            An attacker could compromise the Cross-Domain ALTO
+            Server Discovery Procedure or the underlying
+            infrastructure in such a way that ALTO clients would not
+            be able to discover any ALTO server.
+          </dd>
+          <dt pn="section-6.2-1.3">Threat Discussion</dt>
+          <dd pn="section-6.2-1.4">
+            If no ALTO server can be discovered (although a
+            suitable one exists), applications have to make
+            their decisions without ALTO guidance. As ALTO
+            could be temporarily unavailable for many
+            reasons, applications must be prepared to do so.
+            However, the resulting application performance
+            and traffic distribution will correspond to a
+            deployment scenario without ALTO.
+          </dd>
+          <dt pn="section-6.2-1.5">Protection Strategies and Mechanisms</dt>
+          <dd pn="section-6.2-1.6">
+            Operators should follow best current practices
+            to secure their DNS and ALTO servers (see
+            <xref target="RFC7285" format="default" sectionFormat="of" section="15.5" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.5" derivedContent="RFC7285"/>)
+            against Denial-of-Service (DoS) attacks.
+          </dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-confidentiality-of-the-alto">Confidentiality of the ALTO Server's URI</name>
+        <dl newline="true" spacing="normal" pn="section-6.3-1">
+          <dt pn="section-6.3-1.1">Scenario Description</dt>
+          <dd pn="section-6.3-1.2">
+            An unauthorized party could invoke the Cross-Domain ALTO
+            Server Discovery Procedure or intercept
+            discovery messages between an authorized ALTO
+            client and the DNS servers, in order to
+            acquire knowledge of the ALTO server URI for
+            a specific IP address.
+          </dd>
+          <dt pn="section-6.3-1.3">Threat Discussion</dt>
+          <dd pn="section-6.3-1.4">
+                        In the ALTO use cases that have been described
+                        in the ALTO problem statement
+                        <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/> and/or discussed in the
+                        ALTO working group, the ALTO server's URI as
+                        such has always been considered as public
+                        information that does not need protection of
+                        confidentiality.
+                    </dd>
+          <dt pn="section-6.3-1.5">Protection Strategies and Mechanisms</dt>
+          <dd pn="section-6.3-1.6">
+                        No protection mechanisms for this scenario have
+                        been provided, as it has not been identified as
+                        a relevant threat. However, if a new use case is
+                        identified that requires this kind of
+                        protection, the suitability of this ALTO server
+                        discovery procedure as well as possible security
+                        extensions have to be re-evaluated thoroughly.
+                    </dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-privacy-for-alto-clients">Privacy for ALTO Clients</name>
+        <dl newline="true" spacing="normal" pn="section-6.4-1">
+          <dt pn="section-6.4-1.1">Scenario Description</dt>
+          <dd pn="section-6.4-1.2">
+                        An unauthorized party could eavesdrop on the
+                        messages between an ALTO client and the
+                        DNS servers and thereby find out the fact that
+                        said ALTO client uses (or at least tries to use)
+                        the ALTO service in order to optimize traffic
+                        from/to a specific IP address.
+                    </dd>
+          <dt pn="section-6.4-1.3">Threat Discussion</dt>
+          <dd pn="section-6.4-1.4">
+                        In the ALTO use cases that have been described
+                        in the ALTO problem statement
+                        <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/> and/or discussed in the
+                        ALTO working group, this scenario has not been
+                        identified as a relevant threat. However,
+                        pervasive surveillance <xref target="RFC7624" format="default" sectionFormat="of" derivedContent="RFC7624"/>
+                        and DNS privacy considerations <xref target="RFC7626" format="default" sectionFormat="of" derivedContent="RFC7626"/>
+                        have seen significant attention in the Internet
+                        community in recent years.
+                    </dd>
+          <dt pn="section-6.4-1.5">Protection Strategies and Mechanisms</dt>
+          <dd pn="section-6.4-1.6">
+                        DNS over TLS <xref target="RFC7858" format="default" sectionFormat="of" derivedContent="RFC7858"/> and
+                        DNS over HTTPS <xref target="RFC8484" format="default" sectionFormat="of" derivedContent="RFC8484"/> provide
+                        means for protecting confidentiality (and integrity)
+                        of DNS traffic between a client (stub) and its 
+                        recursive name servers, including DNS queries
+                        and replies caused by the ALTO Cross-Domain 
+                        Server Discovery Procedure.
+                    </dd>
+        </dl>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-7-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.kiesel-alto-alto4alto" to="ALTO4ALTO"/>
+    <displayreference target="I-D.kiesel-alto-ip-based-srv-disc" to="ALTO-ANYCAST"/>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t>This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3403" target="https://www.rfc-editor.org/info/rfc3403" quoteTitle="true" derivedAnchor="RFC3403">
+          <front>
+            <title>Dynamic Delegation Discovery System (DDDS) Part Three: The Domain Name System (DNS) Database</title>
+            <author initials="M." surname="Mealling" fullname="M. Mealling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2002" month="October"/>
+            <abstract>
+              <t>This document describes a Dynamic Delegation Discovery System (DDDS) Database using the Domain Name System (DNS) as a distributed database of Rules.  The Keys are domain-names and the Rules are encoded using the Naming Authority Pointer (NAPTR) Resource Record (RR). Since this document obsoletes RFC 2915, it is the official specification for the NAPTR DNS Resource Record.  It is also part of a series that is completely specified in "Dynamic Delegation Discovery System (DDDS) Part One: The Comprehensive DDDS" (RFC 3401).  It is very important to note that it is impossible to read and understand any document in this series without reading the others.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3403"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3403"/>
+        </reference>
+        <reference anchor="RFC3596" target="https://www.rfc-editor.org/info/rfc3596" quoteTitle="true" derivedAnchor="RFC3596">
+          <front>
+            <title>DNS Extensions to Support IP Version 6</title>
+            <author initials="S." surname="Thomson" fullname="S. Thomson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Huitema" fullname="C. Huitema">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Ksinant" fullname="V. Ksinant">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Souissi" fullname="M. Souissi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="October"/>
+            <abstract>
+              <t>This document defines the changes that need to be made to the Domain Name System (DNS) to support hosts running IP version 6 (IPv6).  The changes include a resource record type to store an IPv6 address, a domain to support lookups based on an IPv6 address, and updated definitions of existing query types that return Internet addresses as part of additional section processing.  The extensions are designed to be compatible with existing applications and, in particular, DNS implementations themselves.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="88"/>
+          <seriesInfo name="RFC" value="3596"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3596"/>
+        </reference>
+        <reference anchor="RFC4848" target="https://www.rfc-editor.org/info/rfc4848" quoteTitle="true" derivedAnchor="RFC4848">
+          <front>
+            <title>Domain-Based Application Service Location Using URIs and the Dynamic Delegation Discovery Service (DDDS)</title>
+            <author initials="L." surname="Daigle" fullname="L. Daigle">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="April"/>
+            <abstract>
+              <t>The purpose of this document is to define a new, straightforward Dynamic Delegation Discovery Service (DDDS) application to allow mapping of domain names to URIs for particular application services and protocols.  Although defined as a new DDDS application, dubbed U-NAPTR, this is effectively an extension of the Straightforward NAPTR (S-NAPTR) DDDS Application.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4848"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4848"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.kiesel-alto-ip-based-srv-disc" quoteTitle="true" target="https://tools.ietf.org/html/draft-kiesel-alto-ip-based-srv-disc-03" derivedAnchor="ALTO-ANYCAST">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Anycast Address</title>
+            <author initials="S" surname="Kiesel" fullname="Sebastian Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R" surname="Penno" fullname="Reinaldo Penno">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="July" day="1" year="2014"/>
+            <abstract>
+              <t>The goal of Application-Layer Traffic Optimization (ALTO) is to provide guidance to applications that have to select one or several hosts from a set of candidates capable of providing a desired resource.  ALTO is realized by a client-server protocol.  This document establishes a well-known IP address for the ALTO service and specifies how ALTO clients embedded in the resource consumer can use it to access the ALTO service.  Terminology and Requirements Language  This document makes use of the ALTO terminology defined in RFC 5693 [RFC5693].</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-kiesel-alto-ip-based-srv-disc-03"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-kiesel-alto-ip-based-srv-disc-03.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.kiesel-alto-alto4alto" quoteTitle="true" target="https://tools.ietf.org/html/draft-kiesel-alto-alto4alto-00" derivedAnchor="ALTO4ALTO">
+          <front>
+            <title>Using ALTO for ALTO server selection</title>
+            <author initials="S" surname="Kiesel" fullname="Sebastian Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="July" day="5" year="2010"/>
+            <abstract>
+              <t>The goal of Application-Layer Traffic Optimization (ALTO) is to provide guidance to applications, which have to select one or several hosts from a set of candidates that are able to provide a desired resource.  Entities seeking guidance need to discover and possibly select an ALTO server to ask.  This document proposes an ALTO-based scheme to select an ALTO server that can give guidance to a given ALTO client.  Unlike some other proposed ALTO discovery mechanisms, this solution works well if the client seeks guidance from a set of ALTO servers that are operated by an entity which is not the operator of the access network.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-kiesel-alto-alto4alto-00"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-kiesel-alto-alto4alto-00.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC1918" target="https://www.rfc-editor.org/info/rfc1918" quoteTitle="true" derivedAnchor="RFC1918">
+          <front>
+            <title>Address Allocation for Private Internets</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Moskowitz" fullname="B. Moskowitz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Karrenberg" fullname="D. Karrenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G. J." surname="de Groot" fullname="G. J. de Groot">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lear" fullname="E. Lear">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1996" month="February"/>
+            <abstract>
+              <t>This document describes address allocation for private internets.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="5"/>
+          <seriesInfo name="RFC" value="1918"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1918"/>
+        </reference>
+        <reference anchor="RFC2317" target="https://www.rfc-editor.org/info/rfc2317" quoteTitle="true" derivedAnchor="RFC2317">
+          <front>
+            <title>Classless IN-ADDR.ARPA delegation</title>
+            <author initials="H." surname="Eidnes" fullname="H. Eidnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="de Groot" fullname="G. de Groot">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="March"/>
+            <abstract>
+              <t>This document describes a way to do IN-ADDR.ARPA delegation on non-octet boundaries for address spaces covering fewer than 256 addresses.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="20"/>
+          <seriesInfo name="RFC" value="2317"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2317"/>
+        </reference>
+        <reference anchor="RFC2818" target="https://www.rfc-editor.org/info/rfc2818" quoteTitle="true" derivedAnchor="RFC2818">
+          <front>
+            <title>HTTP Over TLS</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="May"/>
+            <abstract>
+              <t>This memo describes how to use Transport Layer Security (TLS) to secure Hypertext Transfer Protocol (HTTP) connections over the Internet.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2818"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2818"/>
+        </reference>
+        <reference anchor="RFC4033" target="https://www.rfc-editor.org/info/rfc4033" quoteTitle="true" derivedAnchor="RFC4033">
+          <front>
+            <title>DNS Security Introduction and Requirements</title>
+            <author initials="R." surname="Arends" fullname="R. Arends">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Larson" fullname="M. Larson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Massey" fullname="D. Massey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Rose" fullname="S. Rose">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="March"/>
+            <abstract>
+              <t>The Domain Name System Security Extensions (DNSSEC) add data origin authentication and data integrity to the Domain Name System.  This document introduces these extensions and describes their capabilities and limitations.  This document also discusses the services that the DNS security extensions do and do not provide.  Last, this document describes the interrelationships between the documents that collectively describe DNSSEC.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4033"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4033"/>
+        </reference>
+        <reference anchor="RFC4291" target="https://www.rfc-editor.org/info/rfc4291" quoteTitle="true" derivedAnchor="RFC4291">
+          <front>
+            <title>IP Version 6 Addressing Architecture</title>
+            <author initials="R." surname="Hinden" fullname="R. Hinden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="February"/>
+            <abstract>
+              <t>This specification defines the addressing architecture of the IP Version 6 (IPv6) protocol.  The document includes the IPv6 addressing model, text representations of IPv6 addresses, definition of IPv6 unicast addresses, anycast addresses, and multicast addresses, and an IPv6 node's required addresses.</t>
+              <t>This document obsoletes RFC 3513, "IP Version 6 Addressing Architecture".   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4291"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4291"/>
+        </reference>
+        <reference anchor="RFC4632" target="https://www.rfc-editor.org/info/rfc4632" quoteTitle="true" derivedAnchor="RFC4632">
+          <front>
+            <title>Classless Inter-domain Routing (CIDR): The Internet Address Assignment and Aggregation Plan</title>
+            <author initials="V." surname="Fuller" fullname="V. Fuller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Li" fullname="T. Li">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="August"/>
+            <abstract>
+              <t>This memo discusses the strategy for address assignment of the existing 32-bit IPv4 address space with a view toward conserving the address space and limiting the growth rate of global routing state. This document obsoletes the original Classless Inter-domain Routing (CIDR) spec in RFC 1519, with changes made both to clarify the concepts it introduced and, after more than twelve years, to update the Internet community on the results of deploying the technology described.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="122"/>
+          <seriesInfo name="RFC" value="4632"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4632"/>
+        </reference>
+        <reference anchor="RFC5389" target="https://www.rfc-editor.org/info/rfc5389" quoteTitle="true" derivedAnchor="RFC5389">
+          <front>
+            <title>Session Traversal Utilities for NAT (STUN)</title>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Mahy" fullname="R. Mahy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Matthews" fullname="P. Matthews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Wing" fullname="D. Wing">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="October"/>
+            <abstract>
+              <t>Session Traversal Utilities for NAT (STUN) is a protocol that serves as a tool for other protocols in dealing with Network Address Translator (NAT) traversal.  It can be used by an endpoint to determine the IP address and port allocated to it by a NAT.  It can also be used to check connectivity between two endpoints, and as a keep-alive protocol to maintain NAT bindings.  STUN works with many existing NATs, and does not require any special behavior from them.</t>
+              <t>STUN is not a NAT traversal solution by itself.  Rather, it is a tool to be used in the context of a NAT traversal solution.  This is an important change from the previous version of this specification (RFC 3489), which presented STUN as a complete solution.</t>
+              <t>This document obsoletes RFC 3489.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5389"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5389"/>
+        </reference>
+        <reference anchor="RFC5693" target="https://www.rfc-editor.org/info/rfc5693" quoteTitle="true" derivedAnchor="RFC5693">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Problem Statement</title>
+            <author initials="J." surname="Seedorf" fullname="J. Seedorf">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Burger" fullname="E. Burger">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="October"/>
+            <abstract>
+              <t>Distributed applications -- such as file sharing, real-time communication, and live and on-demand media streaming -- prevalent on the Internet use a significant amount of network resources.  Such applications often transfer large amounts of data through connections established between nodes distributed across the Internet with little knowledge of the underlying network topology.  Some applications are so designed that they choose a random subset of peers from a larger set with which to exchange data.  Absent any topology information guiding such choices, or acting on suboptimal or local information obtained from measurements and statistics, these applications often make less than desirable choices.</t>
+              <t>This document discusses issues related to an information-sharing service that enables applications to perform better-than-random peer selection.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5693"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5693"/>
+        </reference>
+        <reference anchor="RFC6708" target="https://www.rfc-editor.org/info/rfc6708" quoteTitle="true" derivedAnchor="RFC6708">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Requirements</title>
+            <author initials="S." surname="Kiesel" fullname="S. Kiesel" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Previdi" fullname="S. Previdi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Stiemerling" fullname="M. Stiemerling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Woundy" fullname="R. Woundy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Yang" fullname="Y. Yang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="September"/>
+            <abstract>
+              <t>Many Internet applications are used to access resources, such as pieces of information or server processes that are available in several equivalent replicas on different hosts.  This includes, but is not limited to, peer-to-peer file sharing applications.  The goal of Application-Layer Traffic Optimization (ALTO) is to provide guidance to applications that have to select one or several hosts from a set of candidates capable of providing a desired resource. This guidance shall be based on parameters that affect performance and efficiency of the data transmission between the hosts, e.g., the topological distance.  The ultimate goal is to improve performance or Quality of Experience in the application while reducing the utilization of the underlying network infrastructure.</t>
+              <t>This document enumerates requirements for specifying, assessing, or comparing protocols and implementations.  This document is not an  Internet Standards Track specification; it is published for  informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6708"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6708"/>
+        </reference>
+        <reference anchor="RFC7216" target="https://www.rfc-editor.org/info/rfc7216" quoteTitle="true" derivedAnchor="RFC7216">
+          <front>
+            <title>Location Information Server (LIS) Discovery Using IP Addresses and Reverse DNS</title>
+            <author initials="M." surname="Thomson" fullname="M. Thomson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bellis" fullname="R. Bellis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="April"/>
+            <abstract>
+              <t>The residential gateway is a device that has become an integral part of home networking equipment.  Discovering a Location Information Server (LIS) is a necessary part of acquiring location information for location-based services.  However, discovering a LIS when a residential gateway is present poses a configuration challenge, requiring a method that is able to work around the obstacle presented by the gateway.</t>
+              <t>This document describes a solution to this problem.  The solution provides alternative domain names as input to the LIS discovery process based on the network addresses assigned to a Device.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7216"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7216"/>
+        </reference>
+        <reference anchor="RFC7285" target="https://www.rfc-editor.org/info/rfc7285" quoteTitle="true" derivedAnchor="RFC7285">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Protocol</title>
+            <author initials="R." surname="Alimi" fullname="R. Alimi" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Penno" fullname="R. Penno" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Yang" fullname="Y. Yang" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kiesel" fullname="S. Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Previdi" fullname="S. Previdi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Roome" fullname="W. Roome">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Shalunov" fullname="S. Shalunov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Woundy" fullname="R. Woundy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="September"/>
+            <abstract>
+              <t>Applications using the Internet already have access to some topology information of Internet Service Provider (ISP) networks.  For example, views to Internet routing tables at Looking Glass servers are available and can be practically downloaded to many network application clients.  What is missing is knowledge of the underlying network topologies from the point of view of ISPs.  In other words, what an ISP prefers in terms of traffic optimization -- and a way to distribute it.</t>
+              <t>The Application-Layer Traffic Optimization (ALTO) services defined in this document provide network information (e.g., basic network location structure and preferences of network paths) with the goal of modifying network resource consumption patterns while maintaining or improving application performance.  The basic information of ALTO is based on abstract maps of a network.  These maps provide a simplified view, yet enough information about a network for applications to effectively utilize them.  Additional services are built on top of the maps.</t>
+              <t>This document describes a protocol implementing the ALTO services. Although the ALTO services would primarily be provided by ISPs, other entities, such as content service providers, could also provide ALTO services.  Applications that could use the ALTO services are those that have a choice to which end points to connect.  Examples of such applications are peer-to-peer (P2P) and content delivery networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7285"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7285"/>
+        </reference>
+        <reference anchor="RFC7286" target="https://www.rfc-editor.org/info/rfc7286" quoteTitle="true" derivedAnchor="RFC7286">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Server Discovery</title>
+            <author initials="S." surname="Kiesel" fullname="S. Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Stiemerling" fullname="M. Stiemerling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Schwan" fullname="N. Schwan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Scharf" fullname="M. Scharf">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Song" fullname="H. Song">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="November"/>
+            <abstract>
+              <t>The goal of Application-Layer Traffic Optimization (ALTO) is to provide guidance to applications that have to select one or several hosts from a set of candidates capable of providing a desired resource.  ALTO is realized by a client-server protocol.  Before an ALTO client can ask for guidance, it needs to discover one or more ALTO servers.</t>
+              <t>This document specifies a procedure for resource-consumer-initiated ALTO server discovery, which can be used if the ALTO client is embedded in the resource consumer.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7286"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7286"/>
+        </reference>
+        <reference anchor="RFC7624" target="https://www.rfc-editor.org/info/rfc7624" quoteTitle="true" derivedAnchor="RFC7624">
+          <front>
+            <title>Confidentiality in the Face of Pervasive Surveillance: A Threat Model and Problem Statement</title>
+            <author initials="R." surname="Barnes" fullname="R. Barnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Schneier" fullname="B. Schneier">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Jennings" fullname="C. Jennings">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Hardie" fullname="T. Hardie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Trammell" fullname="B. Trammell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Huitema" fullname="C. Huitema">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Borkmann" fullname="D. Borkmann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t>Since the initial revelations of pervasive surveillance in 2013, several classes of attacks on Internet communications have been discovered.  In this document, we develop a threat model that describes these attacks on Internet confidentiality.  We assume an attacker that is interested in undetected, indiscriminate eavesdropping.  The threat model is based on published, verified attacks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7624"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7624"/>
+        </reference>
+        <reference anchor="RFC7626" target="https://www.rfc-editor.org/info/rfc7626" quoteTitle="true" derivedAnchor="RFC7626">
+          <front>
+            <title>DNS Privacy Considerations</title>
+            <author initials="S." surname="Bortzmeyer" fullname="S. Bortzmeyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t>This document describes the privacy issues associated with the use of the DNS by Internet users.  It is intended to be an analysis of the present situation and does not prescribe solutions.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7626"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7626"/>
+        </reference>
+        <reference anchor="RFC7858" target="https://www.rfc-editor.org/info/rfc7858" quoteTitle="true" derivedAnchor="RFC7858">
+          <front>
+            <title>Specification for DNS over Transport Layer Security (TLS)</title>
+            <author initials="Z." surname="Hu" fullname="Z. Hu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Zhu" fullname="L. Zhu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Heidemann" fullname="J. Heidemann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Mankin" fullname="A. Mankin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Wessels" fullname="D. Wessels">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="May"/>
+            <abstract>
+              <t>This document describes the use of Transport Layer Security (TLS) to provide privacy for DNS.  Encryption provided by TLS eliminates opportunities for eavesdropping and on-path tampering with DNS queries in the network, such as discussed in RFC 7626.  In addition, this document specifies two usage profiles for DNS over TLS and provides advice on performance considerations to minimize overhead from using TCP and TLS with DNS.</t>
+              <t>This document focuses on securing stub-to-recursive traffic, as per the charter of the DPRIVE Working Group.  It does not prevent future applications of the protocol to recursive-to-authoritative traffic.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7858"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7858"/>
+        </reference>
+        <reference anchor="RFC7971" target="https://www.rfc-editor.org/info/rfc7971" quoteTitle="true" derivedAnchor="RFC7971">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Deployment Considerations</title>
+            <author initials="M." surname="Stiemerling" fullname="M. Stiemerling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kiesel" fullname="S. Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Scharf" fullname="M. Scharf">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Seidel" fullname="H. Seidel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Previdi" fullname="S. Previdi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="October"/>
+            <abstract>
+              <t>Many Internet applications are used to access resources such as pieces of information or server processes that are available in several equivalent replicas on different hosts.  This includes, but is not limited to, peer-to-peer file sharing applications.  The goal of Application-Layer Traffic Optimization (ALTO) is to provide guidance to applications that have to select one or several hosts from a set of candidates capable of providing a desired resource. This memo discusses deployment-related issues of ALTO.  It addresses different use cases of ALTO such as peer-to-peer file sharing and Content Delivery Networks (CDNs) and presents corresponding examples. The document also includes recommendations for network administrators and application designers planning to deploy ALTO, such as recommendations on how to generate ALTO map information.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7971"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7971"/>
+        </reference>
+        <reference anchor="RFC8484" target="https://www.rfc-editor.org/info/rfc8484" quoteTitle="true" derivedAnchor="RFC8484">
+          <front>
+            <title>DNS Queries over HTTPS (DoH)</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="McManus" fullname="P. McManus">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="October"/>
+            <abstract>
+              <t>This document defines a protocol for sending DNS queries and getting DNS responses over HTTPS.  Each DNS query-response pair is mapped into an HTTP exchange.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8484"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8484"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="sec.multiplesources" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-solution-approaches-for-par">Solution Approaches for Partitioned ALTO Knowledge</name>
+      <t pn="section-appendix.a-1">
+            The ALTO base protocol document <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>
+            specifies the communication between an ALTO client and a
+            single ALTO server. It is implicitly assumed that this
+            server can answer any query, possibly with some kind of
+            default value if no exact data is known. No special
+            provisions were made for the case that the ALTO information
+            originates from multiple sources, which are possibly under
+            the control of different administrative entities (e.g.,
+            different ISPs) or that the overall ALTO information is
+            partitioned and stored on several ALTO servers.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.1">
+        <name slugifiedName="name-classification-of-solution-">Classification of Solution Approaches</name>
+        <t pn="section-a.1-1">
+                Various protocol extensions and other solutions have been
+                proposed to deal with multiple information sources and
+                partitioned knowledge.  They can be classified as follows:
+
+        </t>
+        <ol spacing="normal" start="1" type="1" pn="section-a.1-2">
+          <li pn="section-a.1-2.1" derivedCounter="1.">
+            <t pn="section-a.1-2.1.1">
+    Ensure that all ALTO servers have the same
+    knowledge.</t>
+            <ol type="1.%d" spacing="normal" start="1" pn="section-a.1-2.1.2">
+              <li pn="section-a.1-2.1.2.1" derivedCounter="1.1">
+    Ensure data replication and synchronization
+    within the provisioning protocol (cf. <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/>, Figure 1).
+      </li>
+              <li pn="section-a.1-2.1.2.2" derivedCounter="1.2">
+    Use an inter-ALTO-server data replication
+    protocol.  Possibly, the ALTO protocol itself --
+    maybe with some extensions -- could be used for
+    that purpose; however, this has not been studied
+    in detail so far.
+      </li>
+            </ol>
+          </li>
+          <li pn="section-a.1-2.2" derivedCounter="2.">
+            <t pn="section-a.1-2.2.1">
+    Accept that different ALTO servers (possibly
+    operated by different organizations, e.g., ISPs)
+    do not have the same knowledge.</t>
+            <ol type="2.%d" spacing="normal" start="1" pn="section-a.1-2.2.2">
+              <li pn="section-a.1-2.2.2.1" derivedCounter="2.1">
+      Allow ALTO clients to send arbitrary queries to
+      any ALTO server (e.g., the one discovered using
+      <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>).  If this server
+      cannot answer the query itself, it will fetch
+      the data on behalf of the client, using the ALTO
+      protocol or a to-be-defined inter-ALTO-server
+      request forwarding protocol.
+    </li>
+              <li pn="section-a.1-2.2.2.2" derivedCounter="2.2">
+      Allow ALTO clients to send arbitrary queries to
+      any ALTO server (e.g., the one discovered using
+      <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>).  If this server
+      cannot answer the query itself, it will redirect
+      the client to the "right" ALTO server that has
+      the desired information, using a small
+      to-be-defined extension of the ALTO protocol.
+    </li>
+              <li pn="section-a.1-2.2.2.3" derivedCounter="2.3">
+      ALTO clients need to use some kind of "search
+      engine" that indexes ALTO servers and redirects
+      and/or gives cached results.
+    </li>
+              <li pn="section-a.1-2.2.2.4" derivedCounter="2.4">
+      ALTO clients need to use a new discovery mechanism
+      to discover the ALTO server that has the desired
+      information and contact it directly.
+    </li>
+            </ol>
+          </li>
+        </ol>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.2">
+        <name slugifiedName="name-discussion-of-solution-appr">Discussion of Solution Approaches</name>
+        <t pn="section-a.2-1">
+          The provisioning or initialization protocol for
+                ALTO servers
+                (cf. <xref target="RFC5693" format="default" sectionFormat="of" derivedContent="RFC5693"/>, Figure 1)
+                is currently not standardized.  It was a conscious
+                decision not to include this in the scope of the
+                IETF ALTO working group.  The reason is that there
+                are many different kinds of information sources.
+                This implementation-specific protocol will adapt them
+                to the ALTO server, which offers a standardized protocol
+                to the ALTO clients. However, adding the task of
+                synchronization between ALTO servers to this protocol
+                (i.e., Approach 1.1) would overload this protocol with a
+                second functionality that requires standardization for
+                seamless multidomain operation.
+        </t>
+        <t pn="section-a.2-2">
+   For Approaches 1.1 and 1.2, in addition to general technical
+   feasibility and issues like overhead and caching efficiency, another
+   aspect to consider is legal liability. Operator "A" might prefer not to
+                publish information about nodes in, or paths between,
+                the networks of operators "B" and "C" through A's
+                ALTO server, even if A knew that information. This is
+                not only a question of map size and processing load on
+                A's ALTO server. Operator A could also face legal
+                liability issues if that information had a bad
+                impact on the traffic engineering between B's and C's
+                networks or on their business models.
+        </t>
+        <t pn="section-a.2-3">
+                No specific actions to build a solution based on a "search
+		engine" (Approach 2.3) are currently known, and it is
+                unclear what could be the incentives to operate such an
+                engine. Therefore, this approach is not considered in the
+                remainder of this document.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.3">
+        <name slugifiedName="name-the-need-for-cross-domain-a">The Need for Cross-Domain ALTO Server Discovery</name>
+        <t pn="section-a.3-1">
+Approaches 1.1, 1.2, 2.1, and 2.2 require more than just the
+specification of an ALTO protocol extension or a new protocol that
+runs between ALTO servers. A large-scale,
+                maybe Internet-wide, multidomain deployment would also need
+                mechanisms by which an ALTO server could discover other ALTO
+                servers, learn which information is available where, and
+                ideally also who is authorized to publish information
+                related to a given part of the network.  Approach 2.4 needs
+                the same mechanisms, except that they are used on the
+                client side instead of the server side.
+        </t>
+        <t pn="section-a.3-2">
+                It is sometimes questioned whether there is a need for a
+                solution that allows clients to ask arbitrary queries, even
+                if the ALTO information is partitioned and stored on many
+                ALTO servers.  The main argument is that clients are
+                supposed to optimize the traffic from and to themselves, and
+                that the information needed for that is most likely stored
+                on a "nearby" ALTO server -- i.e., the one that can be
+                discovered using <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>.  However, there
+                are scenarios where the ALTO client is not co-located with
+                an endpoint of the to-be-optimized data transmission.
+                Instead, the ALTO client is located at a third party that
+                takes part in the application signaling -- e.g., a so-called
+                "tracker" in a peer-to-peer application. One such scenario,
+                where it is advantageous to place the ALTO client not at an
+                endpoint of the user data transmission, is analyzed in <xref target="apx.alto_p2p" format="default" sectionFormat="of" derivedContent="Appendix C"/>.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.4">
+        <name slugifiedName="name-our-solution-approach">Our Solution Approach</name>
+        <t pn="section-a.4-1">
+                Several solution approaches for cross-domain ALTO server
+                discovery have been evaluated, using the criteria
+                documented in <xref target="sec.xdom-disc-reqs" format="default" sectionFormat="of" derivedContent="Appendix B"/>.
+                One of them was to use the ALTO protocol itself for
+                the exchange of information availability
+                <xref target="I-D.kiesel-alto-alto4alto" format="default" sectionFormat="of" derivedContent="ALTO4ALTO"/>.
+                However, the drawback of that approach is that a new
+                registration administration authority would have to
+                be established.
+        </t>
+        <t pn="section-a.4-2">
+                This document specifies a DNS-based procedure for
+                cross-domain ALTO server discovery, which was inspired by
+                "Location Information Server (LIS) Discovery Using IP
+                Addresses and Reverse DNS" <xref target="RFC7216" format="default" sectionFormat="of" derivedContent="RFC7216"/>.  The
+                primary goal is that this procedure can be used on the
+                client side (i.e., Approach 2.4), but together with new
+                protocols or protocol extensions, it could also be used to
+                implement the other solution approaches itemized above.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.5">
+        <name slugifiedName="name-relation-to-the-alto-requir">Relation to the ALTO Requirements</name>
+        <t pn="section-a.5-1">During the design phase of the overall ALTO solution, two
+            different server discovery scenarios were identified and
+            documented in the ALTO requirements document
+            <xref target="RFC6708" format="default" sectionFormat="of" derivedContent="RFC6708"/>.  The first scenario,
+	    documented in
+            Req. AR-32, can be supported using the discovery mechanisms
+            specified in <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>.
+            An alternative approach, based on IP anycast
+            <xref target="I-D.kiesel-alto-ip-based-srv-disc" format="default" sectionFormat="of" derivedContent="ALTO-ANYCAST"/>,
+            has also been studied.
+            This document, in contrast, tries to address Req. AR-33.
+        </t>
+      </section>
+    </section>
+    <section anchor="sec.xdom-disc-reqs" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-requirements-for-cross-doma">Requirements for Cross-Domain Server Discovery</name>
+      <t pn="section-appendix.b-1">This appendix itemizes requirements that were
+            collected before the design phase and are reflected
+            in the design of the ALTO Cross-Domain Server Discovery Procedure.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-b.1">
+        <name slugifiedName="name-discovery-client-applicatio">Discovery Client Application Programming Interface</name>
+        <t pn="section-b.1-1">The discovery client will be called through some kind of
+            application programming interface (API), and the parameters
+            will be an IP address and, for purposes of extensibility,
+            a service identifier such as "ALTO". The client will return one or more
+            URIs that offer the requested service ("ALTO") for the given
+            IP address.
+        </t>
+        <t pn="section-b.1-2">In other words, the client would be used to retrieve a
+            mapping:</t>
+        <t pn="section-b.1-3">(IP address, "ALTO") -&gt; IRD-URI(s)</t>
+        <t pn="section-b.1-4">where IRD-URI(s) is one or more URIs of
+            Information Resource Directories
+            (IRDs, see <xref target="RFC7285" format="default" sectionFormat="of" section="9" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>)
+            of ALTO servers that can give reasonable guidance
+            to a resource consumer with the indicated IP address.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-b.2">
+        <name slugifiedName="name-data-storage-and-authority-">Data Storage and Authority Requirements</name>
+        <t pn="section-b.2-1">The information for mapping IP addresses and service
+            parameters to URIs should be stored in a -- preferably
+            distributed -- database.  It must be possible to delegate
+            administration of parts of this database.  Usually, the
+            mapping from a specific IP address to a URI is defined
+            by the authority that has administrative control over
+            this IP address -- e.g., the ISP in residential access networks
+            or the IT department in enterprise, university, or similar
+            networks.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-b.3">
+        <name slugifiedName="name-cross-domain-operations-req">Cross-Domain Operations Requirements</name>
+        <t pn="section-b.3-1">The cross-domain server discovery mechanism should
+            be designed in such a way that it works across the
+            public Internet and also in other IP-based networks.
+            This, in turn, means that such mechanisms cannot rely on
+            protocols that are not widely deployed across the Internet
+            or protocols that require special handling within
+            participating networks. An example is multicast, which
+            is not generally available across the Internet.
+        </t>
+        <t pn="section-b.3-2">The ALTO Cross-Domain Server Discovery Protocol must
+            support gradual deployment without a network-wide flag day.
+            If the mechanism needs some kind of well-known "rendezvous
+            point", reusing an existing infrastructure (such as the DNS
+            root servers or the WHOIS database) should be preferred over
+            establishing a new one.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-b.4">
+        <name slugifiedName="name-protocol-requirements">Protocol Requirements</name>
+        <t pn="section-b.4-1">The protocol must be able to operate across middleboxes,
+            especially NATs and firewalls.
+        </t>
+        <t pn="section-b.4-2">The protocol shall not require any preknowledge from
+            the client other than any information that is known to
+            a regular IP host on the Internet.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-b.5">
+        <name slugifiedName="name-further-requirements">Further Requirements</name>
+        <t pn="section-b.5-1">The ALTO cross-domain server discovery cannot assume that
+            the server-discovery client and the server-discovery
+            responding entity are under the same administrative
+            control.
+        </t>
+      </section>
+    </section>
+    <section anchor="apx.alto_p2p" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-alto-and-tracker-based-peer">ALTO and Tracker-Based Peer-to-Peer Applications</name>
+      <t pn="section-appendix.c-1">This appendix provides a complete example of using ALTO and
+        the ALTO Cross-Domain Server Discovery Procedure in one
+        specific application scenario -- namely, a tracker-based peer-to-peer
+        application. First, in 
+        <xref target="apx.alto_p2p_app" format="default" sectionFormat="of" derivedContent="Appendix C.1"/>,
+        we introduce a generic model of such an 
+        application and show why ALTO optimization is desirable. Then,
+        in <xref target="apx.alto_p2p_arch" format="default" sectionFormat="of" derivedContent="Appendix C.2"/>,
+        we introduce two architectural options for integrating ALTO
+        into the tracker-based peer-to-peer application; one option
+        is based on the "regular" ALTO server discovery 
+        procedure <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>, and one relies on the 
+        ALTO Cross-Domain Server Discovery Procedure. 
+        In <xref target="apx.alto_p2p_eval" format="default" sectionFormat="of" derivedContent="Appendix C.3"/>,
+        a simple mathematical
+        model is used to show that the latter approach is expected to
+        yield significantly better optimization results. The appendix concludes
+        with <xref target="apx.alto_p2p_example" format="default" sectionFormat="of" derivedContent="Appendix C.4"/>,
+        which details an exemplary complete walk-through of the
+        ALTO Cross-Domain Server Discovery Procedure.</t>
+      <section anchor="apx.alto_p2p_app" numbered="true" toc="include" removeInRFC="false" pn="section-c.1">
+        <name slugifiedName="name-a-generic-tracker-based-pee">A Generic Tracker-Based Peer-to-Peer Application</name>
+        <t pn="section-c.1-1">The optimization of peer-to-peer (P2P) applications such
+            as BitTorrent was one of the first use cases that lead to the
+            inception of the IETF ALTO working group.  Further use cases
+            have been identified as well, yet we will use this scenario
+            to illustrate the operation and usefulness of the
+            ALTO Cross-Domain Server Discovery Procedure.</t>
+        <t pn="section-c.1-2">For the remainder of this chapter, we consider a generic,
+            tracker-based peer-to-peer file-sharing application.
+            The goal is the dissemination of a large file, without using one
+            large server with a correspondingly high upload bandwidth.
+            The file is split into chunks. 
+            So-called "peers" assume the role of both a client and a server.
+            That is, they may request chunks from other peers, and they may
+            serve the chunks they already possess to other peers at the same
+            time, thereby contributing their upload bandwidth.
+            Peers that want to share the same file participate in a "swarm".
+            They use the peer-to-peer protocol to inform each other about
+            the availability of chunks and request and transfer chunks
+            from one peer to another.
+            A swarm may consist of a very large number of peers.
+            Consequently, peers usually maintain logical connections to only
+            a subset of all peers in the swarm.
+            If a new peer wants to join a swarm, it first contacts a
+            well-known server, the "tracker", which provides a list of IP
+            addresses of peers in the swarm.</t>
+        <t pn="section-c.1-3">A swarm is an overlay network on top of the IP network.
+            Algorithms that determine the overlay topology and the traffic
+            distribution in the overlay may consider information about
+            the underlying IP network, such as topological distance,
+            link bandwidth, (monetary) costs for sending traffic from
+            one host to another, etc.  
+            ALTO is a protocol for retrieving such information. 
+            The goal of such "topology-aware" decisions is to improve
+            performance or Quality of Experience in the application while
+            reducing the utilization of the underlying network
+            infrastructure.
+        </t>
+      </section>
+      <section anchor="apx.alto_p2p_arch" numbered="true" toc="include" removeInRFC="false" pn="section-c.2">
+        <name slugifiedName="name-architectural-options-for-p">Architectural Options for Placing the ALTO Client</name>
+        <t pn="section-c.2-1">The ALTO protocol specification <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/> details how an ALTO client
+            can query an ALTO server for guiding information and receive
+            the corresponding replies. However, in the considered
+            scenario of a tracker-based P2P application, there are two
+            fundamentally different possible locations for where to place the
+            ALTO client:
+        </t>
+        <ol spacing="normal" type="1" start="1" pn="section-c.2-2">
+          <li pn="section-c.2-2.1" derivedCounter="1.">ALTO client in the resource consumer ("peer")</li>
+          <li pn="section-c.2-2.2" derivedCounter="2.">ALTO client in the resource directory ("tracker")</li>
+        </ol>
+        <t pn="section-c.2-3">In the following, both scenarios are compared in order to
+            explain the need for ALTO queries on behalf of remote resource
+            consumers.</t>
+        <t pn="section-c.2-4">In the first scenario (see <xref target="fig.rcq" format="default" sectionFormat="of" derivedContent="Figure 2"/>), the
+            resource consumer queries the resource directory for the
+            desired resource (F1).  The resource directory returns a
+            list of potential resource providers without considering
+            ALTO (F2).  It is then the duty of the resource consumer to
+            invoke ALTO (F3/F4), in order to solicit guidance regarding
+            this list.</t>
+        <t pn="section-c.2-5">In the second scenario (see <xref target="fig.3pq" format="default" sectionFormat="of" derivedContent="Figure 4"/>),
+            the resource directory has an embedded ALTO client. After 
+            receiving a query for a given resource (F1), the resource directory
+            invokes this ALTO client to evaluate all resource providers it 
+            knows (F2/F3).  Then it returns a list, possibly shortened,
+            containing the "best" resource providers to the resource
+            consumer (F4).</t>
+        <figure anchor="fig.tracker_random_preselect" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-tracker-based-p2p-applicati">Tracker-Based P2P Application with Random Peer Preselection</name>
+          <artwork name="" type="" align="left" alt="" pn="section-c.2-6.1">
+ .............................          .............................
+ : Tracker                   :          : Peer                      :
+ :   ______                  :          :                           :
+ : +-______-+                :          :            k good         :
+ : |        |     +--------+ : P2P App. : +--------+ peers +------+ :
+ : |   N    |     | random | : Protocol : | ALTO-  |------&gt;| data | :
+ : | known  |====&gt;| pre-   |*************&gt;| biased |       | ex-  | :
+ : | peers, |     | selec- | : transmit : | peer   |------&gt;| cha- | :
+ : | M good |     | tion   | : n peer   : | select | n-k   | nge  | :
+ : +-______-+     +--------+ : IDs      : +--------+ bad p.+------+ :
+ :...........................:          :.....^.....................:
+                                              |
+                                              | ALTO protocol
+                                            __|___
+                                          +-______-+
+                                          |        |
+                                          | ALTO   |
+                                          | server |
+                                          +-______-+
+</artwork>
+        </figure>
+        <figure anchor="fig.rcq" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-basic-message-sequence-char">Basic Message Sequence Chart for Resource Consumer-Initiated ALTO Query</name>
+          <artwork name="" type="" align="left" alt="" pn="section-c.2-7.1">
+Peer w. ALTO cli.            Tracker               ALTO Server
+--------+--------       --------+--------       --------+--------
+        | F1 Tracker query      |                       |
+        |======================&gt;|                       |
+        | F2 Tracker reply      |                       |
+        |&lt;======================|                       |
+        | F3 ALTO query         |                       |
+        |----------------------------------------------&gt;|
+        | F4 ALTO reply         |                       |
+        |&lt;----------------------------------------------|
+        |                       |                       |
+
+====  Application protocol (i.e., tracker-based P2P app protocol)
+----  ALTO protocol
+</artwork>
+        </figure>
+        <figure anchor="fig.tracker_alto_client" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-tracker-based-p2p-applicatio">Tracker-Based P2P Application with ALTO Client in Tracker</name>
+          <artwork name="" type="" align="left" alt="" pn="section-c.2-8.1">
+ .............................          .............................
+ : Tracker                   :          : Peer                      :
+ :   ______                  :          :                           :
+ : +-______-+                :          :                           :
+ : |        |     +--------+ : P2P App. :  k good peers &amp;  +------+ :
+ : |   N    |     | ALTO-  | : Protocol :  n-k bad peers   | data | :
+ : | known  |====&gt;| biased |******************************&gt;| ex-  | :
+ : | peers, |     | peer   | : transmit :                  | cha- | :
+ : | M good |     | select | : n peer   :                  | nge  | :
+ : +-______-+     +--------+ : IDs      :                  +------+ :
+ :.....................^.....:          :...........................:
+                       |
+                       | ALTO protocol
+                     __|___
+                   +-______-+
+                   |        |
+                   | ALTO   |
+                   | server |
+                   +-______-+
+</artwork>
+        </figure>
+        <figure anchor="fig.3pq" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-basic-message-sequence-chart">Basic Message Sequence Chart for ALTO Query on Behalf of Remote Resource Consumer</name>
+          <artwork name="" type="" align="left" alt="" pn="section-c.2-9.1">
+      Peer             Tracker w. ALTO cli.       ALTO Server
+--------+--------       --------+--------       --------+--------
+        | F1 Tracker query      |                       |
+        |======================&gt;|                       |
+        |                       | F2 ALTO query         |
+        |                       |----------------------&gt;|
+        |                       | F3 ALTO reply         |
+        |                       |&lt;----------------------|
+        | F4 Tracker reply      |                       |
+        |&lt;======================|                       |
+        |                       |                       |
+
+====  Application protocol (i.e., tracker-based P2P app protocol)
+----  ALTO protocol
+</artwork>
+        </figure>
+        <aside pn="section-c.2-10">
+          <t pn="section-c.2-10.1">Note: The message sequences depicted in Figures <xref target="fig.rcq" format="counter" sectionFormat="of" derivedContent="2"/> and <xref target="fig.3pq" format="counter" sectionFormat="of" derivedContent="4"/> may
+	occur
+            both in the target-aware and the target-independent query
+            mode (cf. <xref target="RFC6708" format="default" sectionFormat="of" derivedContent="RFC6708"/>). In the
+            target-independent query mode, no message exchange with the
+            ALTO server might be needed after the tracker query, because
+            the candidate resource providers could be evaluated using a
+            locally cached "map", which has been retrieved from the ALTO
+            server some time ago.</t>
+        </aside>
+      </section>
+      <section anchor="apx.alto_p2p_eval" numbered="true" toc="include" removeInRFC="false" pn="section-c.3">
+        <name slugifiedName="name-evaluation">Evaluation</name>
+        <t pn="section-c.3-1">The problem with the first approach is that while the
+            resource directory might know thousands of peers taking part
+            in a swarm, the list returned to the resource consumer is
+            usually shortened for efficiency reasons. Therefore, the
+            "best" (in the sense of ALTO) potential resource providers
+            might not be contained in that list anymore, even before
+            ALTO can consider them.</t>
+        <t pn="section-c.3-2">For illustration, consider a simple model of a swarm, in
+            which all peers fall into one of only two categories: assume
+            that there are only "good" (in the sense of ALTO's
+            better-than-random peer selection, based on an arbitrary
+            desired rating criterion) and "bad" peers. Having more
+            different categories makes the math more complex but does
+            not change anything about the basic outcome of this analysis.
+            Assume that the swarm has a total number of N peers, out of
+            which there are M "good" and N-M "bad" peers, which are all known
+            to the tracker. A new peer wants to join the swarm and
+            therefore asks the tracker for a list of peers.</t>
+        <t pn="section-c.3-3">If, according to the first approach, the tracker randomly
+            picks n peers from the N known peers, the result can be
+            described with the hypergeometric distribution. The
+            probability that the tracker reply contains exactly k "good"
+            peers (and n-k "bad" peers) is:</t>
+        <artwork name="" type="" align="left" alt="" pn="section-c.3-4">
+            / M \   / N - M \
+            \ k /   \ n - k /
+P(X=k) =  ---------------------
+                  / N \
+                  \ n /
+
+
+        / n \        n!
+with    \ k /  = -----------    and   n! = n * (n-1) * (n-2) * .. * 1
+                  k! (n-k)!
+</artwork>
+        <t pn="section-c.3-5">The probability that the reply contains at most k "good"
+            peers is: P(X&lt;=k) = P(X=0) + P(X=1) + .. + P⁠(X=k).</t>
+        <t pn="section-c.3-6">For example, consider a swarm with N=10,000 peers known
+            to the tracker, out of which M=100 are "good" peers. If the
+            tracker randomly selects n=100 peers, the formula yields for
+            the reply: P⁠(X=0)=36%, P(X&lt;=4)=99%. That is, with a
+            probability of approximately 36%, this list does not contain a
+            single "good" peer, and with 99% probability, there are only
+            four or fewer of the "good" peers on the list.  Processing
+            this list with the guiding ALTO information will ensure that
+            the few favorable peers are ranked to the top of the list;
+            however, the benefit is rather limited as the number of
+            favorable peers in the list is just too small.</t>
+        <t pn="section-c.3-7">Much better traffic optimization could be achieved if the
+            tracker would evaluate all known peers using ALTO and
+            return a list of 100 peers afterwards.  This list would then
+            include a significantly higher fraction of "good"
+            peers. (Note that if the tracker returned "good" peers
+            only, there might be a risk that the swarm might disconnect
+            and split into several disjunct partitions.  However,
+            finding the right mix of ALTO-biased and random peer
+            selection is out of the scope of this document.) </t>
+        <t pn="section-c.3-8">Therefore, from an overall optimization perspective, the
+            second scenario with the ALTO client embedded in the
+            resource directory is advantageous, because it is ensured
+            that the addresses of the "best" resource providers are
+            actually delivered to the resource consumer. An
+            architectural implication of this insight is that the ALTO
+            server discovery procedures must support ALTO queries on
+            behalf of remote resource consumers.
+            That is, as the tracker issues ALTO queries on
+            behalf of the peer that contacted the tracker, the tracker
+            must be able to discover an ALTO server that can give
+            guidance suitable for that peer.
+            This task can be solved using the ALTO Cross-Domain Server 
+            Discovery Procedure.
+        </t>
+        <t pn="section-c.3-9"/>
+      </section>
+      <section anchor="apx.alto_p2p_example" numbered="true" toc="include" removeInRFC="false" pn="section-c.4">
+        <name slugifiedName="name-example">Example</name>
+        <t pn="section-c.4-1">This section provides a complete example of the
+            ALTO Cross-Domain Server Discovery Procedure in a tracker-based
+            peer-to-peer scenario.</t>
+        <t pn="section-c.4-2">The example is based on the network topology shown in 
+            <xref target="fig.example_network_topology" format="default" sectionFormat="of" derivedContent="Figure 5"/>.
+            Five access networks -- Networks a, b, c, x, and t -- are
+            operated by five different network operators. They are
+            interconnected by a backbone structure. 
+            Each network operator
+            runs an ALTO server in their network -- i.e., ALTO_SRV_A,
+            ALTO_SRV_B, ALTO_SRV_C, ALTO_SRV_X, and ALTO_SRV_T,
+            respectively.
+
+        </t>
+        <figure anchor="fig.example_network_topology" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-example-network-topology">Example Network Topology</name>
+          <artwork name="" type="" align="left" alt="" pn="section-c.4-3.1">
+     _____    __             _____    __             _____    __
+  __(     )__(  )_        __(     )__(  )_        __(     )__(  )_
+ (    Network a   )      (    Network b   )      (    Network c   )
+( Res. Provider A  )    ( Res. Provider B  )    ( Res. Provider C  )
+ (__ ALTO_SRV_A __)      (__ ALTO_SRV_B __)      (__ ALTO_SRV_C __)
+   (___)--(____) \         (___)--(____)         / (___)--(____)
+                  \           /                 /
+                ---+---------+-----------------+----
+               (              Backbone              )
+                ------------+------------------+----
+                _____    __/            _____   \__
+             __(     )__(  )_        __(     )__(  )_
+            (    Network x   )      (    Network t   )
+           ( Res. Consumer X  )    (Resource Directory)
+            (_  ALTO_SRV_X __)      (_  ALTO_SRV_T __)
+              (___)--(____)           (___)--(____)  
+</artwork>
+        </figure>
+        <t pn="section-c.4-4">A new peer of a peer-to-peer application wants to join a
+            specific swarm (overlay network), in order to access a specific
+            resource.  This new peer will be called "Resource Consumer X",
+            in accordance with the terminology of <xref target="RFC6708" format="default" sectionFormat="of" derivedContent="RFC6708"/>, and is
+            located in Network x.  It contacts the tracker ("Resource
+            Directory"), which is located in Network t. The mechanism by which
+            the new peer discovers the tracker is out of the scope of this
+            document. The tracker maintains a list of peers that take part
+            in the overlay network, and hence it can determine that
+            Resource Providers A, B, and C are candidate peers for
+            Resource Consumer X.</t>
+        <t pn="section-c.4-5">As shown in the previous section, a tracker-side ALTO 
+            optimization (cf. Figures <xref target="fig.tracker_alto_client" format="counter" sectionFormat="of" derivedContent="3"/>
+            and <xref target="fig.3pq" format="counter" sectionFormat="of" derivedContent="4"/>)
+            is more efficient than a client-side optimization.
+            Consequently, the tracker wants to use the ALTO Endpoint
+            Cost Service (ECS) to learn the routing costs between
+            X and A, X and B, and X and C, in order to sort
+            A, B, and C by their respective routing costs to X.</t>
+        <t pn="section-c.4-6">In theory, there are many options for how the
+            ALTO Cross-Domain Server Discovery Procedure could be used.
+            For example,
+            the tracker could do the following steps:
+
+</t>
+        <sourcecode type="pseudocode" markers="false" pn="section-c.4-7">
+IRD_URIS_A = XDOMDISC(A,"ALTO:https")
+COST_X_A   = query the ECS(X,A,routingcost) found in IRD_URIS_A
+
+IRD_URIS_B = XDOMDISC(B,"ALTO:https")
+COST_X_B   = query the ECS(X,B,routingcost) found in IRD_URIS_B
+
+IRD_URIS_C = XDOMDISC(C,"ALTO:https")
+COST_X_C   = query the ECS(X,C,routingcost) found in IRD_URIS_C
+</sourcecode>
+        <t pn="section-c.4-8">
+
+            In this scenario, the ALTO Cross-Domain Server Discovery Procedure 
+            queries might yield:  IRD_URIS_A = ALTO_SRV_A, 
+            IRD_URIS_B = ALTO_SRV_B, and IRD_URIS_C = ALTO_SRV_C.
+            That is, each ECS query would be sent to a different
+            ALTO server. The problem with this approach is that we are
+            not necessarily able to
+            compare COST_X_A, COST_X_B, and COST_X_C with each
+            other. The specification of the routingcost metric
+            mandates that "A lower value indicates a higher preference",
+            but "an ISP may internally compute routing cost using any method
+            that it chooses" 
+            (see <xref target="RFC7285" format="default" sectionFormat="of" section="6.1.1.1" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-6.1.1.1" derivedContent="RFC7285"/>).
+            Thus, COST_X_A could be 10 (milliseconds round-trip time), while
+            COST_X_B could be 200 (kilometers great circle distance
+            between the approximate geographic locations of the hosts)
+            and COST_X_C could
+            be 3 (router hops, corresponding to a decrease of the TTL field
+            in the IP header).  Each of these metrics fulfills the
+            "lower value is more preferable" requirement on its own, 
+            but they obviously cannot be compared with each other. Even if there were
+            a reasonable formula to compare, for example, kilometers
+            with milliseconds, we could not use it, as the units of measurement
+            (or any other information about the computation method 
+            for the routingcost) are
+            not sent along with the value in the ECS reply.</t>
+        <t pn="section-c.4-9">To avoid this problem, the tracker tries to send all
+            ECS queries to the same ALTO server. As specified
+            in <xref target="sec.ecs" format="default" sectionFormat="of" derivedContent="Section 4.4"/> of this document, Case 2, it uses
+            the IP address of Resource Consumer x as a parameter of
+            the discovery procedure:
+
+</t>
+        <sourcecode type="pseudocode" markers="false" pn="section-c.4-10">
+IRD_URIS_X = XDOMDISC(X,"ALTO:https")
+COST_X_A   = query the ECS(X,A,routingcost) found in IRD_URIS_X
+COST_X_B   = query the ECS(X,B,routingcost) found in IRD_URIS_X
+COST_X_C   = query the ECS(X,C,routingcost) found in IRD_URIS_X
+</sourcecode>
+        <t pn="section-c.4-11">
+    
+            This strategy ensures that COST_X_A, COST_X_B, and COST_X_C
+            can be compared with each other.</t>
+        <t pn="section-c.4-12"/>
+        <t pn="section-c.4-13">As discussed above, the tracker calls the ALTO Cross-Domain
+            Server Discovery Procedure with IP address X as a 
+            parameter.  For the remainder of this example, we assume 
+            that X = 2001:DB8:1:2:227:eff:fe6a:de42.  Thus, the
+            procedure call is  
+            IRD_URIS_X = XDOMDISC(2001:DB8:1:2:227:eff:fe6a:de42,"ALTO:https"). 
+        </t>
+        <t pn="section-c.4-14">The first parameter, 2001:DB8:1:2:227:eff:fe6a:de42, is a
+            single IPv6 address. Thus, we get AT = IPv6,
+            A = 2001:DB8:1:2:227:eff:fe6a:de42, L = 128, 
+            and SP = "ALTO:https".
+        </t>
+        <t pn="section-c.4-15">The procedure constructs
+            (see Step 1 in <xref target="sec.3pdisc-spec-step1" format="default" sectionFormat="of" derivedContent="Section 3.2"/>)
+        </t>
+        <sourcecode type="pseudocode" markers="false" pn="section-c.4-16">
+R128 = "2.4.E.D.A.6.E.F.F.F.E.0.7.2.2.0.2.0.0.0.1.0.0.0.
+        8.B.D.0.1.0.0.2.IP6.ARPA."
+</sourcecode>
+        <t pn="section-c.4-17">as well as the following
+            (see Step 2 in <xref target="sec.3pdisc-spec-step1" format="default" sectionFormat="of" derivedContent="Section 3.2"/>):
+        </t>
+        <sourcecode type="pseudocode" markers="false" pn="section-c.4-18">
+R64 = "2.0.0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R56 = "0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R48 = "1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA." 
+R40 = "0.0.8.B.D.0.1.0.0.2.IP6.ARPA."
+R32 = "8.B.D.0.1.0.0.2.IP6.ARPA."
+</sourcecode>
+        <t pn="section-c.4-19">In order to illustrate the third step of the
+            ALTO Cross-Domain Server Discovery Procedure, we use
+            the "dig" (domain information groper) DNS lookup utility
+            that is available for many operating systems (e.g., Linux).
+            A real implementation of the ALTO Cross-Domain Server Discovery 
+            Procedure would not be based on the "dig" utility but instead would use
+            appropriate libraries and/or operating-system APIs.
+            Please note that the following steps have been performed in a
+            controlled lab environment with an appropriately configured
+            name server. A suitable DNS configuration will be needed
+            to reproduce these results. Please also note that the rather
+            verbose output of the "dig" tool has been shortened to the
+            relevant lines.</t>
+        <t pn="section-c.4-20">Since AT = IPv6 and L = 128, in the table given
+            in <xref target="sec.3pdisc-spec-step3" format="default" sectionFormat="of" derivedContent="Section 3.4"/>, the sixth row
+            (not counting the column headers) applies.</t>
+        <t pn="section-c.4-21">As mandated by the third column, we start with a lookup
+            of R128, looking for NAPTR resource records:
+
+</t>
+        <artwork align="left" pn="section-c.4-22">
+| user@labpc:~$ dig -tNAPTR 2.4.E.D.A.6.E.F.F.F.E.0.7.2.2.0.\
+| 2.0.0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA.
+| 
+| ;; Got answer:
+| ;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NXDOMAIN, id: 26553
+| ;; flags: qr aa rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADD'L: 0
+</artwork>
+        <t pn="section-c.4-23">
+
+            The domain name R128 does not exist (status: NXDOMAIN), so we 
+            cannot get a useful result. Therefore, we continue with the
+            fourth column of the table and do a lookup of R64:
+
+</t>
+        <artwork align="left" pn="section-c.4-24">
+| user@labpc:~$ dig -tNAPTR 2.0.0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA.
+| 
+| ;; Got answer:
+| ;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 33193
+| ;; flags: qr aa rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADD'L: 0
+</artwork>
+        <t pn="section-c.4-25">
+
+            The domain name R64 could be looked up (status: NOERROR),
+            but there are no NAPTR resource records associated with it (ANSWER:
+            0). There may be some other resource records such as 
+            PTR, NS, or SOA, but we are not interested in them.
+            Thus, we do not get a useful result, and we continue with 
+            looking up R56:
+
+</t>
+        <artwork align="left" pn="section-c.4-26">
+| user@labpc:~$ dig -tNAPTR 0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA.
+| 
+| ;; Got answer:
+| ;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 35966
+| ;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 1, ADD'L: 2
+| 
+| ;; ANSWER SECTION:
+| 0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA. 604800 IN NAPTR 100 10 "u" 
+|  "LIS:HELD" "!.*!https://lis1.example.org:4802/?c=ex!" .
+| 0.0.1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA. 604800 IN NAPTR 100 20 "u"
+|  "LIS:HELD" "!.*!https://lis2.example.org:4802/?c=ex!" .
+</artwork>
+        <t pn="section-c.4-27">
+
+            The domain name R56 could be looked up, and there are 
+            NAPTR resource records associated with it. However,
+            each of these records has a service parameter that 
+            does not match our SP = "ALTO:https"
+            (see <xref target="RFC7216" format="default" sectionFormat="of" derivedContent="RFC7216"/> for "LIS:HELD"),
+            and therefore we have to ignore them.
+            Consequently, we still do not have a useful result and
+            continue with a lookup of R48:
+        
+</t>
+        <artwork align="left" pn="section-c.4-28">
+| user@labpc:~$ dig -tNAPTR 1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA.
+| 
+| ;; Got answer:
+| ;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 50459
+| ;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 1, ADD'L: 2
+| 
+| ;; ANSWER SECTION:
+| 1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA. 604800 IN NAPTR 100 10 "u"
+|  "ALTO:https" "!.*!https://alto1.example.net/ird!" .
+| 1.0.0.0.8.B.D.0.1.0.0.2.IP6.ARPA. 604800 IN NAPTR 100 10 "u"
+|  "LIS:HELD" "!.*!https://lis.example.net:4802/?c=ex!" .
+</artwork>
+        <t pn="section-c.4-29">
+
+            This lookup yields two NAPTR resource records. We have
+            to ignore the second one as its service parameter does
+            not match our SP, but the first NAPTR resource record has
+            a matching service parameter. Therefore, the procedure
+            terminates successfully and the final outcome is:
+            IRD_URIS_X = "https://alto1.example.net/ird".
+        </t>
+        <t pn="section-c.4-30">The ALTO client that is embedded in the tracker will
+            access the ALTO Information Resource Directory 
+            (IRD, see <xref target="RFC7285" format="default" sectionFormat="of" section="9" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-9" derivedContent="RFC7285"/>)
+            at this URI, look for the Endpoint Cost Service
+            (ECS, see <xref target="RFC7285" format="default" sectionFormat="of" section="11.5" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.5" derivedContent="RFC7285"/>),
+            and query the ECS for the costs between A and X,
+            B and X, and C and X, before returning
+            an ALTO-optimized list of candidate resource providers
+            to resource consumer X.</t>
+      </section>
+    </section>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.d">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.d-1">The initial draft version of this document was co-authored by
+        <contact fullname="Marco Tomsu"/> (Alcatel-Lucent).</t>
+      <t pn="section-appendix.d-2">This document borrows some text from <xref target="RFC7286" format="default" sectionFormat="of" derivedContent="RFC7286"/>,
+        as historically, it was part of the draft that
+        eventually became said RFC.
+        Special thanks to <contact fullname="Michael Scharf"/> and <contact fullname="Nico Schwan"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.e">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Sebastian Kiesel" initials="S." surname="Kiesel">
+        <organization abbrev="University of Stuttgart" showOnFrontPage="true">University of Stuttgart Information Center</organization>
+        <address>
+          <postal>
+            <street>Allmandring 30</street>
+            <city>Stuttgart</city>
+            <code>70550</code>
+            <country>Germany</country>
+          </postal>
+          <email>ietf-alto@skiesel.de</email>
+          <uri>http://www.izus.uni-stuttgart.de</uri>
+        </address>
+      </author>
+      <author fullname="Martin Stiemerling" initials="M." surname="Stiemerling">
+        <organization abbrev="H-DA" showOnFrontPage="true">University of Applied Sciences Darmstadt, Computer Science Dept.</organization>
+        <address>
+          <postal>
+            <street>Haardtring 100</street>
+            <code>64295</code>
+            <city>Darmstadt</city>
+            <country>Germany</country>
+          </postal>
+          <phone>+49 6151 16 37938</phone>
+          <email>mls.ietf@gmail.com</email>
+          <uri>https://danet.fbi.h-da.de</uri>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

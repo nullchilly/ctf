@@ -1,0 +1,970 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-idr-bgp-open-policy-23" indexInclude="true" ipr="trust200902" number="9234" prepTime="2022-05-06T12:41:36" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-idr-bgp-open-policy-23" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9234" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Route Leak Prevention">Route Leak Prevention and Detection Using Roles in UPDATE and OPEN Messages</title>
+    <seriesInfo name="RFC" value="9234" stream="IETF"/>
+    <author fullname="Alexander Azimov" initials="A." surname="Azimov">
+      <organization showOnFrontPage="true">Qrator Labs &amp; Yandex</organization>
+      <address>
+        <postal>
+          <street>Ulitsa Lva Tolstogo 16</street>
+          <city>Moscow</city>
+          <code>119021</code>
+          <country>Russian Federation</country>
+        </postal>
+        <email>a.e.azimov@gmail.com</email>
+      </address>
+    </author>
+    <author fullname="Eugene Bogomazov" initials="E." surname="Bogomazov">
+      <organization showOnFrontPage="true">Qrator Labs</organization>
+      <address>
+        <postal>
+          <street>1-y Magistralnyy tupik 5A</street>
+          <city>Moscow</city>
+          <code>123290</code>
+          <country>Russian Federation</country>
+        </postal>
+        <email>eb@qrator.net</email>
+      </address>
+    </author>
+    <author fullname="Randy Bush" initials="R." surname="Bush">
+      <organization abbrev="IIJ &amp; Arrcus" showOnFrontPage="true">Internet Initiative Japan &amp; Arrcus, Inc.</organization>
+      <address>
+        <postal>
+          <street>5147 Crystal Springs</street>
+          <city>Bainbridge Island</city>
+          <region>Washington</region>
+          <code>98110</code>
+          <country>United States of America</country>
+        </postal>
+        <email>randy@psg.com</email>
+      </address>
+    </author>
+    <author fullname="Keyur Patel" initials="K." surname="Patel">
+      <organization showOnFrontPage="true">Arrcus</organization>
+      <address>
+        <postal>
+          <street>2077 Gateway Place</street>
+          <street>Suite #400</street>
+          <city>San Jose</city>
+          <region>CA</region>
+          <code>95119</code>
+          <country>United States of America</country>
+        </postal>
+        <email>keyur@arrcus.com</email>
+      </address>
+    </author>
+    <author fullname="Kotikalapudi Sriram" initials="K." surname="Sriram">
+      <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+      <address>
+        <postal>
+          <street>100 Bureau Drive</street>
+          <city>Gaithersburg</city>
+          <region>MD</region>
+          <code>20899</code>
+          <country>United States of America</country>
+        </postal>
+        <email>ksriram@nist.gov</email>
+      </address>
+    </author>
+    <date month="05" year="2022"/>
+    <area>rtg</area>
+    <workgroup>idr</workgroup>
+    <keyword>BGP</keyword>
+    <keyword>Route leak</keyword>
+    <keyword>BGP Role</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+        Route leaks are the propagation of BGP prefixes that violate assumptions of BGP topology relationships, e.g., announcing a route learned from one transit provider to another transit provider or a lateral (i.e., non-transit) peer or announcing a route learned from one lateral peer to another lateral peer or a transit provider.
+        These are usually the result of misconfigured or absent BGP route filtering or lack of coordination between autonomous systems (ASes).
+        Existing approaches to leak prevention rely on marking routes by operator configuration, with no check that the configuration corresponds to that of the External BGP (eBGP) neighbor, or enforcement of the two eBGP speakers agreeing on the peering relationship.
+        This document enhances the BGP OPEN message to establish an agreement of the peering relationship on each eBGP session between autonomous systems in order to enforce appropriate configuration on both sides.
+        Propagated routes are then marked according to the agreed relationship, allowing both prevention and detection of route leaks.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9234" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-peering-relationships">Peering Relationships</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bgp-role">BGP Role</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bgp-role-capability">BGP Role Capability</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-role-correctness">Role Correctness</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bgp-only-to-customer-otc-at">BGP Only to Customer (OTC) Attribute</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-additional-considerations">Additional Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-contributors">Contributors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+        Route leaks are the propagation of BGP prefixes that violate assumptions of BGP topology relationships, e.g., announcing a route learned from one transit provider to another transit provider or a lateral (i.e., non-transit) peer or announcing a route learned from one lateral peer to another lateral peer or a transit provider <xref target="RFC7908" format="default" sectionFormat="of" derivedContent="RFC7908"/>.
+        These are usually the result of misconfigured or absent BGP route filtering or lack of coordination between autonomous systems (ASes).
+      </t>
+      <t indent="0" pn="section-1-2">
+        Existing approaches to leak prevention rely on marking routes by operator configuration, with no check that the configuration corresponds to that of the eBGP neighbor, or enforcement of the two eBGP speakers agreeing on the relationship.
+        This document enhances the BGP OPEN message to establish an agreement of the relationship on each eBGP session between autonomous systems in order to enforce appropriate configuration on both sides.
+        Propagated routes are then marked according to the agreed relationship, allowing both prevention and detection of route leaks.
+      </t>
+      <t indent="0" pn="section-1-3">
+        This document specifies a means of replacing the operator-driven configuration-based method of route leak prevention, described above, with an in-band method for route leak prevention and detection.
+      </t>
+      <t indent="0" pn="section-1-4">
+        This method uses a new configuration parameter, BGP Role, which is negotiated using a BGP Role Capability in the OPEN message <xref target="RFC5492" format="default" sectionFormat="of" derivedContent="RFC5492"/>.
+        An eBGP speaker may require the use of this capability and confirmation of the BGP Role with a neighbor for the BGP OPEN to succeed.
+      </t>
+      <t indent="0" pn="section-1-5">
+        An optional, transitive BGP Path Attribute, called "Only to Customer (OTC)", is specified in <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/>.
+        It prevents ASes from creating leaks and detects leaks created by the ASes in the middle of an AS path.
+        The main focus/applicability is the Internet (IPv4 and IPv6 unicast route advertisements).
+      </t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-requirements-language">Requirements Language</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="terminology" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-3-1">
+        The terms "local AS" and "remote AS" are used to refer to the two ends of an eBGP session.
+        The "local AS" is the AS where the protocol action being described is to be performed, and "remote AS" is the AS at the other end of the eBGP session in consideration.
+      </t>
+      <t indent="0" pn="section-3-2">
+        The use of the term "route is ineligible" in this document has the same meaning as in <xref target="RFC4271" format="default" sectionFormat="of" derivedContent="RFC4271"/>, i.e., "route is ineligible to be installed in Loc-RIB and will be excluded from the next phase of route selection."
+      </t>
+      <section anchor="defs" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-peering-relationships">Peering Relationships</name>
+        <t indent="0" pn="section-3.1-1">
+        The terms for peering relationships defined and used in this document (see below) do not necessarily represent business relationships based on payment agreements.
+        These terms are used to represent restrictions on BGP route propagation, sometimes known as the Gao-Rexford model <xref target="GAO-REXFORD" format="default" sectionFormat="of" derivedContent="GAO-REXFORD"/>.
+        The terms "Provider", "Customer", and "Peer" used here are synonymous to the terms "transit provider", "customer", and "lateral (i.e., non-transit) peer", respectively, used in <xref target="RFC7908" format="default" sectionFormat="of" derivedContent="RFC7908"/>.
+        </t>
+        <t indent="0" pn="section-3.1-2">
+        The following is a list of BGP Roles for eBGP peering and the corresponding rules for route propagation:
+        </t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-3.1-3">
+          <dt pn="section-3.1-3.1">Provider:</dt>
+          <dd pn="section-3.1-3.2">
+            <bcp14>MAY</bcp14> propagate any available route to a Customer.
+          </dd>
+          <dt pn="section-3.1-3.3">Customer:</dt>
+          <dd pn="section-3.1-3.4">
+            <bcp14>MAY</bcp14> propagate any route learned from a Customer, or that is locally originated, to a Provider.
+            All other routes <bcp14>MUST NOT</bcp14> be propagated.
+          </dd>
+          <dt pn="section-3.1-3.5">Route Server (RS):</dt>
+          <dd pn="section-3.1-3.6">
+            <bcp14>MAY</bcp14> propagate any available route to a Route Server Client (RS-Client).
+          </dd>
+          <dt pn="section-3.1-3.7">Route Server Client (RS-Client):</dt>
+          <dd pn="section-3.1-3.8">
+            <bcp14>MAY</bcp14> propagate any route learned from a Customer, or that is locally originated, to an RS.
+            All other routes <bcp14>MUST NOT</bcp14> be propagated.
+          </dd>
+          <dt pn="section-3.1-3.9">Peer:</dt>
+          <dd pn="section-3.1-3.10">
+            <bcp14>MAY</bcp14> propagate any route learned from a Customer, or that is locally originated, to a Peer.
+            All other routes <bcp14>MUST NOT</bcp14> be propagated.
+          </dd>
+        </dl>
+        <t indent="0" pn="section-3.1-4">
+        If the local AS has one of the above Roles (in the order shown), then the corresponding peering relationship with the remote AS is Provider-to-Customer, Customer-to-Provider, RS-to-RS-Client, RS-Client-to-RS, or Peer-to-Peer (i.e., lateral peers), respectively.
+        These are called normal peering relationships.
+        </t>
+        <t indent="0" pn="section-3.1-5">
+        If the local AS has more than one peering Role with the remote AS, such a peering relation is called "Complex".
+        An example is when the peering relationship is Provider-to-Customer for some prefixes while it is Peer-to-Peer for other prefixes <xref target="GAO-REXFORD" format="default" sectionFormat="of" derivedContent="GAO-REXFORD"/>.
+        </t>
+        <t indent="0" pn="section-3.1-6">
+        A BGP speaker may apply policy to reduce what is announced, and a recipient may apply policy to reduce the set of routes they accept.
+        </t>
+        <t indent="0" pn="section-3.1-7">
+        Violation of the route propagation rules listed above may result in route leaks <xref target="RFC7908" format="default" sectionFormat="of" derivedContent="RFC7908"/>.
+        Automatic enforcement of these rules should significantly reduce route leaks that may otherwise occur due to manual configuration mistakes.
+        </t>
+        <t indent="0" pn="section-3.1-8">
+        As specified in <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/>, the OTC Attribute is used to identify all the routes in the AS that have been received from a Peer, a Provider, or an RS.
+        </t>
+      </section>
+    </section>
+    <section anchor="bgp_role" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-bgp-role">BGP Role</name>
+      <t indent="0" pn="section-4-1">
+        The BGP Role characterizes the relationship between the eBGP speakers forming a session.
+        One of the Roles described below <bcp14>SHOULD</bcp14> be configured at the local AS for each eBGP session (see definitions in <xref target="terminology" format="default" sectionFormat="of" derivedContent="Section 3"/>) based on the local AS's knowledge of its Role.
+        The only exception is when the eBGP connection is Complex (see <xref target="considerations" format="default" sectionFormat="of" derivedContent="Section 6"/>).
+        BGP Roles are mutually confirmed using the BGP Role Capability (described in <xref target="capability" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) on each eBGP session.
+      </t>
+      <t indent="0" pn="section-4-2">
+        Allowed Roles for eBGP sessions are:
+      </t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-4-3">
+        <dt pn="section-4-3.1">Provider:
+</dt>
+        <dd pn="section-4-3.2">the local AS is a transit provider of the remote AS;
+</dd>
+        <dt pn="section-4-3.3">Customer:
+</dt>
+        <dd pn="section-4-3.4">the local AS is a transit customer of the remote AS;
+</dd>
+        <dt pn="section-4-3.5">RS:
+</dt>
+        <dd pn="section-4-3.6"> the local AS is a Route Server (usually at an Internet exchange point), and the remote AS is its RS-Client;
+</dd>
+        <dt pn="section-4-3.7">RS-Client:
+</dt>
+        <dd pn="section-4-3.8">the local AS is a client of an RS and the RS is the remote AS; and
+</dd>
+        <dt pn="section-4-3.9">Peer:
+</dt>
+        <dd pn="section-4-3.10">the local and remote ASes are Peers (i.e., have a lateral peering relationship).
+</dd>
+      </dl>
+      <section anchor="capability" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-bgp-role-capability">BGP Role Capability</name>
+        <t indent="0" pn="section-4.1-1">
+          The BGP Role Capability is defined as follows:
+        </t>
+        <dl indent="3" newline="false" spacing="normal" pn="section-4.1-2">
+          <dt pn="section-4.1-2.1">Code:
+          </dt>
+          <dd pn="section-4.1-2.2">9
+	  </dd>
+          <dt pn="section-4.1-2.3">Length:
+          </dt>
+          <dd pn="section-4.1-2.4">1 (octet)
+	  </dd>
+          <dt pn="section-4.1-2.5">Value:
+          </dt>
+          <dd pn="section-4.1-2.6">integer corresponding to the speaker's BGP Role (see <xref target="values" format="default" sectionFormat="of" derivedContent="Table 1"/>)
+	  </dd>
+        </dl>
+        <table anchor="values" align="center" pn="table-1">
+          <name slugifiedName="name-predefined-bgp-role-values">Predefined BGP Role Values</name>
+          <thead>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Value</th>
+              <th align="left" colspan="1" rowspan="1">Role name (for the local AS)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">0</td>
+              <td align="left" colspan="1" rowspan="1">Provider</td>
+            </tr>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">RS</td>
+            </tr>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">RS-Client</td>
+            </tr>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">3</td>
+              <td align="left" colspan="1" rowspan="1">Customer</td>
+            </tr>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">4</td>
+              <td align="left" colspan="1" rowspan="1">Peer (i.e., Lateral Peer)</td>
+            </tr>
+            <tr>
+              <td align="center" colspan="1" rowspan="1">5-255</td>
+              <td align="left" colspan="1" rowspan="1">Unassigned</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-4.1-4">
+          If the BGP Role is locally configured, the eBGP speaker <bcp14>MUST</bcp14> advertise the BGP Role Capability in the BGP OPEN message.
+          An eBGP speaker <bcp14>MUST NOT</bcp14> advertise multiple versions of the BGP Role Capability.
+          The error handling when multiple BGP Role Capabilities are received is described in <xref target="correctness" format="default" sectionFormat="of" derivedContent="Section 4.2"/>.
+        </t>
+      </section>
+      <section anchor="correctness" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-role-correctness">Role Correctness</name>
+        <t indent="0" pn="section-4.2-1">
+          <xref target="capability" format="default" sectionFormat="of" derivedContent="Section 4.1"/> describes how the BGP Role encodes the relationship on each eBGP session between ASes.
+        </t>
+        <t indent="0" pn="section-4.2-2">
+          The mere receipt of the BGP Role Capability does not automatically guarantee the Role agreement between two eBGP neighbors.
+          If the BGP Role Capability is advertised, and one is also received from the peer, the Roles <bcp14>MUST</bcp14> correspond to the relationships in <xref target="allowed" format="default" sectionFormat="of" derivedContent="Table 2"/>.
+
+          If the Roles do not correspond, the BGP speaker <bcp14>MUST</bcp14> reject the connection using the Role Mismatch Notification (code 2, subcode 11).
+        </t>
+        <table anchor="allowed" align="center" pn="table-2">
+          <name slugifiedName="name-allowed-pairs-of-role-capab">Allowed Pairs of Role Capabilities</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Local AS Role</th>
+              <th align="left" colspan="1" rowspan="1">Remote AS Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Provider</td>
+              <td align="left" colspan="1" rowspan="1">Customer</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Customer</td>
+              <td align="left" colspan="1" rowspan="1">Provider</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">RS</td>
+              <td align="left" colspan="1" rowspan="1">RS-Client</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">RS-Client</td>
+              <td align="left" colspan="1" rowspan="1">RS</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Peer</td>
+              <td align="left" colspan="1" rowspan="1">Peer</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-4.2-4">
+          For backward compatibility, if the BGP Role Capability is sent but one is not received, the BGP Speaker <bcp14>SHOULD</bcp14> ignore the absence of the BGP Role Capability and proceed with session establishment.
+          The locally configured BGP Role is used for the procedures described in <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/>.
+        </t>
+        <t indent="0" pn="section-4.2-5">
+          An operator may choose to apply a "strict mode" in which the receipt of a BGP Role Capability from the remote AS is required.
+          When operating in the "strict mode", if the BGP Role Capability is sent but one is not received, the connection is rejected using the Role Mismatch Notification (code 2, subcode 11). See comments in <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 8"/>.
+        </t>
+        <t indent="0" pn="section-4.2-6">
+          If an eBGP speaker receives multiple but identical BGP Role Capabilities with the same value in each, then the speaker considers them to be a single BGP Role Capability and proceeds <xref target="RFC5492" format="default" sectionFormat="of" derivedContent="RFC5492"/>.
+          If multiple BGP Role Capabilities are received and not all of them have the same value, then the BGP speaker <bcp14>MUST</bcp14> reject the connection using the Role Mismatch Notification (code 2, subcode 11).
+        </t>
+        <t indent="0" pn="section-4.2-7">
+          The BGP Role value for the local AS (in conjunction with the OTC Attribute in the received UPDATE message) is used in the route leak prevention and detection procedures described in <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="prevention_attribute" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-bgp-only-to-customer-otc-at">BGP Only to Customer (OTC) Attribute</name>
+      <t indent="0" pn="section-5-1">
+        The OTC Attribute is an optional transitive Path Attribute of the UPDATE message with Attribute Type Code 35 and a length of 4 octets.
+        The purpose of this attribute is to enforce that once a route is sent to a Customer, a Peer, or an RS-Client (see definitions in <xref target="defs" format="default" sectionFormat="of" derivedContent="Section 3.1"/>), it will subsequently go only to the Customers.
+        The attribute value is an AS number (ASN) determined by the procedures described below.
+      </t>
+      <t indent="0" pn="section-5-2">
+        The following ingress procedure applies to the processing of the OTC Attribute on route receipt:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5-3"><li pn="section-5-3.1" derivedCounter="1.">
+            If a route with the OTC Attribute is received from a Customer or an RS-Client, then it is a route leak and <bcp14>MUST</bcp14> be considered ineligible (see <xref target="terminology" format="default" sectionFormat="of" derivedContent="Section 3"/>).
+          </li>
+        <li pn="section-5-3.2" derivedCounter="2.">
+            If a route with the OTC Attribute is received from a Peer (i.e., remote AS with a Peer Role) and the Attribute has a value that is not equal to the remote (i.e., Peer's) AS number, then it is a route leak and <bcp14>MUST</bcp14> be considered ineligible.
+          </li>
+        <li pn="section-5-3.3" derivedCounter="3.">
+            If a route is received from a Provider, a Peer, or an RS and the OTC Attribute is not present, then it <bcp14>MUST</bcp14> be added with a value equal to the AS number of the remote AS.
+          </li>
+      </ol>
+      <t indent="0" pn="section-5-4">
+        The following egress procedure applies to the processing of the OTC Attribute on route advertisement:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5-5"><li pn="section-5-5.1" derivedCounter="1.">
+            If a route is to be advertised to a Customer, a Peer, or an RS-Client (when the sender is an RS), and the OTC Attribute is not present, then when advertising the route, an OTC Attribute <bcp14>MUST</bcp14> be added with a value equal to the AS number of the local AS.
+          </li>
+        <li pn="section-5-5.2" derivedCounter="2.">
+            If a route already contains the OTC Attribute, it <bcp14>MUST NOT</bcp14> be propagated to Providers, Peers, or RSes.
+          </li>
+      </ol>
+      <t indent="0" pn="section-5-6">
+        The above-described procedures provide both leak prevention for the local AS and leak detection and mitigation multiple hops away.
+	
+        In the case of prevention at the local AS, the presence of an OTC Attribute indicates to the egress router that the route was learned from a Peer, a Provider, or an RS, and it can be advertised only to the Customers.
+        The same OTC Attribute that is set locally also provides a way to detect route leaks by an AS multiple hops away if a route is received from a Customer, a Peer, or an RS-Client.
+        For example, if an AS sets the OTC Attribute on a route sent to a Peer and the route is subsequently received by a compliant AS from a Customer, then the receiving AS detects (based on the presence of the OTC Attribute) that the route is a leak.
+      </t>
+      <t indent="0" pn="section-5-7">
+        The OTC Attribute might be set at the egress of the remote AS or at the ingress of the local AS, i.e., if the remote AS is non-compliant with this specification, then the local AS will have to set the OTC Attribute if it is absent.
+        In both scenarios, the OTC value will be the same.
+        This makes the scheme more robust and benefits early adopters.
+      </t>
+      <t indent="0" pn="section-5-8">
+The OTC Attribute is considered malformed if the length value is not 4. An UPDATE message with a malformed OTC Attribute <bcp14>SHALL</bcp14> be handled using the approach of "treat-as-withdraw" <xref target="RFC7606" format="default" sectionFormat="of" derivedContent="RFC7606"/>.
+      </t>
+      <t indent="0" pn="section-5-9">
+        The BGP Role negotiation and OTC-Attribute-based procedures specified in this document are <bcp14>NOT RECOMMENDED</bcp14> to be used between autonomous systems in an AS Confederation <xref target="RFC5065" format="default" sectionFormat="of" derivedContent="RFC5065"/>.
+        If an OTC Attribute is added on egress from the AS Confederation, its value <bcp14>MUST</bcp14> equal the AS Confederation Identifier.
+        Also, on egress from the AS Confederation, an UPDATE <bcp14>MUST NOT</bcp14> contain an OTC Attribute with a value corresponding to any Member-AS Number other than the AS Confederation Identifier.
+      </t>
+      <t indent="0" pn="section-5-10">
+        The procedures specified in this document in scenarios that use private AS numbers behind an Internet-facing ASN (e.g., a data-center network <xref target="RFC7938" format="default" sectionFormat="of" derivedContent="RFC7938"/> or stub customer) may be used, but any details are outside the scope of this document.
+        On egress from the Internet-facing AS, the OTC Attribute <bcp14>MUST NOT</bcp14> contain a value other than the Internet-facing ASN.
+      </t>
+      <t indent="0" pn="section-5-11">
+        Once the OTC Attribute has been set, it <bcp14>MUST</bcp14> be preserved unchanged (this also applies to an AS Confederation).
+      </t>
+      <t indent="0" pn="section-5-12">
+        The described ingress and egress procedures are applicable only for the address families AFI 1 (IPv4) and AFI 2 (IPv6) with SAFI 1 (unicast) in both cases and <bcp14>MUST NOT</bcp14> be applied to other address families by default.
+        The operator <bcp14>MUST NOT</bcp14> have the ability to modify the procedures defined in this section.
+      </t>
+    </section>
+    <section anchor="considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-additional-considerations">Additional Considerations</name>
+      <t indent="0" pn="section-6-1">
+        Roles <bcp14>MUST NOT</bcp14> be configured on an eBGP session with a Complex peering relationship.
+        If multiple eBGP sessions can segregate the Complex peering relationship into eBGP sessions with normal peering relationships, BGP Roles <bcp14>SHOULD</bcp14> be used on each of the resulting eBGP sessions.
+      </t>
+      <t indent="0" pn="section-6-2">
+        An operator may want to achieve an equivalent outcome by configuring policies on a per-prefix basis to follow the definitions of peering relations as described in <xref target="defs" format="default" sectionFormat="of" derivedContent="Section 3.1"/>.
+        However, in this case, there are no in-band measures to check the correctness of the per-prefix peering configuration.
+      </t>
+      <t indent="0" pn="section-6-3">
+        The incorrect setting of BGP Roles and/or OTC Attributes may affect prefix propagation.
+        Further, this document does not specify any special handling of an incorrect AS number in the OTC Attribute.
+      </t>
+      <t indent="0" pn="section-6-4">
+        In AS migration scenarios <xref target="RFC7705" format="default" sectionFormat="of" derivedContent="RFC7705"/>, a given router may represent itself as any one of several different ASes.
+        This should not be a problem since the egress procedures in <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/> specify that the OTC Attribute is to be attached as part of route transmission.
+        Therefore, a router is expected to set the OTC value equal to the ASN it is currently representing itself as.
+      </t>
+      <t indent="0" pn="section-6-5">
+<xref target="RFC7606" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7606#section-6" derivedContent="RFC7606"/> documents possible negative impacts of "treat-as-withdraw" behavior.  Such negative impacts may include forwarding loops or dropped traffic. It also discusses debugging considerations related to this behavior.
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">
+        IANA has registered a new BGP Capability (<xref target="capability" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) in the "Capability Codes" registry within the "IETF Review" range <xref target="RFC5492" format="default" sectionFormat="of" derivedContent="RFC5492"/>.
+        The description for the new capability is "BGP Role".
+        IANA has assigned the value 9.
+        This document is the reference for the new capability.
+      </t>
+      <t indent="0" pn="section-7-2">
+	IANA has created and now maintains a new subregistry called "BGP Role Value" within the "Capability Codes" registry. Registrations should include a value, a role name, and a reference to the defining document. IANA has registered the values in <xref target="role-table" format="default" sectionFormat="of" derivedContent="Table 3"/>. Future assignments may be made by the "IETF Review" policy as defined in <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.
+      </t>
+      <table anchor="role-table" align="center" pn="table-3">
+        <name slugifiedName="name-iana-registry-for-bgp-role">IANA Registry for BGP Role</name>
+        <thead>
+          <tr>
+            <th align="center" colspan="1" rowspan="1">Value</th>
+            <th align="left" colspan="1" rowspan="1">Role name (for the local AS)</th>
+            <th align="center" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">0</td>
+            <td align="left" colspan="1" rowspan="1">Provider</td>
+            <td align="center" colspan="1" rowspan="1">This document</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">1</td>
+            <td align="left" colspan="1" rowspan="1">RS</td>
+            <td align="center" colspan="1" rowspan="1">This document</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">2</td>
+            <td align="left" colspan="1" rowspan="1">RS-Client</td>
+            <td align="center" colspan="1" rowspan="1">This document</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">3</td>
+            <td align="left" colspan="1" rowspan="1">Customer</td>
+            <td align="center" colspan="1" rowspan="1">This document</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">4</td>
+            <td align="left" colspan="1" rowspan="1">Peer (i.e., Lateral Peer)</td>
+            <td align="center" colspan="1" rowspan="1">This document</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">5-255</td>
+            <td align="left" colspan="1" rowspan="1">To be assigned by IETF Review </td>
+            <td align="center" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-7-4">
+        IANA has registered a new OPEN Message Error subcode named "Role Mismatch" (see <xref target="correctness" format="default" sectionFormat="of" derivedContent="Section 4.2"/>) in the "OPEN Message Error subcodes" registry.
+        IANA has assigned the value 11. This document is the reference for the new subcode.
+      </t>
+      <t indent="0" pn="section-7-5">Due to improper use of the values 8, 9, and 10, IANA has marked values 8-10 as "Deprecated" in
+      the "OPEN Message Error subcodes" registry.  This document is listed as
+      the reference.</t>
+      <t indent="0" pn="section-7-6">
+        IANA has also registered a new Path Attribute named "Only to Customer (OTC)" (see <xref target="prevention_attribute" format="default" sectionFormat="of" derivedContent="Section 5"/>) in the "BGP Path Attributes" registry.
+        IANA has assigned code value 35.
+        This document is the reference for the new attribute.
+      </t>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">
+        The security considerations of BGP (as specified in <xref target="RFC4271" format="default" sectionFormat="of" derivedContent="RFC4271"/> and <xref target="RFC4272" format="default" sectionFormat="of" derivedContent="RFC4272"/>) apply.
+      </t>
+      <t indent="0" pn="section-8-2">
+        This document proposes a mechanism that uses the BGP Role for the prevention and detection of route leaks that are the result of BGP policy misconfiguration.
+        A misconfiguration of the BGP Role may affect prefix propagation.
+        For example, if a downstream (i.e., towards a Customer) peering link were misconfigured with a Provider or Peer Role, it would limit the number of prefixes that can be advertised in this direction.
+        On the other hand, if an upstream provider were misconfigured (by a local AS) with the Customer Role, it may result in propagating routes that are received from other Providers or Peers.
+        But the BGP Role negotiation and the resulting confirmation of Roles make such misconfigurations unlikely.
+      </t>
+      <t indent="0" pn="section-8-3">
+        Setting the strict mode of operation for BGP Role negotiation as the default may result in a situation where the eBGP session will not come up after a software update.
+        Implementations with such default behavior are strongly discouraged.
+      </t>
+      <t indent="0" pn="section-8-4">
+        Removing the OTC Attribute or changing its value can limit the opportunity for route leak detection.
+        Such activity can be done on purpose as part of an on-path attack.
+        For example, an AS can remove the OTC Attribute on a received route and then leak the route to its transit provider.
+        This kind of threat is not new in BGP, and it may affect any Attribute (note that BGPsec <xref target="RFC8205" format="default" sectionFormat="of" derivedContent="RFC8205"/> offers protection only for the AS_PATH Attribute).
+      </t>
+      <t indent="0" pn="section-8-5">
+        Adding an OTC Attribute when the route is advertised from Customer to Provider will limit the propagation of the route.
+        Such a route may be considered as ineligible by the immediate Provider or its Peers or upper-layer Providers.
+        This kind of OTC Attribute addition is unlikely to happen on the Provider side because it will limit the traffic volume towards its Customer.
+        On the Customer side, adding an OTC Attribute for traffic-engineering purposes is also discouraged because it will limit route propagation in an unpredictable way.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4271" target="https://www.rfc-editor.org/info/rfc4271" quoteTitle="true" derivedAnchor="RFC4271">
+          <front>
+            <title>A Border Gateway Protocol 4 (BGP-4)</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Li" fullname="T. Li" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hares" fullname="S. Hares" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="January"/>
+            <abstract>
+              <t indent="0">This document discusses the Border Gateway Protocol (BGP), which is an inter-Autonomous System routing protocol.</t>
+              <t indent="0">The primary function of a BGP speaking system is to exchange network reachability information with other BGP systems.  This network reachability information includes information on the list of Autonomous Systems (ASes) that reachability information traverses. This information is sufficient for constructing a graph of AS connectivity for this reachability from which routing loops may be pruned, and, at the AS level, some policy decisions may be enforced.</t>
+              <t indent="0">BGP-4 provides a set of mechanisms for supporting Classless Inter-Domain Routing (CIDR).  These mechanisms include support for advertising a set of destinations as an IP prefix, and eliminating the concept of network "class" within BGP.  BGP-4 also introduces mechanisms that allow aggregation of routes, including aggregation of AS paths.</t>
+              <t indent="0">This document obsoletes RFC 1771.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4271"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4271"/>
+        </reference>
+        <reference anchor="RFC5065" target="https://www.rfc-editor.org/info/rfc5065" quoteTitle="true" derivedAnchor="RFC5065">
+          <front>
+            <title>Autonomous System Confederations for BGP</title>
+            <author initials="P." surname="Traina" fullname="P. Traina">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McPherson" fullname="D. McPherson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="August"/>
+            <abstract>
+              <t indent="0">The Border Gateway Protocol (BGP) is an inter-autonomous system routing protocol designed for Transmission Control Protocol/Internet Protocol (TCP/IP) networks.  BGP requires that all BGP speakers within a single autonomous system (AS) must be fully meshed.  This represents a serious scaling problem that has been well documented in a number of proposals.</t>
+              <t indent="0">This document describes an extension to BGP that may be used to create a confederation of autonomous systems that is represented as a single autonomous system to BGP peers external to the confederation, thereby removing the "full mesh" requirement.  The intention of this extension is to aid in policy administration and reduce the management complexity of maintaining a large autonomous system.</t>
+              <t indent="0">This document obsoletes RFC 3065.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5065"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5065"/>
+        </reference>
+        <reference anchor="RFC5492" target="https://www.rfc-editor.org/info/rfc5492" quoteTitle="true" derivedAnchor="RFC5492">
+          <front>
+            <title>Capabilities Advertisement with BGP-4</title>
+            <author initials="J." surname="Scudder" fullname="J. Scudder">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Chandra" fullname="R. Chandra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="February"/>
+            <abstract>
+              <t indent="0">This document defines an Optional Parameter, called Capabilities, that is expected to facilitate the introduction of new capabilities in the Border Gateway Protocol (BGP) by providing graceful capability advertisement without requiring that BGP peering be terminated.</t>
+              <t indent="0">This document obsoletes RFC 3392.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5492"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5492"/>
+        </reference>
+        <reference anchor="RFC7606" target="https://www.rfc-editor.org/info/rfc7606" quoteTitle="true" derivedAnchor="RFC7606">
+          <front>
+            <title>Revised Error Handling for BGP UPDATE Messages</title>
+            <author initials="E." surname="Chen" fullname="E. Chen" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Mohapatra" fullname="P. Mohapatra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Patel" fullname="K. Patel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t indent="0">According to the base BGP specification, a BGP speaker that receives an UPDATE message containing a malformed attribute is required to reset the session over which the offending attribute was received. This behavior is undesirable because a session reset would impact not only routes with the offending attribute but also other valid routes exchanged over the session.  This document partially revises the error handling for UPDATE messages and provides guidelines for the authors of documents defining new attributes.  Finally, it revises the error handling procedures for a number of existing attributes.</t>
+              <t indent="0">This document updates error handling for RFCs 1997, 4271, 4360, 4456, 4760, 5543, 5701, and 6368.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7606"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7606"/>
+        </reference>
+        <reference anchor="RFC7908" target="https://www.rfc-editor.org/info/rfc7908" quoteTitle="true" derivedAnchor="RFC7908">
+          <front>
+            <title>Problem Definition and Classification of BGP Route Leaks</title>
+            <author initials="K." surname="Sriram" fullname="K. Sriram">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Montgomery" fullname="D. Montgomery">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McPherson" fullname="D. McPherson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Osterweil" fullname="E. Osterweil">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Dickson" fullname="B. Dickson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="June"/>
+            <abstract>
+              <t indent="0">A systemic vulnerability of the Border Gateway Protocol routing system, known as "route leaks", has received significant attention in recent years.  Frequent incidents that result in significant disruptions to Internet routing are labeled route leaks, but to date a common definition of the term has been lacking.  This document provides a working definition of route leaks while keeping in mind the real occurrences that have received significant attention. Further, this document attempts to enumerate (though not exhaustively) different types of route leaks based on observed events on the Internet.  The aim is to provide a taxonomy that covers several forms of route leaks that have been observed and are of concern to the Internet user community as well as the network operator community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7908"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7908"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="GAO-REXFORD" target="https://ieeexplore.ieee.org/document/974523" quoteTitle="true" derivedAnchor="GAO-REXFORD">
+          <front>
+            <title>Stable Internet routing without global coordination</title>
+            <author initials="L." surname="Gao">
+          </author>
+            <author initials="J." surname="Rexford">
+          </author>
+            <date month="December" year="2001"/>
+          </front>
+          <refcontent>IEEE/ACM Transactions on Networking, Volume 9, Issue 6, pp. 689-692
+          </refcontent>
+          <seriesInfo name="DOI" value="10.1109/90.974523"/>
+        </reference>
+        <reference anchor="RFC4272" target="https://www.rfc-editor.org/info/rfc4272" quoteTitle="true" derivedAnchor="RFC4272">
+          <front>
+            <title>BGP Security Vulnerabilities Analysis</title>
+            <author initials="S." surname="Murphy" fullname="S. Murphy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="January"/>
+            <abstract>
+              <t indent="0">Border Gateway Protocol 4 (BGP-4), along with a host of other infrastructure protocols designed before the Internet environment became perilous, was originally designed with little consideration for protection of the information it carries.  There are no mechanisms internal to BGP that protect against attacks that modify, delete, forge, or replay data, any of which has the potential to disrupt overall network routing behavior.</t>
+              <t indent="0">This document discusses some of the security issues with BGP routing data dissemination.  This document does not discuss security issues with forwarding of packets.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4272"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4272"/>
+        </reference>
+        <reference anchor="RFC7705" target="https://www.rfc-editor.org/info/rfc7705" quoteTitle="true" derivedAnchor="RFC7705">
+          <front>
+            <title>Autonomous System Migration Mechanisms and Their Effects on the BGP AS_PATH Attribute</title>
+            <author initials="W." surname="George" fullname="W. George">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Amante" fullname="S. Amante">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="November"/>
+            <abstract>
+              <t indent="0">This document discusses some existing commonly used BGP mechanisms for Autonomous System Number (ASN) migration that are not formally part of the BGP4 protocol specification.  It is necessary to document these de facto standards to ensure that they are properly supported in future BGP protocol work.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7705"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7705"/>
+        </reference>
+        <reference anchor="RFC7938" target="https://www.rfc-editor.org/info/rfc7938" quoteTitle="true" derivedAnchor="RFC7938">
+          <front>
+            <title>Use of BGP for Routing in Large-Scale Data Centers</title>
+            <author initials="P." surname="Lapukhov" fullname="P. Lapukhov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Premji" fullname="A. Premji">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mitchell" fullname="J. Mitchell" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="August"/>
+            <abstract>
+              <t indent="0">Some network operators build and operate data centers that support over one hundred thousand servers.  In this document, such data centers are referred to as "large-scale" to differentiate them from smaller infrastructures.  Environments of this scale have a unique set of network requirements with an emphasis on operational simplicity and network stability.  This document summarizes operational experience in designing and operating large-scale data centers using BGP as the only routing protocol.  The intent is to report on a proven and stable routing design that could be leveraged by others in the industry.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7938"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7938"/>
+        </reference>
+        <reference anchor="RFC8205" target="https://www.rfc-editor.org/info/rfc8205" quoteTitle="true" derivedAnchor="RFC8205">
+          <front>
+            <title>BGPsec Protocol Specification</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Sriram" fullname="K. Sriram" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="September"/>
+            <abstract>
+              <t indent="0">This document describes BGPsec, an extension to the Border Gateway Protocol (BGP) that provides security for the path of Autonomous Systems (ASes) through which a BGP UPDATE message passes.  BGPsec is implemented via an optional non-transitive BGP path attribute that carries digital signatures produced by each AS that propagates the UPDATE message.  The digital signatures provide confidence that every AS on the path of ASes listed in the UPDATE message has explicitly authorized the advertisement of the route.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8205"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8205"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">
+        The authors wish to thank <contact fullname="Alvaro Retana"/>, <contact fullname="Bruno Decraene"/>, <contact fullname="Jeff Haas"/>, <contact fullname="John Scudder"/>, <contact fullname="Sue Hares"/>, <contact fullname="Ben Maddison"/>, <contact fullname="Andrei Robachevsky"/>, <contact fullname="Daniel Ginsburg"/>, <contact fullname="Ruediger Volk"/>, <contact fullname="Pavel Lunin"/>, <contact fullname="Gyan Mishra"/>, and <contact fullname="Ignas Bagdonas"/> for their reviews, comments, and suggestions during the course of this work.  Thanks are also due to many IESG reviewers whose comments greatly helped improve the clarity, accuracy, and presentation in the document.
+      </t>
+    </section>
+    <section numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-contributors">Contributors</name>
+      <author fullname="Brian Dickson" initials="B" surname="Dickson">
+        <organization showOnFrontPage="true">Independent</organization>
+        <address>
+          <email>brian.peter.dickson@gmail.com</email>
+        </address>
+      </author>
+      <author fullname="Doug Montgomery" initials="D" surname="Montgomery">
+        <organization showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+        <address>
+          <email>dougm@nist.gov</email>
+        </address>
+      </author>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Alexander Azimov" initials="A." surname="Azimov">
+        <organization showOnFrontPage="true">Qrator Labs &amp; Yandex</organization>
+        <address>
+          <postal>
+            <street>Ulitsa Lva Tolstogo 16</street>
+            <city>Moscow</city>
+            <code>119021</code>
+            <country>Russian Federation</country>
+          </postal>
+          <email>a.e.azimov@gmail.com</email>
+        </address>
+      </author>
+      <author fullname="Eugene Bogomazov" initials="E." surname="Bogomazov">
+        <organization showOnFrontPage="true">Qrator Labs</organization>
+        <address>
+          <postal>
+            <street>1-y Magistralnyy tupik 5A</street>
+            <city>Moscow</city>
+            <code>123290</code>
+            <country>Russian Federation</country>
+          </postal>
+          <email>eb@qrator.net</email>
+        </address>
+      </author>
+      <author fullname="Randy Bush" initials="R." surname="Bush">
+        <organization abbrev="IIJ &amp; Arrcus" showOnFrontPage="true">Internet Initiative Japan &amp; Arrcus, Inc.</organization>
+        <address>
+          <postal>
+            <street>5147 Crystal Springs</street>
+            <city>Bainbridge Island</city>
+            <region>Washington</region>
+            <code>98110</code>
+            <country>United States of America</country>
+          </postal>
+          <email>randy@psg.com</email>
+        </address>
+      </author>
+      <author fullname="Keyur Patel" initials="K." surname="Patel">
+        <organization showOnFrontPage="true">Arrcus</organization>
+        <address>
+          <postal>
+            <street>2077 Gateway Place</street>
+            <street>Suite #400</street>
+            <city>San Jose</city>
+            <region>CA</region>
+            <code>95119</code>
+            <country>United States of America</country>
+          </postal>
+          <email>keyur@arrcus.com</email>
+        </address>
+      </author>
+      <author fullname="Kotikalapudi Sriram" initials="K." surname="Sriram">
+        <organization abbrev="USA NIST" showOnFrontPage="true">USA National Institute of Standards and Technology</organization>
+        <address>
+          <postal>
+            <street>100 Bureau Drive</street>
+            <city>Gaithersburg</city>
+            <region>MD</region>
+            <code>20899</code>
+            <country>United States of America</country>
+          </postal>
+          <email>ksriram@nist.gov</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

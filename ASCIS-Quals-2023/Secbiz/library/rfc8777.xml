@@ -1,0 +1,2229 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-mboned-driad-amt-discovery-13" indexInclude="true" ipr="trust200902" number="8777" prepTime="2020-04-23T09:39:05" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="7450" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-mboned-driad-amt-discovery-13" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8777" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="DRIAD">DNS Reverse IP Automatic Multicast Tunneling (AMT) Discovery</title>
+    <seriesInfo name="RFC" value="8777" stream="IETF"/>
+    <author initials="J." surname="Holland" fullname="Jake Holland">
+      <organization showOnFrontPage="true">Akamai Technologies, Inc.</organization>
+      <address>
+        <postal>
+          <street>150 Broadway</street>
+          <city>Cambridge</city>
+          <region>MA</region>
+          <code>02144</code>
+          <country>United States of America</country>
+        </postal>
+        <email>jakeholland.net@gmail.com</email>
+      </address>
+    </author>
+    <date month="04" year="2020"/>
+    <area>Ops</area>
+    <workgroup>Mboned</workgroup>
+    <keyword>example</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">This document updates RFC 7450, "Automatic Multicast Tunneling" (or AMT), by
+ modifying the relay discovery process.  A new DNS resource record named
+ AMTRELAY is defined for publishing AMT relays for source-specific multicast
+ channels.  The reverse IP DNS zone for a multicast sender's IP address is
+ configured to use AMTRELAY resource records to advertise a set of AMT relays
+ that can receive and forward multicast traffic from that sender over an AMT
+ tunnel.  Other extensions and clarifications to the relay discovery
+ process are also defined.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8777" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-background">Background</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2.2.2">
+                  <li pn="section-toc.1-1.1.2.2.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.1.2.2.2.1.1"><xref derivedContent="1.2.1" format="counter" sectionFormat="of" target="section-1.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relays-and-gateways">Relays and Gateways</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.1.2.2.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.1.2.2.2.2.1"><xref derivedContent="1.2.2" format="counter" sectionFormat="of" target="section-1.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions">Definitions</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.1.2.2.2.3">
+                    <t pn="section-toc.1-1.1.2.2.2.3.1"><xref derivedContent="1.2.3" format="counter" sectionFormat="of" target="section-1.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relay-discovery-overview">Relay Discovery Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-basic-mechanics">Basic Mechanics</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-signaling-and-discovery">Signaling and Discovery</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-deployments">Example Deployments</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2.3.2">
+                  <li pn="section-toc.1-1.2.2.3.2.1">
+                    <t pn="section-toc.1-1.2.2.3.2.1.1"><xref derivedContent="2.3.1" format="counter" sectionFormat="of" target="section-2.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-receiving-networks">Example Receiving Networks</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.2.2.3.2.2">
+                    <t pn="section-toc.1-1.2.2.3.2.2.1"><xref derivedContent="2.3.2" format="counter" sectionFormat="of" target="section-2.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-sending-networks">Example Sending Networks</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relay-discovery-operation">Relay Discovery Operation</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-optimal-relay-selection">Optimal Relay Selection</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview">Overview</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.2">
+                    <t pn="section-toc.1-1.3.2.1.2.2.1"><xref derivedContent="3.1.2" format="counter" sectionFormat="of" target="section-3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-preference-ordering">Preference Ordering</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.3">
+                    <t pn="section-toc.1-1.3.2.1.2.3.1"><xref derivedContent="3.1.3" format="counter" sectionFormat="of" target="section-3.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-connecting-to-multiple-rela">Connecting to Multiple Relays</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-happy-eyeballs">Happy Eyeballs</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.2.2">
+                  <li pn="section-toc.1-1.3.2.2.2.1">
+                    <t pn="section-toc.1-1.3.2.2.2.1.1"><xref derivedContent="3.2.1" format="counter" sectionFormat="of" target="section-3.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview-2">Overview</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.2">
+                    <t pn="section-toc.1-1.3.2.2.2.2.1"><xref derivedContent="3.2.2" format="counter" sectionFormat="of" target="section-3.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-guidelines">Algorithm Guidelines</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.3">
+                    <t pn="section-toc.1-1.3.2.2.2.3.1"><xref derivedContent="3.2.3" format="counter" sectionFormat="of" target="section-3.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-connection-definition">Connection Definition</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-guidelines-for-restarting-d">Guidelines for Restarting Discovery</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.3.2">
+                  <li pn="section-toc.1-1.3.2.3.2.1">
+                    <t pn="section-toc.1-1.3.2.3.2.1.1"><xref derivedContent="3.3.1" format="counter" sectionFormat="of" target="section-3.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview-3">Overview</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.2">
+                    <t pn="section-toc.1-1.3.2.3.2.2.1"><xref derivedContent="3.3.2" format="counter" sectionFormat="of" target="section-3.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updates-to-restarting-event">Updates to Restarting Events</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.3">
+                    <t pn="section-toc.1-1.3.2.3.2.3.1"><xref derivedContent="3.3.3" format="counter" sectionFormat="of" target="section-3.3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tunnel-stability">Tunnel Stability</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.4">
+                    <t pn="section-toc.1-1.3.2.3.2.4.1"><xref derivedContent="3.3.4" format="counter" sectionFormat="of" target="section-3.3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-traffic-health">Traffic Health</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.5">
+                    <t pn="section-toc.1-1.3.2.3.2.5.1"><xref derivedContent="3.3.5" format="counter" sectionFormat="of" target="section-3.3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relay-loaded-or-shutting-do">Relay Loaded or Shutting Down</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.6">
+                    <t pn="section-toc.1-1.3.2.3.2.6.1"><xref derivedContent="3.3.6" format="counter" sectionFormat="of" target="section-3.3.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relay-discovery-messages-vs">Relay Discovery Messages vs. Restarting Discovery</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.7">
+                    <t pn="section-toc.1-1.3.2.3.2.7.1"><xref derivedContent="3.3.7" format="counter" sectionFormat="of" target="section-3.3.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-independent-discovery-per-t">Independent Discovery per Traffic Source</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dns-configuration">DNS Configuration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.5">
+                <t pn="section-toc.1-1.3.2.5.1"><xref derivedContent="3.5" format="counter" sectionFormat="of" target="section-3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-waiting-for-dns-resolution">Waiting for DNS Resolution</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-amtrelay-resource-record-de">AMTRELAY Resource Record Definition</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-amtrelay-rrtype">AMTRELAY RRType</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-amtrelay-rdata-format">AMTRELAY RData Format</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.2.2">
+                  <li pn="section-toc.1-1.4.2.2.2.1">
+                    <t pn="section-toc.1-1.4.2.2.2.1.1"><xref derivedContent="4.2.1" format="counter" sectionFormat="of" target="section-4.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rdata-format-precedence">RData Format - Precedence</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.2">
+                    <t pn="section-toc.1-1.4.2.2.2.2.1"><xref derivedContent="4.2.2" format="counter" sectionFormat="of" target="section-4.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rdata-format-discovery-opti">RData Format - Discovery Optional (D-bit)</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.3">
+                    <t pn="section-toc.1-1.4.2.2.2.3.1"><xref derivedContent="4.2.3" format="counter" sectionFormat="of" target="section-4.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rdata-format-type">RData Format - Type</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.4">
+                    <t pn="section-toc.1-1.4.2.2.2.4.1"><xref derivedContent="4.2.4" format="counter" sectionFormat="of" target="section-4.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rdata-format-relay">RData Format - Relay</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-amtrelay-record-presentatio">AMTRELAY Record Presentation Format</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.3.2">
+                  <li pn="section-toc.1-1.4.2.3.2.1">
+                    <t pn="section-toc.1-1.4.2.3.2.1.1"><xref derivedContent="4.3.1" format="counter" sectionFormat="of" target="section-4.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-representation-of-amtrelay-">Representation of AMTRELAY RRs</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.3.2.2">
+                    <t pn="section-toc.1-1.4.2.3.2.2.1"><xref derivedContent="4.3.2" format="counter" sectionFormat="of" target="section-4.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples">Examples</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-of-amt">Use of AMT</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-record-spoofing">Record-Spoofing</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-congestion">Congestion</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t pn="section-toc.1-1.8.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-unknown-rrtype-construction">Unknown RRType Construction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">This document defines DNS Reverse IP AMT Discovery (DRIAD), a mechanism for
+ AMT gateways to discover AMT relays that are capable of forwarding multicast
+ traffic from a known source IP address.</t>
+      <t pn="section-1-2">AMT (Automatic Multicast Tunneling) is defined in <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/> and provides
+ a method to transport multicast traffic over a unicast tunnel in order to
+ traverse network segments that are not multicast capable.</t>
+      <t pn="section-1-3"><xref target="RFC7450" sectionFormat="of" section="4.1.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.1.5" derivedContent="RFC7450"/> explains that the relay selection process
+ for AMT is intended to be more flexible than the particular discovery method
+ described in that document. That section further explains that the selection process
+ might need to depend on the source of the multicast traffic in some
+ deployments, since a relay must be able to receive multicast traffic from the
+ desired source in order to forward it.</t>
+      <t pn="section-1-4"><xref target="RFC7450" sectionFormat="of" section="4.1.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.1.5" derivedContent="RFC7450"/> goes on
+       to suggest DNS-based queries as a possible solution: DRIAD is DNS based.  This solution also
+ addresses the relay discovery issues in the "Disadvantages of this configuration" lists in Sections
+ <xref target="RFC8313" sectionFormat="bare" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8313#section-3.3" derivedContent="RFC8313"/> and
+ <xref target="RFC8313" sectionFormat="bare" section="3.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8313#section-3.4" derivedContent="RFC8313"/> of <xref target="RFC8313" format="default" sectionFormat="of" derivedContent="RFC8313"/>.</t>
+      <t pn="section-1-5">The goal for DRIAD is to enable multicast connectivity between separate
+ multicast-enabled networks without preconfiguring any
+ peering arrangements between the networks when neither the sending nor the receiving network
+ is connected to a multicast-enabled backbone.</t>
+      <t pn="section-1-6">This document extends the relay discovery procedure described in <xref target="RFC7450" sectionFormat="of" section="5.2.3.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.2.3.4" derivedContent="RFC7450"/>.</t>
+      <section anchor="background" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-background">Background</name>
+        <t pn="section-1.1-1">The reader is assumed to be familiar with the basic DNS concepts
+ described in <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>, <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/>, and the subsequent documents that update them, particularly <xref target="RFC2181" format="default" sectionFormat="of" derivedContent="RFC2181"/>.</t>
+        <t pn="section-1.1-2">The reader is also assumed to be familiar with the concepts and terminology
+ regarding source-specific multicast as described in <xref target="RFC4607" format="default" sectionFormat="of" derivedContent="RFC4607"/> and the
+ use of Internet Group Management Protocol Version 3 (IGMPv3) <xref target="RFC3376" format="default" sectionFormat="of" derivedContent="RFC3376"/> and Multicast Listener Discovery Version 2
+ (MLDv2) <xref target="RFC3810" format="default" sectionFormat="of" derivedContent="RFC3810"/> for group management of
+ source-specific multicast channels, as described in <xref target="RFC4604" format="default" sectionFormat="of" derivedContent="RFC4604"/>.</t>
+        <t pn="section-1.1-3">The reader should also be familiar with AMT, particularly the terminology
+ listed in Sections <xref target="RFC7450" sectionFormat="bare" section="3.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-3.2" derivedContent="RFC7450"/>
+	 and <xref target="RFC7450" sectionFormat="bare" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-3.3" derivedContent="RFC7450"/> of <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>.</t>
+      </section>
+      <section anchor="terminology" numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <section anchor="relays-and-gateways" numbered="true" toc="include" removeInRFC="false" pn="section-1.2.1">
+          <name slugifiedName="name-relays-and-gateways">Relays and Gateways</name>
+          <t pn="section-1.2.1-1">When reading this document, it's especially helpful to recall that once
+ an AMT tunnel is established, the relay receives native multicast traffic
+ and sends unicast tunnel-encapsulated traffic to the gateway. The gateway
+ receives the tunnel-encapsulated packets, decapsulates them, and forwards
+ them as native multicast packets, as illustrated in <xref target="figtunnel" format="default" sectionFormat="of" derivedContent="Figure 1"/>.</t>
+          <figure anchor="figtunnel" align="left" suppress-title="false" pn="figure-1">
+            <name slugifiedName="name-amt-tunnel-illustration">AMT Tunnel Illustration</name>
+            <artwork name="" type="" align="left" alt="" pn="section-1.2.1-2.1">
+
+  Multicast  +-----------+  Unicast  +-------------+  Multicast
+ &gt;---------&gt; | AMT relay | &gt;=======&gt; | AMT gateway | &gt;---------&gt;
+	     +-----------+           +-------------+
+ </artwork>
+          </figure>
+        </section>
+        <section anchor="definitions" numbered="true" toc="include" removeInRFC="false" pn="section-1.2.2">
+          <name slugifiedName="name-definitions">Definitions</name>
+          <table align="center" pn="table-1">
+            <name slugifiedName="name-definitions-2">Definitions</name>
+            <thead>
+              <tr>
+                <th align="right" colspan="1" rowspan="1">Term</th>
+                <th align="left" colspan="1" rowspan="1">Definition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">(S,G)</td>
+                <td align="left" colspan="1" rowspan="1">A source-specific multicast channel, as described in <xref target="RFC4607" format="default" sectionFormat="of" derivedContent="RFC4607"/>. A pair of IP addresses with a source host IP and destination group IP.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">CMTS</td>
+                <td align="left" colspan="1" rowspan="1">Cable Modem Termination System</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">discovery broker</td>
+                <td align="left" colspan="1" rowspan="1">A broker or load balancer for AMT relay
+		 discovery, as mentioned in <xref target="RFC7450" sectionFormat="of" section="4.2.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.2.1.1" derivedContent="RFC7450"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">downstream</td>
+                <td align="left" colspan="1" rowspan="1">Further from the source of traffic, as described in <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">FQDN</td>
+                <td align="left" colspan="1" rowspan="1">Fully Qualified Domain Name, as described in <xref target="RFC8499" format="default" sectionFormat="of" derivedContent="RFC8499"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">gateway</td>
+                <td align="left" colspan="1" rowspan="1">An AMT gateway, as described in <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">L flag</td>
+                <td align="left" colspan="1" rowspan="1">The "Limit" flag described in <xref target="RFC7450" sectionFormat="of" section="5.1.4.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.4.4" derivedContent="RFC7450"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">OLT</td>
+                <td align="left" colspan="1" rowspan="1">Optical Line Terminal</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">relay</td>
+                <td align="left" colspan="1" rowspan="1">An AMT relay, as described in <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">RPF</td>
+                <td align="left" colspan="1" rowspan="1">Reverse Path Forwarding, as described in <xref target="RFC5110" format="default" sectionFormat="of" derivedContent="RFC5110"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">RR</td>
+                <td align="left" colspan="1" rowspan="1">A DNS Resource Record, as described in <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">RRType</td>
+                <td align="left" colspan="1" rowspan="1">A DNS Resource Record Type, as described in <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">SSM</td>
+                <td align="left" colspan="1" rowspan="1">Source-specific multicast, as described in <xref target="RFC4607" format="default" sectionFormat="of" derivedContent="RFC4607"/>.</td>
+              </tr>
+              <tr>
+                <td align="right" colspan="1" rowspan="1">upstream</td>
+                <td align="left" colspan="1" rowspan="1">Closer to the source of traffic, as described in <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section anchor="reqs" numbered="true" toc="include" removeInRFC="false" pn="section-1.2.3">
+          <name slugifiedName="name-requirements-language">Requirements Language</name>
+          <t pn="section-1.2.3-1">
+     The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+     "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+     described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+     when, and only when, they appear in all capitals, as shown here.
+          </t>
+        </section>
+      </section>
+    </section>
+    <section anchor="relay-discovery-overview" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-relay-discovery-overview">Relay Discovery Overview</name>
+      <section anchor="basic-mechanics" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-basic-mechanics">Basic Mechanics</name>
+        <t pn="section-2.1-1">The AMTRELAY resource record (RR) defined in this document is used to
+ publish the IP address or domain name of a set of AMT relays or discovery
+ brokers that can receive, encapsulate, and forward multicast traffic from
+ a particular sender.</t>
+        <t pn="section-2.1-2">The sender is the owner of the RR and configures the zone so that it
+ contains a set of RRs that provide the addresses or domain names of AMT
+ relays (or discovery brokers that advertise relays) that can receive
+ multicast IP traffic from that sender.</t>
+        <t pn="section-2.1-3">This enables AMT gateways in remote networks to discover an AMT relay that
+ is capable of forwarding traffic from the sender.  This, in turn, enables those
+ AMT gateways to receive the multicast traffic tunneled over a unicast AMT
+ tunnel from those relays and then pass the multicast packets into
+ networks or applications that are using the gateway to subscribe to traffic
+ from that sender.</t>
+        <t pn="section-2.1-4">This mechanism only works for source-specific multicast (SSM) channels.  The
+ source address of the (S,G) is reversed and used as an index into one of the
+ reverse mapping trees (in-addr.arpa for IPv4, as described in <xref target="RFC1035" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.5" derivedContent="RFC1035"/>, or ip6.arpa for IPv6, as
+	 described in <xref target="RFC3596" sectionFormat="of" section="2.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3596#section-2.5" derivedContent="RFC3596"/>).</t>
+        <t pn="section-2.1-5">This mechanism should be treated as an extension of the AMT relay discovery
+ procedure described in <xref target="RFC7450" sectionFormat="of" section="5.2.3.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.2.3.4" derivedContent="RFC7450"/>.  A gateway that
+ supports this method of AMT relay discovery <bcp14>SHOULD</bcp14> use this method
+ whenever it's performing the relay discovery procedure, the source IP
+ addresses for desired (S,G)s are known to the gateway, and conditions match
+ the requirements outlined in <xref target="priority" format="default" sectionFormat="of" derivedContent="Section 3.1"/>.</t>
+        <t pn="section-2.1-6">Some detailed example use cases are provided in <xref target="exampledeployments" format="default" sectionFormat="of" derivedContent="Section 2.3"/>, and
+ other applicable example topologies appear in Sections <xref target="RFC8313" sectionFormat="bare" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8313#section-3.3" derivedContent="RFC8313"/>,
+ <xref target="RFC8313" sectionFormat="bare" section="3.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8313#section-3.4" derivedContent="RFC8313"/>, and <xref target="RFC8313" sectionFormat="bare" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8313#section-3.5" derivedContent="RFC8313"/> of <xref target="RFC8313" format="default" sectionFormat="of" derivedContent="RFC8313"/>.</t>
+      </section>
+      <section anchor="signaling-and-discovery" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-signaling-and-discovery">Signaling and Discovery</name>
+        <t pn="section-2.2-1">This section describes a typical example of the end-to-end process for
+ signaling a receiver's join of an SSM channel that relies on an AMTRELAY
+ RR.</t>
+        <t pn="section-2.2-2">The example in <xref target="figmessaging" format="default" sectionFormat="of" derivedContent="Figure 2"/> contains two multicast-enabled
+ networks that are both connected to the internet with non-multicast-capable
+ links and which have no direct association with each other.</t>
+        <t pn="section-2.2-3">A content provider operates a sender, which is a source of multicast traffic
+ inside a multicast-capable network.</t>
+        <t pn="section-2.2-4">An end user who is a customer of the content provider has a multicast-capable
+ Internet Service Provider (ISP), which operates a receiving network that uses an
+ AMT gateway.  The AMT gateway is DRIAD capable.</t>
+        <t pn="section-2.2-5">The content provider provides the user with a receiving application that
+ tries to subscribe to at least one (S,G).  This receiving application could,
+ for example, be a file transfer system using File Delivery over Unidirectional
+ Transport (FLUTE) <xref target="RFC6726" format="default" sectionFormat="of" derivedContent="RFC6726"/>, a live
+ video stream using RTP <xref target="RFC3550" format="default" sectionFormat="of" derivedContent="RFC3550"/>, or any other application that might
+ subscribe to an SSM channel.</t>
+        <figure anchor="figmessaging" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-driad-messaging">DRIAD Messaging</name>
+          <artwork name="" type="" align="left" alt="" pn="section-2.2-6.1">
+		  +---------------+
+		  |    Sender     |
+   |    |         |  2001:db8::a  |
+   |    |         +---------------+
+   |Data|                 |
+   |Flow|      Multicast  |
+  \|    |/      Network   |
+   \    /                 |        5: Propagate RPF for Join(S,G)
+    \  /          +---------------+
+     \/           |   AMT relay   |
+		  | 2001:db8:c::f |
+		  +---------------+
+			  |        4: Gateway connects to Relay,
+				      sends Join(S,G) over tunnel
+			  |
+		 Unicast          
+		  Tunnel  |        3: --&gt; DNS Query: type=AMTRELAY,
+				  /        a.0.0.0.0.0.0.0.0.0.0.0.
+      ^                   |      /         0.0.0.0.0.0.0.0.0.0.0.0.
+      |                         /          8.b.d.0.1.0.0.2.ip6.arpa
+      |                   |    /      &lt;-- Response:
+  Join/Leave       +-------------+         AMTRELAY=2001:db8:c::f
+   Signals         | AMT gateway |
+      |            +-------------+
+      |                   |        2: Propagate RPF for Join(S,G)
+      |        Multicast  |
+		Network   |
+        	          |     1: Join(S=2001:db8::a,G=ff3e::8000:d)
+		   +-------------+
+		   |   Receiver  |
+		   |  (end user) |
+		   +-------------+
+ </artwork>
+        </figure>
+        <t pn="section-2.2-7">In this simple example, the sender IP is 2001:db8::a, which is sending
+ traffic to the group address ff3e::8000:d, and the relay IP is
+ 2001:db8::c:f.</t>
+        <t pn="section-2.2-8">The content provider has previously configured the DNS zone that
+ contains the reverse IP domain name for the sender's IP address
+ so that it provides an AMTRELAY RR with the relay's IP address
+ (see <xref target="rpformat" format="default" sectionFormat="of" derivedContent="Section 4.3"/> for details about the AMTRELAY RR format and
+ semantics).  As described in <xref target="RFC3596" sectionFormat="of" section="2.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3596#section-2.5" derivedContent="RFC3596"/>, the
+ reverse IP FQDN of the sender's address "2001:db8::a" is:</t>
+        <sourcecode name="" type="" markers="false" pn="section-2.2-9">
+ a.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.
+                                                                arpa.
+</sourcecode>
+        <t pn="section-2.2-10">The sequence of events depicted in <xref target="figmessaging" format="default" sectionFormat="of" derivedContent="Figure 2"/> is as follows:</t>
+        <ol spacing="normal" type="1" start="1" pn="section-2.2-11">
+          <li pn="section-2.2-11.1" derivedCounter="1.">The end user starts the app, which issues a join to the (S,G):
+ (2001:db8::a, ff3e::8000:d).</li>
+          <li pn="section-2.2-11.2" derivedCounter="2.">The join propagates with RPF through the receiver's multicast-enabled
+ network with PIM <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> or another
+	   multicast routing mechanism until the AMT gateway receives a signal to join the (S,G).</li>
+          <li pn="section-2.2-11.3" derivedCounter="3.">
+            <t pn="section-2.2-11.3.1">The AMT gateway performs a reverse DNS lookup for the AMTRELAY
+	     RRType by sending an AMTRELAY RRType query for the reverse IP domain name
+ for the sender's source IP address (the S from the (S,G)).  </t>
+            <t pn="section-2.2-11.3.2">
+ The DNS resolver for the AMT gateway uses ordinary DNS recursive
+ resolution until it has the authoritative result that the content
+ provider configured, which informs the AMT gateway that the relay address
+ is 2001:db8::c:f.</t>
+          </li>
+          <li pn="section-2.2-11.4" derivedCounter="4.">The AMT gateway performs AMT handshakes with the AMT relay as described
+ in <xref target="RFC7450" section="4" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4" derivedContent="RFC7450"/>, then forwards a membership report to the
+ relay, indicating subscription to the (S,G).</li>
+          <li pn="section-2.2-11.5" derivedCounter="5.">The relay propagates the join through its network toward the
+	   sender and then forwards the appropriate AMT-encapsulated traffic to the
+ gateway, which decapsulates and forwards it as a native multicast through
+ its downstream network to the end user.</li>
+        </ol>
+        <t pn="section-2.2-12">In the case of an IPv4 (S,G), the only difference in the AMT relay
+ discovery process is the use of the in-addr.arpa reverse IP domain name,
+ as described in <xref target="RFC1035" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.5" derivedContent="RFC1035"/>, instead of the in6.arpa
+ domain name.  For example, if the (S,G) is (198.51.100.12, 232.252.0.2),
+ the reverse IP FQDN for the AMTRELAY query would be
+ "12.100.51.198.in-addr.arpa.".</t>
+        <t pn="section-2.2-13">Note that the address family of the AMT tunnel is independent of the
+ address family for the multicast traffic.</t>
+      </section>
+      <section anchor="exampledeployments" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-example-deployments">Example Deployments</name>
+        <section anchor="exrx" numbered="true" toc="include" removeInRFC="false" pn="section-2.3.1">
+          <name slugifiedName="name-example-receiving-networks">Example Receiving Networks</name>
+          <section anchor="exrxisp" numbered="true" toc="exclude" removeInRFC="false" pn="section-2.3.1.1">
+            <name slugifiedName="name-internet-service-provider">Internet Service Provider</name>
+            <t pn="section-2.3.1.1-1">One example of a receiving network is an Internet Service Provider (ISP)
+ that offers multicast ingest services to its subscribers, illustrated in
+ <xref target="figrxisp" format="default" sectionFormat="of" derivedContent="Figure 3"/>.</t>
+            <t pn="section-2.3.1.1-2">In the example network below, subscribers can join (S,G)s with MLDv2 or
+ IGMPv3 as described in <xref target="RFC4604" format="default" sectionFormat="of" derivedContent="RFC4604"/>, and the AMT gateway in this
+ ISP can receive and forward multicast traffic from one of the example sending
+ networks in <xref target="extx" format="default" sectionFormat="of" derivedContent="Section 2.3.2"/> by discovering the appropriate AMT relays with a DNS
+ lookup for the AMTRELAY RR with the reverse IP of the source in the (S,G).</t>
+            <figure anchor="figrxisp" align="left" suppress-title="false" pn="figure-3">
+              <name slugifiedName="name-receiving-isp-example">Receiving ISP Example</name>
+              <artwork name="" type="" align="left" alt="" pn="section-2.3.1.1-3.1">
+		     Internet
+		  ^            ^      Multicast-enabled
+		  |            |      Receiving Network
+	   +------|------------|-------------------------+
+	   |      |            |                         |
+	   |  +--------+   +--------+    +=========+     |
+	   |  | Border |---| Border |    |   AMT   |     |
+	   |  | Router |   | Router |    | gateway |     |
+	   |  +--------+   +--------+    +=========+     |
+	   |      |            |              |          |
+	   |      +-----+------+-----------+--+          |
+	   |            |                  |             |
+	   |      +-------------+    +-------------+     |
+	   |      | Agg Routers | .. | Agg Routers |     |
+	   |      +-------------+    +-------------+     |
+	   |            /     \ \     /         \        |
+	   | +---------------+         +---------------+ |
+	   | |Access Systems | ....... |Access Systems | |
+	   | |(CMTS/OLT/etc.)|         |(CMTS/OLT/etc.)| |
+	   | +---------------+         +---------------+ |
+	   |        |                        |           |
+	   +--------|------------------------|-----------+
+		    |                        |
+	      +---+-+-+---+---+        +---+-+-+---+---+
+	      |   |   |   |   |        |   |   |   |   |
+	     /-\ /-\ /-\ /-\ /-\      /-\ /-\ /-\ /-\ /-\
+	     |_| |_| |_| |_| |_|      |_| |_| |_| |_| |_|
+
+			    Subscribers
+ </artwork>
+            </figure>
+          </section>
+          <section anchor="exoffice" numbered="true" toc="exclude" removeInRFC="false" pn="section-2.3.1.2">
+            <name slugifiedName="name-small-office">Small Office</name>
+            <t pn="section-2.3.1.2-1">Another example receiving network is a small branch office that regularly
+ accesses some multicast content, illustrated in <xref target="figrxofficenm" format="default" sectionFormat="of" derivedContent="Figure 4"/>.</t>
+            <t pn="section-2.3.1.2-2">This office has desktop devices that need to receive some multicast traffic,
+ so an AMT gateway runs on a LAN with these devices to pull traffic in
+ through a non-multicast next hop.</t>
+            <t pn="section-2.3.1.2-3">The office also hosts some mobile devices that have AMT gateway instances
+ embedded inside apps in order to receive multicast traffic over their
+ non-multicast wireless LAN.  (Note that the "Legacy Router" is a
+ simplification that's meant to describe a variety of possible conditions;
+ for example, it could be a device providing a split-tunnel VPN as described
+ in <xref target="RFC7359" format="default" sectionFormat="of" derivedContent="RFC7359"/>, deliberately excluding multicast traffic for a VPN
+ tunnel, rather than a device that is incapable of multicast forwarding.)</t>
+            <figure anchor="figrxofficenm" align="left" suppress-title="false" pn="figure-4">
+              <name slugifiedName="name-small-office-no-multicast-u">Small Office (No Multicast Up)</name>
+              <artwork name="" type="" align="left" alt="" pn="section-2.3.1.2-4.1">
+		  Internet
+	       (non-multicast)
+		      ^
+		      |                  Office Network
+	   +----------|----------------------------------+
+	   |          |                                  |
+	   |    +---------------+ (Wifi)   Mobile apps   |
+	   |    | Modem+ | Wifi | - - - -  w/ embedded   |
+	   |    | Router |  AP  |          AMT gateways  |
+	   |    +---------------+                        |
+	   |          |                                  |
+	   |          |                                  |
+	   |     +----------------+                      |
+	   |     | Legacy Router  |                      |
+	   |     |   (unicast)    |                      |
+	   |     +----------------+                      |
+	   |      /        |      \                      |
+	   |     /         |       \                     |
+	   | +--------+ +--------+ +--------+=========+  |
+	   | | Phones | | ConfRm | | Desks  |   AMT   |  |
+	   | | subnet | | subnet | | subnet | gateway |  |
+	   | +--------+ +--------+ +--------+=========+  |
+	   |                                             |
+	   +---------------------------------------------+
+ </artwork>
+            </figure>
+            <t pn="section-2.3.1.2-5">By adding an AMT relay to this office network as in <xref target="figrxoffice" format="default" sectionFormat="of" derivedContent="Figure 5"/>, it's
+ possible to make use of multicast services from the example multicast-capable
+ ISP in <xref target="exrxisp" format="default" sectionFormat="of" derivedContent="Section 2.3.1.1"/>.</t>
+            <figure anchor="figrxoffice" align="left" suppress-title="false" pn="figure-5">
+              <name slugifiedName="name-small-office-example">Small Office Example</name>
+              <artwork name="" type="" align="left" alt="" pn="section-2.3.1.2-6.1">
+	    Multicast-capable ISP
+		      ^
+		      |                  Office Network
+	   +----------|----------------------------------+
+	   |          |                                  |
+	   |    +---------------+ (Wifi)   Mobile apps   |
+	   |    | Modem+ | Wifi | - - - -  w/ embedded   |
+	   |    | Router |  AP  |          AMT gateways  |
+	   |    +---------------+                        |
+	   |          |               +=======+          |
+	   |          +---Wired LAN---|  AMT  |          |
+	   |          |               | relay |          |
+	   |     +----------------+   +=======+          |
+	   |     | Legacy Router  |                      |
+	   |     |   (unicast)    |                      |
+	   |     +----------------+                      |
+	   |      /        |      \                      |
+	   |     /         |       \                     |
+	   | +--------+ +--------+ +--------+=========+  |
+	   | | Phones | | ConfRm | | Desks  |   AMT   |  |
+	   | | subnet | | subnet | | subnet | gateway |  |
+	   | +--------+ +--------+ +--------+=========+  |
+	   |                                             |
+	   +---------------------------------------------+
+ </artwork>
+            </figure>
+            <t pn="section-2.3.1.2-7">When multicast-capable networks are chained like this, with a network like
+ the one in <xref target="figrxoffice" format="default" sectionFormat="of" derivedContent="Figure 5"/> receiving Internet services from a
+ multicast-capable network like the one in <xref target="figrxisp" format="default" sectionFormat="of" derivedContent="Figure 3"/>, it's important for
+ AMT gateways to reach the more local AMT relay in order to avoid
+ accidentally tunneling multicast traffic from a more distant AMT relay with
+ unicast and failing to utilize the multicast transport capabilities of the
+ network in <xref target="figrxisp" format="default" sectionFormat="of" derivedContent="Figure 3"/>.</t>
+          </section>
+        </section>
+        <section anchor="extx" numbered="true" toc="include" removeInRFC="false" pn="section-2.3.2">
+          <name slugifiedName="name-example-sending-networks">Example Sending Networks</name>
+          <section anchor="extxsnd" numbered="true" toc="exclude" removeInRFC="false" pn="section-2.3.2.1">
+            <name slugifiedName="name-sender-controlled-relays">Sender-Controlled Relays</name>
+            <t pn="section-2.3.2.1-1">When a sender network is also operating AMT relays to distribute multicast
+ traffic, as in <xref target="figtxrelay" format="default" sectionFormat="of" derivedContent="Figure 6"/>, each address could appear as an AMTRELAY RR
+ for the reverse IP of the sender. Alternately, one or more domain names could appear
+ in AMTRELAY RRs, and the AMT relay addresses can be discovered by finding
+ A or AAAA records from those domain names.</t>
+            <figure anchor="figtxrelay" align="left" suppress-title="false" pn="figure-6">
+              <name slugifiedName="name-small-office-example-2">Small Office Example</name>
+              <artwork name="" type="" align="left" alt="" pn="section-2.3.2.1-2.1">
+				       Sender Network
+		 +-----------------------------------+
+		 |                                   |
+		 | +--------+   +=======+  +=======+ |
+		 | | Sender |   |  AMT  |  |  AMT  | |
+		 | +--------+   | relay |  | relay | |
+		 |     |        +=======+  +=======+ |
+		 |     |            |          |     |
+		 |     +-----+------+----------+     |
+		 |           |                       |
+		 +-----------|-----------------------+
+			     v
+			  Internet
+		       (non-multicast)
+ </artwork>
+            </figure>
+          </section>
+          <section anchor="extxprv" numbered="true" toc="exclude" removeInRFC="false" pn="section-2.3.2.2">
+            <name slugifiedName="name-provider-controlled-relays">Provider-Controlled Relays</name>
+            <t pn="section-2.3.2.2-1">When an ISP offers a service to transmit outbound multicast traffic through
+ a forwarding network, it might also offer AMT relays in order to reach
+ receivers without multicast connectivity to the forwarding network, as in
+ <xref target="figtxisp" format="default" sectionFormat="of" derivedContent="Figure 7"/>. In this case, it's recommended that the ISP also provide at
+ least one domain name for the AMT relays for use with the AMTRELAY RR.</t>
+            <t pn="section-2.3.2.2-2">When the sender wishes to use the relays provided by the ISP for
+ forwarding multicast traffic, an AMTRELAY RR should be configured to use
+ the domain name provided by the ISP to allow for address reassignment of the
+ relays without forcing the sender to reconfigure the corresponding AMTRELAY
+ RRs.</t>
+            <figure anchor="figtxisp" align="left" suppress-title="false" pn="figure-7">
+              <name slugifiedName="name-sending-isp-example">Sending ISP Example</name>
+              <artwork name="" type="" align="left" alt="" pn="section-2.3.2.2-3.1">
+		   +--------+
+		   | Sender |
+		   +---+----+        Multicast-enabled
+		       |              Sending Network
+	   +-----------|-------------------------------+
+	   |           v                               |
+	   |    +------------+     +=======+ +=======+ |
+	   |    | Agg Router |     |  AMT  | |  AMT  | |
+	   |    +------------+     | relay | | relay | |
+	   |           |           +=======+ +=======+ |
+	   |           |               |         |     |
+	   |     +-----+------+--------+---------+     |
+	   |     |            |                        |
+	   | +--------+   +--------+                   |
+	   | | Border |---| Border |                   |
+	   | | Router |   | Router |                   |
+	   | +--------+   +--------+                   |
+	   +-----|------------|------------------------+
+		 |            |
+		 v            v
+		    Internet
+		 (non-multicast)
+ </artwork>
+            </figure>
+          </section>
+        </section>
+      </section>
+    </section>
+    <section anchor="relay-discovery-operation" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-relay-discovery-operation">Relay Discovery Operation</name>
+      <section anchor="priority" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-optimal-relay-selection">Optimal Relay Selection</name>
+        <section anchor="overview" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.1">
+          <name slugifiedName="name-overview">Overview</name>
+          <t pn="section-3.1.1-1">The reverse source IP DNS query of an AMTRELAY RR is a good way for a gateway
+ to discover a relay that is known to the sender.</t>
+          <t pn="section-3.1.1-2">However, it is *not* necessarily a good way to discover the best relay for that
+ gateway to use, because the RR will only provide information about relays
+ known to the source.</t>
+          <t pn="section-3.1.1-3">If there is an upstream relay in a network that is topologically closer to
+ the gateway and is able to receive and forward multicast traffic from the sender,
+ that relay is better for the gateway to use since more of the network path
+ uses native multicast, allowing more chances for packet replication.  But since
+ that relay is not known to the sender, it won't be advertised in the sender's
+ reverse IP DNS record.  An example network that illustrates this scenario is
+ outlined in <xref target="figrxoffice" format="default" sectionFormat="of" derivedContent="Figure 5"/> from <xref target="exoffice" format="default" sectionFormat="of" derivedContent="Section 2.3.1.2"/>.</t>
+          <t pn="section-3.1.1-4">It's only appropriate for an AMT gateway to discover an AMT relay by querying
+ an AMTRELAY RR owned by a sender when all of these conditions are met:</t>
+          <ol spacing="normal" type="1" start="1" pn="section-3.1.1-5">
+            <li pn="section-3.1.1-5.1" derivedCounter="1.">The gateway needs to propagate a join of an (S,G) over AMT because in
+ the gateway's network, no RPF next hop toward the source can
+ propagate a native multicast join of the (S,G);</li>
+            <li pn="section-3.1.1-5.2" derivedCounter="2.">The gateway is not already connected to a relay that forwards multicast
+ traffic from the source of the (S,G);</li>
+            <li pn="section-3.1.1-5.3" derivedCounter="3.">The gateway is not configured to use a particular IP address for AMT
+ discovery, or a relay discovered with that IP is not able to forward
+ traffic from the source of the (S,G);</li>
+            <li pn="section-3.1.1-5.4" derivedCounter="4.">The gateway is not able to find an upstream AMT relay with
+	     DNS-based Service Discovery (DNS-SD)
+ <xref target="RFC6763" format="default" sectionFormat="of" derivedContent="RFC6763"/> using "_amt._udp" as the Service section of the queries, or a
+ relay discovered this way is not able to forward traffic from the source of
+ the (S,G) (as described in <xref target="trafficabsent" format="default" sectionFormat="of" derivedContent="Section 3.3.4.1"/> and <xref target="loaded" format="counter" sectionFormat="of" derivedContent="3.3.5"/>); and</li>
+            <li pn="section-3.1.1-5.5" derivedCounter="5.">The gateway is not able to find an upstream AMT relay with the well-known
+ anycast addresses from <xref target="RFC7450" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-7" derivedContent="RFC7450"/>.</li>
+          </ol>
+          <t pn="section-3.1.1-6">When all of the above conditions are met, the gateway has no path within its local
+ network that can receive multicast traffic from the source IP of the (S,G).</t>
+          <t pn="section-3.1.1-7">In this situation, the best way to find a relay that can forward the
+ required traffic is to use information that comes from the operator of the
+ sender.  When the sender has configured an AMTRELAY RR, gateways can use the
+ DRIAD mechanism defined in this document to discover the relay information
+ provided by the sender.</t>
+          <t pn="section-3.1.1-8">Note that the above conditions are designed to prefer the use of
+	   a local AMT relay if one can be discovered.  However, note also
+	   that the network upstream of the locally discovered relay would
+	   still need to receive traffic from the sender of the (S,G) in order
+	   to forward it.  Therefore, unless the upstream network contains the
+	   sender or has a multicast-capable peering with a network that can
+	   forward traffic from the sender, the upstream network might still
+	   use AMT to ingest the traffic from a network that can receive
+	   traffic from the sender.  If this is the case, the upstream AMT
+	   gateway could still rely on the AMTRELAY RR provided by the sender,
+	   even though the AMTRELAY RR is not directly used by gateways
+	   topologically closer to the receivers.  For a concrete example of
+	   such a situation, consider the network in <xref target="figrxoffice" format="default" sectionFormat="of" derivedContent="Figure 5"/> connected as one
+	   of the customers to the network in <xref target="figrxisp" format="default" sectionFormat="of" derivedContent="Figure 3"/>.</t>
+        </section>
+        <section anchor="ordering" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.2">
+          <name slugifiedName="name-preference-ordering">Preference Ordering</name>
+          <t pn="section-3.1.2-1">This section defines a preference ordering for relay addresses during
+ the relay discovery process.  Gateways are encouraged to implement a
+ Happy Eyeballs <xref target="RFC8305" format="default" sectionFormat="of" derivedContent="RFC8305"/> algorithm to try candidate relays
+ concurrently (see <xref target="happy" format="default" sectionFormat="of" derivedContent="Section 3.2"/>), but even
+ gateways that do not implement a Happy Eyeballs algorithm <bcp14>SHOULD</bcp14> use
+ this ordering, except as noted.</t>
+          <t pn="section-3.1.2-2">When establishing an AMT tunnel to forward multicast data, it's
+ very important for the discovery process to prioritize network
+ topology considerations ahead of address selection considerations in
+ order to gain the packet replication benefits from using multicast
+ instead of unicast tunneling in the multicast-capable portions of the
+ network path.</t>
+          <t pn="section-3.1.2-3">The intent of the advice and requirements in this section is to describe
+ how a gateway should make use of the concurrency provided by a Happy
+ Eyeballs algorithm to reduce the join latency while still prioritizing
+ network efficiency considerations over address selection considerations.</t>
+          <t pn="section-3.1.2-4"><xref target="RFC8305" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-4" derivedContent="RFC8305"/> requires a Happy Eyeballs algorithm to sort
+ the addresses with the Destination Address Selection defined in <xref target="RFC6724" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6724#section-6" derivedContent="RFC6724"/>, but for the above reasons, that requirement is superseded
+ in the AMT discovery use case by the following considerations:</t>
+          <ul spacing="normal" bare="false" empty="false" pn="section-3.1.2-5">
+            <li pn="section-3.1.2-5.1">
+              <t pn="section-3.1.2-5.1.1">Prefer Local Relays  </t>
+              <t pn="section-3.1.2-5.1.2"><xref target="figrxoffice" format="default" sectionFormat="of" derivedContent="Figure 5"/> and <xref target="exoffice" format="default" sectionFormat="of" derivedContent="Section 2.3.1.2"/> provide a motivating example to prefer
+  DNS-SD <xref target="RFC6763" format="default" sectionFormat="of" derivedContent="RFC6763"/> for discovery strictly ahead of using the AMTRELAY RR
+  controlled by the sender for AMT discovery.</t>
+              <t pn="section-3.1.2-5.1.3">
+ For this reason, it's <bcp14>RECOMMENDED</bcp14> that AMT gateways by default perform
+  service discovery using DNS Service Discovery (DNS-SD) <xref target="RFC6763" format="default" sectionFormat="of" derivedContent="RFC6763"/> for
+  _amt._udp.&lt;domain&gt; (with &lt;domain&gt; chosen as described in <xref target="RFC6763" sectionFormat="of" section="11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6763#section-11" derivedContent="RFC6763"/>) and use the AMT relays discovered that way in preference to
+  AMT relays discoverable via the mechanism defined in this document
+  (DRIAD).</t>
+            </li>
+            <li pn="section-3.1.2-5.2">
+              <t pn="section-3.1.2-5.2.1">Prefer Relays Managed by the Containing Network  </t>
+              <t pn="section-3.1.2-5.2.2">
+ When no local relay is discoverable with DNS-SD, it still may be the
+  case that a relay local to the receiver is operated by the network
+  providing transit services to the receiver.  </t>
+              <t pn="section-3.1.2-5.2.3">
+ In this case, when the network cannot make the relay discoverable via
+  DNS-SD, the network <bcp14>SHOULD</bcp14> use the well-known anycast addresses from <xref target="RFC7450" format="default" section="7" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-7" derivedContent="RFC7450"/> to route discovery traffic to the relay most
+  appropriate to the receiver's gateway.</t>
+              <t pn="section-3.1.2-5.2.4">
+ Accordingly, the gateway <bcp14>SHOULD</bcp14> by default discover a relay with the
+  well-known AMT anycast addresses as the next-best option after DNS-SD
+  when searching for a local relay.</t>
+            </li>
+            <li pn="section-3.1.2-5.3">
+              <t pn="section-3.1.2-5.3.1">Let Sender Manage Relay Provisioning  </t>
+              <t pn="section-3.1.2-5.3.2">
+ A related motivating example is provided by considering a sender whose
+  traffic can be forwarded by relays in a sender-controlled network
+  like <xref target="figtxrelay" format="default" sectionFormat="of" derivedContent="Figure 6"/> in <xref target="extxsnd" format="default" sectionFormat="of" derivedContent="Section 2.3.2.1"/> and by relays in a
+  provider-controlled network like <xref target="figtxisp" format="default" sectionFormat="of" derivedContent="Figure 7"/> in <xref target="extxprv" format="default" sectionFormat="of" derivedContent="Section 2.3.2.2"/>, with
+  different cost and scalability profiles for the different options.  </t>
+              <t pn="section-3.1.2-5.3.3">
+ In this example about the sending-side network, the precedence field
+  described in <xref target="rrdef-precedence" format="default" sectionFormat="of" derivedContent="Section 4.2.1"/> is a critical method of control so
+  that senders can provide the appropriate guidance to gateways
+  during the discovery process in order to manage load and failover
+  scenarios in a manner that operates well with the sender's
+  provisioning strategy for horizontal scaling of AMT relays.  </t>
+              <t pn="section-3.1.2-5.3.4">
+ Therefore, after DNS-SD, the precedence from the RR <bcp14>MUST</bcp14> be used for
+  sorting preference ahead of the Destination Address Selection ordering
+  from <xref target="RFC6724" section="6" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6724#section-6" derivedContent="RFC6724"/> so that only relay IPs with the same
+  precedence are directly compared according to the Destination Address
+  Selection ordering.</t>
+            </li>
+          </ul>
+          <t pn="section-3.1.2-6">Accordingly, AMT gateways <bcp14>SHOULD</bcp14> by default prefer relays in this
+	   order:</t>
+          <ol spacing="normal" start="1" type="1" pn="section-3.1.2-7">
+            <li pn="section-3.1.2-7.1" derivedCounter="1.">DNS-SD</li>
+            <li pn="section-3.1.2-7.2" derivedCounter="2.">Anycast addresses from <xref target="RFC7450" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-7" derivedContent="RFC7450"/></li>
+            <li pn="section-3.1.2-7.3" derivedCounter="3.">DRIAD</li>
+          </ol>
+          <t pn="section-3.1.2-8">This default behavior <bcp14>MAY</bcp14> be overridden by administrative configuration where
+ other behavior is more appropriate for the gateway within its network.</t>
+          <t pn="section-3.1.2-9">Among relay addresses that have an equivalent preference as described above, a
+ Happy Eyeballs algorithm for AMT <bcp14>SHOULD</bcp14> use the Destination Address Selection
+ defined in <xref target="RFC6724" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6724#section-6" derivedContent="RFC6724"/>.</t>
+          <t pn="section-3.1.2-10">Among relay addresses that still have an equivalent preference after the
+ above orderings, a gateway <bcp14>SHOULD</bcp14> make a non-deterministic choice (such as
+ a pseudorandom selection) for relay preference ordering in order to
+ support load balancing by DNS configurations that provide many relay
+ options.</t>
+          <t pn="section-3.1.2-11">The gateway <bcp14>MAY</bcp14> introduce a bias in the non-deterministic choice according
+ to information that indicates expected benefits from selecting some relays in
+ preference to others. Details about the structure and collection of this
+ information are out of scope for this document but could, for example, be
+ obtained by out-of-band methods or from a historical record about
+ network topology, timing information, or the response to a probing
+ mechanism. A gateway in possession of such information <bcp14>MAY</bcp14> use it to prefer topologically closer relays.</t>
+          <t pn="section-3.1.2-12">Within the above constraints, gateways <bcp14>MAY</bcp14> make use of other considerations
+ from <xref target="RFC8305" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-4" derivedContent="RFC8305"/>, such as the address family interleaving
+ strategies, to produce a final ordering of candidate relay addresses.</t>
+          <t pn="section-3.1.2-13">Note also that certain relay addresses might be excluded from consideration
+ by the hold-down timers described in <xref target="trafficabsent" format="default" sectionFormat="of" derivedContent="Section 3.3.4.1"/> or <xref target="loaded" format="counter" sectionFormat="of" derivedContent="3.3.5"/>.  These
+ relays constitute "unusable destinations" under Rule 1 of the Destination
+ Address Selection and are also not part of the superseding considerations
+ described above.</t>
+          <t pn="section-3.1.2-14">The discovery and connection process for the relay addresses in the above
+ described ordering <bcp14>MAY</bcp14> operate in parallel, subject to delays prescribed
+ by the Happy Eyeballs requirements described in <xref target="RFC8305" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-5" derivedContent="RFC8305"/>
+ for successively launched concurrent connection attempts.</t>
+        </section>
+        <section anchor="connecting-to-multiple-relays" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.3">
+          <name slugifiedName="name-connecting-to-multiple-rela">Connecting to Multiple Relays</name>
+          <t pn="section-3.1.3-1">In some deployments, it may be useful for a gateway to connect to
+ multiple upstream relays and subscribe to the same traffic in order to
+ support an active/active failover model.  A gateway <bcp14>SHOULD NOT</bcp14> be
+ configured to do so without guaranteeing that adequate bandwidth is
+ available.</t>
+          <t pn="section-3.1.3-2">A gateway configured to do this <bcp14>SHOULD</bcp14> still use the same preference-ordering logic from <xref target="ordering" format="default" sectionFormat="of" derivedContent="Section 3.1.2"/> for each connection.  (Note that
+ this ordering allows for overriding by explicit administrative
+ configuration where required.)</t>
+        </section>
+      </section>
+      <section anchor="happy" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-happy-eyeballs">Happy Eyeballs</name>
+        <section anchor="overview-1" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.1">
+          <name slugifiedName="name-overview-2">Overview</name>
+          <t pn="section-3.2.1-1">Often, multiple choices of relay will exist for a gateway using DRIAD
+ for relay discovery.  Happy Eyeballs <xref target="RFC8305" format="default" sectionFormat="of" derivedContent="RFC8305"/> provides a widely
+ deployed and generalizable strategy for probing multiple possible
+ connections in parallel. Therefore, it is <bcp14>RECOMMENDED</bcp14> that DRIAD-capable
+ gateways implement a Happy Eyeballs algorithm to support fast discovery
+ of the most preferred available relay by probing multiple relays
+ concurrently.</t>
+          <t pn="section-3.2.1-2">The parallel discovery logic of a Happy Eyeballs algorithm serves to
+ reduce join latency for the initial join of an SSM channel.  This section
+ and the preference ordering of relays defined in <xref target="ordering" format="default" sectionFormat="of" derivedContent="Section 3.1.2"/> together provide guidance on use of a Happy Eyeballs algorithm for the
+ case of establishing AMT connections.</t>
+          <t pn="section-3.2.1-3">Note that according to the definition in <xref target="connection-def" format="default" sectionFormat="of" derivedContent="Section 3.2.3"/> of this
+ document, establishing the connection occurs before sending a membership
+ report.  As described in <xref target="RFC8305" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-5" derivedContent="RFC8305"/>, only one of the
+ successful connections will be used, and the others are all canceled
+ or ignored.  In the context of an AMT connection, this means the gateway
+ will send the membership reports that subscribe to traffic only for the
+ chosen connection after the Happy Eyeballs algorithm resolves.</t>
+        </section>
+        <section anchor="algorithm-guidelines" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.2">
+          <name slugifiedName="name-algorithm-guidelines">Algorithm Guidelines</name>
+          <t pn="section-3.2.2-1">During the "Initiation of asynchronous DNS queries" phase
+	   described in <xref target="RFC8305" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-3" derivedContent="RFC8305"/>, a gateway attempts to resolve the domain names
+ listed in <xref target="priority" format="default" sectionFormat="of" derivedContent="Section 3.1"/>.  This consists of resolving the SRV queries for
+ DNS-SD domains for the AMT service, as well as the AMTRELAY query for the
+	   reverse IP domain defined in this document.</t>
+          <t pn="section-3.2.2-2">Each of the SRV and AMTRELAY responses might contain:</t>
+          <ul spacing="normal" bare="false" empty="false" pn="section-3.2.2-3">
+            <li pn="section-3.2.2-3.1">one
+	   or more IP addresses (as with type 1 or type 2 AMTRELAY
+	   responses or when the SRV Additional Data section of the
+	   SRV response contains the address records for the target,
+	   as urged by <xref target="RFC2782" format="default" sectionFormat="of" derivedContent="RFC2782"/>),
+	   or</li>
+            <li pn="section-3.2.2-3.2">
+	   only domain names (as with type 3
+	   responses from <xref target="rtype" format="default" sectionFormat="of" derivedContent="Section 4.2.3"/> or
+	   an SRV response without an additional data section).</li>
+          </ul>
+          <t pn="section-3.2.2-4">When present, IP addresses in the initial response provide resolved
+ destination address candidates for the "Sorting of resolved
+ destination addresses" phase described in <xref target="RFC8305" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-4" derivedContent="RFC8305"/>),
+ whereas domain names without IP addresses in the initial response result
+ in another set of queries for AAAA and A records, whose responses provide
+ the candidate resolved destination addresses.</t>
+          <t pn="section-3.2.2-5">Since the SRV or AMTRELAY responses don't have a bound on the count of
+ queries that might be generated aside from the bounds imposed by the
+ DNS resolver, it's important for the gateway to provide a rate limit on
+ the DNS queries.  The DNS query functionality is expected to follow
+ ordinary standards and best practices for DNS clients.  A gateway <bcp14>MAY</bcp14>
+ use an existing DNS client implementation that does so and <bcp14>MAY</bcp14> rely on
+ that client's rate-limiting logic to avoid issuing excessive queries.
+ Otherwise, a gateway <bcp14>MUST</bcp14> provide a rate limit for the DNS queries, and
+ its default settings <bcp14>SHOULD NOT</bcp14> permit more than 10 queries for any
+ 100-millisecond period (though this <bcp14>MAY</bcp14> be overridable by the administrative
+ configuration).</t>
+          <t pn="section-3.2.2-6">As the resolved IP addresses arrive, the Happy Eyeballs algorithm
+ sorts them according to the requirements and recommendations given in
+ <xref target="ordering" format="default" sectionFormat="of" derivedContent="Section 3.1.2"/> and attempts connections with the corresponding relays
+ under the algorithm restrictions and guidelines given in <xref target="RFC8305" format="default" sectionFormat="of" derivedContent="RFC8305"/> for
+ the "Establishment of one connection, which cancels all other attempts"
+ phase.  As described in <xref target="RFC8305" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-3" derivedContent="RFC8305"/>, DNS resolution is
+ treated as asynchronous, and connection initiation does not wait
+ for lagging DNS responses.</t>
+        </section>
+        <section anchor="connection-def" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.3">
+          <name slugifiedName="name-connection-definition">Connection Definition</name>
+          <t pn="section-3.2.3-1"><xref target="RFC8305" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8305#section-5" derivedContent="RFC8305"/>
+	   non-normatively describes a successful connection attempt as "generally when the TCP handshake completes".</t>
+          <t pn="section-3.2.3-2">There is no normative definition of a connection in the AMT specification
+ <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/>, and there is no TCP connection involved in an AMT tunnel.</t>
+          <t pn="section-3.2.3-3">However, the concept of an AMT connection in the context of a Happy
+ Eyeballs algorithm is a useful one, and so this section provides the
+ following normative definition:</t>
+          <ul spacing="normal" bare="false" empty="false" pn="section-3.2.3-4">
+            <li pn="section-3.2.3-4.1">An AMT connection is established successfully when the gateway receives
+ from a newly discovered relay a valid Membership Query message
+ (<xref target="RFC7450" sectionFormat="of" section="5.1.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.4" derivedContent="RFC7450"/>) that does not have the L flag set.</li>
+          </ul>
+          <t pn="section-3.2.3-5">See <xref target="loaded" format="default" sectionFormat="of" derivedContent="Section 3.3.5"/> of this document for further information about the
+ relevance of the L flag to the establishment of a Happy Eyeballs
+ connection.  See <xref target="flowhealth" format="default" sectionFormat="of" derivedContent="Section 3.3.4"/> for an overview of how to respond
+ if the connection does not provide multicast connectivity to the
+ source.</t>
+          <t pn="section-3.2.3-6">To "cancel" this kind of AMT connection for the Happy Eyeballs algorithm,
+ a gateway that has not sent a membership report with a subscription
+ would simply stop sending AMT packets for that connection.  A
+ gateway only sends a membership report to a connection it has chosen as
+ the most preferred available connection.</t>
+        </section>
+      </section>
+      <section anchor="guidelines-for-restarting-discovery" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-guidelines-for-restarting-d">Guidelines for Restarting Discovery</name>
+        <section anchor="overview-2" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.1">
+          <name slugifiedName="name-overview-3">Overview</name>
+          <t pn="section-3.3.1-1">It's expected that gateways deployed in different environments will use a
+ variety of heuristics to decide when it's appropriate to restart the relay
+ discovery process in order to meet different performance goals (for example,
+ to fulfill different kinds of service level agreements).</t>
+          <t pn="section-3.3.1-2">In general, restarting the discovery process is always safe for
+ the gateway and relay during any of the events listed in this section
+ but may cause a disruption in the forwarded traffic if the discovery
+ process results in choosing a different relay because this changes
+ the RPF forwarding tree for the multicast traffic upstream of the gateway.
+ This is likely to result in some dropped or duplicated packets from channels
+	   actively being tunneled from the old relay to the gateway.</t>
+          <t pn="section-3.3.1-3">The degree of impact on the traffic from choosing a different relay may
+ depend on network conditions between the gateway and the new relay, as well
+ as the network conditions and topology between the sender and the new relay,
+ as this may cause the relay to propagate a new RPF join toward the sender.</t>
+          <t pn="section-3.3.1-4">Balancing the expected impact on the tunneled traffic against likely
+ or observed problems with an existing connection to the relay is the goal
+ of the heuristics that gateways use to determine when to restart the
+ discovery process.</t>
+          <t pn="section-3.3.1-5">The non-normative advice in this section should be treated as guidelines to
+ operators and implementors working with AMT systems that can use DRIAD as
+ part of the relay discovery process.</t>
+        </section>
+        <section anchor="updates-to-restarting-events" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.2">
+          <name slugifiedName="name-updates-to-restarting-event">Updates to Restarting Events</name>
+          <t pn="section-3.3.2-1"><xref target="RFC7450" sectionFormat="of" section="5.2.3.4.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.2.3.4.1" derivedContent="RFC7450"/> lists several events that may cause a
+ gateway to start or restart the discovery procedure.</t>
+          <t pn="section-3.3.2-2">This document provides some updates and recommendations regarding the
+ handling of these and similar events.  The first five events are copied
+ here and numbered for easier reference, and the remaining four events are
+ newly added for consideration in this document:</t>
+          <ol spacing="normal" type="1" start="1" pn="section-3.3.2-3">
+            <li pn="section-3.3.2-3.1" derivedCounter="1.">When a gateway pseudo-interface is started (enabled).</li>
+            <li pn="section-3.3.2-3.2" derivedCounter="2.">When the gateway wishes to report a group subscription when none
+ currently exists.</li>
+            <li pn="section-3.3.2-3.3" derivedCounter="3.">Before sending the next Request message in a membership update
+ cycle.</li>
+            <li pn="section-3.3.2-3.4" derivedCounter="4.">After the gateway fails to receive a response to a Request
+ message.</li>
+            <li pn="section-3.3.2-3.5" derivedCounter="5.">After the gateway receives a Membership Query message with the
+ L flag set to 1.</li>
+            <li pn="section-3.3.2-3.6" derivedCounter="6.">When the gateway wishes to report an (S,G) subscription with a source
+ address that does not currently have other group subscriptions.</li>
+            <li pn="section-3.3.2-3.7" derivedCounter="7.">When there is a network change detected; for example, when a gateway is
+operating inside an end user device or application and the device
+joins a different network or when the domain portion of a DNS-SD
+domain name changes in response to a DHCP message or administrative
+configuration.</li>
+            <li pn="section-3.3.2-3.8" derivedCounter="8.">When substantial loss, persistent congestion, or network overload is
+detected in the stream of AMT packets from a relay.</li>
+            <li pn="section-3.3.2-3.9" derivedCounter="9.">When the gateway has reported one or more (S,G) subscriptions but
+no traffic is received from the source for some timeout (see
+<xref target="trafficabsent" format="default" sectionFormat="of" derivedContent="Section 3.3.4.1"/>).</li>
+          </ol>
+          <t pn="section-3.3.2-4">This list is not exhaustive, nor are any of the listed events strictly
+required to always force a restart of the discovery process.</t>
+          <t pn="section-3.3.2-5">Note that during event #1, a gateway may use DNS-SD but does not
+have sufficient information to use DRIAD, since no source is known.</t>
+        </section>
+        <section anchor="stability" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.3">
+          <name slugifiedName="name-tunnel-stability">Tunnel Stability</name>
+          <t pn="section-3.3.3-1">In general, subscribers to active traffic flows that are being forwarded
+by an AMT gateway are less likely to experience a degradation in service
+(for example, from missing or duplicated packets) when the gateway continues
+using the same relay as long as the relay is not overloaded and the network
+conditions remain stable.</t>
+          <t pn="section-3.3.3-2">Therefore, gateways <bcp14>SHOULD</bcp14> avoid performing a full restart of the discovery
+process during routine cases of event #3 (sending a new Request message),
+since it occurs frequently in normal operation.</t>
+          <t pn="section-3.3.3-3">However, see Sections <xref target="flowhealth" format="counter" sectionFormat="of" derivedContent="3.3.4"/>, <xref target="discoverymessage" format="counter" sectionFormat="of" derivedContent="3.3.6"/>, and <xref target="ancient" format="counter" sectionFormat="of" derivedContent="3.3.4.3"/> for more
+information about exceptional cases when it may be appropriate to use
+event #3.</t>
+        </section>
+        <section anchor="flowhealth" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.4">
+          <name slugifiedName="name-traffic-health">Traffic Health</name>
+          <section anchor="trafficabsent" numbered="true" toc="exclude" removeInRFC="false" pn="section-3.3.4.1">
+            <name slugifiedName="name-absence-of-traffic">Absence of Traffic</name>
+            <t pn="section-3.3.4.1-1">If a gateway indicates one or more (S,G) subscriptions in a Membership
+Update message but no traffic for any of the (S,G)s is received in a
+reasonable time, it's appropriate for the gateway to restart the
+discovery process.</t>
+            <t pn="section-3.3.4.1-2">If the gateway restarts the discovery process multiple times consecutively
+for this reason, the timeout period <bcp14>SHOULD</bcp14> be adjusted to provide a random
+exponential back-off.</t>
+            <t pn="section-3.3.4.1-3">The <bcp14>RECOMMENDED</bcp14> timeout is a random value in the range
+[initial_timeout, MIN(initial_timeout * 2^retry_count, maximum_timeout)],
+with a <bcp14>RECOMMENDED</bcp14> initial_timeout of 4 seconds and a <bcp14>RECOMMENDED</bcp14>
+maximum_timeout of 120 seconds (which is the recommended minimum NAT
+mapping timeout described in <xref target="RFC4787" format="default" sectionFormat="of" derivedContent="RFC4787"/>).</t>
+            <t pn="section-3.3.4.1-4">Note that the recommended initial_timeout is larger than the initial 
+timeout recommended in the similar algorithm from <xref target="RFC7450" sectionFormat="of" section="5.2.3.4.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.2.3.4.3" derivedContent="RFC7450"/>.  This is to provide time for RPF Join propagation in the
+sending network.  Although the timeout values may be administratively
+adjusted to support performance requirements, operators are advised to
+consider the possibility of join propagation delays between the sender
+and the relay when choosing an appropriate timeout value.</t>
+            <t pn="section-3.3.4.1-5">Gateways restarting the discovery process because of an absence of
+traffic <bcp14>MUST</bcp14> use a hold-down timer that removes this relay from
+consideration during subsequent rounds of discovery while active.
+The hold-down <bcp14>SHOULD</bcp14> last for no less than 3 minutes and no more than
+10 minutes.</t>
+          </section>
+          <section anchor="loss-and-congestion" numbered="true" toc="exclude" removeInRFC="false" pn="section-3.3.4.2">
+            <name slugifiedName="name-loss-and-congestion">Loss and Congestion</name>
+            <t pn="section-3.3.4.2-1">In some gateway deployments, it is also feasible to monitor the health of
+traffic flows through the gateway -- for example, by detecting the rate of
+packet loss by communicating out of band with receivers or monitoring the
+packets of known protocols with sequence numbers.  Where feasible,
+it's encouraged for gateways to use such traffic health information to
+trigger a restart of the discovery process during event #3 (before
+sending a new Request message).</t>
+            <t pn="section-3.3.4.2-2">However, if a transient network event that affects the tunneled
+	    multicast stream -- as opposed to an event that affects the tunnel
+	    connection between the relay and gateway -- occurs, poor health
+	    detection could be triggered for many gateways simultaneously. In
+	    this situation, adding a random delay to avoid synchronized
+	    rediscovery by many gateways is recommended.</t>
+            <t pn="section-3.3.4.2-3">The span of the random portion of the delay should be no less than 10
+seconds by default but may be administratively configured
+to support different performance requirements.</t>
+          </section>
+          <section anchor="ancient" numbered="true" toc="exclude" removeInRFC="false" pn="section-3.3.4.3">
+            <name slugifiedName="name-ancient-discovery-informati">Ancient Discovery Information</name>
+            <t pn="section-3.3.4.3-1">In most cases, a gateway actively receiving healthy traffic from a relay
+that has not indicated load with the L flag should prefer to remain
+connected to the same relay, as described in <xref target="stability" format="default" sectionFormat="of" derivedContent="Section 3.3.3"/>.</t>
+            <t pn="section-3.3.4.3-2">However, a relay that appears healthy but has been forwarding traffic for
+days or weeks may have an increased chance of becoming unstable.  Gateways
+may benefit from restarting the discovery process during event #3 (before
+sending a Request message) after the expiration of a long-term timeout on
+the order of multiple hours or even days in some deployments.</t>
+            <t pn="section-3.3.4.3-3">It may be beneficial for such timers to consider the amount of traffic
+currently being forwarded and to give a higher probability of restarting
+discovery during periods with an unusually low data rate to reduce the
+impact on active traffic while still avoiding relying on the results of a
+very old discovery.</t>
+            <t pn="section-3.3.4.3-4">Other issues may also be worth considering as part of this heuristic; for
+example, if the DNS expiry time of the record that was used to discover
+the current relay has not passed, the long-term timer might be restarted
+without restarting the discovery process.</t>
+          </section>
+        </section>
+        <section anchor="loaded" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.5">
+          <name slugifiedName="name-relay-loaded-or-shutting-do">Relay Loaded or Shutting Down</name>
+          <t pn="section-3.3.5-1">The L flag (see <xref target="RFC7450" sectionFormat="of" section="5.1.4.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.4.4" derivedContent="RFC7450"/>) is the preferred mechanism for
+a relay to signal overloading or a graceful shutdown to gateways.</t>
+          <t pn="section-3.3.5-2">A gateway that supports handling of the L flag should generally restart the
+discovery process when it processes a Membership Query packet with the
+L flag set.  If an L flag is received while a concurrent Happy Eyeballs
+discovery process is underway for multiple candidate relays (<xref target="happy" format="default" sectionFormat="of" derivedContent="Section 3.2"/>),
+the relay sending the L flag <bcp14>SHOULD NOT</bcp14> be considered for the relay selection.</t>
+          <t pn="section-3.3.5-3">It is also <bcp14>RECOMMENDED</bcp14> that gateways avoid choosing a relay
+that has recently sent an L flag, with approximately a 10-minute hold-down.
+Gateways <bcp14>SHOULD</bcp14> treat this hold-down timer in the same way as the hold-down
+in <xref target="trafficabsent" format="default" sectionFormat="of" derivedContent="Section 3.3.4.1"/> so that the relay is removed from consideration
+for subsequent short-term rounds of discovery.</t>
+        </section>
+        <section anchor="discoverymessage" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.6">
+          <name slugifiedName="name-relay-discovery-messages-vs">Relay Discovery Messages vs. Restarting Discovery</name>
+          <t pn="section-3.3.6-1">All AMT relays are required by <xref target="RFC7450" format="default" sectionFormat="of" derivedContent="RFC7450"/> to support handling of
+Relay Discovery messages (e.g., in <xref target="RFC7450" sectionFormat="of" section="5.3.3.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.3.3.2" derivedContent="RFC7450"/>).</t>
+          <t pn="section-3.3.6-2">So a gateway with an existing connection to a relay can send a Relay
+Discovery message to the unicast address of that AMT relay.  Under stable
+conditions with an unloaded relay, it's expected that the relay will
+return its own unicast address in the Relay Advertisement in response
+to such a Relay Discovery message.  Since this will not result in the
+gateway changing to another relay unless the relay directs the gateway
+away, this is a reasonable exception to the advice against handling event #3
+described in <xref target="stability" format="default" sectionFormat="of" derivedContent="Section 3.3.3"/>.</t>
+          <t pn="section-3.3.6-3">This behavior is discouraged for gateways that do support the L flag to
+avoid sending unnecessary packets over the network.</t>
+          <t pn="section-3.3.6-4">However, gateways that do not support the L flag may be able to avoid a
+disruption in the forwarded traffic by sending such Relay Discovery
+messages regularly.  When a relay is under load or has started a graceful
+shutdown, it may respond with a different relay address, which the gateway
+can use to connect to a different relay.  This kind of coordinated handoff
+will likely result in a smaller disruption to the traffic than if the relay
+simply stops responding to Request messages and stops forwarding traffic.</t>
+          <t pn="section-3.3.6-5">This style of Relay Discovery message (one sent to the unicast address
+of a relay that's already forwarding traffic to this gateway) <bcp14>SHOULD NOT</bcp14> be
+considered a full restart of the relay discovery process.  It is <bcp14>RECOMMENDED</bcp14>
+that gateways support the L flag, but for gateways that do not support the
+L flag, sending this message during event #3 may help mitigate service
+degradation when relays become unstable.</t>
+        </section>
+        <section anchor="independent-discovery-per-traffic-source" numbered="true" toc="include" removeInRFC="false" pn="section-3.3.7">
+          <name slugifiedName="name-independent-discovery-per-t">Independent Discovery per Traffic Source</name>
+          <t pn="section-3.3.7-1">Relays discovered via the AMTRELAY RR are source-specific relay addresses and
+may use different pseudo-interfaces from each other and from relays
+discovered via DNS-SD or via a non-source-specific address, as described in
+<xref target="RFC7450" sectionFormat="of" section="4.1.2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.1.2.1" derivedContent="RFC7450"/>.</t>
+          <t pn="section-3.3.7-2">Restarting the discovery process for one pseudo-interface does not require
+restarting the discovery process for other pseudo-interfaces.  Gateway
+heuristics about restarting the discovery process should operate
+independently for different tunnels to relays when responding to events
+that are specific to the different tunnels.</t>
+        </section>
+      </section>
+      <section anchor="dns-configuration" numbered="true" toc="include" removeInRFC="false" pn="section-3.4">
+        <name slugifiedName="name-dns-configuration">DNS Configuration</name>
+        <t pn="section-3.4-1">Often, an AMT gateway will only have access to the source and group IP addresses
+of the desired traffic and will not know any other name for the source of the
+traffic.  Because of this, typically, the best way of looking up AMTRELAY RRs
+will be by using the source IP address as an index into one of the reverse
+mapping trees (in-addr.arpa for IPv4, as described in <xref target="RFC1035" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.5" derivedContent="RFC1035"/>, or ip6.arpa for IPv6, as described in <xref target="RFC3596" sectionFormat="of" section="2.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3596#section-2.5" derivedContent="RFC3596"/>).</t>
+        <t pn="section-3.4-2">Therefore, it is <bcp14>RECOMMENDED</bcp14> that AMTRELAY RRs be added to reverse IP
+zones as appropriate.  AMTRELAY records <bcp14>MAY</bcp14> also appear in other zones,
+since this may be necessary to perform delegation from the reverse zones
+(see, for example, <xref target="RFC2317" sectionFormat="of" section="5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc2317#section-5.2" derivedContent="RFC2317"/>), but the use case enabled
+by this document requires a reverse IP mapping for the source from an
+(S,G) in order to be useful to most AMT gateways.  This document does
+not define semantics for the use of AMTRELAY records obtained in a way
+other than by a reverse IP lookup.</t>
+        <t pn="section-3.4-3">When performing the AMTRELAY RR lookup, any CNAMEs or DNAMEs found <bcp14>MUST</bcp14> be
+followed.  This is necessary to support zone delegation.  Some examples
+outlining this need are described in <xref target="RFC2317" format="default" sectionFormat="of" derivedContent="RFC2317"/>.</t>
+        <t pn="section-3.4-4">See Sections <xref target="rrdef" format="counter" sectionFormat="of" derivedContent="4"/> and <xref target="rpformat" format="counter" sectionFormat="of" derivedContent="4.3"/> for a detailed explanation of the contents
+of a DNS zone file.</t>
+      </section>
+      <section anchor="waiting-for-dns-resolution" numbered="true" toc="include" removeInRFC="false" pn="section-3.5">
+        <name slugifiedName="name-waiting-for-dns-resolution">Waiting for DNS Resolution</name>
+        <t pn="section-3.5-1">DNS query functionality is expected to follow ordinary standards and best
+practices for DNS clients.  A gateway <bcp14>MAY</bcp14> use an existing DNS client
+implementation that does so and <bcp14>MAY</bcp14> rely on that client's retry logic
+to determine the timeouts between retries.</t>
+        <t pn="section-3.5-2">Otherwise, a gateway <bcp14>MAY</bcp14> resend a DNS query if it does not receive an
+appropriate DNS response within some timeout period.  If the gateway retries
+multiple times, the timeout period <bcp14>SHOULD</bcp14> be adjusted to provide a random
+exponential back-off.</t>
+        <t pn="section-3.5-3">As with the waiting process for the Relay Advertisement message from
+<xref target="RFC7450" sectionFormat="of" section="5.2.3.4.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.2.3.4.3" derivedContent="RFC7450"/>, the <bcp14>RECOMMENDED</bcp14> timeout is a random value
+in the range [initial_timeout, MIN(initial_timeout * 2^retry_count,
+maximum_timeout)], with a <bcp14>RECOMMENDED</bcp14> initial_timeout of 1 second and
+a <bcp14>RECOMMENDED</bcp14> maximum_timeout of 120 seconds.</t>
+      </section>
+    </section>
+    <section anchor="rrdef" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-amtrelay-resource-record-de">AMTRELAY Resource Record Definition</name>
+      <section anchor="amtrelay-rrtype" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-amtrelay-rrtype">AMTRELAY RRType</name>
+        <t pn="section-4.1-1">The AMTRELAY RRType has the mnemonic AMTRELAY and type code 260 (decimal).</t>
+        <t pn="section-4.1-2">The AMTRELAY RR is class independent.</t>
+      </section>
+      <section anchor="amtrelay-rdata-format" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-amtrelay-rdata-format">AMTRELAY RData Format</name>
+        <t pn="section-4.2-1">The AMTRELAY RData consists of an 8-bit precedence field, a 1-bit
+"Discovery Optional" field, a 7-bit type field, and a variable
+length relay field.</t>
+        <artwork name="" type="" align="left" alt="" pn="section-4.2-2">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   precedence  |D|    type     |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+~                            relay                              ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        <section anchor="rrdef-precedence" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.1">
+          <name slugifiedName="name-rdata-format-precedence">RData Format - Precedence</name>
+          <t pn="section-4.2.1-1">This is an 8-bit precedence for this record.  It is interpreted in
+the same way as the PREFERENCE field described in <xref target="RFC1035" sectionFormat="of" section="3.3.9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.3.9" derivedContent="RFC1035"/>.</t>
+          <t pn="section-4.2.1-2">Relays listed in AMTRELAY records with a lower value for precedence are to be
+attempted first.</t>
+        </section>
+        <section anchor="rrdef-dbit" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.2">
+          <name slugifiedName="name-rdata-format-discovery-opti">RData Format - Discovery Optional (D-bit)</name>
+          <t pn="section-4.2.2-1">The D-bit is a "Discovery Optional" flag.</t>
+          <t pn="section-4.2.2-2">If the D-bit is set to 0, a gateway using this RR <bcp14>MUST</bcp14> perform AMT relay
+discovery as described in <xref target="RFC7450" sectionFormat="of" section="4.2.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.2.1.1" derivedContent="RFC7450"/> rather than directly
+sending an AMT Request message to the relay.</t>
+          <t pn="section-4.2.2-3">That is, the gateway <bcp14>MUST</bcp14> receive an AMT Relay Advertisement message (<xref target="RFC7450" sectionFormat="of" section="5.1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.2" derivedContent="RFC7450"/>) for an address before sending an AMT Request message
+(<xref target="RFC7450" sectionFormat="of" section="5.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.3" derivedContent="RFC7450"/>) to that address. Before receiving the Relay
+Advertisement message, this record has only indicated that the address can be
+used for AMT relay discovery, not for a Request message.  This is necessary for
+devices that are not fully functional AMT relays but rather load balancers or
+brokers, as mentioned in <xref target="RFC7450" sectionFormat="of" section="4.2.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.2.1.1" derivedContent="RFC7450"/>.</t>
+          <t pn="section-4.2.2-4">If the D-bit is set to 1, the gateway <bcp14>MAY</bcp14> send an AMT Request message directly
+to the discovered relay address without first sending an AMT Discovery message.</t>
+          <t pn="section-4.2.2-5">This bit should be set according to advice from the AMT relay operator. The
+D-bit <bcp14>MUST</bcp14> be set to zero when no information is available from the AMT relay
+operator about its suitability.</t>
+        </section>
+        <section anchor="rtype" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.3">
+          <name slugifiedName="name-rdata-format-type">RData Format - Type</name>
+          <t pn="section-4.2.3-1">The type field indicates the format of the information that
+is stored in the relay field.</t>
+          <t pn="section-4.2.3-2">The following values are defined:</t>
+          <ul spacing="normal" bare="false" empty="false" pn="section-4.2.3-3">
+            <li pn="section-4.2.3-3.1">type = 0:
+The relay field is empty (0 bytes).</li>
+            <li pn="section-4.2.3-3.2">type = 1:
+The relay field contains a 4-octet IPv4 address.</li>
+            <li pn="section-4.2.3-3.3">type = 2:
+The relay field contains a 16-octet IPv6 address.</li>
+            <li pn="section-4.2.3-3.4">type = 3:
+The relay field contains a wire-encoded domain name. The wire-encoded
+format is self-describing, so the length is implicit. The domain name
+<bcp14>MUST NOT</bcp14> be compressed (see <xref target="RFC1035" sectionFormat="of" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.3" derivedContent="RFC1035"/> and <xref target="RFC3597" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3597#section-4" derivedContent="RFC3597"/>).</li>
+          </ul>
+          <t pn="section-4.2.3-4">RRs with an undefined value in the Type field <bcp14>SHOULD NOT</bcp14> be considered
+by receiving gateways for AMT relay discovery.</t>
+        </section>
+        <section anchor="rdformat" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.4">
+          <name slugifiedName="name-rdata-format-relay">RData Format - Relay</name>
+          <t pn="section-4.2.4-1">The relay field is the address or domain name of the AMT relay. It is
+formatted according to the type field.</t>
+          <t pn="section-4.2.4-2">When the type field is 0, the length of the relay field is 0, and it
+indicates that no AMT relay should be used for multicast traffic from this
+source.</t>
+          <t pn="section-4.2.4-3">When the type field is 1, the length of the relay field is 4 octets, and a
+32-bit IPv4 address is present. This is an IPv4 address as described in
+<xref target="RFC1035" sectionFormat="of" section="3.4.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.4.1" derivedContent="RFC1035"/>. This is a 32-bit number in network byte
+order.</t>
+          <t pn="section-4.2.4-4">When the type field is 2, the length of the relay field is 16 octets, and
+a 128-bit IPv6 address is present. This is an IPv6 address as described in
+<xref target="RFC3596" sectionFormat="of" section="2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3596#section-2.2" derivedContent="RFC3596"/>. This is a 128-bit number in network byte order.</t>
+          <t pn="section-4.2.4-5">When the type field is 3, the relay field is a normal wire-encoded domain
+name, as described in <xref target="RFC1035" sectionFormat="of" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-3.3" derivedContent="RFC1035"/>. For the reasons given in <xref target="RFC3597" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3597#section-4" derivedContent="RFC3597"/>, compression <bcp14>MUST NOT</bcp14> be
+used.</t>
+          <t pn="section-4.2.4-6">For a type 3 record, the D-bit and preference fields carry over to all
+A or AAAA records for the domain name.  There is no difference in the
+result of the discovery process when it's obtained by type 1 or type 2
+AMTRELAY records with identical D-bit and preference fields vs. when
+the result is obtained by a type 3 AMTRELAY record that resolves
+to the same set of IPv4 and IPv6 addresses via A and AAAA lookups.</t>
+        </section>
+      </section>
+      <section anchor="rpformat" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-amtrelay-record-presentatio">AMTRELAY Record Presentation Format</name>
+        <section anchor="representation-of-amtrelay-rrs" numbered="true" toc="include" removeInRFC="false" pn="section-4.3.1">
+          <name slugifiedName="name-representation-of-amtrelay-">Representation of AMTRELAY RRs</name>
+          <t pn="section-4.3.1-1">AMTRELAY RRs may appear in a zone data master file. The precedence, D-bit,
+relay type, and relay fields are <bcp14>REQUIRED</bcp14>.</t>
+          <t pn="section-4.3.1-2">If the relay type field is 0, the relay field <bcp14>MUST</bcp14> be ".".</t>
+          <t pn="section-4.3.1-3">The presentation for the record is as follows:</t>
+          <sourcecode name="" type="" markers="false" pn="section-4.3.1-4">
+  IN AMTRELAY precedence D-bit type relay
+</sourcecode>
+        </section>
+        <section anchor="examples" numbered="true" toc="include" removeInRFC="false" pn="section-4.3.2">
+          <name slugifiedName="name-examples">Examples</name>
+          <t pn="section-4.3.2-1">In a DNS authoritative nameserver that understands the AMTRELAY type,
+the zone might contain a set of entries like this:</t>
+          <sourcecode name="" type="" markers="false" pn="section-4.3.2-2">
+    $ORIGIN 100.51.198.in-addr.arpa.
+    12     IN AMTRELAY  10 0 1 203.0.113.15
+    12     IN AMTRELAY  10 0 2 2001:db8::15
+    12     IN AMTRELAY 128 1 3 amtrelays.example.com.
+</sourcecode>
+          <t pn="section-4.3.2-3">This configuration advertises an IPv4 discovery address, an IPv6
+discovery address, and a domain name for AMT relays that can receive
+traffic from the source 198.51.100.12.  The IPv4 and IPv6 addresses
+are configured with a D-bit of 0 (meaning discovery is mandatory, as
+described in <xref target="rrdef-dbit" format="default" sectionFormat="of" derivedContent="Section 4.2.2"/>) and a precedence 10 (meaning they're
+preferred ahead of the last entry, which has precedence 128).</t>
+          <t pn="section-4.3.2-4">For zone files in name servers that don't support the AMTRELAY RRType
+natively, it's possible to use the format for unknown RR types, as
+described in <xref target="RFC3597" format="default" sectionFormat="of" derivedContent="RFC3597"/>.  This approach would replace the AMTRELAY
+entries in the example above with the entries below:</t>
+          <sourcecode name="" type="" markers="false" pn="section-4.3.2-5">
+    10   IN TYPE260  \# (
+           6  ; length
+           0a ; precedence=10
+           01 ; D=0, relay type=1, an IPv4 address
+           cb00710f ) ; 203.0.113.15
+    10   IN TYPE260  \# (
+           18 ; length
+           0a ; precedence=10
+           02 ; D=0, relay type=2, an IPv6 address
+           20010db800000000000000000000000f ) ; 2001:db8::15
+    10   IN TYPE260  \# (
+           24 ; length
+           80 ; precedence=128
+           83 ; D=1, relay type=3, a wire-encoded domain name
+         09616d7472656c617973076578616d706c6503636f6d ) ; domain name
+</sourcecode>
+          <t pn="section-4.3.2-6">See <xref target="extranslate" format="default" sectionFormat="of" derivedContent="Appendix A"/> for more details.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-5-1">This document updates the DNS "Resource Record (RR) TYPEs" registry
+by assigning type 260 to the AMTRELAY record.</t>
+      <t pn="section-5-2">This document creates a new registry named "AMTRELAY Resource Record
+Parameters" with a subregistry for the "Relay Type Field".  The initial
+values in the subregistry are:</t>
+      <table align="left" pn="table-2">
+        <name slugifiedName="name-initial-contents-of-the-rel">Initial Contents of the "Relay Type Field" Registry</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Value</th>
+            <th align="left" colspan="1" rowspan="1">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">0</td>
+            <td align="left" colspan="1" rowspan="1">No relay is present</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">1</td>
+            <td align="left" colspan="1" rowspan="1">A 4-byte IPv4 address is present</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">2</td>
+            <td align="left" colspan="1" rowspan="1">A 16-byte IPv6 address is present</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">3</td>
+            <td align="left" colspan="1" rowspan="1">A wire-encoded domain name is present</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">4-255</td>
+            <td align="left" colspan="1" rowspan="1">Unassigned</td>
+          </tr>
+        </tbody>
+      </table>
+      <t pn="section-5-4">Values 0, 1, 2, and 3 are further explained in Sections <xref target="rtype" format="counter" sectionFormat="of" derivedContent="4.2.3"/> and <xref target="rdformat" format="counter" sectionFormat="of" derivedContent="4.2.4"/>.
+Relay type numbers 4 through 255 can be assigned with a policy of
+Specification Required (as described in <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>).</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <section anchor="use-of-amt" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-use-of-amt">Use of AMT</name>
+        <t pn="section-6.1-1">This document defines a mechanism that enables a more widespread and
+automated use of AMT, even without access to a multicast backbone.
+Operators of networks and applications that include a DRIAD-capable
+AMT gateway are advised to carefully consider the security considerations
+in <xref target="RFC7450" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-6" derivedContent="RFC7450"/>.</t>
+        <t pn="section-6.1-2">AMT gateway operators also are encouraged to take appropriate steps to
+ensure the integrity of the data received via AMT, for example, by the
+opportunistic use of IPsec <xref target="RFC4301" format="default" sectionFormat="of" derivedContent="RFC4301"/> to secure traffic received from AMT
+relays when IPSECKEY records <xref target="RFC4025" format="default" sectionFormat="of" derivedContent="RFC4025"/> are available or when a trust
+relationship with the AMT relays can be otherwise established and secured.</t>
+        <t pn="section-6.1-3">Note that AMT does not itself provide any integrity protection for
+Multicast Data packets (<xref target="RFC7450" sectionFormat="of" section="5.1.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-5.1.6" derivedContent="RFC7450"/>), so absent
+protections like those mentioned above, even an off-path attacker who
+discovers the gateway IP, the relay IP, and the relay source port for
+an active AMT connection can inject multicast data packets for a
+joined (S,G) into the data stream if he can get data packets delivered
+to the gateway IP that spoof the relay as the source.</t>
+      </section>
+      <section anchor="record-spoofing" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-record-spoofing">Record-Spoofing</name>
+        <t pn="section-6.2-1">The AMTRELAY resource record contains information that <bcp14>SHOULD</bcp14> be
+communicated to the DNS client without being modified.  The
+method used to ensure the result was unmodified is up to the client.</t>
+        <t pn="section-6.2-2">There must be a trust relationship between the end consumer of this
+resource record and the DNS server.  This relationship may be end-to-end
+DNSSEC validation or a secure connection to a trusted DNS server that
+provides end-to-end safety to prevent record-spoofing of the response
+from the trusted server.  The connection to the trusted server can use
+any secure channel, such as with a TSIG <xref target="RFC2845" format="default" sectionFormat="of" derivedContent="RFC2845"/> or SIG(0) <xref target="RFC2931" format="default" sectionFormat="of" derivedContent="RFC2931"/>
+channel, a secure local channel on the host, DNS over TLS <xref target="RFC7858" format="default" sectionFormat="of" derivedContent="RFC7858"/>,
+DNS over HTTPS <xref target="RFC8484" format="default" sectionFormat="of" derivedContent="RFC8484"/>, or some other mechanism that provides
+authentication of the RR.</t>
+        <t pn="section-6.2-3">If an AMT gateway accepts a maliciously crafted AMTRELAY record,
+the result could be a Denial of Service or receivers processing
+multicast traffic from a source under the attacker's control.</t>
+      </section>
+      <section anchor="congestion" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-congestion">Congestion</name>
+        <t pn="section-6.3-1">Multicast traffic, particularly interdomain multicast traffic, carries
+some congestion risks, as described in <xref target="RFC8085" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8085#section-4" derivedContent="RFC8085"/>.</t>
+        <t pn="section-6.3-2">Application implementors and network operators that use AMT gateways
+are advised to take precautions, including monitoring of application
+traffic behavior, traffic authentication at ingest, rate-limiting of
+multicast traffic, and the use of circuit-breaker techniques such as
+those described in <xref target="RFC8085" sectionFormat="of" section="3.1.10" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8085#section-3.1.10" derivedContent="RFC8085"/> and similar
+protections at the network level in order to ensure network health
+in the event of misconfiguration, poorly written applications that
+don't follow UDP congestion control principles, or a deliberate attack.</t>
+        <t pn="section-6.3-3"><xref target="RFC7450" sectionFormat="of" section="4.1.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-4.1.4.2" derivedContent="RFC7450"/> and <xref target="RFC7450" sectionFormat="of" section="6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7450#section-6.1" derivedContent="RFC7450"/>
+provide some further considerations and advice about mitigating
+congestion risk.</t>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+          <front>
+            <title>Domain names - concepts and facilities</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t>This RFC is the revised basic definition of The Domain Name System.  It obsoletes RFC-882.  This memo describes the domain style names and their used for host address look up and electronic mail forwarding.  It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+        </reference>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t>This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC2181" target="https://www.rfc-editor.org/info/rfc2181" quoteTitle="true" derivedAnchor="RFC2181">
+          <front>
+            <title>Clarifications to the DNS Specification</title>
+            <author initials="R." surname="Elz" fullname="R. Elz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bush" fullname="R. Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="July"/>
+            <abstract>
+              <t>This document considers some areas that have been identified as problems with the specification of the Domain Name System, and proposes remedies for the defects identified. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2181"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2181"/>
+        </reference>
+        <reference anchor="RFC2782" target="https://www.rfc-editor.org/info/rfc2782" quoteTitle="true" derivedAnchor="RFC2782">
+          <front>
+            <title>A DNS RR for specifying the location of services (DNS SRV)</title>
+            <author initials="A." surname="Gulbrandsen" fullname="A. Gulbrandsen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Esibov" fullname="L. Esibov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="February"/>
+            <abstract>
+              <t>This document describes a DNS RR which specifies the location of the server(s) for a specific protocol and domain.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2782"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2782"/>
+        </reference>
+        <reference anchor="RFC3376" target="https://www.rfc-editor.org/info/rfc3376" quoteTitle="true" derivedAnchor="RFC3376">
+          <front>
+            <title>Internet Group Management Protocol, Version 3</title>
+            <author initials="B." surname="Cain" fullname="B. Cain">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Kouvelas" fullname="I. Kouvelas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Fenner" fullname="B. Fenner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Thyagarajan" fullname="A. Thyagarajan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2002" month="October"/>
+          </front>
+          <seriesInfo name="RFC" value="3376"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3376"/>
+        </reference>
+        <reference anchor="RFC3596" target="https://www.rfc-editor.org/info/rfc3596" quoteTitle="true" derivedAnchor="RFC3596">
+          <front>
+            <title>DNS Extensions to Support IP Version 6</title>
+            <author initials="S." surname="Thomson" fullname="S. Thomson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Huitema" fullname="C. Huitema">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Ksinant" fullname="V. Ksinant">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Souissi" fullname="M. Souissi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="October"/>
+            <abstract>
+              <t>This document defines the changes that need to be made to the Domain Name System (DNS) to support hosts running IP version 6 (IPv6).  The changes include a resource record type to store an IPv6 address, a domain to support lookups based on an IPv6 address, and updated definitions of existing query types that return Internet addresses as part of additional section processing.  The extensions are designed to be compatible with existing applications and, in particular, DNS implementations themselves.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="88"/>
+          <seriesInfo name="RFC" value="3596"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3596"/>
+        </reference>
+        <reference anchor="RFC3597" target="https://www.rfc-editor.org/info/rfc3597" quoteTitle="true" derivedAnchor="RFC3597">
+          <front>
+            <title>Handling of Unknown DNS Resource Record (RR) Types</title>
+            <author initials="A." surname="Gustafsson" fullname="A. Gustafsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="September"/>
+            <abstract>
+              <t>Extending the Domain Name System (DNS) with new Resource Record (RR) types currently requires changes to name server software.  This document specifies the changes necessary to allow future DNS implementations to handle new RR types transparently.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3597"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3597"/>
+        </reference>
+        <reference anchor="RFC3810" target="https://www.rfc-editor.org/info/rfc3810" quoteTitle="true" derivedAnchor="RFC3810">
+          <front>
+            <title>Multicast Listener Discovery Version 2 (MLDv2) for IPv6</title>
+            <author initials="R." surname="Vida" fullname="R. Vida" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Costa" fullname="L. Costa" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="June"/>
+            <abstract>
+              <t>This document updates RFC 2710, and it specifies Version 2 of the ulticast Listener Discovery Protocol (MLDv2).  MLD is used by an IPv6 router to discover the presence of multicast listeners on directly attached links, and to discover which multicast addresses are of interest to those neighboring nodes.  MLDv2 is designed to be interoperable with MLDv1.  MLDv2 adds the ability for a node to report interest in listening to packets with a particular multicast address only from specific source addresses or from all sources except for specific source addresses.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3810"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3810"/>
+        </reference>
+        <reference anchor="RFC4604" target="https://www.rfc-editor.org/info/rfc4604" quoteTitle="true" derivedAnchor="RFC4604">
+          <front>
+            <title>Using Internet Group Management Protocol Version 3 (IGMPv3) and Multicast Listener Discovery Protocol Version 2 (MLDv2) for Source-Specific Multicast</title>
+            <author initials="H." surname="Holbrook" fullname="H. Holbrook">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Cain" fullname="B. Cain">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Haberman" fullname="B. Haberman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="August"/>
+            <abstract>
+              <t>The Internet Group Management Protocol Version 3 (IGMPv3) and the Multicast Listener Discovery Protocol Version 2 (MLDv2) are protocols that allow a host to inform its neighboring routers of its desire to receive IPv4 and IPv6 multicast transmissions, respectively. Source-specific multicast (SSM) is a form of multicast in which a receiver is required to specify both the network-layer address of the source and the multicast destination address in order to receive the multicast transmission.  This document defines the notion of an "SSM-aware" router and host, and clarifies and (in some cases) modifies the behavior of IGMPv3 and MLDv2 on SSM-aware routers and hosts to accommodate source-specific multicast.  This document updates the IGMPv3 and MLDv2 specifications.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4604"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4604"/>
+        </reference>
+        <reference anchor="RFC4607" target="https://www.rfc-editor.org/info/rfc4607" quoteTitle="true" derivedAnchor="RFC4607">
+          <front>
+            <title>Source-Specific Multicast for IP</title>
+            <author initials="H." surname="Holbrook" fullname="H. Holbrook">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Cain" fullname="B. Cain">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="August"/>
+            <abstract>
+              <t>IP version 4 (IPv4) addresses in the 232/8 (232.0.0.0 to 232.255.255.255) range are designated as source-specific multicast (SSM) destination addresses and are reserved for use by source-specific applications and protocols.  For IP version 6 (IPv6), the address prefix FF3x::/32 is reserved for source-specific multicast use.  This document defines an extension to the Internet network service that applies to datagrams sent to SSM addresses and defines the host and router requirements to support this extension.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4607"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4607"/>
+        </reference>
+        <reference anchor="RFC6724" target="https://www.rfc-editor.org/info/rfc6724" quoteTitle="true" derivedAnchor="RFC6724">
+          <front>
+            <title>Default Address Selection for Internet Protocol Version 6 (IPv6)</title>
+            <author initials="D." surname="Thaler" fullname="D. Thaler" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Draves" fullname="R. Draves">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Matsumoto" fullname="A. Matsumoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Chown" fullname="T. Chown">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="September"/>
+            <abstract>
+              <t>This document describes two algorithms, one for source address selection and one for destination address selection.  The algorithms specify default behavior for all Internet Protocol version 6 (IPv6) implementations.  They do not override choices made by applications or upper-layer protocols, nor do they preclude the development of more advanced mechanisms for address selection.  The two algorithms share a common context, including an optional mechanism for allowing administrators to provide policy that can override the default behavior.  In dual-stack implementations, the destination address selection algorithm can consider both IPv4 and IPv6 addresses -- depending on the available source addresses, the algorithm might prefer IPv6 addresses over IPv4 addresses, or vice versa.</t>
+              <t>Default address selection as defined in this specification applies to all IPv6 nodes, including both hosts and routers.  This document obsoletes RFC 3484.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6724"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6724"/>
+        </reference>
+        <reference anchor="RFC6763" target="https://www.rfc-editor.org/info/rfc6763" quoteTitle="true" derivedAnchor="RFC6763">
+          <front>
+            <title>DNS-Based Service Discovery</title>
+            <author initials="S." surname="Cheshire" fullname="S. Cheshire">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Krochmal" fullname="M. Krochmal">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="February"/>
+            <abstract>
+              <t>This document specifies how DNS resource records are named and structured to facilitate service discovery.  Given a type of service that a client is looking for, and a domain in which the client is looking for that service, this mechanism allows clients to discover a list of named instances of that desired service, using standard DNS queries. This mechanism is referred to as DNS-based Service Discovery, or DNS-SD.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6763"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6763"/>
+        </reference>
+        <reference anchor="RFC7450" target="https://www.rfc-editor.org/info/rfc7450" quoteTitle="true" derivedAnchor="RFC7450">
+          <front>
+            <title>Automatic Multicast Tunneling</title>
+            <author initials="G." surname="Bumgardner" fullname="G. Bumgardner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="February"/>
+            <abstract>
+              <t>This document describes Automatic Multicast Tunneling (AMT), a protocol for delivering multicast traffic from sources in a multicast-enabled network to receivers that lack multicast connectivity to the source network.  The protocol uses UDP encapsulation and unicast replication to provide this functionality.</t>
+              <t>The AMT protocol is specifically designed to support rapid deployment by requiring minimal changes to existing network infrastructure.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7450"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7450"/>
+        </reference>
+        <reference anchor="RFC8085" target="https://www.rfc-editor.org/info/rfc8085" quoteTitle="true" derivedAnchor="RFC8085">
+          <front>
+            <title>UDP Usage Guidelines</title>
+            <author initials="L." surname="Eggert" fullname="L. Eggert">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Fairhurst" fullname="G. Fairhurst">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Shepherd" fullname="G. Shepherd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="March"/>
+            <abstract>
+              <t>The User Datagram Protocol (UDP) provides a minimal message-passing transport that has no inherent congestion control mechanisms.  This document provides guidelines on the use of UDP for the designers of applications, tunnels, and other protocols that use UDP.  Congestion control guidelines are a primary focus, but the document also provides guidance on other topics, including message sizes, reliability, checksums, middlebox traversal, the use of Explicit Congestion Notification (ECN), Differentiated Services Code Points (DSCPs), and ports.</t>
+              <t>Because congestion control is critical to the stable operation of the Internet, applications and other protocols that choose to use UDP as an Internet transport must employ mechanisms to prevent congestion collapse and to establish some degree of fairness with concurrent traffic.  They may also need to implement additional mechanisms, depending on how they use UDP.</t>
+              <t>Some guidance is also applicable to the design of other protocols (e.g., protocols layered directly on IP or via IP-based tunnels), especially when these protocols do not themselves provide congestion control.</t>
+              <t>This document obsoletes RFC 5405 and adds guidelines for multicast UDP usage.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="145"/>
+          <seriesInfo name="RFC" value="8085"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8085"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8305" target="https://www.rfc-editor.org/info/rfc8305" quoteTitle="true" derivedAnchor="RFC8305">
+          <front>
+            <title>Happy Eyeballs Version 2: Better Connectivity Using Concurrency</title>
+            <author initials="D." surname="Schinazi" fullname="D. Schinazi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Pauly" fullname="T. Pauly">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="December"/>
+            <abstract>
+              <t>Many communication protocols operating over the modern Internet use hostnames.  These often resolve to multiple IP addresses, each of which may have different performance and connectivity characteristics.  Since specific addresses or address families (IPv4 or IPv6) may be blocked, broken, or sub-optimal on a network, clients that attempt multiple connections in parallel have a chance of establishing a connection more quickly.  This document specifies requirements for algorithms that reduce this user-visible delay and provides an example algorithm, referred to as "Happy Eyeballs".  This document obsoletes the original algorithm description in RFC 6555.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8305"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8305"/>
+        </reference>
+        <reference anchor="RFC8499" target="https://www.rfc-editor.org/info/rfc8499" quoteTitle="true" derivedAnchor="RFC8499">
+          <front>
+            <title>DNS Terminology</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Sullivan" fullname="A. Sullivan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Fujiwara" fullname="K. Fujiwara">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="January"/>
+            <abstract>
+              <t>The Domain Name System (DNS) is defined in literally dozens of different RFCs.  The terminology used by implementers and developers of DNS protocols, and by operators of DNS systems, has sometimes changed in the decades since the DNS was first defined.  This document gives current definitions for many of the terms used in the DNS in a single document.</t>
+              <t>This document obsoletes RFC 7719 and updates RFC 2308.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="219"/>
+          <seriesInfo name="RFC" value="8499"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8499"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC2317" target="https://www.rfc-editor.org/info/rfc2317" quoteTitle="true" derivedAnchor="RFC2317">
+          <front>
+            <title>Classless IN-ADDR.ARPA delegation</title>
+            <author initials="H." surname="Eidnes" fullname="H. Eidnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="de Groot" fullname="G. de Groot">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="March"/>
+            <abstract>
+              <t>This document describes a way to do IN-ADDR.ARPA delegation on non-octet boundaries for address spaces covering fewer than 256 addresses.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="20"/>
+          <seriesInfo name="RFC" value="2317"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2317"/>
+        </reference>
+        <reference anchor="RFC2845" target="https://www.rfc-editor.org/info/rfc2845" quoteTitle="true" derivedAnchor="RFC2845">
+          <front>
+            <title>Secret Key Transaction Authentication for DNS (TSIG)</title>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Gudmundsson" fullname="O. Gudmundsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Wellington" fullname="B. Wellington">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="May"/>
+            <abstract>
+              <t>This protocol allows for transaction level authentication using shared secrets and one way hashing.  It can be used to authenticate dynamic updates as coming from an approved client, or to authenticate responses as coming from an approved recursive name server.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2845"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2845"/>
+        </reference>
+        <reference anchor="RFC2931" target="https://www.rfc-editor.org/info/rfc2931" quoteTitle="true" derivedAnchor="RFC2931">
+          <front>
+            <title>DNS Request and Transaction Signatures ( SIG(0)s )</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="September"/>
+            <abstract>
+              <t>This document describes the minor but non-interoperable changes in Request and Transaction signature resource records ( SIG(0)s ) that implementation experience has deemed necessary.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2931"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2931"/>
+        </reference>
+        <reference anchor="RFC3550" target="https://www.rfc-editor.org/info/rfc3550" quoteTitle="true" derivedAnchor="RFC3550">
+          <front>
+            <title>RTP: A Transport Protocol for Real-Time Applications</title>
+            <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Casner" fullname="S. Casner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Frederick" fullname="R. Frederick">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="July"/>
+            <abstract>
+              <t>This memorandum describes RTP, the real-time transport protocol.  RTP provides end-to-end network transport functions suitable for applications transmitting real-time data, such as audio, video or simulation data, over multicast or unicast network services.  RTP does not address resource reservation and does not guarantee quality-of- service for real-time services.  The data transport is augmented by a control protocol (RTCP) to allow monitoring of the data delivery in a manner scalable to large multicast networks, and to provide minimal control and identification functionality.  RTP and RTCP are designed to be independent of the underlying transport and network layers.  The protocol supports the use of RTP-level translators and mixers. Most of the text in this memorandum is identical to RFC 1889 which it obsoletes.  There are no changes in the packet formats on the wire, only changes to the rules and algorithms governing how the protocol is used. The biggest change is an enhancement to the scalable timer algorithm for calculating when to send RTCP packets in order to minimize transmission in excess of the intended rate when many participants join a session simultaneously.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="64"/>
+          <seriesInfo name="RFC" value="3550"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3550"/>
+        </reference>
+        <reference anchor="RFC4025" target="https://www.rfc-editor.org/info/rfc4025" quoteTitle="true" derivedAnchor="RFC4025">
+          <front>
+            <title>A Method for Storing IPsec Keying Material in DNS</title>
+            <author initials="M." surname="Richardson" fullname="M. Richardson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="March"/>
+            <abstract>
+              <t>This document describes a new resource record for the Domain Name System (DNS).  This record may be used to store public keys for use in IP security (IPsec) systems.  The record also includes provisions for indicating what system should be contacted when an IPsec tunnel is established with the entity in question. </t>
+              <t> This record replaces the functionality of the sub-type #4 of the KEY Resource Record, which has been obsoleted by RFC 3445.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4025"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4025"/>
+        </reference>
+        <reference anchor="RFC4301" target="https://www.rfc-editor.org/info/rfc4301" quoteTitle="true" derivedAnchor="RFC4301">
+          <front>
+            <title>Security Architecture for the Internet Protocol</title>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Seo" fullname="K. Seo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="December"/>
+            <abstract>
+              <t>This document describes an updated version of the "Security Architecture for IP", which is designed to provide security services for traffic at the IP layer.  This document obsoletes RFC 2401 (November 1998).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4301"/>
+        </reference>
+        <reference anchor="RFC4787" target="https://www.rfc-editor.org/info/rfc4787" quoteTitle="true" derivedAnchor="RFC4787">
+          <front>
+            <title>Network Address Translation (NAT) Behavioral Requirements for Unicast UDP</title>
+            <author initials="F." surname="Audet" fullname="F. Audet" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Jennings" fullname="C. Jennings">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="January"/>
+            <abstract>
+              <t>This document defines basic terminology for describing different types of Network Address Translation (NAT) behavior when handling Unicast UDP and also defines a set of requirements that would allow many applications, such as multimedia communications or online gaming, to work consistently.  Developing NATs that meet this set of requirements will greatly increase the likelihood that these applications will function properly.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="127"/>
+          <seriesInfo name="RFC" value="4787"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4787"/>
+        </reference>
+        <reference anchor="RFC5110" target="https://www.rfc-editor.org/info/rfc5110" quoteTitle="true" derivedAnchor="RFC5110">
+          <front>
+            <title>Overview of the Internet Multicast Routing Architecture</title>
+            <author initials="P." surname="Savola" fullname="P. Savola">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t>This document describes multicast routing architectures that are currently deployed on the Internet.  This document briefly describes those protocols and references their specifications.</t>
+              <t>This memo also reclassifies several older RFCs to Historic.  These RFCs describe multicast routing protocols that were never widely deployed or have fallen into disuse.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5110"/>
+        </reference>
+        <reference anchor="RFC6726" target="https://www.rfc-editor.org/info/rfc6726" quoteTitle="true" derivedAnchor="RFC6726">
+          <front>
+            <title>FLUTE - File Delivery over Unidirectional Transport</title>
+            <author initials="T." surname="Paila" fullname="T. Paila">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Walsh" fullname="R. Walsh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Luby" fullname="M. Luby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Roca" fullname="V. Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Lehtonen" fullname="R. Lehtonen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="November"/>
+            <abstract>
+              <t>This document defines File Delivery over Unidirectional Transport (FLUTE), a protocol for the unidirectional delivery of files over the Internet, which is particularly suited to multicast networks.  The specification builds on Asynchronous Layered Coding, the base protocol designed for massively scalable multicast distribution. This document obsoletes RFC 3926.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6726"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6726"/>
+        </reference>
+        <reference anchor="RFC7359" target="https://www.rfc-editor.org/info/rfc7359" quoteTitle="true" derivedAnchor="RFC7359">
+          <front>
+            <title>Layer 3 Virtual Private Network (VPN) Tunnel Traffic Leakages in Dual-Stack Hosts/Networks</title>
+            <author initials="F." surname="Gont" fullname="F. Gont">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="August"/>
+            <abstract>
+              <t>The subtle way in which the IPv6 and IPv4 protocols coexist in typical networks, together with the lack of proper IPv6 support in popular Virtual Private Network (VPN) tunnel products, may inadvertently result in VPN tunnel traffic leakages.  That is, traffic meant to be transferred over an encrypted and integrity- protected VPN tunnel may leak out of such a tunnel and be sent in the clear on the local network towards the final destination.  This document discusses some scenarios in which such VPN tunnel traffic leakages may occur as a result of employing IPv6-unaware VPN software.  Additionally, this document offers possible mitigations for this issue.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7359"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7359"/>
+        </reference>
+        <reference anchor="RFC7761" target="https://www.rfc-editor.org/info/rfc7761" quoteTitle="true" derivedAnchor="RFC7761">
+          <front>
+            <title>Protocol Independent Multicast - Sparse Mode (PIM-SM): Protocol Specification (Revised)</title>
+            <author initials="B." surname="Fenner" fullname="B. Fenner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Holbrook" fullname="H. Holbrook">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Kouvelas" fullname="I. Kouvelas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Parekh" fullname="R. Parekh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Z." surname="Zhang" fullname="Z. Zhang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Zheng" fullname="L. Zheng">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t>This document specifies Protocol Independent Multicast - Sparse Mode (PIM-SM).  PIM-SM is a multicast routing protocol that can use the underlying unicast routing information base or a separate multicast-capable routing information base.  It builds unidirectional shared trees rooted at a Rendezvous Point (RP) per group, and it optionally creates shortest-path trees per source.</t>
+              <t>This document obsoletes RFC 4601 by replacing it, addresses the errata filed against it, removes the optional (*,*,RP), PIM Multicast Border Router features and authentication using IPsec that lack sufficient deployment experience (see Appendix A), and moves the PIM specification to Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="83"/>
+          <seriesInfo name="RFC" value="7761"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7761"/>
+        </reference>
+        <reference anchor="RFC7858" target="https://www.rfc-editor.org/info/rfc7858" quoteTitle="true" derivedAnchor="RFC7858">
+          <front>
+            <title>Specification for DNS over Transport Layer Security (TLS)</title>
+            <author initials="Z." surname="Hu" fullname="Z. Hu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Zhu" fullname="L. Zhu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Heidemann" fullname="J. Heidemann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Mankin" fullname="A. Mankin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Wessels" fullname="D. Wessels">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="May"/>
+            <abstract>
+              <t>This document describes the use of Transport Layer Security (TLS) to provide privacy for DNS.  Encryption provided by TLS eliminates opportunities for eavesdropping and on-path tampering with DNS queries in the network, such as discussed in RFC 7626.  In addition, this document specifies two usage profiles for DNS over TLS and provides advice on performance considerations to minimize overhead from using TCP and TLS with DNS.</t>
+              <t>This document focuses on securing stub-to-recursive traffic, as per the charter of the DPRIVE Working Group.  It does not prevent future applications of the protocol to recursive-to-authoritative traffic.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7858"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7858"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t>Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t>To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t>This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8313" target="https://www.rfc-editor.org/info/rfc8313" quoteTitle="true" derivedAnchor="RFC8313">
+          <front>
+            <title>Use of Multicast across Inter-domain Peering Points</title>
+            <author initials="P." surname="Tarapore" fullname="P. Tarapore" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Sayko" fullname="R. Sayko">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Shepherd" fullname="G. Shepherd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Eckert" fullname="T. Eckert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Krishnan" fullname="R. Krishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="January"/>
+            <abstract>
+              <t>This document examines the use of Source-Specific Multicast (SSM) across inter-domain peering points for a specified set of deployment scenarios.  The objectives are to (1) describe the setup process for multicast-based delivery across administrative domains for these scenarios and (2) document supporting functionality to enable this process.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="213"/>
+          <seriesInfo name="RFC" value="8313"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8313"/>
+        </reference>
+        <reference anchor="RFC8484" target="https://www.rfc-editor.org/info/rfc8484" quoteTitle="true" derivedAnchor="RFC8484">
+          <front>
+            <title>DNS Queries over HTTPS (DoH)</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="McManus" fullname="P. McManus">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="October"/>
+            <abstract>
+              <t>This document defines a protocol for sending DNS queries and getting DNS responses over HTTPS.  Each DNS query-response pair is mapped into an HTTP exchange.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8484"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8484"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="extranslate" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-unknown-rrtype-construction">Unknown RRType Construction</name>
+      <t pn="section-appendix.a-1">In a DNS resolver that understands the AMTRELAY type, the zone file might
+contain this line:</t>
+      <sourcecode name="" type="" markers="false" pn="section-appendix.a-2">
+  IN AMTRELAY 128 0 3 amtrelays.example.com.
+</sourcecode>
+      <t pn="section-appendix.a-3">In order to translate this example to appear as an unknown RRType
+as defined in <xref target="RFC3597" format="default" sectionFormat="of" derivedContent="RFC3597"/>, one could run the following program:</t>
+      <sourcecode name="" type="python" markers="true" pn="section-appendix.a-4">
+  $ cat translate.py
+  #!/usr/bin/env python3
+  import sys
+  name=sys.argv[1]
+  wire=''
+  for dn in name.split('.'):
+    if len(dn) &gt; 0:
+      wire += ('%02x' % len(dn))
+      wire += (''.join('%02x'%ord(x) for x in dn))
+  print(len(wire)//2) + 2
+  print(wire)
+
+  $ ./translate.py amtrelays.example.com
+  24
+  09616d7472656c617973076578616d706c6503636f6d
+</sourcecode>
+      <t pn="section-appendix.a-5">The length of the RData and the hex string for the domain name
+"amtrelays.example.com" are the outputs of this program.</t>
+      <t pn="section-appendix.a-6">The length of the wire-encoded domain name is 22, so 2 was added to
+that value (1 for the precedence field and 1 for the combined D-bit and
+relay type fields) to get the full length 24 of the RData.  For the 2
+octets ahead of the domain name, we encode the precedence, D-bit, and
+relay type fields, as described in <xref target="rrdef" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+      <t pn="section-appendix.a-7">This results in a zone file entry like this:</t>
+      <artwork name="" type="" align="left" alt="" pn="section-appendix.a-8">
+  IN TYPE260  \# ( 24 ; length
+          80 ; precedence = 128
+          03 ; D-bit=0, relay type=3 (wire-encoded domain name)
+        09616d7472656c617973076578616d706c6503636f6d ) ; domain name
+</artwork>
+    </section>
+    <section anchor="acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.b-1">This specification was inspired by the previous work of <contact fullname="Doug Nortz"/>, <contact fullname="Robert Sayko"/>, <contact fullname="David Segelstein"/>, and <contact fullname="Percy Tarapore"/>, presented in
+the MBONED Working Group at IETF 93.</t>
+      <t pn="section-appendix.b-2">Thanks to <contact fullname="Jeff Goldsmith"/>, <contact fullname="Toerless Eckert"/>, <contact fullname="Mikael Abrahamsson"/>, <contact fullname="Lenny Giuliano"/>, <contact fullname="Mark Andrews"/>, <contact fullname="Sandy Zheng"/>, <contact fullname="Kyle Rose"/>, <contact fullname="Ben Kaduk"/>,
+      <contact fullname="Bill Atwood"/>, <contact fullname="Tim Chown"/>, <contact fullname="Christian Worm Mortensen"/>, <contact fullname="Warren Kumari"/>, <contact fullname="Dan Romanescu"/>, <contact fullname="Bernard Aboba"/>, <contact fullname="Carlos Pignataro"/>, <contact fullname="Niclas Comstedt"/>, <contact fullname="Mirja Kühlewind"/>, <contact fullname="Henning Rogge"/>, <contact fullname="Eric Vyncke"/>, <contact fullname="Barry Lieba"/>,
+<contact fullname="Roman Danyliw"/>, <contact fullname="Alissa Cooper"/>,
+<contact fullname="Suresh Krishnan"/>, <contact fullname="Adam Roach"/>,
+and <contact fullname="Daniel Franke"/> for their very helpful reviews and comments.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author initials="J." surname="Holland" fullname="Jake Holland">
+        <organization showOnFrontPage="true">Akamai Technologies, Inc.</organization>
+        <address>
+          <postal>
+            <street>150 Broadway</street>
+            <city>Cambridge</city>
+            <region>MA</region>
+            <code>02144</code>
+            <country>United States of America</country>
+          </postal>
+          <email>jakeholland.net@gmail.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

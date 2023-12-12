@@ -1,0 +1,1187 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="bcp" consensus="true" docName="draft-ietf-tcpm-rto-consider-17" indexInclude="true" ipr="trust200902" number="8961" prepTime="2020-11-23T17:16:56" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tcpm-rto-consider-17" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8961" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Requirements for Time-Based Loss Detection">Requirements for Time-Based Loss Detection</title>
+    <seriesInfo name="RFC" value="8961" stream="IETF"/>
+    <seriesInfo name="BCP" value="233" stream="IETF"/>
+    <author initials="M." surname="Allman" fullname="Mark Allman">
+      <organization abbrev="ICSI" showOnFrontPage="true">International Computer Science Institute</organization>
+      <address>
+        <postal>
+          <street>2150 Shattuck Ave., Suite 1100</street>
+          <city>Berkeley</city>
+          <region>CA</region>
+          <country>United States of America</country>
+          <code>94704</code>
+        </postal>
+        <email>mallman@icir.org</email>
+        <uri>https://www.icir.org/mallman</uri>
+      </address>
+    </author>
+    <date month="11" year="2020"/>
+    <area>Transport</area>
+    <workgroup>TCPM</workgroup>
+    <keyword>retransmission timeout</keyword>
+    <keyword>packet loss</keyword>
+    <keyword>loss detection</keyword>
+    <keyword>requirements</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">Many protocols must detect packet loss for various reasons
+    (e.g., to ensure reliability using retransmissions or to understand the
+    level of congestion along a network path).  While many mechanisms have
+    been designed to detect loss, ultimately, protocols can only count on the
+    passage of time without delivery confirmation to declare a packet "lost".
+    Each implementation of a time-based loss detection mechanism represents a
+    balance between correctness and timeliness; therefore, no implementation
+    suits all situations.  This document provides high-level requirements for
+    time-based loss detectors appropriate for general use in unicast
+    communication across the Internet.  Within the requirements,
+    implementations have latitude to define particulars that best address each
+    situation.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This memo documents an Internet Best Current Practice.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further information
+            on BCPs is available in Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8961" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-context">Context</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-scope">Scope</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements">Requirements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-discussion">Discussion</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sect-1" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+   As a network of networks, the Internet consists of a large variety
+   of links and systems that support a wide variety of tasks and
+   workloads.  The service provided by the network varies from
+   best-effort delivery among loosely connected components to highly
+   predictable delivery within controlled environments (e.g., between
+   physically connected nodes, within a tightly controlled data
+   center).  Each path through the network has a set of path
+   properties, e.g., available capacity, delay, and packet loss.  Given
+   the range of networks that make up the Internet, these properties
+   range from largely static to highly dynamic.</t>
+      <t indent="0" pn="section-1-2">
+   This document provides guidelines for developing an understanding of one
+   path property: packet loss.  In particular, we offer guidelines for
+   developing and implementing time-based loss detectors that have been
+   gradually learned over the last several decades.  We focus on the general
+   case where the loss properties of a path are (a) unknown a priori and (b)
+   dynamically varying over time.  Further, while there are numerous root
+   causes of packet loss, we leverage the conservative notion that loss is an
+   implicit indication of congestion <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>.  While this stance is not always correct, as a general
+   assumption it has historically served us well <xref target="Jac88" format="default" sectionFormat="of" derivedContent="Jac88"/>.  As we discuss further in <xref target="sect-2" format="default" sectionFormat="of" derivedContent="Section 2"/>, the
+   guidelines in this document should be viewed as a general default for
+   unicast communication across best-effort networks and not as optimal -- or
+   even applicable -- for all situations.</t>
+      <t indent="0" pn="section-1-3">
+   Given that packet loss is routine in best-effort networks, loss
+   detection is a crucial activity for many protocols and applications
+   and is generally undertaken for two major reasons:
+
+      </t>
+      <ol type="(%d)" indent="adaptive" spacing="normal" start="1" pn="section-1-4">
+          <li pn="section-1-4.1" derivedCounter="(1)">
+          <t indent="0" pn="section-1-4.1.1">Ensuring reliable data delivery</t>
+          <t indent="0" pn="section-1-4.1.2">This requires a data sender to develop an understanding of
+              which transmitted packets have not arrived at the receiver.
+              This knowledge allows the sender to retransmit missing
+	      data. </t>
+        </li>
+        <li pn="section-1-4.2" derivedCounter="(2)">
+          <t indent="0" pn="section-1-4.2.1"> Congestion control
+          </t>
+          <t indent="0" pn="section-1-4.2.2"> As we mention above, packet loss is often taken as an
+              implicit indication that the sender is transmitting too fast and
+              is overwhelming some portion of the network path.  Data senders
+              can therefore use loss to trigger transmission rate
+              reductions. </t>
+        </li>
+      </ol>
+      <t indent="0" pn="section-1-5">
+   Various mechanisms are used to detect losses in a packet stream.
+   Often, we use continuous or periodic acknowledgments from the
+   recipient to inform the sender's notion of which pieces of data are
+   missing.  However, despite our best intentions and most robust
+   mechanisms, we cannot place ultimate faith in receiving such
+   acknowledgments but can only truly depend on the passage of time.
+   Therefore, our ultimate backstop to ensuring that we detect all loss
+   is a timeout.  That is, the sender sets some expectation for how
+   long to wait for confirmation of delivery for a given piece of data.
+   When this time period passes without delivery confirmation, the
+   sender concludes the data was lost in transit.</t>
+      <t indent="0" pn="section-1-6">The specifics of time-based loss detection schemes represent a
+   tradeoff between correctness and responsiveness.  In other words, we
+   wish to simultaneously:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-7">
+        <li pn="section-1-7.1">wait long enough to ensure the detection of loss is correct,
+	  and</li>
+        <li pn="section-1-7.2">minimize the amount of delay we impose on applications (before
+     repairing loss) and the network (before we reduce the
+     congestion).</li>
+      </ul>
+      <t indent="0" pn="section-1-8">
+   Serving both of these goals is difficult, as they pull in opposite
+   directions <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>.  By not waiting long
+   enough to accurately determine a packet has been lost, we may provide a
+   needed retransmission in a timely manner but risk both sending unnecessary
+   ("spurious") retransmissions and needlessly lowering the transmission rate.
+   By waiting long enough that we are unambiguously certain a packet has been
+   lost, we cannot repair losses in a timely manner and we risk prolonging
+   network congestion.</t>
+      <t indent="0" pn="section-1-9">
+   Many protocols and applications -- such as TCP <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>, SCTP <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/>, and SIP
+   <xref target="RFC3261" format="default" sectionFormat="of" derivedContent="RFC3261"/> -- use their own time-based loss detection mechanisms.
+   At
+   this point, our experience leads to a recognition that often specific
+   tweaks that deviate from standardized time-based loss detectors do not
+   materially impact network safety with respect to congestion control <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>.  Therefore, in this document we outline a
+   set of high-level, protocol-agnostic requirements for time-based loss
+   detection.  The intent is to provide a safe foundation on which
+   implementations have the flexibility to instantiate mechanisms that best
+   realize their specific goals.</t>
+      <section anchor="sect-1.1" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+          <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals,
+    as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="sect-2" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-context">Context</name>
+      <t indent="0" pn="section-2-1">
+   This document is different from the way we ideally like to engineer
+   systems.  Usually, we strive to understand high-level requirements
+   as a starting point.  We then methodically engineer specific
+   protocols, algorithms, and systems that meet these requirements.
+   Within the IETF standards process, we have derived many time-based
+   loss detection schemes without the benefit of some over-arching
+   requirements document -- because we had no idea how to write such a
+   document!  Therefore, we made the best specific decisions we could
+   in response to specific needs.</t>
+      <t indent="0" pn="section-2-2">
+   At this point, however, the community's experience has matured to
+   the point where we can define a set of general, high-level
+   requirements for time-based loss detection schemes.  We now
+   understand how to separate the strategies these mechanisms use that
+   are crucial for network safety from those small details that do not
+   materially impact network safety.  The requirements in this document
+   may not be appropriate in all cases.  In particular, the guidelines
+   in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/> are concerned with the general case, but
+   specific
+   situations may allow for more flexibility in terms of loss detection
+   because specific facets of the environment are known (e.g., when
+   operating over a single physical link or within a tightly controlled
+   data center).  Therefore, variants, deviations, or wholly different
+   time-based loss detectors may be necessary or useful in some cases.
+   The correct way to view this document is as the default case and not
+   as one-size-fits-all guidance that is optimal in all cases.</t>
+      <t indent="0" pn="section-2-3">
+   Adding a requirements umbrella to a body of existing specifications
+   is inherently messy and we run the risk of creating inconsistencies
+   with both past and future mechanisms.  Therefore, we make the
+   following statements about the relationship of this document to past
+   and future specifications:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-4">
+        <li pn="section-2-4.1">This document does not update or obsolete any existing RFC.  These
+        previous specifications -- while generally consistent with the
+        requirements in this document -- reflect community consensus, and this
+        document does not change that consensus.</li>
+        <li pn="section-2-4.2">The requirements in this document are meant to provide for network
+        safety and, as such, <bcp14>SHOULD</bcp14> be used by all future
+        time-based loss detection mechanisms.</li>
+        <li pn="section-2-4.3">The requirements in this document may not be appropriate in all
+        cases; therefore, deviations and variants may be necessary in the
+        future (hence the "<bcp14>SHOULD</bcp14>" in the last bullet).
+        However, inconsistencies <bcp14>MUST</bcp14> be (a) explained and (b)
+        gather consensus.</li>
+      </ul>
+    </section>
+    <section anchor="sect-3" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-scope">Scope</name>
+      <t indent="0" pn="section-3-1">
+   The principles we outline in this document are protocol-agnostic and
+   widely applicable.  We make the following scope statements about
+   the application of the requirements discussed in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/>:</t>
+      <ol type="(S.%d)" spacing="normal" indent="6" start="1" pn="section-3-2">
+        <li pn="section-3-2.1" derivedCounter="(S.1)">While there are a bevy of uses for timers in
+	  protocols -- from rate-based pacing to connection failure detection
+	    and beyond -- this document is focused only on loss
+	detection.</li>
+        <li pn="section-3-2.2" derivedCounter="(S.2)">
+          <t indent="0" pn="section-3-2.2.1"> The requirements for time-based loss detection
+	    mechanisms in this document are for the primary or "last resort"
+	      loss detection mechanism, whether the mechanism is the sole loss
+	        repair strategy or works in concert with other mechanisms.
+
+          </t>
+          <t indent="0" pn="section-3-2.2.2">
+          While a straightforward time-based loss detector is sufficient
+            for simple protocols like DNS <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/> <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/>, more
+            complex protocols often use more advanced loss detectors to aid
+            performance.  For instance, TCP and SCTP have methods to detect
+            (and repair) loss based on explicit endpoint state sharing <xref target="RFC2018" format="default" sectionFormat="of" derivedContent="RFC2018"/> <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/> <xref target="RFC6675" format="default" sectionFormat="of" derivedContent="RFC6675"/>.
+            Such mechanisms often provide more timely and precise loss
+            detection than time-based loss detectors.  However, these
+            mechanisms do not obviate the need for a "retransmission timeout"
+            or "RTO" because, as we discuss in <xref target="sect-1" format="default" sectionFormat="of" derivedContent="Section 1"/>, only
+	    the passage
+            of time can ultimately be relied upon to detect loss.  In other
+            words, we ultimately cannot count on acknowledgments to arrive at
+            the data sender to indicate which packets never arrived at the
+            receiver.  In cases such as these, we need a time-based loss
+            detector to function as a "last resort".
+</t>
+          <t indent="0" pn="section-3-2.2.3">Also, note that some recent proposals have incorporated time
+            as a component of advanced loss detection methods either as an
+            aggressive first loss detector in certain situations or in
+            conjunction with endpoint state sharing <xref target="I-D.dukkipati-tcpm-tcp-loss-probe" format="default" sectionFormat="of" derivedContent="DCCM13"/> <xref target="I-D.ietf-tcpm-rack" format="default" sectionFormat="of" derivedContent="CCDJ20"/> <xref target="I-D.ietf-quic-recovery" format="default" sectionFormat="of" derivedContent="IS20"/>.  While these mechanisms can aid timely loss
+            recovery, the protocol ultimately leans on another more
+            conservative timer to ensure reliability when these mechanisms
+            break down.  The requirements in this document are only directly
+            applicable to last-resort loss detection.  However, we expect that
+            many of the requirements can serve as useful guidelines for more
+            aggressive non-last-resort timers as well.</t>
+        </li>
+        <li pn="section-3-2.3" derivedCounter="(S.3)">
+          <t indent="0" pn="section-3-2.3.1"> The requirements in this document apply only to
+	    endpoint-to-endpoint unicast communication.  Reliable multicast
+	      (e.g., <xref target="RFC5740" format="default" sectionFormat="of" derivedContent="RFC5740"/>) protocols are
+	      explicitly outside
+	        the scope of this document.
+
+          </t>
+          <t indent="0" pn="section-3-2.3.2">Protocols such as SCTP <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/> and Multipath TCP (MP-TCP) <xref target="RFC6182" format="default" sectionFormat="of" derivedContent="RFC6182"/> that communicate in a unicast fashion with
+            multiple specific endpoints can leverage the requirements in this
+            document provided they track state and follow the requirements for
+            each endpoint independently.  That is, if host A communicates with
+            addresses B and C, A needs to use independent time-based loss
+            detector instances for traffic sent to B and C.</t>
+        </li>
+        <li pn="section-3-2.4" derivedCounter="(S.4)"> There are cases where state is shared across connections or flows
+        (e.g., <xref target="RFC2140" format="default" sectionFormat="of" derivedContent="RFC2140"/> and <xref target="RFC3124" format="default" sectionFormat="of" derivedContent="RFC3124"/>).  State pertaining to time-based
+        loss detection is often discussed as sharable.  These situations raise
+        issues that the simple flow-oriented time-based loss detection
+        mechanism discussed in this document does not consider (e.g., how long
+        to preserve state between connections).  Therefore, while the general
+        principles given in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/> are
+        likely applicable, sharing time-based loss detection information
+        across flows is outside the scope of this document.
+	</li>
+      </ol>
+    </section>
+    <section anchor="sect-4" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-requirements">Requirements</name>
+      <t indent="0" pn="section-4-1">
+   We now list the requirements that apply when designing primary or
+   last-resort time-based loss detection mechanisms.  For historical
+   reasons and ease of exposition, we refer to the time between sending
+   a packet and determining the packet has been lost due to lack of
+   delivery confirmation as the "retransmission timeout" or "RTO".
+   After the RTO passes without delivery confirmation, the sender may
+   safely assume the packet is lost.  However, as discussed above, the
+   detected loss need not be repaired (i.e., the loss could be detected
+   only for congestion control and not reliability purposes).
+
+      </t>
+      <ol spacing="normal" type="(%d)" indent="adaptive" start="1" pn="section-4-2">
+        <li pn="section-4-2.1" derivedCounter="(1)">
+          <t indent="0" pn="section-4-2.1.1">As we note above, loss detection happens when a sender does not
+   receive delivery confirmation within some expected period of
+   time.  In the absence of any knowledge about the latency of a
+   path, the initial RTO <bcp14>MUST</bcp14> be conservatively set to no less
+   than
+   1 second.
+
+          </t>
+          <t indent="0" pn="section-4-2.1.2">Correctness is of the utmost importance when transmitting
+              into a network with unknown properties because:
+
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-2.1.3">
+            <li pn="section-4-2.1.3.1">Premature loss detection can trigger spurious retransmits
+                that could cause issues when a network is already
+                congested.</li>
+            <li pn="section-4-2.1.3.2">Premature loss detection can needlessly cause congestion
+                control to dramatically lower the sender's allowed
+                transmission rate, especially since the rate is already
+                likely low at this stage of the communication.  Recovering
+                from such a rate change can take a relatively long time.</li>
+            <li pn="section-4-2.1.3.3">Finally, as discussed below, sometimes using time-based
+                loss detection and retransmissions can cause ambiguities in
+                assessing the latency of a network path.  Therefore, it is
+                especially important for the first latency sample to be free
+                of ambiguities such that there is a baseline for the remainder
+                of the communication.</li>
+          </ul>
+          <t indent="0" pn="section-4-2.1.4">
+            The specific constant (1 second) comes from the analysis of
+	    Internet
+      round-trip times (RTTs) found in <xref target="RFC6298" sectionFormat="of" section="A" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6298#appendix-A" derivedContent="RFC6298"/>.</t>
+        </li>
+        <li pn="section-4-2.2" derivedCounter="(2)">
+          <t indent="0" pn="section-4-2.2.1"> We now specify four requirements that pertain to setting an
+	  expected time interval for delivery confirmation.
+          </t>
+          <t indent="0" pn="section-4-2.2.2">
+        Often, measuring the time required for delivery confirmation is
+	framed as assessing the RTT of the network path.
+	The RTT is the minimum amount of time required to receive delivery
+	confirmation and also often follows protocol behavior whereby
+	acknowledgments are generated quickly after data arrives.  For
+	instance, this is the case for the RTO used by TCP <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/> and SCTP <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/>.  However, this
+	is somewhat misleading, and the expected latency is better framed as
+	the "feedback time" (FT).  In other words, the expectation is not
+	always simply a network property; it can include additional time
+	before a sender should reasonably expect a response. 
+</t>
+          <t indent="0" pn="section-4-2.2.3">For instance, consider a UDP-based DNS request from a client to
+	    a
+	    recursive resolver <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/>.
+	    When the request can be
+	    served from the resolver's cache, the feedback time (FT) likely
+	    well approximates the
+	    network RTT between the client and resolver.  However, on a cache
+	    miss,
+	    the resolver will request the needed information from one or more
+	    authoritative DNS servers, which will non-trivially increase the
+	    FT
+	    compared to the network RTT between the client and resolver.</t>
+          <t indent="0" pn="section-4-2.2.4">Therefore, we express the requirements in terms of FT.  Again,
+	    for
+	    ease of exposition, we use "RTO" to indicate the interval between
+	    a
+	    packet transmission and the decision that the packet has been
+	    lost, regardless of whether the packet will be retransmitted.</t>
+          <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-4-2.2.5">
+            <li pn="section-4-2.2.5.1" derivedCounter="(a)">
+              <t indent="0" pn="section-4-2.2.5.1.1">The RTO <bcp14>SHOULD</bcp14> be set based on multiple
+              observations of the FT when available.
+              </t>
+              <t indent="0" pn="section-4-2.2.5.1.2">In other words, the RTO should represent an empirically
+		derived
+      reasonable amount of time that the sender should wait for delivery
+      confirmation before deciding the given data is lost.  Network paths are
+      inherently dynamic; therefore, it is crucial to incorporate multiple
+      recent FT samples in the RTO to take into account the delay variation
+      across time.</t>
+              <t indent="0" pn="section-4-2.2.5.1.3">For example, TCP's RTO <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/> would satisfy this requirement due to its
+                use of an exponentially weighted moving average (EWMA) to
+                combine multiple FT samples into a "smoothed RTT".  In the
+                name of conservativeness, TCP goes further to also include an
+                explicit variance term when computing the RTO.</t>
+              <t indent="0" pn="section-4-2.2.5.1.4">While multiple FT samples are crucial for capturing the
+		delay
+      dynamics of a path, we explicitly do not tightly specify the
+      process -- including the number of FT samples to use and how/when to age
+      samples out of the RTO calculation -- as the particulars could depend on
+      the situation and/or goals of each specific loss detector.</t>
+              <t indent="0" pn="section-4-2.2.5.1.5">Finally, FT samples come from packet exchanges between
+		peers.  We
+      encourage protocol designers -- especially for new protocols -- to
+      strive
+      to ensure the feedback is not easily spoofable by on- or off-path
+      attackers such that they can perturb a host's notion of the FT.
+      Ideally, all messages would be cryptographically secure, but given that
+      this is not always possible -- especially in legacy protocols -- using a
+      healthy amount of randomness in the packets is encouraged.</t>
+            </li>
+            <li pn="section-4-2.2.5.2" derivedCounter="(b)">
+              <t indent="0" pn="section-4-2.2.5.2.1">FT observations <bcp14>SHOULD</bcp14> be taken and
+	      incorporated into the RTO at
+      least once per RTT or as frequently as data is exchanged in cases where
+      that happens less frequently than once per RTT.
+
+              </t>
+              <t indent="0" pn="section-4-2.2.5.2.2">Internet measurements show that taking only a single FT
+		sample per
+      TCP connection results in a relatively poorly performing RTO mechanism
+      <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>, hence this requirement that the
+      FT be sampled
+      continuously throughout the lifetime of communication.</t>
+              <t indent="0" pn="section-4-2.2.5.2.3">As an example, TCP takes an FT sample roughly once per RTT,
+                or, if using the timestamp option <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/>, on each acknowledgment arrival.  <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/> shows that both these
+                approaches result in roughly equivalent performance for the
+                RTO estimator.</t>
+            </li>
+            <li pn="section-4-2.2.5.3" derivedCounter="(c)">
+              <t indent="0" pn="section-4-2.2.5.3.1">FT observations <bcp14>MAY</bcp14> be taken from non-data
+	      exchanges.
+	      
+              </t>
+              <t indent="0" pn="section-4-2.2.5.3.2">Some protocols use non-data exchanges for various reasons,
+		e.g.,
+      keepalives, heartbeats, and control messages.  To the extent that the
+      latency of these exchanges mirrors data exchange, they can be leveraged
+      to take FT samples within the RTO mechanism.  Such samples can help
+      protocols keep their RTO accurate during lulls in data transmission.
+      However, given that these messages may not be subject to the same delays
+      as data transmission, we do not take a general view on whether this is
+      useful or not.</t>
+            </li>
+            <li pn="section-4-2.2.5.4" derivedCounter="(d)">
+              <t indent="0" pn="section-4-2.2.5.4.1">An RTO mechanism <bcp14>MUST NOT</bcp14> use ambiguous FT
+	      samples.
+
+              </t>
+              <t indent="0" pn="section-4-2.2.5.4.2">Assume two copies of some packet X are transmitted at
+                times t0 and t1. Then, at time t2, the sender receives
+                confirmation that X in fact arrived.  In some cases, it is not
+                clear which copy of X triggered the confirmation; hence, the
+                actual FT is either t2-t1 or t2-t0, but which is a mystery.
+                Therefore, in this situation, an implementation <bcp14>MUST NOT</bcp14> use either version of the FT sample and hence not
+                update the RTO (as discussed in <xref target="KP87" format="default" sectionFormat="of" derivedContent="KP87"/> and <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>).</t>
+              <t indent="0" pn="section-4-2.2.5.4.3">There are cases where two copies of some data are
+      transmitted in a way whereby the sender can tell which is
+      being acknowledged by an incoming ACK. For example, TCP's
+      timestamp option <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/> allows for
+      packets to be
+      uniquely identified and hence avoid the ambiguity.  In such
+      cases, there is no ambiguity and the resulting samples can
+      update the RTO.</t>
+            </li>
+          </ol>
+        </li>
+        <li pn="section-4-2.3" derivedCounter="(3)">
+          <t indent="0" pn="section-4-2.3.1">Loss detected by the RTO mechanism <bcp14>MUST</bcp14> be taken
+          as an indication of network congestion and the sending rate adapted
+          using a standard mechanism (e.g., TCP collapses the congestion
+          window to one packet <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>).
+
+          </t>
+          <t indent="0" pn="section-4-2.3.2">This ensures network safety.</t>
+          <t indent="0" pn="section-4-2.3.3">An exception to this rule is if an IETF standardized mechanism
+      determines that a particular loss is due to a non-congestion event
+      (e.g., packet corruption).  In such a case, a congestion control action
+      is not required.  Additionally, congestion control actions taken based
+      on time-based loss detection could be reversed when a standard mechanism
+      post facto determines that the cause of the loss was not congestion
+      (e.g., <xref target="RFC5682" format="default" sectionFormat="of" derivedContent="RFC5682"/>).</t>
+        </li>
+        <li pn="section-4-2.4" derivedCounter="(4)">
+          <t indent="0" pn="section-4-2.4.1">Each time the RTO is used to detect a loss, the value of the RTO
+	  <bcp14>MUST</bcp14>
+      be exponentially backed off such that the next firing requires a longer
+      interval.  The backoff <bcp14>SHOULD</bcp14> be removed after either (a)
+      the subsequent
+      successful transmission of non-retransmitted data, or (b) an RTO passes
+      without detecting additional losses.  The former will generally be
+      quicker.  The latter covers cases where loss is detected but not
+      repaired.
+
+          </t>
+          <t indent="0" pn="section-4-2.4.2">A maximum value <bcp14>MAY</bcp14> be placed on the RTO.  The
+            maximum RTO <bcp14>MUST NOT</bcp14> be less than 60 seconds (as
+            specified in <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>).</t>
+          <t indent="0" pn="section-4-2.4.3">This ensures network safety.</t>
+          <t indent="0" pn="section-4-2.4.4">As with guideline (3), an exception to this rule exists if an
+	    IETF
+      standardized mechanism determines that a particular loss is not due to
+      congestion.</t>
+        </li>
+      </ol>
+    </section>
+    <section anchor="sect-5" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-discussion">Discussion</name>
+      <t indent="0" pn="section-5-1">
+   We note that research has shown the tension between the
+   responsiveness and correctness of time-based loss detection seems to
+   be a fundamental tradeoff in the context of TCP <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>.  That is,
+   making the RTO more aggressive (e.g., via changing TCP's
+   exponentially weighted moving average (EWMA) gains, lowering the
+   minimum RTO, etc.) can reduce the time required to detect actual
+   loss.  However, at the same time, such aggressiveness leads to more
+   cases of mistakenly declaring packets lost that ultimately arrived
+   at the receiver.  Therefore, being as aggressive as the requirements
+   given in the previous section allow in any particular situation may
+   not be the best course of action because detecting loss, even if
+   falsely, carries a requirement to invoke a congestion response
+   that will ultimately reduce the transmission rate.</t>
+      <t indent="0" pn="section-5-2">
+   While the tradeoff between responsiveness and correctness seems
+   fundamental, the tradeoff can be made less relevant if the sender can
+   detect and recover from mistaken loss detection.  Several mechanisms have
+   been proposed for this purpose, such as Eifel <xref target="RFC3522" format="default" sectionFormat="of" derivedContent="RFC3522"/>, Forward RTO-Recovery (F-RTO) <xref target="RFC5682" format="default" sectionFormat="of" derivedContent="RFC5682"/>, and Duplicate Selective Acknowledgement (DSACK) <xref target="RFC2883" format="default" sectionFormat="of" derivedContent="RFC2883"/> <xref target="RFC3708" format="default" sectionFormat="of" derivedContent="RFC3708"/>.  Using such
+   mechanisms may allow a data originator to tip towards being more responsive
+   without incurring (as much of) the attendant costs of mistakenly declaring
+   packets to be lost.</t>
+      <t indent="0" pn="section-5-3">
+   Also, note that, in addition to the experiments discussed in <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>,
+   the Linux TCP implementation has been using various non-standard RTO
+   mechanisms for many years seemingly without large-scale problems
+   (e.g., using different EWMA gains than specified in <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>).
+   Further, a number of TCP implementations use a steady-state minimum
+   RTO that is less than the 1 second specified in <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>.  While
+   the implication of these deviations from the standard may be more
+   spurious retransmits (per <xref target="AP99" format="default" sectionFormat="of" derivedContent="AP99"/>), we are
+   aware of no large-scale
+   network safety issues caused by this change to the minimum RTO.
+   This informs the guidelines in the last section (e.g., there is no
+   minimum RTO specified).</t>
+      <t indent="0" pn="section-5-4">
+   Finally, we note that while allowing implementations to be more
+   aggressive could in fact increase the number of needless
+   retransmissions, the above requirements fail safely in that they
+   insist on exponential backoff and a transmission rate reduction.
+   Therefore, providing implementers more latitude than they have
+   traditionally been given in IETF specifications of RTO mechanisms
+   does not somehow open the flood gates to aggressive behavior.  Since
+   there is a downside to being aggressive, the incentives for proper
+   behavior are retained in the mechanism.</t>
+    </section>
+    <section anchor="sect-6" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">
+   This document does not alter the security properties of time-based
+   loss detection mechanisms.  See <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>
+   for a discussion of these
+   within the context of TCP.</t>
+    </section>
+    <section anchor="sect-7" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">
+   This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-tcpm-rack" to="CCDJ20"/>
+    <displayreference target="I-D.dukkipati-tcpm-tcp-loss-probe" to="DCCM13"/>
+    <displayreference target="I-D.ietf-quic-recovery" to="IS20"/>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="AP99" quoteTitle="true" derivedAnchor="AP99">
+          <front>
+            <title>On Estimating End-to-End Network Path Properties</title>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+	    </author>
+            <author initials="V." surname="Paxson" fullname="V. Paxson">
+	    </author>
+            <date month="September" year="1999"/>
+          </front>
+          <refcontent>Proceedings of the ACM SIGCOMM Technical Symposium</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-tcpm-rack" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-tcpm-rack-13" derivedAnchor="CCDJ20">
+          <front>
+            <title>The RACK-TLP loss detection algorithm for TCP</title>
+            <author fullname="Yuchung Cheng">
+              <organization showOnFrontPage="true">Google, Inc</organization>
+            </author>
+            <author fullname="Neal Cardwell">
+              <organization showOnFrontPage="true">Google, Inc</organization>
+            </author>
+            <author fullname="Nandita Dukkipati">
+              <organization showOnFrontPage="true">Google, Inc</organization>
+            </author>
+            <author fullname="Priyaranjan Jha">
+              <organization showOnFrontPage="true">Google, Inc</organization>
+            </author>
+            <date month="November" day="2" year="2020"/>
+            <abstract>
+              <t indent="0">   This document presents the RACK-TLP loss detection algorithm for TCP.
+   RACK-TLP uses per-segment transmit timestamps and selective
+   acknowledgements (SACK) and has two parts: RACK ("Recent
+   ACKnowledgment") starts fast recovery quickly using time-based
+   inferences derived from ACK feedback.  TLP ("Tail Loss Probe")
+   leverages RACK and sends a probe packet to trigger ACK feedback to
+   avoid retransmission timeout (RTO) events.  Compared to the widely
+   used DUPACK threshold approach, RACK-TLP detects losses more
+   efficiently when there are application-limited flights of data, lost
+   retransmissions, or data packet reordering events.  It is intended to
+   be an alternative to the DUPACK threshold approach.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tcpm-rack-13"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-tcpm-rack-13.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.dukkipati-tcpm-tcp-loss-probe" quoteTitle="true" target="https://tools.ietf.org/html/draft-dukkipati-tcpm-tcp-loss-probe-01" derivedAnchor="DCCM13">
+          <front>
+            <title>Tail Loss Probe (TLP): An Algorithm for Fast Recovery of Tail Losses</title>
+            <author fullname="Nandita Dukkipati">
+	 </author>
+            <author fullname="Neal Cardwell">
+	 </author>
+            <author fullname="Yuchung Cheng">
+	 </author>
+            <author fullname="Matt Mathis">
+	 </author>
+            <date month="February" day="25" year="2013"/>
+            <abstract>
+              <t indent="0">   Retransmission timeouts are detrimental to application latency,
+   especially for short transfers such as Web transactions where
+   timeouts can often take longer than all of the rest of a transaction.
+   The primary cause of retransmission timeouts are lost segments at the
+   tail of transactions.  This document describes an experimental
+   algorithm for TCP to quickly recover lost segments at the end of
+   transactions or when an entire window of data or acknowledgments are
+   lost.  Tail Loss Probe (TLP) is a sender-only algorithm that allows
+   the transport to recover tail losses through fast recovery as opposed
+   to lengthy retransmission timeouts.  If a connection is not receiving
+   any acknowledgments for a certain period of time, TLP transmits the
+   last unacknowledged segment (loss probe).  In the event of a tail
+   loss in the original transmissions, the acknowledgment from the loss
+   probe triggers SACK/FACK based fast recovery.  TLP effectively avoids
+   long timeouts and thereby improves TCP performance.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-dukkipati-tcpm-tcp-loss-probe-01"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-dukkipati-tcpm-tcp-loss-probe-01.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-quic-recovery" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-quic-recovery-32" derivedAnchor="IS20">
+          <front>
+            <title>QUIC Loss Detection and Congestion Control</title>
+            <author initials="J" surname="Iyengar" fullname="Jana Iyengar" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I" surname="Swett" fullname="Ian Swett" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" day="20" year="2020"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-quic-recovery-32"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Jac88" quoteTitle="true" target="https://doi.org/10.1145/52325.52356" derivedAnchor="Jac88">
+          <front>
+            <title>Congestion avoidance and control</title>
+            <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+	    </author>
+            <date month="August" year="1988"/>
+          </front>
+          <refcontent>ACM SIGCOMM</refcontent>
+          <seriesInfo name="DOI" value="10.1145/52325.52356"/>
+        </reference>
+        <reference anchor="KP87" quoteTitle="true" derivedAnchor="KP87">
+          <front>
+            <title>Improving Round-Trip Time Estimates in Reliable Transport Protocols</title>
+            <author initials="P." surname="Karn" fullname="P. Karn"/>
+            <author initials="C." surname="Partridge" fullname="C. Partridge"/>
+          </front>
+          <refcontent>SIGCOMM 87</refcontent>
+        </reference>
+        <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+          <front>
+            <title>Domain names - concepts and facilities</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised basic definition of The Domain Name System.  It obsoletes RFC-882.  This memo describes the domain style names and their used for host address look up and electronic mail forwarding.  It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+        </reference>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC2018" target="https://www.rfc-editor.org/info/rfc2018" quoteTitle="true" derivedAnchor="RFC2018">
+          <front>
+            <title>TCP Selective Acknowledgment Options</title>
+            <author initials="M." surname="Mathis" fullname="M. Mathis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mahdavi" fullname="J. Mahdavi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Romanow" fullname="A. Romanow">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1996" month="October"/>
+            <abstract>
+              <t indent="0">This memo proposes an implementation of SACK and discusses its performance and related issues.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2018"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2018"/>
+        </reference>
+        <reference anchor="RFC2140" target="https://www.rfc-editor.org/info/rfc2140" quoteTitle="true" derivedAnchor="RFC2140">
+          <front>
+            <title>TCP Control Block Interdependence</title>
+            <author initials="J." surname="Touch" fullname="J. Touch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="April"/>
+            <abstract>
+              <t indent="0">This memo makes the case for interdependent TCP control blocks, where part of the TCP state is shared among similar concurrent connections, or across similar connection instances. TCP state includes a combination of parameters, such as connection state, current round-trip time estimates, congestion control information, and process information.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2140"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2140"/>
+        </reference>
+        <reference anchor="RFC2883" target="https://www.rfc-editor.org/info/rfc2883" quoteTitle="true" derivedAnchor="RFC2883">
+          <front>
+            <title>An Extension to the Selective Acknowledgement (SACK) Option for TCP</title>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mahdavi" fullname="J. Mahdavi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Mathis" fullname="M. Mathis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Podolsky" fullname="M. Podolsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="July"/>
+            <abstract>
+              <t indent="0">This note defines an extension of the Selective Acknowledgement (SACK) Option for TCP.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2883"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2883"/>
+        </reference>
+        <reference anchor="RFC3124" target="https://www.rfc-editor.org/info/rfc3124" quoteTitle="true" derivedAnchor="RFC3124">
+          <front>
+            <title>The Congestion Manager</title>
+            <author initials="H." surname="Balakrishnan" fullname="H. Balakrishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Seshan" fullname="S. Seshan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="June"/>
+            <abstract>
+              <t indent="0">This document describes the Congestion Manager (CM), an end-system module that enables an ensemble of multiple concurrent streams from a sender destined to the same receiver and sharing the same congestion properties to perform proper congestion avoidance and control, and allows applications to easily adapt to network congestion.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3124"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3124"/>
+        </reference>
+        <reference anchor="RFC3261" target="https://www.rfc-editor.org/info/rfc3261" quoteTitle="true" derivedAnchor="RFC3261">
+          <front>
+            <title>SIP: Session Initiation Protocol</title>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Camarillo" fullname="G. Camarillo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Johnston" fullname="A. Johnston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Peterson" fullname="J. Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Sparks" fullname="R. Sparks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Schooler" fullname="E. Schooler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2002" month="June"/>
+            <abstract>
+              <t indent="0">This document describes Session Initiation Protocol (SIP), an application-layer control (signaling) protocol for creating, modifying, and terminating sessions with one or more participants.  These sessions include Internet telephone calls, multimedia distribution, and multimedia conferences.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3261"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3261"/>
+        </reference>
+        <reference anchor="RFC3522" target="https://www.rfc-editor.org/info/rfc3522" quoteTitle="true" derivedAnchor="RFC3522">
+          <front>
+            <title>The Eifel Detection Algorithm for TCP</title>
+            <author initials="R." surname="Ludwig" fullname="R. Ludwig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Meyer" fullname="M. Meyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="April"/>
+            <abstract>
+              <t indent="0">The Eifel detection algorithm allows a TCP sender to detect a posteriori whether it has entered loss recovery unnecessarily.  It requires that the TCP Timestamps option defined in RFC 1323 be enabled for a connection.  The Eifel detection algorithm makes use of the fact that the TCP Timestamps option eliminates the retransmission ambiguity in TCP.  Based on the timestamp of the first acceptable ACK that arrives during loss recovery, it decides whether loss recovery was entered unnecessarily.  The Eifel detection algorithm provides a basis for future TCP enhancements.  This includes response algorithms to back out of loss recovery by restoring a TCP sender's congestion control state. This memo defines an Experimental Protocol for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3522"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3522"/>
+        </reference>
+        <reference anchor="RFC3708" target="https://www.rfc-editor.org/info/rfc3708" quoteTitle="true" derivedAnchor="RFC3708">
+          <front>
+            <title>Using TCP Duplicate Selective Acknowledgement (DSACKs) and Stream Control Transmission Protocol (SCTP) Duplicate Transmission Sequence Numbers (TSNs) to Detect Spurious Retransmissions</title>
+            <author initials="E." surname="Blanton" fullname="E. Blanton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="February"/>
+            <abstract>
+              <t indent="0">TCP and Stream Control Transmission Protocol (SCTP) provide notification of duplicate segment receipt through Duplicate Selective Acknowledgement (DSACKs) and Duplicate Transmission Sequence Number (TSN) notification, respectively.  This document presents conservative methods of using this information to identify unnecessary retransmissions for various applications.  This memo defines an Experimental Protocol for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3708"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3708"/>
+        </reference>
+        <reference anchor="RFC4960" target="https://www.rfc-editor.org/info/rfc4960" quoteTitle="true" derivedAnchor="RFC4960">
+          <front>
+            <title>Stream Control Transmission Protocol</title>
+            <author initials="R." surname="Stewart" fullname="R. Stewart" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document obsoletes RFC 2960 and RFC 3309.  It describes the Stream Control Transmission Protocol (SCTP).  SCTP is designed to transport Public Switched Telephone Network (PSTN) signaling messages over IP networks, but is capable of broader applications.</t>
+              <t indent="0">SCTP is a reliable transport protocol operating on top of a connectionless packet network such as IP.  It offers the following services to its users:</t>
+              <t indent="0">--  acknowledged error-free non-duplicated transfer of user data,</t>
+              <t indent="0">--  data fragmentation to conform to discovered path MTU size,</t>
+              <t indent="0">--  sequenced delivery of user messages within multiple streams, with an option for order-of-arrival delivery of individual user messages,</t>
+              <t indent="0">--  optional bundling of multiple user messages into a single SCTP packet, and</t>
+              <t indent="0">--  network-level fault tolerance through supporting of multi-homing at either or both ends of an association.</t>
+              <t indent="0"> The design of SCTP includes appropriate congestion avoidance behavior and resistance to flooding and masquerade attacks.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4960"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4960"/>
+        </reference>
+        <reference anchor="RFC5681" target="https://www.rfc-editor.org/info/rfc5681" quoteTitle="true" derivedAnchor="RFC5681">
+          <front>
+            <title>TCP Congestion Control</title>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Paxson" fullname="V. Paxson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Blanton" fullname="E. Blanton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="September"/>
+            <abstract>
+              <t indent="0">This document defines TCP's four intertwined congestion control algorithms: slow start, congestion avoidance, fast retransmit, and fast recovery.  In addition, the document specifies how TCP should begin transmission after a relatively long idle period, as well as discussing various acknowledgment generation methods.  This document obsoletes RFC 2581.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5681"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5681"/>
+        </reference>
+        <reference anchor="RFC5682" target="https://www.rfc-editor.org/info/rfc5682" quoteTitle="true" derivedAnchor="RFC5682">
+          <front>
+            <title>Forward RTO-Recovery (F-RTO): An Algorithm for Detecting Spurious Retransmission Timeouts with TCP</title>
+            <author initials="P." surname="Sarolahti" fullname="P. Sarolahti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kojo" fullname="M. Kojo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Yamamoto" fullname="K. Yamamoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Hata" fullname="M. Hata">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="September"/>
+            <abstract>
+              <t indent="0">The purpose of this document is to move the F-RTO (Forward RTO-Recovery) functionality for TCP in RFC 4138 from Experimental to Standards Track status.  The F-RTO support for Stream Control Transmission Protocol (SCTP) in RFC 4138 remains with Experimental status.  See Appendix B for the differences between this document and RFC 4138.</t>
+              <t indent="0">Spurious retransmission timeouts cause suboptimal TCP performance because they often result in unnecessary retransmission of the last window of data.  This document describes the F-RTO detection algorithm for detecting spurious TCP retransmission timeouts.  F-RTO is a TCP sender-only algorithm that does not require any TCP options to operate.  After retransmitting the first unacknowledged segment triggered by a timeout, the F-RTO algorithm of the TCP sender monitors the incoming acknowledgments to determine whether the timeout was spurious.  It then decides whether to send new segments or retransmit unacknowledged segments.  The algorithm effectively helps to avoid additional unnecessary retransmissions and thereby improves TCP performance in the case of a spurious timeout.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5682"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5682"/>
+        </reference>
+        <reference anchor="RFC5740" target="https://www.rfc-editor.org/info/rfc5740" quoteTitle="true" derivedAnchor="RFC5740">
+          <front>
+            <title>NACK-Oriented Reliable Multicast (NORM) Transport Protocol</title>
+            <author initials="B." surname="Adamson" fullname="B. Adamson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Macker" fullname="J. Macker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="November"/>
+            <abstract>
+              <t indent="0">This document describes the messages and procedures of the Negative- ACKnowledgment (NACK) Oriented Reliable Multicast (NORM) protocol. This protocol can provide end-to-end reliable transport of bulk data objects or streams over generic IP multicast routing and forwarding services.  NORM uses a selective, negative acknowledgment mechanism for transport reliability and offers additional protocol mechanisms to allow for operation with minimal a priori coordination among senders and receivers.  A congestion control scheme is specified to allow the NORM protocol to fairly share available network bandwidth with other transport protocols such as Transmission Control Protocol (TCP).  It is capable of operating with both reciprocal multicast routing among senders and receivers and with asymmetric connectivity (possibly a unicast return path) between the senders and receivers. The protocol offers a number of features to allow different types of applications or possibly other higher-level transport protocols to utilize its service in different ways.  The protocol leverages the use of FEC-based (forward error correction) repair and other IETF Reliable Multicast Transport (RMT) building blocks in its design. This document obsoletes RFC 3940.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5740"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5740"/>
+        </reference>
+        <reference anchor="RFC6182" target="https://www.rfc-editor.org/info/rfc6182" quoteTitle="true" derivedAnchor="RFC6182">
+          <front>
+            <title>Architectural Guidelines for Multipath TCP Development</title>
+            <author initials="A." surname="Ford" fullname="A. Ford">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Raiciu" fullname="C. Raiciu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Barre" fullname="S. Barre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Iyengar" fullname="J. Iyengar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="March"/>
+            <abstract>
+              <t indent="0">Hosts are often connected by multiple paths, but TCP restricts communications to a single path per transport connection.  Resource usage within the network would be more efficient were these multiple paths able to be used concurrently.  This should enhance user experience through improved resilience to network failure and higher throughput.</t>
+              <t indent="0">This document outlines architectural guidelines for the development of a Multipath Transport Protocol, with references to how these architectural components come together in the development of a Multipath TCP (MPTCP).  This document lists certain high-level design decisions that provide foundations for the design of the MPTCP protocol, based upon these architectural requirements.  This document  is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6182"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6182"/>
+        </reference>
+        <reference anchor="RFC6298" target="https://www.rfc-editor.org/info/rfc6298" quoteTitle="true" derivedAnchor="RFC6298">
+          <front>
+            <title>Computing TCP's Retransmission Timer</title>
+            <author initials="V." surname="Paxson" fullname="V. Paxson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Chu" fullname="J. Chu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Sargent" fullname="M. Sargent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="June"/>
+            <abstract>
+              <t indent="0">This document defines the standard algorithm that Transmission Control Protocol (TCP) senders are required to use to compute and manage their retransmission timer.  It expands on the discussion in Section 4.2.3.1 of RFC 1122 and upgrades the requirement of supporting the algorithm from a SHOULD to a MUST.  This document obsoletes RFC 2988.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6298"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6298"/>
+        </reference>
+        <reference anchor="RFC6675" target="https://www.rfc-editor.org/info/rfc6675" quoteTitle="true" derivedAnchor="RFC6675">
+          <front>
+            <title>A Conservative Loss Recovery Algorithm Based on Selective Acknowledgment (SACK) for TCP</title>
+            <author initials="E." surname="Blanton" fullname="E. Blanton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Wang" fullname="L. Wang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Jarvinen" fullname="I. Jarvinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kojo" fullname="M. Kojo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Nishida" fullname="Y. Nishida">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="August"/>
+            <abstract>
+              <t indent="0">This document presents a conservative loss recovery algorithm for TCP that is based on the use of the selective acknowledgment (SACK) TCP option.  The algorithm presented in this document conforms to the spirit of the current congestion control specification (RFC 5681), but allows TCP senders to recover more effectively when multiple segments are lost from a single flight of data. This document obsoletes RFC 3517 and describes changes from it.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6675"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6675"/>
+        </reference>
+        <reference anchor="RFC7323" target="https://www.rfc-editor.org/info/rfc7323" quoteTitle="true" derivedAnchor="RFC7323">
+          <front>
+            <title>TCP Extensions for High Performance</title>
+            <author initials="D." surname="Borman" fullname="D. Borman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Braden" fullname="B. Braden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Scheffenegger" fullname="R. Scheffenegger" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="September"/>
+            <abstract>
+              <t indent="0">This document specifies a set of TCP extensions to improve performance over paths with a large bandwidth * delay product and to provide reliable operation over very high-speed paths.  It defines the TCP Window Scale (WS) option and the TCP Timestamps (TS) option and their semantics.  The Window Scale option is used to support larger receive windows, while the Timestamps option can be used for at least two distinct mechanisms, Protection Against Wrapped Sequences (PAWS) and Round-Trip Time Measurement (RTTM), that are also described herein.</t>
+              <t indent="0">This document obsoletes RFC 1323 and describes changes from it.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7323"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7323"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">
+   This document benefits from years of discussions with <contact fullname="Ethan Blanton"/>, <contact fullname="Sally Floyd"/>, <contact fullname="Jana Iyengar"/>, <contact fullname="Shawn Ostermann"/>, <contact fullname="Vern Paxson"/>, and the members of the TCPM and TCPIMPL Working
+   Groups.  <contact fullname="Ran Atkinson"/>, <contact fullname="Yuchung    Cheng"/>, <contact fullname="David Black"/>, <contact fullname="Stewart    Bryant"/>, <contact fullname="Martin Duke"/>, <contact fullname="Wesley    Eddy"/>, <contact fullname="Gorry Fairhurst"/>, <contact fullname="Rahul    Arvind Jadhav"/>, <contact fullname="Benjamin Kaduk"/>, <contact fullname="Mirja Kühlewind"/>, <contact fullname="Nicolas Kuhn"/>, <contact fullname="Jonathan Looney"/>, and <contact fullname="Michael Scharf"/>
+   provided useful comments on
+   previous draft versions of this document.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author initials="M." surname="Allman" fullname="Mark Allman">
+        <organization abbrev="ICSI" showOnFrontPage="true">International Computer Science Institute</organization>
+        <address>
+          <postal>
+            <street>2150 Shattuck Ave., Suite 1100</street>
+            <city>Berkeley</city>
+            <region>CA</region>
+            <country>United States of America</country>
+            <code>94704</code>
+          </postal>
+          <email>mallman@icir.org</email>
+          <uri>https://www.icir.org/mallman</uri>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

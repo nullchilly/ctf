@@ -1,0 +1,594 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" submissionType="IETF" category="std" consensus="true" docName="draft-ietf-acme-authority-token-09" number="9447" ipr="trust200902" obsoletes="" updates="" xml:lang="en" tocInclude="true" tocDepth="4" symRefs="true" sortRefs="true" prepTime="2023-09-12T21:03:27" indexInclude="true" scripts="Common,Latin">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-acme-authority-token-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9447" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="ACME Authority Token">Automated Certificate Management Environment (ACME) Challenges Using an Authority Token</title>
+    <seriesInfo name="RFC" value="9447" stream="IETF"/>
+    <author initials="J." surname="Peterson" fullname="Jon Peterson">
+      <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+      <address>
+        <email>jon.peterson@team.neustar</email>
+      </address>
+    </author>
+    <author fullname="Mary Barnes" initials="M." surname="Barnes">
+      <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+      <address>
+        <email>mary.ietf.barnes@gmail.com</email>
+      </address>
+    </author>
+    <author fullname="David Hancock" initials="D." surname="Hancock">
+      <organization showOnFrontPage="true">Somos</organization>
+      <address>
+        <email>davidhancock.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author fullname="Chris Wendt" initials="C." surname="Wendt">
+      <organization showOnFrontPage="true">Somos</organization>
+      <address>
+        <email>chris-ietf@chriswendt.net</email>
+      </address>
+    </author>
+    <date month="09" year="2023"/>
+    <area>sec</area>
+    <workgroup>acme</workgroup>
+    <keyword>ACME</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+	  Some proposed extensions to the Automated Certificate Management Environment (ACME) rely on proving eligibility for certificates through consulting an external authority that issues a token
+	  according to a particular policy. This document specifies a generic Authority Token Challenge for ACME that supports subtype claims for different identifiers or namespaces
+	  that can be defined separately for specific applications.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9447" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-acme-authority-token-challe">ACME Authority Token Challenge</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-token-type-requirements">Token Type Requirements</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authority-token-scope">Authority Token Scope</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-binding-challenges">Binding Challenges</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authority-token-challenge-t">Authority Token Challenge tkauth-type Registration</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-acquiring-a-token">Acquiring a Token</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-basic-rest-interface">Basic REST Interface</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-acme-validation-method-regi">ACME Validation Method Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-json-web-token-claim-regist">JSON Web Token Claim Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-creation-of-acme-authority-">Creation of ACME Authority Token Challenge Types Registry</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+	<xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555">ACME</xref> is a mechanism for automating certificate management on the Internet. It enables administrative entities to prove effective control over
+	resources, like domain names, and automates the process of issuing certificates that attest control or ownership of those resources.
+      </t>
+      <t indent="0" pn="section-1-2">
+	In some cases, proving effective control over an identifier requires an attestation from a third party who has authority over the resource, for example, an external policy administrator for a namespace other than the DNS application ACME was originally designed to support. In order to automate the process of issuing certificates for those resources, this specification defines a generic Authority Token Challenge that ACME servers can
+	issue in order to require clients to return an Authority Token that authorizes a given issuance. The challenge contains a type indication that tells the client what sort of token it needs to acquire. 
+	It is expected that the Authority Token Challenge will be usable for a variety of identifier types. 
+	In particular, this document describes an architecture for Authority Tokens, defines a JSON Web Token (JWT) <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519"/> Authority Token format along with a protocol for token acquisition, and shows how to integrate these tokens into an ACME challenge.
+      </t>
+      <t indent="0" pn="section-1-3">
+	As a concrete example, <xref target="RFC9448" format="default" sectionFormat="of" derivedContent="RFC9448"/> provides a mechanism that allows service providers to acquire certificates corresponding to a Service Provider Code (SPC) as defined in <xref target="RFC8226" format="default" sectionFormat="of" derivedContent="RFC8226"/> by consulting an external authority responsible for those codes. Furthermore, Communications Service Providers (CSPs) can delegate authority over numbers to their customers, and those CSPs who support ACME can then help customers to acquire certificates for those numbering resources with ACME.  This can permit number acquisition flows compatible with those shown in <xref target="RFC8396" format="default" sectionFormat="of" derivedContent="RFC8396"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-language">Requirements Language</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="challenges" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-acme-authority-token-challe">ACME Authority Token Challenge</name>
+      <t indent="0" pn="section-3-1">
+	Proving that a device on the Internet has effective control over a non-Internet resource is not as straightforward as proving control over Internet resources, like a DNS zone or a 
+	web page. Provided that the issuer of identifiers in a namespace, or someone acting on the issuer's behalf, can implement a service that grants Authority Tokens to the people to whom it has issued identifiers, a generic token could be used as a response to an ACME challenge. This specification, therefore, defines an Authority Token issued by an authority over a namespace to an ACME client for delivery to an ACME server in response to a challenge. Authority over a hierarchical namespace can also be delegated so that delegates of a root authority can themselves act as Token Authorities for certain types of names.
+      </t>
+      <t indent="0" pn="section-3-2">
+	This architecture assumes a trust relationship between certification authorities (CAs) and Token Authorities, i.e., that CAs are willing to accept the attestation of Token Authorities for particular types of identifiers as sufficient proof to issue a credential. It furthermore assumes that ACME clients have a relationship with Token Authorities, which permits them to authenticate and authorize the issuance of Authority Tokens to the proper entities. This ACME challenge has no applicability to identifiers or authorities where those pre-associations cannot be assumed.
+      </t>
+      <t indent="0" pn="section-3-3">
+	The ACME Authority Token Challenge type, "tkauth-01", is here specified for use with the "TNAuthList" (Telephone Number Authentication List) ACME Identifier Type described in <xref target="RFC9448" format="default" sectionFormat="of" derivedContent="RFC9448"/>; in order to use the "tkauth-01" Validation Method with an ACME Identifier Type other than "TNAuthList", that identifier type would need to be listed in a new registration in the ACME Validation Methods registry maintained by IANA. "tkauth-01" furthermore supports different token subtypes. The token subtype is determined by a new ACME challenge field, tkauth-type. An IANA registry is used to manage the values of tkauth-type (see <xref target="IANA-3" format="default" sectionFormat="of" derivedContent="Section 6.3"/>). Additionally, this challenge type also has a new "token-authority" field to designate a location where a token can be acquired. 
+	
+      </t>
+      <section anchor="req" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-token-type-requirements">Token Type Requirements</name>
+        <t indent="0" pn="section-3.1-1">
+	  IANA will maintain a registry of tkauth-types under a policy of Specification Required. In order to register a new tkauth-type, specifications must address the following requirements; in cases where a tkauth-type admits of its own subtypes, subtypes inherit these requirements.
+        </t>
+        <t indent="0" pn="section-3.1-2">
+	  While Authority Token types do not need to be specific to a namespace, every token must carry enough information for a CA to determine the name for which certificate issuance is authorized. Some types of Authority Token types might be reusable for a number of different namespaces; others might be specific to a particular type of name. Therefore, 
+	  in defining tkauth-types, future specifications must indicate how a token conveys to the CA the name(s) that the Token Authority is attesting that the ACME client controls.
+        </t>
+        <t indent="0" pn="section-3.1-3">
+	  While nothing precludes use cases where an ACME client is itself a Token Authority, an ACME client will typically need a protocol to request and retrieve an Authority Token. The Token Authority will require certain information from an ACME client in order to ascertain that it is an authorized entity to request a certificate for a particular name. The protocols used to request an Authority Token <bcp14>MUST</bcp14> convey to the Token Authority the identifier type and value that will be used in the ACME challenge, as well as the binding (see <xref target="bind" format="default" sectionFormat="of" derivedContent="Section 3.3"/>), and those <bcp14>MUST</bcp14> be reflected in the Authority Token. A baseline mechanism for how the Token Authority authenticates and authorizes ACME clients to receive Authority Tokens is given in <xref target="acquire" format="default" sectionFormat="of" derivedContent="Section 5"/>.
+        </t>
+        <t indent="0" pn="section-3.1-4">
+	  Because the assignment of resources can change over time, demonstrations of authority must be regularly refreshed. Definitions of a tkauth-type <bcp14>MUST</bcp14> specify how they manage the freshness of authority assignments. Typically, a CA will expect a regular refreshing of the token.
+        </t>
+      </section>
+      <section anchor="scope" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-authority-token-scope">Authority Token Scope</name>
+        <t indent="0" pn="section-3.2-1">
+	An Authority Token is used to answer a challenge from an ACME server, upon a request for the issuance of a certificate. It could be that the Authority Token is requested from the Token Authority after a challenge has been received, or it could be that the Authority Token was acquired prior to the initial ACME client request. A Token Authority could grant an Authority Token that has the exact same scope as the requested certificate to a client; alternatively, an Authority Token could attest to all of the resources that the client is eligible to receive certificates for, which could be a superset of the scope of the requested certificate.
+        </t>
+        <t indent="0" pn="section-3.2-2">
+	For example, imagine a case where a Token Authority for DNS names knows that a client is eligible to receive certificates for "example.com" and "example.net". The client asks an ACME server for a certificate for "example.com", and the server directs the client to acquire an Authority Token from the Token Authority. When the client sends an acquisition request (see <xref target="acquire" format="default" sectionFormat="of" derivedContent="Section 5"/>) to the Token Authority, the Token Authority could issue a token scoped just to "example.com" or a token that attests the client is eligible to receive certificates for both "example.com" or "example.net". The advantage of the latter is that if, at a later time (but one within the expiry of the token), the client wanted to acquire a certificate for "example.net", it would not have to return to the Token Authority, as the Token effectively pre-authorized the issuance of that certificate.
+        </t>
+        <t indent="0" pn="section-3.2-3">
+	Applications of the Authority Token to different identifier types might require different scopes, so registrations of tkauth-types should be clear about if and how a scope greater than that of the requested certificate would be conveyed in a token.
+        </t>
+      </section>
+      <section anchor="bind" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-binding-challenges">Binding Challenges</name>
+        <t indent="0" pn="section-3.3-1">
+	Applications that use the Authority Token need a way to correlate tokens issued by a Token Authority with the proper ACME client to prevent replay or cut-and-paste attacks using a token issued for a different purpose. To mitigate this, Authority Tokens contain a binding signed by a Token Authority; an ACME server can use the binding to determine that a Token presented by a client was in fact granted by the Token Authority based on a request from the client and not from some other entity. It is <bcp14>RECOMMENDED</bcp14> that the ACME account fingerprint be used for this purpose.
+        </t>
+        <t indent="0" pn="section-3.3-2">
+	Creating a binding from an Authority Token to a particular ACME account entails that the Token could be reused up until its expiry for multiple challenges issued by an ACME server. This might be a desirable property
+	when using short-lived certificates, for example, in any cases where the ACME server issues challenges more frequently that an Authority Token can or should issue tokens or in cases where the Authority Token scope (see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 3.2"/>) is broad, so certificates with a more narrow scope may periodically be issued.
+        </t>
+        <t indent="0" pn="section-3.3-3">
+	For some identifier types, it may be more appropriate to bind the Authority Token to a nonce specific to the challenge rather than to an ACME account fingerprint. Any specification of the use of the nonce or other factors for this purpose is left to the identifier type profile for the Authority Token. 
+        </t>
+        <t indent="0" pn="section-3.3-4">
+	Note that the fingerprint value in the client's JWT is reflected in the Authority Token returned by the Token Authority; the Token Authority has no requirement to validate that fingerprint. Were a fingerprint to be captured by an attacker that had its own account with the Token Authority, it could replay that fingerprint in its own JWT in order to receive an Authority Token with that fingerprint. However, were the attacker to present that Authority Token to an ACME service, the service would see the fingerprint does not match the attacker's ACME account fingerprint. So unless an attacker can compromise a target ACME account or gain similar privileges, the binding would be secure.
+        </t>
+      </section>
+    </section>
+    <section anchor="tn" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-authority-token-challenge-t">Authority Token Challenge tkauth-type Registration</name>
+      <t indent="0" pn="section-4-1">
+	This document specifies a tkauth-type of "atc", which contains a standard
+  JWT <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519"/> using a signature string defined by a JSON Web Signature (JWS) <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/>.
+The "atc" tkauth-type <bcp14>MAY</bcp14> be used for any number of different ACME
+Identifier Types in the ACME challenge. 
+      </t>
+      <t indent="0" pn="section-4-2">
+ A new JWT claim, "atc", is
+ defined below and lists the identifier type used in this Authority
+Token.  The "atc" tkauth-type is restricted to the JWTs; if a
+non-JWT format is desired for the ACME Authority Token
+Challenge, a different tkauth-type should be specified and registered in the
+"ACME Authority Token Challenge Types"
+registry defined in <xref target="IANA-3" format="default" sectionFormat="of" derivedContent="Section 6.3"/>.
+      </t>
+      <t indent="0" pn="section-4-3">
+        For this ACME Authority Token usage of a JWT, it is <bcp14>OPTIONAL</bcp14> for the payload of the JWT to contain an "iss", indicating the Token Authority that generated the token if the "x5u" or "x5c" element in the header does not already convey that information; typically, this will be the same location that appeared in the "token-authority" field of the ACME challenge, when present. In order to satisfy the requirement for replay prevention, the JWT <bcp14>MUST</bcp14> contain a "jti" element and an "exp" claim; the "exp" claim manages token freshness. In addition to helping to manage replay, the "jti" provides a convenient way to reliably track when the same "atc" Authority Token is being used for multiple challenges over time within its set lifetime.
+      </t>
+      <t indent="0" pn="section-4-4">
+        The JWT payload <bcp14>MUST</bcp14> also contain a new JWT claim, "atc", for Authority Token Challenge, which contains three mandatory elements in a JSON map: the ATC identifier type ("tktype"), the identifier value ("tkvalue"), and the binding ("fingerprint"). The use of "tktype" is restricted to the values in the "ACME Identifier Types" registry, as defined by <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/>. The identifier type and value are those given in the ACME challenge and conveyed to the Token Authority by the ACME client. For the purposes of the "atc" tkauth-type, the binding "fingerprint" is assumed to be a fingerprint of the ACME credential for the account used to request the certificate, but the specification of how the binding is generated is left to the identifier type profile for the Authority Token (see <xref target="bind" format="default" sectionFormat="of" derivedContent="Section 3.3"/>). The "tkvalue" indicates the scope of the authority that the token and its semantics are outside the scope of this document, as they will be specified by the "tkvalue" identifier in a separate specification.
+      </t>
+      <t indent="0" pn="section-4-5">	
+		Following the example of <xref target="RFC9448" format="default" sectionFormat="of" derivedContent="RFC9448"/>, the "tktype" identifier type could be the TNAuthList (as defined in <xref target="RFC8226" format="default" sectionFormat="of" derivedContent="RFC8226"/>), which would be the value for the "tkvalue" element that the Token Authority is attesting. Practically speaking, that scope may comprise a list of Service Provider Code elements, telephone number range elements, and/or individual telephone numbers.  So for example:
+      </t>
+      <sourcecode type="" markers="false" pn="section-4-6">
+     {
+ "protected": base64url({
+      "typ":"JWT",
+  "alg":"ES256",
+  "x5u":"https://authority.example.org/cert"
+     }),
+ "payload": base64url({
+      "iss":"https://authority.example.org/authz",
+  "exp":1300819380,
+  "jti":"id6098364921",
+  "atc":{"tktype":"TnAuthList","tkvalue":"F83n2a...avn27DN3==",
+  "fingerprint":"SHA256 56:3E:CF:AE:83:CA:4D:15:B0:29:FF:1B:71:D3:
+  BA:B9:19:81:F8:50:9B:DF:4A:D4:39:72:E2:B1:F0:B9:38:E3"}
+     }),
+  "signature": "9cbg5JO1Gf5YLjjz...SpkUfcdPai9uVYYQ"
+     }
+</sourcecode>
+      <t indent="0" pn="section-4-7">Optionally, the "atc" claim may contain a fourth boolean element, "ca". If set to "true", the "ca" element indicates that the Token Authority is granting permission to issue a certification authority certificate rather than an end-entity certificate for the names in question. This permits subordinate delegations from the issued certificate (using <xref target="RFC9115" format="default" sectionFormat="of" derivedContent="RFC9115"/> or similar mechanisms). If the "ca" element is absent, the Token Authority is explicitly withholding permission. The "atc" object in the example above would then look like:
+      </t>
+      <sourcecode type="" markers="false" pn="section-4-8">
+"atc":{"tktype":"TnAuthList","tkvalue":"F83n2a...avn27DN3==",
+"ca":true,"fingerprint":"SHA256 56:3E:CF:AE:83:CA:4D:15:B0:29:FF:1B:
+71:D3:BA:B9:19:81:F8:50:9B:DF:4A:D4:39:72:E2:B1:F0:B9:38:E3"} }
+</sourcecode>
+      <t indent="0" pn="section-4-9">
+    Specifications of "tktype" identifier types may define additional optional "atc" elements.
+      </t>
+    </section>
+    <section anchor="acquire" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-acquiring-a-token">Acquiring a Token</name>
+      <t indent="0" pn="section-5-1">
+    The acquisition of an Authority Token requires a network interface, apart from potential use cases where the entity that acts as an ACME client itself also acts as a Token Authority trusted by the ACME server. Implementations compliant with this specification <bcp14>MUST</bcp14> support an HTTPS interface for Authority Token acquisition as described below, though other interfaces <bcp14>MAY</bcp14> be supported as well.
+      </t>
+      <section anchor="ex" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-basic-rest-interface">Basic REST Interface</name>
+        <t indent="0" pn="section-5.1-1">
+     In order to request an Authority Token from a Token Authority, a client sends a HTTPS POST request <xref target="RFC9110" format="default" sectionFormat="of" derivedContent="RFC9110"/>. This specification assumes that Token Authority URIs are known to clients through preexisting business relationships and that the credentials and related authentication and authorization for Authority Token acquisition are encompassed in that relationship. Different services may organize their web resources in domain-specific ways, but the resource locator should specify the account of the client, an identifier for the service provider, and finally a locator for the token.
+        </t>
+        <sourcecode type="" markers="false" pn="section-5.1-2">
+   POST /at/account/:id/token HTTP/1.1
+   Host: authority.example.com
+   Content-Type: application/json
+</sourcecode>
+        <t indent="0" pn="section-5.1-3">Note that ":id" here is a placeholder for an actual account identifier. The body of the POST request <bcp14>MUST</bcp14> contain the Authority Token Challenge element (the key "atc", colon, and its value) that the client is requesting the Token Authority generate. In this way, the client proposes the scope of the Authority Token it would like to receive from the Token Authority.
+        </t>
+        <t indent="0" pn="section-5.1-4">
+    In common use cases, the "tkvalue" in this request is asking that the Token Authority issue a token that attests the entire scope of authority to which the client is entitled. The client may also request an Authority Token with some subset of its own authority via the "tkvalue" element in the Authority Token Challenge object. The way that "tkvalue" is defined will necessarily be specific to the identifier type. For the TNAuthList identifier type, for example, an object requesting an Authority Token could request authority for only a single telephone number in a way that is defined in the TNAuthList specification.
+        </t>
+        <t indent="0" pn="section-5.1-5">
+    Finally, the JSON object <bcp14>MAY</bcp14> also contain an optional boolean element, "ca", which signifies that the client is requesting that the Token Authority issue an Authority Token with the "ca" flag set, as described in <xref target="tn" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+        <t indent="0" pn="section-5.1-6">
+    After an HTTPS-level challenge (e.g., a 401 HTTP response code) to verify the identity of the client and subsequently making an authorization decision about whether the client should receive an Authority Token with the requested scope, then in the success case, the Token Authority <bcp14>MUST</bcp14> return a 200 OK with a body of type "application/json" containing the Authority Token. 
+        </t>
+        <t indent="0" pn="section-5.1-7">
+	A full example of "atc" token acquisition using the HTTP interface, with the "tktype" of "TNAuthList", is given in <xref target="RFC9448" format="default" sectionFormat="of" section="5.5" derivedLink="https://rfc-editor.org/rfc/rfc9448#section-5.5" derivedContent="RFC9448"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="IANA-1" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-acme-validation-method-regi">ACME Validation Method Registration</name>
+        <t indent="0" pn="section-6.1-1">IANA has added a new ACME Validation Method (per <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/>) in the "ACME Validation Methods" subregistry of the "Automated Certificate Management Environment (ACME) Protocol" registry group  as follows:</t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-6.1-2">
+          <dt pn="section-6.1-2.1">Label:</dt>
+          <dd pn="section-6.1-2.2">tkauth-01</dd>
+          <dt pn="section-6.1-2.3">Identifier Type:</dt>
+          <dd pn="section-6.1-2.4">TNAuthList</dd>
+          <dt pn="section-6.1-2.5">ACME:</dt>
+          <dd pn="section-6.1-2.6">Y</dd>
+          <dt pn="section-6.1-2.7">Reference:</dt>
+          <dd pn="section-6.1-2.8">RFC 9447</dd>
+        </dl>
+      </section>
+      <section anchor="IANA-2" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-json-web-token-claim-regist">JSON Web Token Claim Registration</name>
+        <t indent="0" pn="section-6.2-1">
+		IANA has added a new claim in the "JSON Web Token Claims" registry, as defined in <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519"/>, as follows:
+        </t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-6.2-2">
+          <dt pn="section-6.2-2.1">Claim name:</dt>
+          <dd pn="section-6.2-2.2">atc</dd>
+          <dt pn="section-6.2-2.3">Claim Description:</dt>
+          <dd pn="section-6.2-2.4">Authority Token Challenge</dd>
+          <dt pn="section-6.2-2.5">Change Controller:</dt>
+          <dd pn="section-6.2-2.6">IETF</dd>
+          <dt pn="section-6.2-2.7">Specification document(s):</dt>
+          <dd pn="section-6.2-2.8">RFC 9447</dd>
+        </dl>
+      </section>
+      <section anchor="IANA-3" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-creation-of-acme-authority-">Creation of ACME Authority Token Challenge Types Registry</name>
+        <t indent="0" pn="section-6.3-1">
+          IANA has created a new registry for "ACME Authority Token Challenge Types" as used in these challenges, under a policy of Specification Required and following the requirements in <xref target="req" format="default" sectionFormat="of" derivedContent="Section 3.1"/>, with three columns: Label, Description, and Reference. The initial content of the registry is as follows:</t>
+        <dl newline="false" indent="3" spacing="normal" pn="section-6.3-2">
+          <dt pn="section-6.3-2.1">Label:</dt>
+          <dd pn="section-6.3-2.2"> atc (as defined in <xref target="tn" format="default" sectionFormat="of" derivedContent="Section 4"/>)</dd>
+          <dt pn="section-6.3-2.3">Description:</dt>
+          <dd pn="section-6.3-2.4">JSON Web Token (JWT) challenge type</dd>
+          <dt pn="section-6.3-2.5">Reference:</dt>
+          <dd pn="section-6.3-2.6">RFC 9447</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">
+          Per the guidance in <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/>, ACME transactions <bcp14>MUST</bcp14> use TLS, and similarly, the HTTPS REST transactions used to request and acquire Authority Tokens <bcp14>MUST</bcp14> use TLS. These measures are intended to prevent the capture of Authority Tokens by eavesdroppers. A preexisting trust relationship between the HTTPS REST client and the Token Authority must also exist in order for the parties to meaningfully authenticate one another. The security considerations of <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/> apply to the use of the mechanism in this specification. Implementations should follow the best practices identified in <xref target="RFC8725" format="default" sectionFormat="of" derivedContent="RFC8725"/>.
+      </t>
+      <t indent="0" pn="section-7-2">
+		  As described in <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 3.2"/>, an Authority Token can either have a scope that attests all of the resources that a client is eligible to receive certificates for or potentially a more limited scope that is intended to capture only those resources for which a client will receive a certificate from a particular certification authority. Any certification authority that sees an Authority Token can learn information about the resources a client can claim. In cases where this incurs a privacy risk, Authority Token scopes should be limited to only the resources that will be attested by the requested ACME certificate.
+      </t>
+      <t indent="0" pn="section-7-3">
+		  In cases where a tkauth-type, as defined in <xref target="tn" format="default" sectionFormat="of" derivedContent="Section 4"/>, admits of its own subtypes, the security of features like binding challenges (see <xref target="bind" format="default" sectionFormat="of" derivedContent="Section 3.3"/>) will depend on the subtype specification. 
+      </t>
+      <t indent="0" pn="section-7-4">
+	The capture of Authority Tokens by an adversary could enable an attacker to acquire a certificate from a CA. Therefore, all Authority Tokens <bcp14>MUST</bcp14> contain a field that identifies to the CA which ACME client requested the token from the Token Authority; here, that is the fingerprint specified in <xref target="tn" format="default" sectionFormat="of" derivedContent="Section 4"/>. All Authority Tokens must specify an expiry (of the token itself as proof for a CA, as opposed to the expiry of the name), and for some applications, it may make sense for that expiry to be quite short.
+	ACME services relying on Authority Tokens <bcp14>SHOULD NOT</bcp14> issue certificates with a longer expiry than the expiry of the Authority Token. Any protocol used to retrieve Authority Tokens from a Token Authority <bcp14>MUST</bcp14> use confidentiality to prevent eavesdroppers from acquiring an Authority Token. The details of this protocol are out of the scope of this specification.
+      </t>
+      <t indent="0" pn="section-7-5">
+		This document only specifies SHA256 for the fingerprint hash. However, the syntax of the fingerprint object would permit other keys if, due to concerns about algorithmic agility, a more robust algorithm were required at a future time. Future specifications can define new keys for the fingerprint object as needed.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515" quoteTitle="true" derivedAnchor="RFC7515">
+          <front>
+            <title>JSON Web Signature (JWS)</title>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <author fullname="J. Bradley" initials="J." surname="Bradley"/>
+            <author fullname="N. Sakimura" initials="N." surname="Sakimura"/>
+            <date month="May" year="2015"/>
+            <abstract>
+              <t indent="0">JSON Web Signature (JWS) represents content secured with digital signatures or Message Authentication Codes (MACs) using JSON-based data structures. Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and an IANA registry defined by that specification. Related encryption capabilities are described in the separate JSON Web Encryption (JWE) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7515"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7515"/>
+        </reference>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519" quoteTitle="true" derivedAnchor="RFC7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <author fullname="J. Bradley" initials="J." surname="Bradley"/>
+            <author fullname="N. Sakimura" initials="N." surname="Sakimura"/>
+            <date month="May" year="2015"/>
+            <abstract>
+              <t indent="0">JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties. The claims in a JWT are encoded as a JSON object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or integrity protected with a Message Authentication Code (MAC) and/or encrypted.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8555" target="https://www.rfc-editor.org/info/rfc8555" quoteTitle="true" derivedAnchor="RFC8555">
+          <front>
+            <title>Automatic Certificate Management Environment (ACME)</title>
+            <author fullname="R. Barnes" initials="R." surname="Barnes"/>
+            <author fullname="J. Hoffman-Andrews" initials="J." surname="Hoffman-Andrews"/>
+            <author fullname="D. McCarney" initials="D." surname="McCarney"/>
+            <author fullname="J. Kasten" initials="J." surname="Kasten"/>
+            <date month="March" year="2019"/>
+            <abstract>
+              <t indent="0">Public Key Infrastructure using X.509 (PKIX) certificates are used for a number of purposes, the most significant of which is the authentication of domain names. Thus, certification authorities (CAs) in the Web PKI are trusted to verify that an applicant for a certificate legitimately represents the domain name(s) in the certificate. As of this writing, this verification is done through a collection of ad hoc mechanisms. This document describes a protocol that a CA and an applicant can use to automate the process of verification and certificate issuance. The protocol also provides facilities for other certificate management functions, such as certificate revocation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8555"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8555"/>
+        </reference>
+        <reference anchor="RFC8725" target="https://www.rfc-editor.org/info/rfc8725" quoteTitle="true" derivedAnchor="RFC8725">
+          <front>
+            <title>JSON Web Token Best Current Practices</title>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="D. Hardt" initials="D." surname="Hardt"/>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <date month="February" year="2020"/>
+            <abstract>
+              <t indent="0">JSON Web Tokens, also known as JWTs, are URL-safe JSON-based security tokens that contain a set of claims that can be signed and/or encrypted. JWTs are being widely used and deployed as a simple security token format in numerous protocols and applications, both in the area of digital identity and in other application areas. This Best Current Practices document updates RFC 7519 to provide actionable guidance leading to secure implementation and deployment of JWTs.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="225"/>
+          <seriesInfo name="RFC" value="8725"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8725"/>
+        </reference>
+        <reference anchor="RFC9110" target="https://www.rfc-editor.org/info/rfc9110" quoteTitle="true" derivedAnchor="RFC9110">
+          <front>
+            <title>HTTP Semantics</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document describes the overall architecture of HTTP, establishes common terminology, and defines aspects of the protocol that are shared by all versions. In this definition are core protocol elements, extensibility mechanisms, and the "http" and "https" Uniform Resource Identifier (URI) schemes.</t>
+              <t indent="0">This document updates RFC 3864 and obsoletes RFCs 2818, 7231, 7232, 7233, 7235, 7538, 7615, 7694, and portions of 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="97"/>
+          <seriesInfo name="RFC" value="9110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9110"/>
+        </reference>
+        <reference anchor="RFC9448" target="https://www.rfc-editor.org/info/rfc9448" quoteTitle="true" derivedAnchor="RFC9448">
+          <front>
+            <title>TNAuthList Profile of Automated Certificate Management Environment (ACME) Authority Token</title>
+            <author initials="C" surname="Wendt" fullname="Chris Wendt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Hancock" fullname="David Hancock">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Barnes" fullname="Mary Barnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J" surname="Peterson" fullname="Jon Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2023" month="September"/>
+          </front>
+          <seriesInfo name="RFC" value="9448"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9448"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC8226" target="https://www.rfc-editor.org/info/rfc8226" quoteTitle="true" derivedAnchor="RFC8226">
+          <front>
+            <title>Secure Telephone Identity Credentials: Certificates</title>
+            <author fullname="J. Peterson" initials="J." surname="Peterson"/>
+            <author fullname="S. Turner" initials="S." surname="Turner"/>
+            <date month="February" year="2018"/>
+            <abstract>
+              <t indent="0">In order to prevent the impersonation of telephone numbers on the Internet, some kind of credential system needs to exist that cryptographically asserts authority over telephone numbers. This document describes the use of certificates in establishing authority over telephone numbers, as a component of a broader architecture for managing telephone numbers as identities in protocols like SIP.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8226"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8226"/>
+        </reference>
+        <reference anchor="RFC8396" target="https://www.rfc-editor.org/info/rfc8396" quoteTitle="true" derivedAnchor="RFC8396">
+          <front>
+            <title>Managing, Ordering, Distributing, Exposing, and Registering Telephone Numbers (MODERN): Problem Statement, Use Cases, and Framework</title>
+            <author fullname="J. Peterson" initials="J." surname="Peterson"/>
+            <author fullname="T. McGarry" initials="T." surname="McGarry"/>
+            <date month="July" year="2018"/>
+            <abstract>
+              <t indent="0">The functions of the Public Switched Telephone Network (PSTN) are rapidly migrating to the Internet. This is generating new requirements for many traditional elements of the PSTN, including Telephone Numbers (TNs). TNs no longer serve simply as telephone routing addresses: they are now identifiers that may be used by Internet-based services for a variety of purposes including session establishment, identity verification, and service enablement. This problem statement examines how the existing tools for allocating and managing telephone numbers do not align with the use cases of the Internet environment and proposes a framework for Internet-based services relying on TNs.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8396"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8396"/>
+        </reference>
+        <reference anchor="RFC9115" target="https://www.rfc-editor.org/info/rfc9115" quoteTitle="true" derivedAnchor="RFC9115">
+          <front>
+            <title>An Automatic Certificate Management Environment (ACME) Profile for Generating Delegated Certificates</title>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="D. López" initials="D." surname="López"/>
+            <author fullname="A. Pastor Perales" initials="A." surname="Pastor Perales"/>
+            <author fullname="T. Fossati" initials="T." surname="Fossati"/>
+            <date month="September" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines a profile of the Automatic Certificate Management Environment (ACME) protocol by which the holder of an identifier (e.g., a domain name) can allow a third party to obtain an X.509 certificate such that the certificate subject is the delegated identifier while the certified public key corresponds to a private key controlled by the third party. A primary use case is that of a Content Delivery Network (CDN), the third party, terminating TLS sessions on behalf of a content provider (the holder of a domain name). The presented mechanism allows the holder of the identifier to retain control over the delegation and revoke it at any time. Importantly, this mechanism does not require any modification to the deployed TLS clients and servers.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9115"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9115"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">We would like to <contact fullname="Roman Danyliw"/> and <contact fullname="Ben Kaduk"/> for contributions to this problem statement and framework.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="J." surname="Peterson" fullname="Jon Peterson">
+        <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+        <address>
+          <email>jon.peterson@team.neustar</email>
+        </address>
+      </author>
+      <author fullname="Mary Barnes" initials="M." surname="Barnes">
+        <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+        <address>
+          <email>mary.ietf.barnes@gmail.com</email>
+        </address>
+      </author>
+      <author fullname="David Hancock" initials="D." surname="Hancock">
+        <organization showOnFrontPage="true">Somos</organization>
+        <address>
+          <email>davidhancock.ietf@gmail.com</email>
+        </address>
+      </author>
+      <author fullname="Chris Wendt" initials="C." surname="Wendt">
+        <organization showOnFrontPage="true">Somos</organization>
+        <address>
+          <email>chris-ietf@chriswendt.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

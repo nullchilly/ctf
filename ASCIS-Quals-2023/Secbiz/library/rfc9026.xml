@@ -1,0 +1,1812 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-bess-mvpn-fast-failover-15" indexInclude="true" ipr="trust200902" number="9026" prepTime="2021-04-17T12:41:55" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-bess-mvpn-fast-failover-15" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9026" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="MVPN Fast Upstream Failover">Multicast VPN Fast Upstream Failover</title>
+    <seriesInfo name="RFC" value="9026" stream="IETF"/>
+    <author fullname="Thomas Morin" initials="T." role="editor" surname="Morin">
+      <organization showOnFrontPage="true">Orange</organization>
+      <address>
+        <postal>
+          <street>2, avenue Pierre Marzin</street>
+          <city>Lannion</city>
+          <code>22307</code>
+          <country>France</country>
+        </postal>
+        <email>thomas.morin@orange.com</email>
+      </address>
+    </author>
+    <author fullname="Robert Kebler" initials="R." role="editor" surname="Kebler">
+      <organization showOnFrontPage="true">Juniper Networks</organization>
+      <address>
+        <postal>
+          <street>1194 North Mathilda Avenue</street>
+          <city>Sunnyvale</city>
+          <region>CA</region>
+          <code>94089</code>
+          <country>United States of America</country>
+        </postal>
+        <email>rkebler@juniper.net</email>
+      </address>
+    </author>
+    <author initials="G." surname="Mirsky" fullname="Greg Mirsky" role="editor">
+      <organization showOnFrontPage="true">ZTE Corp.</organization>
+      <address>
+        <email>gregimirsky@gmail.com</email>
+      </address>
+    </author>
+    <date month="04" year="2021"/>
+    <keyword>BFD</keyword>
+    <keyword>P2MP</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document defines Multicast Virtual Private Network (VPN)
+      extensions and procedures that allow fast failover for upstream failures
+      by allowing downstream Provider Edges (PEs) to consider the status of
+      Provider-Tunnels (P-tunnels) when selecting the Upstream PE for a VPN
+      multicast flow.  The fast failover is enabled by using "Bidirectional
+      Forwarding Detection (BFD) for Multipoint Networks" (RFC 8562)  and the
+      new BGP Attribute, BFD Discriminator.  Also, this document introduces a
+      new BGP Community, Standby PE, extending BGP Multicast VPN (MVPN) routing so
+      that a C-multicast route can be advertised toward a Standby Upstream
+      PE.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9026" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-used-in-this-do">Conventions Used in This Document</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-abbreviations">Abbreviations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-umh-selection-based-on-tunn">UMH Selection Based on Tunnel Status</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-determining-the-status-of-a">Determining the Status of a Tunnel</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mvpn-tunnel-root-tracking">MVPN Tunnel Root Tracking</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.2.1"><xref derivedContent="3.1.2" format="counter" sectionFormat="of" target="section-3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pe-p-upstream-link-status">PE-P Upstream Link Status</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.3.1"><xref derivedContent="3.1.3" format="counter" sectionFormat="of" target="section-3.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-p2mp-rsvp-te-tunnels">P2MP RSVP-TE Tunnels</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.4">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.4.1"><xref derivedContent="3.1.4" format="counter" sectionFormat="of" target="section-3.1.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-leaf-initiated-p-tunnels">Leaf-Initiated P-Tunnels</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.5">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.5.1"><xref derivedContent="3.1.5" format="counter" sectionFormat="of" target="section-3.1.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-c-sc-g-counter-information">(C-S,C-G) Counter Information</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.6">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.6.1"><xref derivedContent="3.1.6" format="counter" sectionFormat="of" target="section-3.1.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bfd-discriminator-attribute">BFD Discriminator Attribute</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.7">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.7.1"><xref derivedContent="3.1.7" format="counter" sectionFormat="of" target="section-3.1.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bfd-discriminator-per-pe-ce">BFD Discriminator per PE-CE Link</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.8">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.8.1"><xref derivedContent="3.1.8" format="counter" sectionFormat="of" target="section-3.1.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-considerations-">Operational Considerations for Monitoring a P-Tunnel's Status</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-standby-c-multicast-route">Standby C-Multicast Route</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-downstream-pe-behavior">Downstream PE Behavior</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-upstream-pe-behavior">Upstream PE Behavior</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-reachability-determination">Reachability Determination</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-inter-as">Inter-AS</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.4.2">
+                  <li pn="section-toc.1-1.4.2.4.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.1.1"><xref derivedContent="4.4.1" format="counter" sectionFormat="of" target="section-4.4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-inter-as-procedures-for-dow">Inter-AS Procedures for Downstream PEs, ASBR Fast Failover</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.4.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.2.1"><xref derivedContent="4.4.2" format="counter" sectionFormat="of" target="section-4.4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-inter-as-procedures-for-asb">Inter-AS Procedures for ASBRs</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-hot-root-standby">Hot Root Standby</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-duplicate-packets">Duplicate Packets</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-standby-pe-community">Standby PE Community</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bfd-discriminator">BFD Discriminator</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-bfd-discriminator-optional-">BFD Discriminator Optional TLV Type</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-contributors">Contributors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">It is assumed that the reader is familiar with the workings of
+      multicast MPLS/BGP IP VPNs as described in <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/> and
+      <xref target="RFC6514" format="default" sectionFormat="of" derivedContent="RFC6514"/>.</t>
+      <t indent="0" pn="section-1-2">In the context of multicast in BGP/MPLS VPNs <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/>, it is desirable to provide mechanisms allowing fast
+      recovery of connectivity on different types of failures. This document
+      addresses failures of elements in the provider network that are upstream
+      of PEs connected to VPN sites with receivers.</t>
+      <t indent="0" pn="section-1-3">
+          <xref target="tunnel-status" format="default" sectionFormat="of" derivedContent="Section 3"/>
+          describes local procedures allowing an egress PE (a PE connected to
+          a receiver site) to take into account the status of P-tunnels to
+          determine the Upstream Multicast Hop (UMH) for a given
+          (C-S,C-G). One of the optional methods uses <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/>
+          and the new BGP Attribute, BFD Discriminator.  None of these methods
+          provide a "fast failover" solution when used alone but can be used
+          together with the mechanism described in <xref target="standby-join" format="default" sectionFormat="of" derivedContent="Section 4"/> for a "fast failover" solution.
+      </t>
+      <t indent="0" pn="section-1-4">
+          <xref target="standby-join" format="default" sectionFormat="of" derivedContent="Section 4"/>
+          describes an optional BGP extension, a new Standby PE
+          Community, that can speed up failover by not requiring any Multicast
+          VPN (MVPN) routing message exchange at recovery time.
+      </t>
+      <t indent="0" pn="section-1-5">
+      <xref target="hot-standby" format="default" sectionFormat="of" derivedContent="Section 5"/>
+      describes a "hot root standby" mechanism that can be used to improve
+      failover time in MVPN.  The approach combines mechanisms defined in
+      Sections <xref target="tunnel-status" format="counter" sectionFormat="of" derivedContent="3"/> and <xref target="standby-join" format="counter" sectionFormat="of" derivedContent="4"/> and
+      has similarities with the solution described in <xref target="RFC7431" format="default" sectionFormat="of" derivedContent="RFC7431"/>
+      to improve failover times when PIM routing is used in a network given
+      some topology and metric constraints.
+      </t>
+      <t indent="0" pn="section-1-6">
+      The procedures described in this document are optional and allow an
+      operator to provide protection for multicast services in BGP/MPLS IP
+      VPNs.  An operator would enable these mechanisms using a method
+      discussed in <xref target="tunnel-status" format="default" sectionFormat="of" derivedContent="Section 3"/> combined with the redundancy
+      provided by a standby PE connected to the multicast flow source.  PEs
+      that support these mechanisms would converge faster and thus provide a
+      more stable multicast service.  In the case that a BGP implementation
+      does not recognize or is configured not to support the extensions
+      defined in this document, the implementation will continue to provide
+      the multicast service, as described in <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/>.
+      </t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-used-in-this-do">Conventions Used in This Document</name>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-2.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-2.2">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-2.2-1">The terminology used in this document is the terminology defined in
+      <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/> and <xref target="RFC6514" format="default" sectionFormat="of" derivedContent="RFC6514"> </xref>.</t>
+        <t indent="0" pn="section-2.2-2">The term "upstream" (lower case) throughout this document refers to links and nodes
+      that are upstream to a PE connected to VPN sites with receivers of a multicast flow.</t>
+        <t indent="0" pn="section-2.2-3">The term "Upstream" (capitalized) throughout this document refers to a  PE or an Autonomous
+   System Border Router (ASBR) at which (S,G) or (*,G) data packets enter the VPN backbone or the local AS
+   when traveling through the VPN backbone.</t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-2.3">
+        <name slugifiedName="name-abbreviations">Abbreviations</name>
+        <dl indent="12" newline="false" spacing="normal" pn="section-2.3-1">
+          <dt pn="section-2.3-1.1">PMSI:
+</dt>
+          <dd pn="section-2.3-1.2">P-Multicast Service Interface
+</dd>
+          <dt pn="section-2.3-1.3">I-PMSI:
+</dt>
+          <dd pn="section-2.3-1.4">Inclusive PMSI
+</dd>
+          <dt pn="section-2.3-1.5">S-PMSI:
+</dt>
+          <dd pn="section-2.3-1.6">Selective PMSI
+</dd>
+          <dt pn="section-2.3-1.7">x-PMSI:
+</dt>
+          <dd pn="section-2.3-1.8">Either an I-PMSI or an S-PMSI
+</dd>
+          <dt pn="section-2.3-1.9">P-tunnel:
+</dt>
+          <dd pn="section-2.3-1.10">Provider-Tunnel
+</dd>
+          <dt pn="section-2.3-1.11">UMH:
+</dt>
+          <dd pn="section-2.3-1.12">Upstream Multicast Hop
+</dd>
+          <dt pn="section-2.3-1.13">VPN:
+</dt>
+          <dd pn="section-2.3-1.14">Virtual Private Network
+</dd>
+          <dt pn="section-2.3-1.15">MVPN:
+</dt>
+          <dd pn="section-2.3-1.16">Multicast VPN
+</dd>
+          <dt pn="section-2.3-1.17">RD:
+</dt>
+          <dd pn="section-2.3-1.18">Route Distinguisher
+</dd>
+          <dt pn="section-2.3-1.19">RP:
+</dt>
+          <dd pn="section-2.3-1.20">Rendezvous Point
+</dd>
+          <dt pn="section-2.3-1.21">NLRI:
+</dt>
+          <dd pn="section-2.3-1.22">Network Layer Reachability Information
+</dd>
+          <dt pn="section-2.3-1.23">VRF:
+</dt>
+          <dd pn="section-2.3-1.24">VPN Routing and Forwarding Table
+</dd>
+          <dt pn="section-2.3-1.25">MED:
+</dt>
+          <dd pn="section-2.3-1.26">Multi-Exit Discriminator
+</dd>
+          <dt pn="section-2.3-1.27">P2MP:
+</dt>
+          <dd pn="section-2.3-1.28">Point-to-Multipoint
+</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="tunnel-status" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-umh-selection-based-on-tunn">UMH Selection Based on Tunnel Status</name>
+      <t indent="0" pn="section-3-1">
+      <xref target="RFC6513" sectionFormat="of" section="5.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-5.1" derivedContent="RFC6513"/> describes
+      procedures used by an MVPN downstream PE to determine the
+      Upstream Multicast Hop (UMH) for a given (C-S,C-G).
+      </t>
+      <t indent="0" pn="section-3-2">
+   For a given downstream PE and a given VRF, the P-tunnel corresponding
+   to a given Upstream PE for a given (C-S,C-G) state is the S-PMSI
+   tunnel advertised by that Upstream PE for that (C-S,C-G) and
+    imported into that VRF or, if there isn't any such S-PMSI, the I-PMSI
+   tunnel advertised by that PE and imported into that VRF.
+      </t>
+      <t indent="0" pn="section-3-3">
+The procedure described here is optional one, based on a
+downstream PE taking into account the status of P-tunnels rooted at each
+possible Upstream PE, for including or not including each given PE in the list
+of candidate UMHs for a given (C-S,C-G) state.  If it is not possible to
+determine whether a P-tunnel's current status is Up, the state shall be
+considered "not known to be Down", and it may be treated as if it is Up so
+that attempts to use the tunnel are acceptable.  The result is that, if a
+P-tunnel is Down (see <xref target="tunnel-status-determination" format="default" sectionFormat="of" derivedContent="Section 3.1"/>), the PE
+that is the root of the P-tunnel will not be considered for UMH
+selection. This will result in the downstream PE failing over to use the next
+Upstream PE in the list of candidates.
+
+Some downstream PEs could arrive at a different conclusion regarding the
+tunnel's state because the failure impacts only a subset of branches.  Because
+of that, the procedures of <xref target="RFC6513" sectionFormat="of" section="9.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-9.1.1" derivedContent="RFC6513"/> are applicable when using I-PMSI P-tunnels.  That document
+is a foundation for this document, and its processes all apply here.
+
+      </t>
+      <t indent="0" pn="section-3-4">
+   There are three options specified in <xref target="RFC6513" sectionFormat="of" section="5.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-5.1" derivedContent="RFC6513"/> for a downstream PE to select an
+   Upstream PE.
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-5">
+        <li pn="section-3-5.1">
+          <t indent="0" pn="section-3-5.1.1">
+          The first two options select the Upstream PE from a candidate PE
+      set based either on an IP address or a hashing algorithm.  When used
+      together with the optional procedure of considering the P-tunnel
+      status as in this document, a candidate Upstream PE is included in
+      the set if it either:
+          </t>
+          <ol spacing="normal" type="a" indent="adaptive" start="1" pn="section-3-5.1.2"><li pn="section-3-5.1.2.1" derivedCounter="a.">
+          advertises an x-PMSI bound to a tunnel, where the specified tunnel's state
+          is not known to be Down, or,
+        </li>
+            <li pn="section-3-5.1.2.2" derivedCounter="b.">
+          does not advertise any x-PMSI applicable to the given (C-S,C-G)
+          but has associated a VRF Route Import BGP Extended Community to the
+          unicast VPN route for S. That is necessary to avoid
+          incorrectly invalidating a UMH PE that would use a policy
+          where no I-PMSI is advertised for a given VRF and where only
+          S-PMSIs are used. The S-PMSI can be advertised
+          only after the Upstream PE receives a C-multicast route for
+          (C-S,C-G) / (C-*,C-G) to be carried over the advertised
+          S-PMSI.
+            </li>
+          </ol>
+          <t indent="0" pn="section-3-5.1.3">
+      If the resulting candidate set is empty, then the procedure is
+      repeated without considering the P-tunnel status.
+          </t>
+        </li>
+        <li pn="section-3-5.2">
+      The third option uses the installed UMH Route (i.e., the "best"
+      route towards the C-root) as the Selected UMH Route, and its
+      originating PE is the selected Upstream PE.  With the optional
+      procedure of considering P-tunnel status as in this document, the
+      Selected UMH Route is the best one among those whose originating
+      PE's P-tunnel is not "down".  If that does not exist, the
+      installed UMH Route is selected regardless of the P-tunnel status.
+        </li>
+      </ul>
+      <section anchor="tunnel-status-determination" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-determining-the-status-of-a">Determining the Status of a Tunnel</name>
+        <t indent="0" pn="section-3.1-1">
+        Different factors can be considered to determine the "status" of a
+        P-tunnel and are described in the following subsections. The optional
+        procedures described in this section also handle the case when the
+        downstream PEs do not all apply the same rules to define what the
+        status of a P-tunnel is (please see <xref target="dups" format="default" sectionFormat="of" derivedContent="Section 6"> </xref>), and
+        some of them will produce a result that may be different for different
+        downstream PEs.  Thus, the "status" of a P-tunnel in this section is
+        not a characteristic of the tunnel in itself but is the tunnel
+        status, as seen from a particular downstream PE. Additionally, some of
+        the following methods determine the ability of a downstream PE to
+        receive traffic on the P-tunnel and not specifically on the status of
+        the P-tunnel itself.  That could be referred to as "P-tunnel reception
+        status", but for simplicity, we will use the terminology of P-tunnel
+        "status" for all of these methods.
+        </t>
+        <t indent="0" pn="section-3.1-2">Depending on the criteria used to determine the status of a
+        P-tunnel, there may be an interaction with another resiliency mechanism
+        used for the P-tunnel itself, and the UMH update may happen
+        immediately or may need to be delayed. Each particular case is covered
+        in each separate subsection below.</t>
+        <t indent="0" pn="section-3.1-3">An implementation may support any combination of the methods
+        described in this section and provide a network operator with control
+        to choose which one to use in the particular deployment.</t>
+        <section anchor="root-track-sec" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.1">
+          <name slugifiedName="name-mvpn-tunnel-root-tracking">MVPN Tunnel Root Tracking</name>
+          <t indent="0" pn="section-3.1.1-1">When determining if the status of a P-tunnel is Up, a condition
+          to consider is whether the root of the tunnel, as specified
+          in the x-PMSI Tunnel attribute, is reachable through unicast routing tables. In this case,
+          the downstream PE can immediately update its UMH when the
+          reachability condition changes.</t>
+          <t indent="0" pn="section-3.1.1-2">That is similar to BGP next-hop tracking for VPN routes, except
+          that the address considered is not the BGP next-hop address but the
+          root address in the x-PMSI Tunnel attribute. BGP next-hop tracking monitors
+          BGP next-hop address changes in the routing table. In general,
+          when a change is detected, it performs a next-hop scan to find
+          if any of the next hops in the BGP table is affected and updates it accordingly.</t>
+          <t indent="0" pn="section-3.1.1-3">If BGP next-hop tracking is done for VPN routes and the root
+          address of a given tunnel happens to be the same as the next-hop
+          address in the BGP A-D Route advertising the tunnel, then checking,
+          in unicast routing tables, whether the tunnel root is reachable will
+          be unnecessary duplication and will thus not bring any specific
+          benefit.</t>
+        </section>
+        <section anchor="pe-p-link-status-sec" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.2">
+          <name slugifiedName="name-pe-p-upstream-link-status">PE-P Upstream Link Status</name>
+          <t indent="0" pn="section-3.1.2-1">
+          When determining if the status of a P-tunnel is Up, a condition to
+          consider is whether the last-hop link of the P-tunnel is Up.
+          Conversely, if the last-hop link of the P-tunnel is Down, then this
+          can be taken as an indication that the P-tunnel is Down.
+          </t>
+          <t indent="0" pn="section-3.1.2-2">
+          Using this method when a fast restoration mechanism (such as MPLS
+          Fast Reroute (FRR) <xref target="RFC4090" format="default" sectionFormat="of" derivedContent="RFC4090"/>) is in place for the link requires
+          careful consideration and coordination of defect detection intervals
+          for the link and the tunnel.  When using multi-layer protection,
+          particular consideration must be given to the interaction of defect
+          detections at different network layers.  It is recommended to use
+          longer detection intervals at the higher layers.  Some
+          recommendations suggest using a multiplier of 3 or larger, e.g., 10
+          msec detection for the link failure detection and at least 100 msec
+          for the tunnel failure detection.  In many cases, it is not
+          practical to use both protection methods simultaneously because
+          uncorrelated timers might cause unnecessary switchovers and
+          destabilize the network.
+          </t>
+        </section>
+        <section anchor="rsvp-te-tunnel" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.3">
+          <name slugifiedName="name-p2mp-rsvp-te-tunnels">P2MP RSVP-TE Tunnels</name>
+          <t indent="0" pn="section-3.1.3-1">
+          For P-tunnels of type P2MP MPLS-TE, the status of the P-tunnel is
+          considered Up if the sub-LSP to this downstream PE is in the Up
+          state. The determination of whether a P2MP RSVP-TE Label Switched Path (LSP) is in the Up
+          state requires Path and Resv state for the LSP and is based on
+          procedures specified in <xref target="RFC4875" format="default" sectionFormat="of" derivedContent="RFC4875"/>.  As a result, the
+          downstream PE can immediately update its UMH when the reachability
+          condition changes.
+          </t>
+          <t indent="0" pn="section-3.1.3-2">
+          When using this method and if the signaling state for a P2MP TE LSP is removed (e.g., if the
+          ingress of the P2MP TE LSP sends a PathTear message) or the P2MP TE
+          LSP changes state from Up to Down as determined by procedures in
+          <xref target="RFC4875" format="default" sectionFormat="of" derivedContent="RFC4875"/>, the status of the corresponding
+          P-tunnel <bcp14>MUST</bcp14> be re-evaluated. If the P-tunnel transitions from Up
+          to Down state, the Upstream PE that is the ingress of the P-tunnel
+          <bcp14>MUST NOT</bcp14> be considered to be a valid candidate UMH.
+          </t>
+        </section>
+        <section anchor="leaf-init-tunnel" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.4">
+          <name slugifiedName="name-leaf-initiated-p-tunnels">Leaf-Initiated P-Tunnels</name>
+          <t indent="0" pn="section-3.1.4-1">An Upstream PE <bcp14>MUST</bcp14> be removed from the UMH candidate list for a given (C-S,C-G)
+          if the P-tunnel (I-PMSI or S-PMSI) for this (S,G) is leaf triggered
+          (PIM, mLDP), but for some reason, internal to the protocol, the
+          upstream one-hop branch of the tunnel from P to PE cannot be built.
+          As a result, the downstream PE can immediately update its UMH when
+          the reachability condition changes.</t>
+        </section>
+        <section anchor="counter-info-tunnel" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.5">
+          <name slugifiedName="name-c-sc-g-counter-information">(C-S,C-G) Counter Information</name>
+          <t indent="0" pn="section-3.1.5-1">In cases where the downstream node can be configured so that the
+          maximum inter-packet time is known for all the multicast flows
+          mapped on a P-tunnel, the local traffic counter
+          information per (C-S,C-G) for traffic received on this P-tunnel can be used to
+          determine the status of the P-tunnel.</t>
+          <t indent="0" pn="section-3.1.5-2">When such a procedure is used, in the context where fast
+          restoration mechanisms are used for the P-tunnels, a configurable
+          timer <bcp14>MUST</bcp14> be set on the downstream PE to wait before
+          updating the UMH to let the P-tunnel restoration mechanism execute
+          its actions.  Determining that a tunnel is probably down by waiting
+          for enough packets to fail to arrive as expected is a heuristic and
+          operational matter that depends on the maximum inter-packet time. A
+          timeout of three seconds is a generally suitable default waiting
+          period to ascertain that the tunnel is down, though other values
+          would be needed for atypical conditions.</t>
+          <t indent="0" pn="section-3.1.5-3">In cases where this mechanism is used in conjunction with the
+          method described in <xref target="hot-standby" format="default" sectionFormat="of" derivedContent="Section 5"/>, no prior knowledge
+          of the rate or maximum inter-packet time on the multicast streams is
+          required; downstream PEs can periodically compare actual packet
+          reception statistics on the two P-tunnels to determine when one of
+          them is down. The detailed specification of this mechanism is
+          outside the scope of this document.</t>
+        </section>
+        <section anchor="bfd-tunnel" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.6">
+          <name slugifiedName="name-bfd-discriminator-attribute">BFD Discriminator Attribute</name>
+          <t indent="0" pn="section-3.1.6-1">
+          The P-tunnel status may be derived from the status of a multipoint
+          BFD session <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/> whose discriminator is
+          advertised along with an x-PMSI A-D Route.  A P2MP BFD session can
+          be instantiated using a mechanism other than the BFD Discriminator
+          attribute, e.g., MPLS LSP Ping (<xref target="MPLS-P2MP-BFD" format="default" sectionFormat="of" derivedContent="MPLS-P2MP-BFD"/>).
+          The description of these methods is outside the scope of this
+          document.
+          </t>
+          <t indent="0" pn="section-3.1.6-2">
+          This document defines the format and ways of using a new BGP
+          attribute called the "BFD Discriminator" (38).  It is an optional
+          transitive BGP attribute. Thus, it is expected that an implementation
+          that does not recognize or is configured not to support this
+          attribute, as if the attribute was unrecognized, follows procedures
+          defined for optional transitive path attributes in <xref target="RFC4271" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4271#section-5" derivedContent="RFC4271"/>.  See <xref target="iana-bfd-discr" format="default" sectionFormat="of" derivedContent="Section 7.2"/> for more information.  The format of this attribute is shown in
+          <xref target="bfd-attr-fig" format="default" sectionFormat="of" derivedContent="Figure 1"/>.
+          </t>
+          <figure anchor="bfd-attr-fig" align="left" suppress-title="false" pn="figure-1">
+            <name slugifiedName="name-format-of-the-bfd-discrimin">Format of the BFD Discriminator Attribute</name>
+            <artwork align="left" pn="section-3.1.6-3.1">         
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+
+   |    BFD Mode   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       BFD Discriminator                       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   ~                         Optional TLVs                         ~
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+          </artwork>
+          </figure>
+          <t indent="0" pn="section-3.1.6-4">
+          Where:
+          </t>
+          <dl newline="false" spacing="normal" indent="3" pn="section-3.1.6-5">
+            <dt pn="section-3.1.6-5.1"/>
+            <dd pn="section-3.1.6-5.2">BFD Mode field is 1 octet long. This specification defines
+            P2MP BFD Session as value 1 (<xref target="iana-bfd-discr" format="default" sectionFormat="of" derivedContent="Section 7.2"/>).</dd>
+            <dt pn="section-3.1.6-5.3"/>
+            <dd pn="section-3.1.6-5.4">BFD Discriminator field is 4 octets long.</dd>
+            <dt pn="section-3.1.6-5.5"/>
+            <dd pn="section-3.1.6-5.6">
+              <t indent="0" pn="section-3.1.6-5.6.1">Optional TLVs is the optional variable-length field that <bcp14>MAY</bcp14> be used in the BFD Discriminator attribute for future extensions.
+          TLVs <bcp14>MAY</bcp14> be included in a sequential or nested manner. To allow for TLV nesting,
+          it is advised to define a new TLV as a variable-length object.
+          <xref target="opt-tlv-fig" format="default" sectionFormat="of" derivedContent="Figure 2"/> presents the Optional TLV format TLV that consists of:
+              </t>
+              <dl spacing="normal" indent="3" newline="false" pn="section-3.1.6-5.6.2">
+                <dt pn="section-3.1.6-5.6.2.1">Type:</dt>
+                <dd pn="section-3.1.6-5.6.2.2">a 1-octet-long field that characterizes the
+                interpretation of the Value field (<xref target="iana-bfd-attr-ext" format="default" sectionFormat="of" derivedContent="Section 7.3"/>)</dd>
+                <dt pn="section-3.1.6-5.6.2.3">Length:</dt>
+                <dd pn="section-3.1.6-5.6.2.4">a 1-octet-long field equal to the length of the Value field in octets</dd>
+                <dt pn="section-3.1.6-5.6.2.5">Value:</dt>
+                <dd pn="section-3.1.6-5.6.2.6">a variable-length field</dd>
+              </dl>
+              <t indent="0" pn="section-3.1.6-5.6.3">
+             All multibyte fields in TLVs defined in this specification are in network byte order.
+              </t>
+            </dd>
+          </dl>
+          <figure anchor="opt-tlv-fig" align="left" suppress-title="false" pn="figure-2">
+            <name slugifiedName="name-format-of-the-optional-tlv">Format of the Optional TLV</name>
+            <artwork align="left" pn="section-3.1.6-6.1">          
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      Type     |     Length    |           Value             ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+          </artwork>
+          </figure>
+          <t indent="0" pn="section-3.1.6-7">
+An optional Source IP Address TLV is defined in this document.
+The Source IP Address TLV <bcp14>MUST</bcp14> be used when the value of the BFD Mode field's value is P2MP BFD Session.
+The BFD Discriminator attribute that does not include the Source IP Address TLV <bcp14>MUST</bcp14> be handled
+according to the "attribute discard" approach, as defined in <xref target="RFC7606" format="default" sectionFormat="of" derivedContent="RFC7606"/>.
+For the Source IP Address TLV, fields are set as follows:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1.6-8">
+            <li pn="section-3.1.6-8.1">
+The Type field is set to 1 (<xref target="iana-bfd-attr-ext" format="default" sectionFormat="of" derivedContent="Section 7.3"/>).
+	    </li>
+            <li pn="section-3.1.6-8.2">
+The Length field is 4 for the IPv4 address family and 16 for the IPv6 address family.
+The TLV is considered malformed if the field is set to any other value.
+	    </li>
+            <li pn="section-3.1.6-8.3">
+The Value field contains the address associated with the MultipointHead of the P2MP BFD session.
+	    </li>
+          </ul>
+          <t indent="0" pn="section-3.1.6-9">
+          The BFD Discriminator attribute <bcp14>MUST</bcp14> be considered malformed
+          if its length is smaller than 11 octets or if Optional TLVs are present but not well formed.
+           If the attribute is deemed to be malformed,
+           the UPDATE message <bcp14>SHALL</bcp14> be handled using the approach of Attribute Discard per <xref target="RFC7606" format="default" sectionFormat="of" derivedContent="RFC7606"/>.
+          </t>
+          <section numbered="true" removeInRFC="false" toc="exclude" pn="section-3.1.6.1">
+            <name slugifiedName="name-upstream-pe-procedures">Upstream PE Procedures</name>
+            <t indent="0" pn="section-3.1.6.1-1">
+          To enable downstream PEs to track the P-tunnel status using a
+          point-to-multipoint (P2MP) BFD session, the Upstream PE:
+          
+            </t>
+            <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1.6.1-2">
+              <li pn="section-3.1.6.1-2.1">
+                <bcp14>MUST</bcp14> initiate the BFD session and set bfd.SessionType
+          = MultipointHead as described in <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/>;
+              </li>
+              <li pn="section-3.1.6.1-2.2">
+          when transmitting BFD Control packets <bcp14>MUST</bcp14> set the IP
+          destination address of the inner IP header to the internal loopback
+          address 127.0.0.1/32 for IPv4 <xref target="RFC1122" format="default" sectionFormat="of" derivedContent="RFC1122"/>.  For IPv6,
+          it <bcp14>MUST</bcp14> use the loopback address ::1/128 <xref target="RFC4291" format="default" sectionFormat="of" derivedContent="RFC4291"/>;
+              </li>
+              <li pn="section-3.1.6.1-2.3">
+                <bcp14>MUST</bcp14> use the IP address included in the Source IP
+          Address TLV of the BFD Discriminator attribute as the source IP
+          address when transmitting BFD Control packets;
+              </li>
+              <li pn="section-3.1.6.1-2.4">
+                <bcp14>MUST</bcp14> include the BFD Discriminator attribute in the
+          x-PMSI A-D Route with the value set to the My Discriminator value;
+              </li>
+              <li pn="section-3.1.6.1-2.5">
+                <bcp14>MUST</bcp14> periodically transmit BFD Control packets over
+          the x-PMSI P-tunnel after the P-tunnel is considered established.
+          Note that the methods to declare that a P-tunnel has been
+          established are outside the scope of this specification.
+
+	      </li>
+            </ul>
+            <t indent="0" pn="section-3.1.6.1-3">
+   If the tracking of the P-tunnel by using a P2MP BFD session is enabled
+   after the x-PMSI A-D Route has been already advertised, the x-PMSI A-D
+   Route <bcp14>MUST</bcp14> be resent with the only change between the
+   previous advertisement and the new advertisement to be the inclusion of the
+   BFD Discriminator attribute.
+            </t>
+            <t indent="0" pn="section-3.1.6.1-4">
+   If the x-PMSI A-D Route is advertised with P-tunnel status tracked using
+   the P2MP BFD session, and it is desired to stop tracking P-tunnel
+   status using BFD, then:
+          
+            </t>
+            <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1.6.1-5">
+              <li pn="section-3.1.6.1-5.1">
+          the x-PMSI A-D Route <bcp14>MUST</bcp14> be resent with the only
+          change between the previous advertisement and the new advertisement
+          be the exclusion of the BFD Discriminator attribute;
+              </li>
+              <li pn="section-3.1.6.1-5.2">
+          the P2MP BFD session <bcp14>MUST</bcp14> be deleted. The session
+          <bcp14>MAY</bcp14> be deleted after some configurable delay, which
+          should have a reasonable default.
+              </li>
+            </ul>
+          </section>
+          <section numbered="true" removeInRFC="false" toc="exclude" pn="section-3.1.6.2">
+            <name slugifiedName="name-downstream-pe-procedures">Downstream PE Procedures</name>
+            <t indent="0" pn="section-3.1.6.2-1">
+          Upon receiving the BFD Discriminator attribute in the x-PMSI A-D Route, the downstream PE:
+            </t>
+            <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1.6.2-2">
+              <li pn="section-3.1.6.2-2.1">
+                <bcp14>MUST</bcp14> associate the received BFD Discriminator value with the P-tunnel
+          originating from the Upstream PE and the IP address of the Upstream PE;
+              </li>
+              <li pn="section-3.1.6.2-2.2">
+                <bcp14>MUST</bcp14> create a P2MP BFD session and set bfd.SessionType = MultipointTail
+          as described in <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/>;
+              </li>
+              <li pn="section-3.1.6.2-2.3">
+                <t indent="0" pn="section-3.1.6.2-2.3.1">
+          to properly demultiplex BFD session, <bcp14>MUST</bcp14> use:
+                </t>
+                <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-3.1.6.2-2.3.2">
+                  <li pn="section-3.1.6.2-2.3.2.1">the IP address in the Source IP Address TLV included the BFD Discriminator
+attribute in the x-PMSI A-D Route;
+</li>
+                  <li pn="section-3.1.6.2-2.3.2.2">the value of the BFD Discriminator field in the BFD Discriminator
+attribute;
+</li>
+                  <li pn="section-3.1.6.2-2.3.2.3">the x-PMSI Tunnel Identifier <xref target="RFC6514" format="default" sectionFormat="of" derivedContent="RFC6514"/> the BFD Control
+packet was received on.
+</li>
+                </ul>
+              </li>
+            </ul>
+            <t indent="0" pn="section-3.1.6.2-3">
+          After the state of the P2MP BFD session is up, i.e., bfd.SessionState == Up,
+           the session state will then be used to track the health of the P-tunnel.
+            </t>
+            <t indent="0" pn="section-3.1.6.2-4">
+          According to <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/>, if the downstream PE receives
+          Down or AdminDown in the State field of the BFD Control packet, or
+          if the Detection Timer associated with the BFD session expires, the
+          BFD session is down, i.e., bfd.SessionState == Down. When the BFD
+          session state is Down, then the P-tunnel associated with the BFD
+          session <bcp14>MUST</bcp14> be considered down.  If the site that
+          contains C-S is connected to two or more PEs, a downstream PE will
+          select one as its Primary Upstream PE, while others are considered
+          to be Standby Upstream PEs.  In such a scenario, when the P-tunnel
+          is considered down, the downstream PE <bcp14>MAY</bcp14> initiate a
+          switchover of the traffic from the Primary Upstream PE to the
+          Standby Upstream PE only if the Standby Upstream PE is deemed to be
+          in the Up state.  That <bcp14>MAY</bcp14> be determined from the
+          state of a P2MP BFD session with the Standby Upstream PE as the
+          MultipointHead.
+            </t>
+            <t indent="0" pn="section-3.1.6.2-5">
+
+          If the downstream PE's P-tunnel is already established when the
+          downstream PE receives the new x-PMSI A-D Route with the BFD
+          Discriminator attribute, the downstream PE <bcp14>MUST</bcp14>
+          associate the value of the BFD Discriminator field with the P-tunnel
+          and follow procedures listed above in this section if and only if
+          the x-PMSI A-D Route was properly processed as per <xref target="RFC6514" format="default" sectionFormat="of" derivedContent="RFC6514"/>, and the BFD Discriminator attribute was
+          validated.
+            </t>
+            <t indent="0" pn="section-3.1.6.2-6">
+          If the downstream PE's P-tunnel is already established, its state
+          being monitored by the P2MP BFD session set up using the BFD
+          Discriminator attribute, and both the downstream PE receives the new
+          x-PMSI A-D Route without the BFD Discriminator attribute and the
+          x-PMSI A-D Route was processed without any error as per the relevant
+          specifications, then:
+            </t>
+            <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1.6.2-7">
+              <li pn="section-3.1.6.2-7.1">
+          The downstream PE <bcp14>MUST</bcp14> stop processing BFD Control
+          packets for this P2MP BFD session;
+              </li>
+              <li pn="section-3.1.6.2-7.2">
+          The P2MP BFD session associated with the P-tunnel
+          <bcp14>MUST</bcp14> be deleted. The session <bcp14>MAY</bcp14> be
+          deleted after some configurable delay, which should have a
+          reasonable default.
+              </li>
+              <li pn="section-3.1.6.2-7.3">
+          The downstream PE <bcp14>MUST NOT</bcp14> switch the traffic to the
+          Standby Upstream PE.
+              </li>
+            </ul>
+          </section>
+        </section>
+        <section numbered="true" removeInRFC="false" toc="include" pn="section-3.1.7">
+          <name slugifiedName="name-bfd-discriminator-per-pe-ce">BFD Discriminator per PE-CE Link</name>
+          <t indent="0" pn="section-3.1.7-1">
+   The following approach is defined in response to the detection by the
+   Upstream PE of a PE-CE link failure.  Even though the provider tunnel is
+   still up, it is desired for the downstream PEs to switch to a backup
+   Upstream PE. To achieve that, if the Upstream PE detects that its PE-CE
+   link fails, it <bcp14>MUST</bcp14> set the bfd.LocalDiag of the P2MP BFD
+   session to Concatenated Path Down or Reverse Concatenated Path Down (per
+   <xref target="RFC5880" sectionFormat="of" section="6.8.17" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5880#section-6.8.17" derivedContent="RFC5880"/>) unless it
+   switches to a new PE-CE link within the time of bfd.DesiredMinTxInterval
+   for the P2MP BFD session (in that case, the Upstream PE will start tracking
+   the status of the new PE-CE link).  When a downstream PE receives that
+   bfd.LocalDiag code, it treats it as if the tunnel itself failed and tries
+   to switch to a backup PE.
+          </t>
+        </section>
+        <section anchor="operational-sec" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.8">
+          <name slugifiedName="name-operational-considerations-">Operational Considerations for Monitoring a P-Tunnel's Status</name>
+          <t indent="0" pn="section-3.1.8-1">
+Several methods to monitor the status of a P-tunnel are described in <xref target="tunnel-status-determination" format="default" sectionFormat="of" derivedContent="Section 3.1"/>.
+
+          </t>
+          <t indent="0" pn="section-3.1.8-2">
+Tracking the root of an MVPN (<xref target="root-track-sec" format="default" sectionFormat="of" derivedContent="Section 3.1.1"/>) reveals the
+status of a P-tunnel based on the control plane information. Because, in
+general, the MPLS data plane is not fate sharing with the control plane, this
+method might produce false-positive or false-negative alarms, for example,
+resulting in tunnels that are considered Up but are not able to reach the
+root, or ones that are declared down prematurely. On the other hand, because
+BGP next-hop tracking is broadly supported and deployed, this method might be
+the easiest to deploy.
+          </t>
+          <t indent="0" pn="section-3.1.8-3">
+The method described in <xref target="pe-p-link-status-sec" format="default" sectionFormat="of" derivedContent="Section 3.1.2"/> monitors the state
+of the data plane but only for an egress P-PE link of a P-tunnel. As a result,
+network failures that affect upstream links might not be detected using this
+method and the MVPN convergence would be determined by the convergence of the
+BGP control plane.
+          </t>
+          <t indent="0" pn="section-3.1.8-4">
+Using the state change of a P2MP RSVP-TE LSP as the trigger to re-evaluate the status of the P-tunnel (<xref target="rsvp-te-tunnel" format="default" sectionFormat="of" derivedContent="Section 3.1.3"/>)
+relies on the mechanism used to monitor the state of the P2MP LSP.
+          </t>
+          <t indent="0" pn="section-3.1.8-5">
+The method described in <xref target="leaf-init-tunnel" format="default" sectionFormat="of" derivedContent="Section 3.1.4"/> is simple
+and is safe from causing false alarms, e.g., considering a tunnel operationally Up even though its data path has a defect or, conversely, declaring a tunnel failed when it is unaffected.
+ But the method applies to a subset of MVPNs, those that use the leaf-triggered x-PMSI tunnels.
+          </t>
+          <t indent="0" pn="section-3.1.8-6">
+Though some MVPNs might be used to provide a multicast service with
+predictable inter-packet intervals (<xref target="counter-info-tunnel" format="default" sectionFormat="of" derivedContent="Section 3.1.5"/>), the number of such cases seem limited.
+          </t>
+          <t indent="0" pn="section-3.1.8-7">
+
+
+Monitoring the status of a P-tunnel using a P2MP BFD session (<xref target="bfd-tunnel" format="default" sectionFormat="of" derivedContent="Section 3.1.6"/>) may produce the most accurate and expedient failure
+notification of all monitoring methods discussed.  On the other hand, it
+requires careful consideration of the additional load of BFD sessions onto
+network and PE nodes.  Operators should consider the rate of BFD Control
+packets transmitted by root PEs combined with the number of such PEs in the
+network. In addition, the number of P2MP BFD sessions per PE determines the
+amount of state information that a PE maintains.
+</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="standby-join" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-standby-c-multicast-route">Standby C-Multicast Route</name>
+      <t indent="0" pn="section-4-1">
+      The procedures described below are limited to the case where the site
+      that contains C-S is connected to two or more PEs, though to simplify
+      the description, the case of dual homing is described. In the case where
+      more than two PEs are connected to the C-S site, selection of the
+      Standby PE can be performed using one of the methods of selecting a
+      UMH. Details of the selection are outside the scope of this document.
+      The procedures require all the PEs of that MVPN to follow the same UMH
+      selection procedure, as specified in <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/>,
+      regardless of whether the PE selected based on its IP address, the
+      hashing algorithm described in <xref target="RFC6513" sectionFormat="of" section="5.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-5.1.3" derivedContent="RFC6513"/>, or the Installed UMH Route.  The consistency of the
+      UMH selection method used among all PEs is expected to be provided by
+      the management plane.  The procedures assume that if a site of a given
+      MVPN that contains C-S is dual homed to two PEs, then all the other
+      sites of that MVPN would have two unicast VPN routes (VPN-IPv4 or
+      VPN-IPv6) to C-S, each with its own RD.
+      </t>
+      <t indent="0" pn="section-4-2">As long as C-S is reachable via both PEs, a given downstream PE will
+      select one of the PEs connected to C-S as its Upstream PE for C-S.  We
+      will refer to the other PE connected to C-S as the "Standby Upstream
+      PE". Note that if the connectivity to C-S through the Primary Upstream
+      PE becomes unavailable, then the PE will select the Standby Upstream PE
+      as its Upstream PE for C-S. When the Primary PE later becomes available,
+      the PE will select the Primary Upstream PE again as its Upstream
+      PE. Such behavior is referred to as "revertive" behavior and
+      <bcp14>MUST</bcp14> be supported.  Non-revertive behavior refers to the
+      behavior of continuing to select the backup PE as the UMH even after the
+      Primary has come up. This non-revertive behavior <bcp14>MAY</bcp14> also
+      be supported by an implementation and would be enabled through some
+      configuration.  Selection of the behavior, revertive or non-revertive,
+      is an operational issue, but it <bcp14>MUST</bcp14> be consistent on all
+      PEs in the given MVPN. While revertive is considered the default
+      behavior, there might be cases where the switchover to the standby
+      tunnel does not affect other services and provides the required quality
+      of service. In this case, an operator might use non-revertive behavior
+      to avoid unnecessary switchover and thus minimize disruption to the
+      multicast service.</t>
+      <t indent="0" pn="section-4-3">For readability, in the following subsections, the procedures are
+      described for BGP C-multicast Source Tree Join routes, but they apply
+      equally to BGP C-multicast Shared Tree Join routes for the case where
+      the customer RP is dual homed (substitute "C-RP" to "C-S").</t>
+      <section anchor="ds-behavior" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-downstream-pe-behavior">Downstream PE Behavior</name>
+        <t indent="0" pn="section-4.1-1">When a (downstream) PE connected to some site of an MVPN needs to
+        send a C-multicast route (C-S,C-G), then following the procedures
+        specified in <xref target="RFC6514" sectionFormat="of" section="11.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6514#section-11.1" derivedContent="RFC6514"/>, the PE sends the C-multicast route with an RT that
+        identifies the Upstream PE selected by the PE originating the
+        route. As long as C-S is reachable via the Primary Upstream PE, the
+        Upstream PE is the Primary Upstream PE. If C-S is reachable only via
+        the Standby Upstream PE, then the Upstream PE is the Standby Upstream
+        PE.</t>
+        <t indent="0" pn="section-4.1-2">If C-S is reachable via both the Primary and the Standby Upstream
+        PE, then in addition to sending the C-multicast route with an RT that
+        identifies the Primary Upstream PE, the downstream PE also originates and sends a
+        C-multicast route with an RT that identifies the Standby Upstream PE.
+        The route that has the semantics of being a "standby" C-multicast
+        route is further called a "Standby BGP C-multicast route", and is
+        constructed as follows:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1-3">
+          <li pn="section-4.1-3.1">The NLRI is constructed as the C-multicast route with an RT that
+          identifies the Primary Upstream PE, except that the RD is the same
+          as if the C-multicast route was built using the Standby Upstream PE
+          as the UMH (it will carry the RD associated to the unicast VPN route
+          advertised by the Standby Upstream PE for S and a Route Target
+          derived from the Standby Upstream PE's UMH route's VRF RT Import
+          EC);</li>
+          <li pn="section-4.1-3.2">It <bcp14>MUST</bcp14> carry the "Standby PE" BGP Community
+          (0xFFFF0009); see <xref target="pe-standby-com-iana" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.</li>
+        </ul>
+        <t indent="0" pn="section-4.1-4">
+        The Local Preference attribute of both the normal and the standby
+        C-multicast route needs to be adjusted as follows: if a BGP peer
+        receives two C-multicast routes with the same NLRI, one carrying the
+        "Standby PE" community and the other one not carrying the "Standby PE"
+        community, preference is given to the one not carrying the
+        "Standby PE" community. Such a situation can happen when, for
+        instance, due to transient unicast routing inconsistencies or lack of
+        support of the Standby PE community, two different downstream PEs
+        consider different Upstream PEs to be the primary one. In that case,
+        without any precaution taken, both Upstream PEs would process a
+        standby C-multicast route and possibly stop forwarding at the same
+        time. For this purpose, routes that carry the Standby PE BGP Community
+        must have the LOCAL_PREF attribute set to the value lower than the
+        value specified as the LOCAL_PREF attribute for the route that does
+        not carry the Standby PE BGP Community. The value of zero is
+        <bcp14>RECOMMENDED</bcp14>.
+        </t>
+        <t indent="0" pn="section-4.1-5">Note that when a PE advertises such a Standby C-multicast join for
+        a (C-S,C-G), it <bcp14>MUST</bcp14> join the corresponding P-tunnel.</t>
+        <t indent="0" pn="section-4.1-6">If, at some later point, the PE determines that C-S is no longer
+        reachable through the Primary Upstream PE, the Standby Upstream PE
+        becomes the Upstream PE, and the PE resends the C-multicast route with
+        the RT that identifies the Standby Upstream PE, except that now the
+        route does not carry the Standby PE BGP Community (which results in
+        replacing the old route with a new route, with the only difference
+        between these routes being the absence of the Standby PE BGP
+        Community). The new Upstream PE must set the LOCAL_PREF attribute for
+        that C-multicast route to the same value as when the Standby PE BGP
+        Community was included in the advertisement.</t>
+      </section>
+      <section anchor="us-behavior" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-upstream-pe-behavior">Upstream PE Behavior</name>
+        <t indent="0" pn="section-4.2-1">
+When a PE supporting this specification receives a C-multicast route for a particular (C-S,C-G) for which all of the following are true:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.2-2">
+          <li pn="section-4.2-2.1">the RT carried in the route results in importing the route into a particular VRF on the PE;</li>
+          <li pn="section-4.2-2.2">the route carries the Standby PE BGP Community; and</li>
+          <li pn="section-4.2-2.3">
+the PE determines (via a method of failure detection that is outside the scope of this document)
+that C-S is not reachable through some other PE (more details are in <xref target="reach-sec" format="default" sectionFormat="of" derivedContent="Section 4.3"/>),
+	  </li>
+        </ul>
+        <t indent="0" pn="section-4.2-3">
+then the PE <bcp14>MAY</bcp14> install VRF PIM state corresponding to this Standby BGP C-multicast route
+(the result will be that a PIM Join message will be sent to the CE towards C-S, and that
+the PE will receive (C-S,C-G) traffic), and the PE <bcp14>MAY</bcp14> forward (C-S,C-G)
+traffic received by the PE to other PEs through a P-tunnel rooted at the PE.
+        </t>
+        <t indent="0" pn="section-4.2-4">Furthermore, irrespective of whether C-S carried in that route is
+        reachable through some other PE:</t>
+        <ol type="a" indent="adaptive" spacing="normal" start="1" pn="section-4.2-5">
+
+<li pn="section-4.2-5.1" derivedCounter="a.">based on local policy, as soon as the PE receives this Standby BGP
+C-multicast route, the PE <bcp14>MAY</bcp14> install VRF PIM state
+corresponding to this BGP Source Tree Join route (the result will be that Join
+messages will be sent to the CE toward C-S, and that the PE will receive (C-S,C-G) traffic); and
+</li>
+          <li pn="section-4.2-5.2" derivedCounter="b.">based on local policy, as soon as the PE receives this Standby BGP
+C-multicast route, the PE <bcp14>MAY</bcp14> forward (C-S,C-G) traffic to
+other PEs through a P-tunnel independently of the reachability of C-S through
+some other PE. (note that this implies also doing step a.)
+</li>
+        </ol>
+        <t indent="0" pn="section-4.2-6">Doing neither step a nor step b for a given (C-S,C-G) is called "cold
+        root standby".</t>
+        <t indent="0" pn="section-4.2-7">Doing step a but not step b for a given (C-S,C-G) is called "warm root
+        standby".</t>
+        <t indent="0" pn="section-4.2-8">Doing step b (which implies also doing step a) for a given (C-S,C-G) is
+        called "hot root standby".</t>
+        <t indent="0" pn="section-4.2-9">Note that, if an Upstream PE uses an S-PMSI-only policy, it shall
+        advertise an S-PMSI for a (C-S,C-G) as soon as it receives a C-multicast
+        route for (C-S,C-G), normal or Standby; that is, it shall not wait for
+        receiving a non-Standby C-multicast route before advertising the
+        corresponding S-PMSI.</t>
+        <t indent="0" pn="section-4.2-10"><xref target="RFC6513" sectionFormat="of" section="9.3.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-9.3.2" derivedContent="RFC6513"/>
+        describes the procedures of sending a Source-Active A-D Route as a
+        result of receiving the C-multicast route.  These procedures
+        <bcp14>MUST</bcp14> be followed for both the normal and Standby
+        C-multicast routes.</t>
+      </section>
+      <section anchor="reach-sec" numbered="true" removeInRFC="false" toc="include" pn="section-4.3">
+        <name slugifiedName="name-reachability-determination">Reachability Determination</name>
+        <t indent="0" pn="section-4.3-1">
+        The Standby Upstream PE can use the following information to determine that
+        C-S can or cannot be reached through the Primary Upstream PE:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.3-2">
+          <li pn="section-4.3-2.1">presence/absence of a unicast VPN route toward C-S</li>
+          <li pn="section-4.3-2.2">supposing that the Standby Upstream PE is the egress of the tunnel rooted
+            at the Primary Upstream PE, the Standby Upstream PE can determine the reachability
+            of C-S through the Primary Upstream PE based on the status of this tunnel,
+            determined thanks to the same criteria as the ones described in
+            <xref target="tunnel-status-determination" format="default" sectionFormat="of" derivedContent="Section 3.1"/> (without using
+            the UMH selection procedures of <xref target="tunnel-status" format="default" sectionFormat="of" derivedContent="Section 3"/>);</li>
+          <li pn="section-4.3-2.3">other mechanisms</li>
+        </ul>
+      </section>
+      <section anchor="interas" numbered="true" removeInRFC="false" toc="include" pn="section-4.4">
+        <name slugifiedName="name-inter-as">Inter-AS</name>
+        <t indent="0" pn="section-4.4-1">If the non-segmented inter-AS approach is used, the procedures described in
+        <xref target="ds-behavior" format="default" sectionFormat="of" derivedContent="Section 4.1"/> through <xref target="reach-sec" format="default" sectionFormat="of" derivedContent="Section 4.3"/> can be applied.</t>
+        <t indent="0" pn="section-4.4-2">When MVPNs are used in an inter-AS context with the
+        segmented inter-AS approach described in <xref target="RFC6514" sectionFormat="of" section="9.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6514#section-9.2" derivedContent="RFC6514"/>, the procedures in this section can
+        be applied.</t>
+        <t indent="0" pn="section-4.4-3">Prerequisites for the procedures described below to be applied
+        for a source of a given MVPN are:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.4-4">
+          <li pn="section-4.4-4.1">that any PE of this MVPN receives two or more Inter-AS I-PMSI
+            A-D Routes advertised by the AS of the source</li>
+          <li pn="section-4.4-4.2">that these Inter-AS I-PMSI A-D Routes have distinct
+            Route Distinguishers (as described in item "(2)" of <xref target="RFC6514" section="9.2" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6514#section-9.2" derivedContent="RFC6514"/>).</li>
+        </ul>
+        <t indent="0" pn="section-4.4-5">
+          As an example, these conditions will be satisfied when the source is
+          dual homed to an AS that connects to the receiver AS through two
+          ASBR using autoconfigured RDs.</t>
+        <section numbered="true" removeInRFC="false" toc="include" pn="section-4.4.1">
+          <name slugifiedName="name-inter-as-procedures-for-dow">Inter-AS Procedures for Downstream PEs, ASBR Fast Failover</name>
+          <t indent="0" pn="section-4.4.1-1">The following procedure is applied by downstream PEs of an AS,
+          for a source S in a remote AS.</t>
+          <t indent="0" pn="section-4.4.1-2">In additional to choosing an Inter-AS I-PMSI A-D Route advertised
+          from the AS of the source to construct a C-multicast route, as
+          described in <xref target="RFC6514" sectionFormat="of" section="11.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6514#section-11.1.3" derivedContent="RFC6514"/>, a downstream PE will choose a second Inter-AS
+          I-PMSI A-D Route advertised from the AS of the source and use this
+          route to construct and advertise a Standby C-multicast route
+          (C-multicast route carrying the Standby extended community), as
+          described in <xref target="ds-behavior" format="default" sectionFormat="of" derivedContent="Section 4.1"> </xref>.</t>
+        </section>
+        <section numbered="true" removeInRFC="false" toc="include" pn="section-4.4.2">
+          <name slugifiedName="name-inter-as-procedures-for-asb">Inter-AS Procedures for ASBRs</name>
+          <t indent="0" pn="section-4.4.2-1">When an Upstream ASBR receives a C-multicast route, and at least
+          one of the RTs of the route matches one of the ASBR Import RTs, the
+          ASBR that supports this specification must try to locate an Inter-AS
+          I-PMSI A-D Route whose RD and Source AS respectively match the RD
+          and Source AS carried in the C-multicast route. If the match is
+          found, and the C-multicast route carries the Standby PE BGP
+          Community, then the ASBR implementation that supports this
+          specification <bcp14>MUST</bcp14> be configurable to perform as
+          follows:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.4.2-2">
+            <li pn="section-4.4.2-2.1">If the route was received over iBGP and its LOCAL_PREF
+            attribute is set to zero, then it <bcp14>MUST</bcp14> be
+            re-advertised in eBGP with a MED attribute (MULTI_EXIT_DISC) set
+            to the highest possible value (0xffff).</li>
+            <li pn="section-4.4.2-2.2">If the route was received over eBGP and its MED attribute is set
+            to 0xffff, then it <bcp14>MUST</bcp14> be re-advertised in iBGP
+            with a LOCAL_PREF attribute set to zero.</li>
+          </ul>
+          <t indent="0" pn="section-4.4.2-3">
+            Other ASBR procedures are applied without modification and, when applied, <bcp14>MAY</bcp14> modify the above-listed behavior.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="hot-standby" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-hot-root-standby">Hot Root Standby</name>
+      <t indent="0" pn="section-5-1">The mechanisms defined in Sections <xref format="counter" target="tunnel-status" sectionFormat="of" derivedContent="3"/> and <xref format="counter" target="standby-join" sectionFormat="of" derivedContent="4"/> can be used
+      together as follows.</t>
+      <t indent="0" pn="section-5-2">The principle is that, for a given VRF (or possibly only for a given
+      (C-S,C-G)):</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5-3">
+        <li pn="section-5-3.1">Downstream PEs advertise a Standby BGP C-multicast route (based on
+        <xref target="standby-join" format="default" sectionFormat="of" derivedContent="Section 4"/>).</li>
+        <li pn="section-5-3.2">Upstream PEs use the "hot standby" optional behavior and will thus
+        start forwarding traffic for a given multicast state after they have a
+        (primary) BGP C-multicast route or a Standby BGP C-multicast route for
+        that state (or both).</li>
+        <li pn="section-5-3.3">A policy controls from which tunnel downstream PEs accept traffic.
+        For example, the policy could be based on the status of the tunnel or
+        tunnel-monitoring method (<xref target="counter-info-tunnel" format="default" sectionFormat="of" derivedContent="Section 3.1.5"/>).</li>
+      </ul>
+      <t indent="0" pn="section-5-4">Other combinations of the mechanisms proposed in Sections <xref format="counter" target="tunnel-status" sectionFormat="of" derivedContent="3"/> and <xref format="counter" target="standby-join" sectionFormat="of" derivedContent="4"/> are for further study.</t>
+      <t indent="0" pn="section-5-5">Note that the same level of protection would be achievable with a
+      simple C-multicast Source Tree Join route advertised to both the primary
+      and secondary Upstream PEs (carrying, as Route Target extended
+      communities, the values of the VRF Route Import Extended Community of each VPN
+      route from each Upstream PE). The advantage of using the Standby
+      semantic is that, supposing that downstream PEs always advertise a
+      Standby C-multicast route to the secondary Upstream PE, it allows to
+      choose the protection level through a change of configuration on the
+      secondary Upstream PE without requiring any reconfiguration of all the
+      downstream PEs.</t>
+    </section>
+    <section anchor="dups" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-duplicate-packets">Duplicate Packets</name>
+      <t indent="0" pn="section-6-1"><xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513">Multicast VPN specifications</xref> impose
+      that a PE only forwards to CEs the packets coming from the expected
+      Upstream PE (<xref target="RFC6513" sectionFormat="of" section="9.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6513#section-9.1" derivedContent="RFC6513"/>).</t>
+      <t indent="0" pn="section-6-2">We draw the reader's attention to the fact that the respect of this
+      part of MVPN specifications is especially important when two
+      distinct Upstream PEs are susceptible to forward the same traffic on
+      P-tunnels at the same time in the steady state. That will be the case
+      when "hot root standby" mode is used (<xref target="hot-standby" format="default" sectionFormat="of" derivedContent="Section 5"/>) and
+      can also be the case if the procedures of <xref target="tunnel-status" format="default" sectionFormat="of" derivedContent="Section 3"/>
+      are used; likewise, it can also be the case when a) the rules
+      determining the status of a tree are not the same on two distinct
+      downstream PEs or b) the rule determining the status of a tree depends
+      on conditions local to a PE (e.g., the PE-P upstream link being Up).</t>
+    </section>
+    <section anchor="IANA" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="pe-standby-com-iana" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-standby-pe-community">Standby PE Community</name>
+        <t indent="0" pn="section-7.1-1">IANA has allocated the BGP "Standby PE" community value 0xFFFF0009
+      from the "Border Gateway Protocol (BGP) Well-known Communities"
+      registry using the First Come First Served registration policy.</t>
+      </section>
+      <section anchor="iana-bfd-discr" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-bfd-discriminator">BFD Discriminator</name>
+        <t indent="0" pn="section-7.2-1">This document defines a new BGP optional transitive attribute called
+   "BFD Discriminator". IANA has allocated codepoint 38 in the "BGP Path
+   Attributes" registry to the BFD Discriminator attribute.</t>
+        <t indent="0" pn="section-7.2-2">
+   IANA has created a new "BFD Mode" subregistry in the "Border Gateway Protocol (BGP)
+   Parameters" registry.
+      The registration policies, per <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>, for
+      this subregistry are according to <xref target="iana-bfd-mode-reg" format="default" sectionFormat="of" derivedContent="Table 1"/>.
+        </t>
+        <table anchor="iana-bfd-mode-reg" align="center" pn="table-1">
+          <name slugifiedName="name-bfd-mode-subregistry-regist">"BFD Mode" Subregistry Registration Policies</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Policy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0- 175</td>
+              <td align="center" colspan="1" rowspan="1">IETF Review</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">176 - 249</td>
+              <td align="center" colspan="1" rowspan="1">First Come First Served</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">250 - 254</td>
+              <td align="center" colspan="1" rowspan="1">Experimental Use</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">255</td>
+              <td align="center" colspan="1" rowspan="1">IETF Review</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-7.2-4">
+   IANA has made initial assignments according to <xref target="iana-bfd-mode-alloc-tbl" format="default" sectionFormat="of" derivedContent="Table 2"/>.
+        </t>
+        <table anchor="iana-bfd-mode-alloc-tbl" align="center" pn="table-2">
+          <name slugifiedName="name-bfd-mode-subregistry">"BFD Mode" Subregistry</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Description</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0</td>
+              <td align="center" colspan="1" rowspan="1">Reserved</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="center" colspan="1" rowspan="1">P2MP BFD Session</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">2- 175</td>
+              <td align="center" colspan="1" rowspan="1">Unassigned</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">176 - 249</td>
+              <td align="center" colspan="1" rowspan="1">Unassigned</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">250 - 254</td>
+              <td align="center" colspan="1" rowspan="1">Experimental Use</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">255</td>
+              <td align="center" colspan="1" rowspan="1">Reserved</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section anchor="iana-bfd-attr-ext" numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-bfd-discriminator-optional-">BFD Discriminator Optional TLV Type</name>
+        <t indent="0" pn="section-7.3-1">
+   IANA has created a new "BFD Discriminator Optional TLV Type" subregistry in the "Border Gateway Protocol (BGP) Parameters" registry.
+   The registration policies, per <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>, for
+   this subregistry are according to <xref target="iana-bfd-discr-ext-reg" format="default" sectionFormat="of" derivedContent="Table 3"/>.
+        </t>
+        <table anchor="iana-bfd-discr-ext-reg" align="center" pn="table-3">
+          <name slugifiedName="name-bfd-discriminator-optional-t">"BFD Discriminator Optional TLV Type" Subregistry Registration Policies</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Policy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0- 175</td>
+              <td align="center" colspan="1" rowspan="1">IETF Review</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">176 - 249</td>
+              <td align="center" colspan="1" rowspan="1">First Come First Served</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">250 - 254</td>
+              <td align="center" colspan="1" rowspan="1">Experimental Use</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">255</td>
+              <td align="center" colspan="1" rowspan="1">IETF Review</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-7.3-3">
+IANA has made initial assignments according to <xref target="iana-bfd-discr-ext-tbl" format="default" sectionFormat="of" derivedContent="Table 4"/>.
+        </t>
+        <table anchor="iana-bfd-discr-ext-tbl" align="center" pn="table-4">
+          <name slugifiedName="name-bfd-discriminator-optional-tl">"BFD Discriminator Optional TLV Type" Subregistry</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Description</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0</td>
+              <td align="center" colspan="1" rowspan="1">Reserved</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="center" colspan="1" rowspan="1">Source IP Address</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">2- 175</td>
+              <td align="center" colspan="1" rowspan="1">Unassigned</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">176 - 249</td>
+              <td align="center" colspan="1" rowspan="1">Unassigned</td>
+              <td align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">250 - 254</td>
+              <td align="center" colspan="1" rowspan="1">Experimental Use</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">255</td>
+              <td align="center" colspan="1" rowspan="1">Reserved</td>
+              <td align="left" colspan="1" rowspan="1">This document</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">
+    This document describes procedures based on <xref target="RFC6513" format="default" sectionFormat="of" derivedContent="RFC6513"/> and
+    <xref target="RFC6514" format="default" sectionFormat="of" derivedContent="RFC6514"/>; hence, it shares the security considerations
+    respectively represented in those specifications.
+      </t>
+      <t indent="0" pn="section-8-2">
+This document uses P2MP BFD, as defined in <xref target="RFC8562" format="default" sectionFormat="of" derivedContent="RFC8562"/>, which, in
+turn, is based on <xref target="RFC5880" format="default" sectionFormat="of" derivedContent="RFC5880"/>.  Security considerations relevant
+to each protocol are discussed in the respective protocol specifications.  An
+implementation that supports this specification <bcp14>MUST</bcp14> provide a
+mechanism to limit the overall amount of capacity used by the BFD traffic (as
+the combination of the number of active P2MP BFD sessions and the rate of BFD
+Control packets to process).
+      </t>
+      <t indent="0" pn="section-8-3">
+        The methods described in <xref target="tunnel-status-determination" format="default" sectionFormat="of" derivedContent="Section 3.1"/>
+        may produce false-negative state changes that can be the trigger for
+        an unnecessary convergence in the control plane, ultimately negatively
+        impacting the multicast service provided by the VPN. An operator is
+        expected to consider the network environment and use available
+        controls of the mechanism used to determine the status of a P-tunnel.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4271" target="https://www.rfc-editor.org/info/rfc4271" quoteTitle="true" derivedAnchor="RFC4271">
+          <front>
+            <title>A Border Gateway Protocol 4 (BGP-4)</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Li" fullname="T. Li" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hares" fullname="S. Hares" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="January"/>
+            <abstract>
+              <t indent="0">This document discusses the Border Gateway Protocol (BGP), which is an inter-Autonomous System routing protocol.</t>
+              <t indent="0">The primary function of a BGP speaking system is to exchange network reachability information with other BGP systems.  This network reachability information includes information on the list of Autonomous Systems (ASes) that reachability information traverses. This information is sufficient for constructing a graph of AS connectivity for this reachability from which routing loops may be pruned, and, at the AS level, some policy decisions may be enforced.</t>
+              <t indent="0">BGP-4 provides a set of mechanisms for supporting Classless Inter-Domain Routing (CIDR).  These mechanisms include support for advertising a set of destinations as an IP prefix, and eliminating the concept of network "class" within BGP.  BGP-4 also introduces mechanisms that allow aggregation of routes, including aggregation of AS paths.</t>
+              <t indent="0">This document obsoletes RFC 1771.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4271"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4271"/>
+        </reference>
+        <reference anchor="RFC4875" target="https://www.rfc-editor.org/info/rfc4875" quoteTitle="true" derivedAnchor="RFC4875">
+          <front>
+            <title>Extensions to Resource Reservation Protocol - Traffic Engineering (RSVP-TE) for Point-to-Multipoint TE Label Switched Paths (LSPs)</title>
+            <author initials="R." surname="Aggarwal" fullname="R. Aggarwal" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Papadimitriou" fullname="D. Papadimitriou" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Yasukawa" fullname="S. Yasukawa" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="May"/>
+            <abstract>
+              <t indent="0">This document describes extensions to Resource Reservation Protocol - Traffic Engineering (RSVP-TE) for the set up of Traffic Engineered (TE) point-to-multipoint (P2MP) Label Switched Paths (LSPs) in Multi- Protocol Label Switching (MPLS) and Generalized MPLS (GMPLS) networks.  The solution relies on RSVP-TE without requiring a multicast routing protocol in the Service Provider core.  Protocol elements and procedures for this solution are described.</t>
+              <t indent="0">There can be various applications for P2MP TE LSPs such as IP multicast.  Specification of how such applications will use a P2MP TE LSP is outside the scope of this document.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4875"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4875"/>
+        </reference>
+        <reference anchor="RFC5880" target="https://www.rfc-editor.org/info/rfc5880" quoteTitle="true" derivedAnchor="RFC5880">
+          <front>
+            <title>Bidirectional Forwarding Detection (BFD)</title>
+            <author initials="D." surname="Katz" fullname="D. Katz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ward" fullname="D. Ward">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="June"/>
+            <abstract>
+              <t indent="0">This document describes a protocol intended to detect faults in the bidirectional path between two forwarding engines, including interfaces, data link(s), and to the extent possible the forwarding engines themselves, with potentially very low latency.  It operates independently of media, data protocols, and routing protocols. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5880"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5880"/>
+        </reference>
+        <reference anchor="RFC6513" target="https://www.rfc-editor.org/info/rfc6513" quoteTitle="true" derivedAnchor="RFC6513">
+          <front>
+            <title>Multicast in MPLS/BGP IP VPNs</title>
+            <author initials="E." surname="Rosen" fullname="E. Rosen" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Aggarwal" fullname="R. Aggarwal" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">In order for IP multicast traffic within a BGP/MPLS IP VPN (Virtual Private Network) to travel from one VPN site to another, special protocols and procedures must be implemented by the VPN Service Provider.  These protocols and procedures are specified in this document.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6513"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6513"/>
+        </reference>
+        <reference anchor="RFC6514" target="https://www.rfc-editor.org/info/rfc6514" quoteTitle="true" derivedAnchor="RFC6514">
+          <front>
+            <title>BGP Encodings and Procedures for Multicast in MPLS/BGP IP VPNs</title>
+            <author initials="R." surname="Aggarwal" fullname="R. Aggarwal">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rosen" fullname="E. Rosen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Morin" fullname="T. Morin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document describes the BGP encodings and procedures for exchanging the information elements required by Multicast in MPLS/BGP IP VPNs, as specified in RFC 6513.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6514"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6514"/>
+        </reference>
+        <reference anchor="RFC7606" target="https://www.rfc-editor.org/info/rfc7606" quoteTitle="true" derivedAnchor="RFC7606">
+          <front>
+            <title>Revised Error Handling for BGP UPDATE Messages</title>
+            <author initials="E." surname="Chen" fullname="E. Chen" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Mohapatra" fullname="P. Mohapatra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Patel" fullname="K. Patel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t indent="0">According to the base BGP specification, a BGP speaker that receives an UPDATE message containing a malformed attribute is required to reset the session over which the offending attribute was received. This behavior is undesirable because a session reset would impact not only routes with the offending attribute but also other valid routes exchanged over the session.  This document partially revises the error handling for UPDATE messages and provides guidelines for the authors of documents defining new attributes.  Finally, it revises the error handling procedures for a number of existing attributes.</t>
+              <t indent="0">This document updates error handling for RFCs 1997, 4271, 4360, 4456, 4760, 5543, 5701, and 6368.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7606"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7606"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8562" target="https://www.rfc-editor.org/info/rfc8562" quoteTitle="true" derivedAnchor="RFC8562">
+          <front>
+            <title>Bidirectional Forwarding Detection (BFD) for Multipoint Networks</title>
+            <author initials="D." surname="Katz" fullname="D. Katz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ward" fullname="D. Ward">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Pallagatti" fullname="S. Pallagatti" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Mirsky" fullname="G. Mirsky" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="April"/>
+            <abstract>
+              <t indent="0">This document describes extensions to the Bidirectional Forwarding Detection (BFD) protocol for its use in multipoint and multicast networks.</t>
+              <t indent="0">This document updates RFC 5880.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8562"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8562"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="MPLS-P2MP-BFD" quoteTitle="true" target="https://tools.ietf.org/html/draft-mirsky-mpls-p2mp-bfd-14" derivedAnchor="MPLS-P2MP-BFD">
+          <front>
+            <title>BFD for Multipoint Networks over Point-to-Multi-Point MPLS LSP</title>
+            <author initials="G" surname="Mirsky" fullname="Greg Mirsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G" surname="Mishra" fullname="Gyan Mishra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D" surname="Eastlake 3rd" fullname="Donald Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="2021"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mirsky-mpls-p2mp-bfd-14"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC1122" target="https://www.rfc-editor.org/info/rfc1122" quoteTitle="true" derivedAnchor="RFC1122">
+          <front>
+            <title>Requirements for Internet Hosts - Communication Layers</title>
+            <author initials="R." surname="Braden" fullname="R. Braden" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1989" month="October"/>
+            <abstract>
+              <t indent="0">This RFC is an official specification for the Internet community.  It incorporates by reference, amends, corrects, and supplements the primary protocol standards documents relating to hosts.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="3"/>
+          <seriesInfo name="RFC" value="1122"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1122"/>
+        </reference>
+        <reference anchor="RFC4090" target="https://www.rfc-editor.org/info/rfc4090" quoteTitle="true" derivedAnchor="RFC4090">
+          <front>
+            <title>Fast Reroute Extensions to RSVP-TE for LSP Tunnels</title>
+            <author initials="P." surname="Pan" fullname="P. Pan" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Swallow" fullname="G. Swallow" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Atlas" fullname="A. Atlas" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="May"/>
+            <abstract>
+              <t indent="0">This document defines RSVP-TE extensions to establish backup label-switched path (LSP) tunnels for local repair of LSP tunnels.  These mechanisms enable the re-direction of traffic onto backup LSP tunnels in 10s of milliseconds, in the event of a failure.</t>
+              <t indent="0">Two methods are defined here.  The one-to-one backup method creates detour LSPs for each protected LSP at each potential point of local repair.  The facility backup method creates a bypass tunnel to protect a potential failure point; by taking advantage of MPLS label stacking, this bypass tunnel can protect a set of LSPs that have similar backup constraints.  Both methods can be used to protect links and nodes during network failure.  The described behavior and extensions to RSVP allow nodes to implement either method or both and to interoperate in a mixed network.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4090"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4090"/>
+        </reference>
+        <reference anchor="RFC4291" target="https://www.rfc-editor.org/info/rfc4291" quoteTitle="true" derivedAnchor="RFC4291">
+          <front>
+            <title>IP Version 6 Addressing Architecture</title>
+            <author initials="R." surname="Hinden" fullname="R. Hinden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="February"/>
+            <abstract>
+              <t indent="0">This specification defines the addressing architecture of the IP Version 6 (IPv6) protocol.  The document includes the IPv6 addressing model, text representations of IPv6 addresses, definition of IPv6 unicast addresses, anycast addresses, and multicast addresses, and an IPv6 node's required addresses.</t>
+              <t indent="0">This document obsoletes RFC 3513, "IP Version 6 Addressing Architecture".   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4291"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4291"/>
+        </reference>
+        <reference anchor="RFC7431" target="https://www.rfc-editor.org/info/rfc7431" quoteTitle="true" derivedAnchor="RFC7431">
+          <front>
+            <title>Multicast-Only Fast Reroute</title>
+            <author initials="A." surname="Karan" fullname="A. Karan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Filsfils" fullname="C. Filsfils">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="IJ." surname="Wijnands" fullname="IJ. Wijnands" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Decraene" fullname="B. Decraene">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t indent="0">As IPTV deployments grow in number and size, service providers are looking for solutions that minimize the service disruption due to faults in the IP network carrying the packets for these services.  This document describes a mechanism for minimizing packet loss in a network when node or link failures occur. Multicast-only Fast Reroute (MoFRR) works by making simple enhancements to multicast routing protocols such as Protocol Independent Multicast (PIM) and Multipoint LDP (mLDP).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7431"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7431"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Acknowledgments" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The authors want to thank <contact fullname="Greg Reaume"/>, <contact fullname="Eric Rosen"/>, <contact fullname="Jeffrey Zhang"/>, <contact fullname="Martin Vigoureux"/>, <contact fullname="Adrian Farrel"/>, and
+      <contact fullname="Zheng (Sandy) Zhang"/> for their reviews, useful
+      comments, and helpful suggestions.</t>
+    </section>
+    <section anchor="Contributors" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-contributors">Contributors</name>
+      <t indent="0" pn="section-appendix.b-1">Below is a list of other contributing authors in alphabetical order:
+      </t>
+      <author fullname="Rahul Aggarwal" initials="R" surname="Aggarwal">
+        <organization showOnFrontPage="true">Arktan</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <code/>
+            <country/>
+          </postal>
+          <email>raggarwa_1@yahoo.com</email>
+        </address>
+      </author>
+      <author fullname="Nehal Bhau" initials="N" surname="Bhau">
+        <organization showOnFrontPage="true">Cisco</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <code/>
+            <country/>
+          </postal>
+          <email>NBhau@cisco.com</email>
+        </address>
+      </author>
+      <author fullname="Clayton Hassen" initials="C" surname="Hassen">
+        <organization showOnFrontPage="true">Bell Canada</organization>
+        <address>
+          <postal>
+            <street>2955 Virtual Way</street>
+            <city>Vancouver</city>
+            <code/>
+            <country>Canada</country>
+          </postal>
+          <email>Clayton.Hassen@bell.ca</email>
+        </address>
+      </author>
+      <author fullname="Wim Henderickx" initials="W" surname="Henderickx">
+        <organization showOnFrontPage="true">Nokia</organization>
+        <address>
+          <postal>
+            <street>Copernicuslaan 50</street>
+            <city>Antwerp</city>
+            <code>2018</code>
+            <country>Belgium</country>
+          </postal>
+          <email>wim.henderickx@nokia.com</email>
+        </address>
+      </author>
+      <author fullname="Pradeep Jain" initials="P" surname="Jain">
+        <organization showOnFrontPage="true">Nokia</organization>
+        <address>
+          <postal>
+            <street>701 E Middlefield Rd</street>
+            <city>Mountain View</city>
+            <code>CA 94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>pradeep.jain@nokia.com</email>
+        </address>
+      </author>
+      <author fullname="Jayant Kotalwar" initials="J" surname="Kotalwar">
+        <organization showOnFrontPage="true">Nokia</organization>
+        <address>
+          <postal>
+            <street>701 E Middlefield Rd</street>
+            <city>Mountain View</city>
+            <code>CA 94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>Jayant.Kotalwar@nokia.com</email>
+        </address>
+      </author>
+      <author fullname="Praveen Muley" initials="P" surname="Muley">
+        <organization showOnFrontPage="true">Nokia</organization>
+        <address>
+          <postal>
+            <street>701 East Middlefield Rd</street>
+            <city>Mountain View</city>
+            <code>CA 94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>praveen.muley@nokia.com</email>
+        </address>
+      </author>
+      <author fullname="Ray (Lei) Qiu" initials="R" surname="Qiu">
+        <organization showOnFrontPage="true">Juniper Networks</organization>
+        <address>
+          <postal>
+            <street>1194 North Mathilda Ave.</street>
+            <city>Sunnyvale</city>
+            <code>CA 94089</code>
+            <country>United States of America</country>
+          </postal>
+          <email>rqiu@juniper.net</email>
+        </address>
+      </author>
+      <author fullname="Yakov Rekhter" initials="Y" surname="Rekhter">
+        <organization showOnFrontPage="true">Juniper Networks</organization>
+        <address>
+          <postal>
+            <street>1194 North Mathilda Ave.</street>
+            <city>Sunnyvale</city>
+            <code>CA 94089</code>
+            <country>United States of America</country>
+          </postal>
+          <email>yakov@juniper.net</email>
+        </address>
+      </author>
+      <author fullname="Kanwar Singh" initials="K" surname="Singh">
+        <organization showOnFrontPage="true">Nokia</organization>
+        <address>
+          <postal>
+            <street>701 E Middlefield Rd</street>
+            <city>Mountain View</city>
+            <code>CA 94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>kanwar.singh@nokia.com</email>
+        </address>
+      </author>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Thomas Morin" initials="T." role="editor" surname="Morin">
+        <organization showOnFrontPage="true">Orange</organization>
+        <address>
+          <postal>
+            <street>2, avenue Pierre Marzin</street>
+            <city>Lannion</city>
+            <code>22307</code>
+            <country>France</country>
+          </postal>
+          <email>thomas.morin@orange.com</email>
+        </address>
+      </author>
+      <author fullname="Robert Kebler" initials="R." role="editor" surname="Kebler">
+        <organization showOnFrontPage="true">Juniper Networks</organization>
+        <address>
+          <postal>
+            <street>1194 North Mathilda Avenue</street>
+            <city>Sunnyvale</city>
+            <region>CA</region>
+            <code>94089</code>
+            <country>United States of America</country>
+          </postal>
+          <email>rkebler@juniper.net</email>
+        </address>
+      </author>
+      <author initials="G." surname="Mirsky" fullname="Greg Mirsky" role="editor">
+        <organization showOnFrontPage="true">ZTE Corp.</organization>
+        <address>
+          <email>gregimirsky@gmail.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

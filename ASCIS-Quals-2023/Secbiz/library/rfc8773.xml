@@ -1,0 +1,892 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="exp" consensus="true" docName="draft-ietf-tls-tls13-cert-with-extern-psk-07" indexInclude="true" ipr="trust200902" number="8773" prepTime="2020-03-29T14:38:23" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-tls13-cert-with-extern-psk-07" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8773" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Certificate with External PSK">TLS 1.3 Extension for Certificate-Based Authentication with an External Pre-Shared Key</title>
+    <seriesInfo name="RFC" value="8773" stream="IETF"/>
+    <author fullname="Russ Housley" initials="R." surname="Housley">
+      <organization abbrev="Vigil Security" showOnFrontPage="true">Vigil Security, LLC</organization>
+      <address>
+        <postal>
+          <street>516 Dranesville Road</street>
+          <city>Herndon</city>
+          <region>VA</region>
+          <code>20170</code>
+          <country>United States of America</country>
+        </postal>
+        <email>housley@vigilsec.com</email>
+      </address>
+    </author>
+    <date month="03" year="2020"/>
+    <keyword>cryptography</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+        This document specifies a TLS 1.3 extension that allows a server to
+        authenticate with a combination of a certificate and an external
+        pre-shared key (PSK).
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This document is a product of the Internet Engineering
+            Task Force (IETF).  It represents the consensus of the IETF community.
+            It has received public review and has been approved for publication
+            by the Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8773" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-motivation-and-design-ratio">Motivation and Design Rationale</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-extension-overview">Extension Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate-with-external-p">Certificate with External PSK Extension</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-companion-extensions">Companion Extensions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication">Authentication</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-keying-material">Keying Material</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+        The TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> handshake
+        protocol provides two mutually exclusive forms of server
+        authentication.  First, the server can be authenticated by
+        providing a signature certificate and creating a valid digital
+        signature to demonstrate that it possesses the corresponding
+        private key.  Second, the server can be authenticated
+        by demonstrating that it possesses a pre-shared key (PSK) that
+        was established by a previous handshake.  A PSK that
+        is established in this fashion is called a resumption PSK.  A
+        PSK that is established by any other means is called an external
+        PSK.  This document specifies a TLS 1.3 extension permitting
+        certificate-based server authentication to be combined with
+        an external PSK as an input to the TLS 1.3 key schedule.
+      </t>
+      <t pn="section-1-2">
+        Several implementors wanted to gain more experience with this
+        specification before producing a Standards Track RFC.  As a
+        result, this specification is being published as an Experimental
+        RFC to enable interoperable implementations and gain deployment
+        and operational experience.
+      </t>
+    </section>
+    <section anchor="term" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="motive" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-motivation-and-design-ratio">Motivation and Design Rationale</name>
+      <t pn="section-3-1">
+        The development of a large-scale quantum computer would pose a serious
+        challenge for the cryptographic algorithms that are widely deployed
+        today, including the digital signature algorithms that are used
+        to authenticate the server in the TLS 1.3 handshake protocol.  It
+        is an open question whether or not it is feasible to build
+        a large-scale quantum computer, and if so, when that might
+        happen.  However, if such a quantum computer is invented, many
+        of the cryptographic algorithms and the security protocols that
+        use them would become vulnerable.
+      </t>
+      <t pn="section-3-2">
+		The TLS 1.3 handshake protocol employs key agreement algorithms
+		and digital signature algorithms that could be broken by the
+		development of a large-scale quantum computer
+		<xref target="I-D.hoffman-c2pq" format="default" sectionFormat="of" derivedContent="TRANSITION"/>.  The key agreement algorithms
+		include Diffie-Hellman (DH) <xref target="DH1976" format="default" sectionFormat="of" derivedContent="DH1976"/> and
+		Elliptic Curve Diffie-Hellman (ECDH) <xref target="IEEE1363" format="default" sectionFormat="of" derivedContent="IEEE1363"/>;
+		the digital signature algorithms include RSA <xref target="RFC8017" format="default" sectionFormat="of" derivedContent="RFC8017"/>
+		and the Elliptic Curve Digital Signature Algorithm (ECDSA)
+		<xref target="FIPS186" format="default" sectionFormat="of" derivedContent="FIPS186"/>.  As a result, an adversary that
+		stores a TLS 1.3 handshake protocol exchange today could
+		decrypt the associated encrypted communications in the
+		future when a large-scale quantum computer becomes
+		available.
+      </t>
+      <t pn="section-3-3">
+        In the near term, this document describes a TLS 1.3 extension to protect
+        today's communications from the future invention of a large-scale
+        quantum computer by providing a strong external PSK as an input to
+        the TLS 1.3 key schedule while preserving the authentication provided
+        by the existing certificate and digital signature mechanisms.
+      </t>
+    </section>
+    <section anchor="over" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-extension-overview">Extension Overview</name>
+      <t pn="section-4-1">
+        This section provides a brief overview of the
+        "tls_cert_with_extern_psk" extension.
+      </t>
+      <t pn="section-4-2">
+        The client includes the "tls_cert_with_extern_psk" extension in the
+        ClientHello message.  The "tls_cert_with_extern_psk" extension <bcp14>MUST</bcp14>
+        be accompanied by the "key_share", "psk_key_exchange_modes", and
+        "pre_shared_key" extensions.  The client <bcp14>MAY</bcp14> also find it useful
+        to include the "supported_groups" extension.  Since the
+        "tls_cert_with_extern_psk" extension is intended to be used only
+        with initial handshakes, it <bcp14>MUST NOT</bcp14> be sent alongside the
+        "early_data" extension.  These extensions are all described in
+        <xref target="RFC8446" sectionFormat="of" section="4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2" derivedContent="RFC8446"/>, which also requires
+        the "pre_shared_key" extension to be the last extension in the
+        ClientHello message.
+      </t>
+      <t pn="section-4-3">
+        If the client includes both the "tls_cert_with_extern_psk" extension
+        and the "early_data" extension, then the server <bcp14>MUST</bcp14> terminate the
+        connection with an "illegal_parameter" alert.
+      </t>
+      <t pn="section-4-4">
+        If the server is willing to use one of the external PSKs listed in the
+        "pre_shared_key" extension and perform certificate-based authentication,
+        then the server includes the "tls_cert_with_extern_psk" extension in the
+        ServerHello message.  The "tls_cert_with_extern_psk" extension <bcp14>MUST</bcp14> be
+        accompanied by the "key_share" and "pre_shared_key" extensions.  If none
+        of the external PSKs in the list provided by the client is acceptable
+        to the server, then the "tls_cert_with_extern_psk" extension is
+        omitted from the ServerHello message.
+      </t>
+      <t pn="section-4-5">
+        When the "tls_cert_with_extern_psk" extension is successfully
+        negotiated, the TLS 1.3 key schedule processing includes
+        both the selected external PSK and the (EC)DHE shared secret
+        value.  (EC)DHE refers to Diffie-Hellman over either finite fields
+        or elliptic curves.  As a result, the Early Secret, Handshake
+        Secret, and Master Secret values all depend upon the value of the
+        selected external PSK.  Of course, the Early Secret does not
+        depend upon the (EC)DHE shared secret.
+      </t>
+      <t pn="section-4-6">
+        The authentication of the server and optional authentication of
+        the client depend upon the ability to generate a signature that
+        can be validated with the public key in their certificates.  The
+        authentication processing is not changed in any way by the
+        selected external PSK.
+      </t>
+      <t pn="section-4-7">
+        Each external PSK is associated with a single hash algorithm, which
+        is required by <xref target="RFC8446" sectionFormat="of" section="4.2.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11" derivedContent="RFC8446"/>.  The
+        hash algorithm <bcp14>MUST</bcp14> be set when the PSK is established, with a
+        default of SHA-256.
+      </t>
+    </section>
+    <section anchor="extn" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-certificate-with-external-p">Certificate with External PSK Extension</name>
+      <t pn="section-5-1">
+        This section specifies the "tls_cert_with_extern_psk" extension,
+        which <bcp14>MAY</bcp14> appear in the ClientHello message and ServerHello message.  It
+        <bcp14>MUST NOT</bcp14> appear in any other messages.  The "tls_cert_with_extern_psk"
+        extension <bcp14>MUST NOT</bcp14> appear in the ServerHello message unless the
+        "tls_cert_with_extern_psk" extension appeared in the preceding
+        ClientHello message.  If an implementation recognizes the
+        "tls_cert_with_extern_psk" extension and receives it in any other
+        message, then the implementation <bcp14>MUST</bcp14> abort the handshake with an
+        "illegal_parameter" alert.
+      </t>
+      <t pn="section-5-2">
+        The general extension mechanisms enable clients and servers to
+        negotiate the use of specific extensions.  Clients request
+        extended functionality from servers with the extensions field
+        in the ClientHello message.  If the server responds with a
+        HelloRetryRequest message, then the client sends another
+        ClientHello message as described in <xref target="RFC8446" sectionFormat="of" section="4.1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.1.2" derivedContent="RFC8446"/>, including the same
+        "tls_cert_with_extern_psk" extension as the original
+        ClientHello message, or aborts the handshake.
+      </t>
+      <t pn="section-5-3">
+        Many server extensions are carried in the EncryptedExtensions
+        message; however, the "tls_cert_with_extern_psk" extension is
+        carried in the ServerHello message.  Successful negotiation of
+        the "tls_cert_with_extern_psk" extension affects the key used for
+        encryption, so it cannot be carried in the EncryptedExtensions
+        message.  Therefore, the "tls_cert_with_extern_psk" extension
+        is only present in the ServerHello message if the server
+        recognizes the "tls_cert_with_extern_psk" extension and the
+        server possesses one of the external PSKs offered by the client
+        in the "pre_shared_key" extension in the ClientHello message.
+      </t>
+      <t pn="section-5-4">
+        The Extension structure is defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>;
+        it is repeated here for convenience.
+      </t>
+      <sourcecode type="tls-presentation" markers="false" pn="section-5-5">  struct {
+      ExtensionType extension_type;
+      opaque extension_data&lt;0..2^16-1&gt;;
+  } Extension;
+</sourcecode>
+      <t pn="section-5-6">
+        The "extension_type" identifies the particular extension type,
+        and the "extension_data" contains information specific to the
+        particular extension type.
+      </t>
+      <t pn="section-5-7">
+        This document specifies the "tls_cert_with_extern_psk" extension,
+        adding one new type to ExtensionType:
+      </t>
+      <sourcecode type="tls-presentation" markers="false" pn="section-5-8">  enum {
+      tls_cert_with_extern_psk(33), (65535)
+  } ExtensionType;
+</sourcecode>
+      <t pn="section-5-9">
+        The "tls_cert_with_extern_psk" extension is relevant when the
+        client and server possess an external PSK in common that can be
+        used as an input to the TLS 1.3 key schedule.  The
+        "tls_cert_with_extern_psk" extension is essentially a flag to
+        use the external PSK in the key schedule, and it has the
+        following syntax:
+      </t>
+      <sourcecode type="tls-presentation" markers="false" pn="section-5-10">  struct {
+      select (Handshake.msg_type) {
+          case client_hello: Empty;
+          case server_hello: Empty;
+      };
+  } CertWithExternPSK;
+</sourcecode>
+      <section anchor="other-extns" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-companion-extensions">Companion Extensions</name>
+        <t pn="section-5.1-1">
+        <xref target="over" format="default" sectionFormat="of" derivedContent="Section 4"/> lists the extensions that are required to accompany the
+        "tls_cert_with_extern_psk" extension.  Most of those extensions 
+        are not impacted in any way by this specification.  However, this
+        section discusses the extensions that require additional consideration.
+        </t>
+        <t pn="section-5.1-2">
+        The "psk_key_exchange_modes" extension is defined in
+        of <xref target="RFC8446" sectionFormat="of" section="4.2.9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.9" derivedContent="RFC8446"/>.  The
+	"psk_key_exchange_modes"
+        extension restricts the use of both the PSKs offered in this
+        ClientHello and those that the server might supply via a subsequent
+        NewSessionTicket.  As a result, when the "psk_key_exchange_modes"
+        extension is included in the ClientHello message, clients <bcp14>MUST</bcp14>
+        include psk_dhe_ke mode.  In addition, clients <bcp14>MAY</bcp14> also include
+        psk_ke mode to support a subsequent NewSessionTicket.  When the
+        "psk_key_exchange_modes" extension is included in the ServerHello
+        message, servers <bcp14>MUST</bcp14> select the psk_dhe_ke mode for the initial
+        handshake.  Servers <bcp14>MUST</bcp14> select a key exchange mode that is listed
+        by the client for subsequent handshakes that include the resumption
+        PSK from the initial handshake.
+        </t>
+        <t pn="section-5.1-3">
+        The "pre_shared_key" extension is defined in <xref target="RFC8446" sectionFormat="of" section="4.2.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11" derivedContent="RFC8446"/>.  The
+	syntax is repeated below for
+        convenience.  All of the listed PSKs <bcp14>MUST</bcp14> be external PSKs.  If a
+        resumption PSK is listed along with the "tls_cert_with_extern_psk"
+        extension, the server <bcp14>MUST</bcp14> abort the handshake with an
+        "illegal_parameter" alert.
+        </t>
+        <sourcecode type="tls-presentation" markers="false" pn="section-5.1-4">  struct {
+      opaque identity&lt;1..2^16-1&gt;;
+      uint32 obfuscated_ticket_age;
+  } PskIdentity;
+
+  opaque PskBinderEntry&lt;32..255&gt;;
+
+  struct {
+      PskIdentity identities&lt;7..2^16-1&gt;;
+      PskBinderEntry binders&lt;33..2^16-1&gt;;
+  } OfferedPsks;
+
+  struct {
+      select (Handshake.msg_type) {
+          case client_hello: OfferedPsks;
+          case server_hello: uint16 selected_identity;
+      };
+  } PreSharedKeyExtension;
+</sourcecode>
+        <t pn="section-5.1-5">
+        "OfferedPsks" contains the list of PSK identities and
+        associated binders for the external PSKs that the client is
+        willing to use with the server.
+        </t>
+        <t pn="section-5.1-6">
+        The identities are a list of external PSK identities that the
+        client is willing to negotiate with the server.  Each external
+        PSK has an associated identity that is known to the client
+        and the server; the associated identities may be known to other
+        parties as well.  In addition, the binder validation (see below)
+        confirms that the client and server have the same key associated
+        with the identity.
+        </t>
+        <t pn="section-5.1-7">
+        The "obfuscated_ticket_age" is not used for external PSKs.  As
+        stated in <xref target="RFC8446" sectionFormat="of" section="4.2.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11" derivedContent="RFC8446"/>, clients
+        <bcp14>SHOULD</bcp14> set this value to 0, and servers <bcp14>MUST</bcp14> ignore the value.
+        </t>
+        <t pn="section-5.1-8">
+        The binders are a series of HMAC <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="RFC2104"/> values, one
+        for each external PSK offered by the client, in the same order as the
+        identities list.  The HMAC value is computed using the binder_key, which
+        is derived from the external PSK, and a partial transcript of the current
+        handshake.  Generation of the binder_key from the external PSK is
+        described in <xref target="RFC8446" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-7.1" derivedContent="RFC8446"/>.  The
+        partial transcript of the current handshake includes a partial
+        ClientHello up to and including the PreSharedKeyExtension.identities
+        field, as described in <xref target="RFC8446" sectionFormat="of" section="4.2.11.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11.2" derivedContent="RFC8446"/>.
+        </t>
+        <t pn="section-5.1-9">
+        The "selected_identity" contains the index of the external PSK
+        identity that the server selected from the list offered by the
+        client.  As described in <xref target="RFC8446" sectionFormat="of" section="4.2.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11" derivedContent="RFC8446"/>,
+        the server <bcp14>MUST</bcp14> validate the binder value that corresponds to the
+        selected external PSK, and if the binder does not validate, the
+        server <bcp14>MUST</bcp14> abort the handshake with an "illegal_parameter" alert.
+        </t>
+      </section>
+      <section anchor="authn" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-authentication">Authentication</name>
+        <t pn="section-5.2-1">
+        When the "tls_cert_with_extern_psk" extension is successfully
+        negotiated, authentication of the server depends upon the ability to
+        generate a signature that can be validated with the public key in 
+        the server's certificate.  This is accomplished by the server
+        sending the Certificate and CertificateVerify messages, as described
+        in Sections <xref target="RFC8446" sectionFormat="bare" section="4.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.2" derivedContent="RFC8446"/> and <xref target="RFC8446" sectionFormat="bare" section="4.4.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.3" derivedContent="RFC8446"/> of <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.
+        </t>
+        <t pn="section-5.2-2">
+        TLS 1.3 does not permit the server to send a CertificateRequest message
+        when a PSK is being used.  This restriction is removed when the
+        "tls_cert_with_extern_psk" extension is negotiated, allowing
+        certificate-based authentication for both the client and the server.  If
+        certificate-based client authentication is desired, this is accomplished
+        by the client sending the Certificate and CertificateVerify messages as
+        described in Sections <xref target="RFC8446" sectionFormat="bare" section="4.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.2" derivedContent="RFC8446"/> and <xref target="RFC8446" sectionFormat="bare" section="4.4.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.3" derivedContent="RFC8446"/> of <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.
+        </t>
+      </section>
+      <section anchor="keying" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-keying-material">Keying Material</name>
+        <t pn="section-5.3-1">
+        <xref target="RFC8446" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-7.1" derivedContent="RFC8446"/> specifies the
+        TLS 1.3 key schedule.  The successful negotiation of the
+        "tls_cert_with_extern_psk" extension requires the key schedule
+        processing to include both the external PSK and the (EC)DHE
+	shared secret value.
+        </t>
+        <t pn="section-5.3-2">
+        If the client and the server have different values associated
+        with the selected external PSK identifier, then the client and
+        the server will compute different values for every entry in the
+        key schedule, which will lead to the client aborting the
+        handshake with a "decrypt_error" alert. 
+        </t>
+      </section>
+    </section>
+    <section anchor="IANA-con" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-6-1">
+        IANA has updated the "TLS ExtensionType Values" registry
+	<xref target="IANA" format="default" sectionFormat="of" derivedContent="IANA"/>
+        to include "tls_cert_with_extern_psk" with a value of 33 and the list of
+        messages "CH, SH" in which the "tls_cert_with_extern_psk" extension may
+        appear.
+      </t>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-7-1">
+        The Security Considerations in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>
+        remain relevant.
+      </t>
+      <t pn="section-7-2">
+        TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> does not permit
+        the server to send a CertificateRequest message when a PSK
+        is being used.  This restriction is removed when the
+        "tls_cert_with_extern_psk" extension is offered by the client
+        and accepted by the server.  However, TLS 1.3 does not
+        permit an external PSK to be used in the same fashion as a
+        resumption PSK, and this extension does not alter those
+        restrictions.  Thus, a certificate <bcp14>MUST NOT</bcp14> be used with
+        a resumption PSK.
+      </t>
+      <t pn="section-7-3">
+        Implementations must protect the external pre-shared key (PSK).
+        Compromise of the external PSK will make the encrypted session
+        content vulnerable to the future development of a large-scale
+        quantum computer.  However, the generation, distribution, and
+        management of the external PSKs is out of scope for this
+        specification.
+      </t>
+      <t pn="section-7-4">
+        Implementers should not transmit the same content on a connection
+        that is protected with an external PSK and a connection that is
+        not.  Doing so may allow an eavesdropper to correlate the
+        connections, making the content vulnerable to the future
+        invention of a large-scale quantum computer.
+      </t>
+      <t pn="section-7-5">
+        Implementations must generate external PSKs with a secure key-management
+        technique, such as pseudorandom generation of the key or derivation of
+        the key from one or more other secure keys.  The use of inadequate
+        pseudorandom number generators (PRNGs) to generate external PSKs can
+        result in little or no security.  An attacker may find it much easier
+        to reproduce the PRNG environment that produced the external PSKs and
+        search the resulting small set of possibilities, rather than brute-force
+        searching the whole key space.  The generation of quality random
+        numbers is difficult.  <xref target="RFC4086" format="default" sectionFormat="of" derivedContent="RFC4086"/> offers important
+        guidance in this area.
+      </t>
+      <t pn="section-7-6">
+        If the external PSK is known to any party other than the client and
+        the server, then the external PSK <bcp14>MUST NOT</bcp14> be the sole basis for
+        authentication.  The reasoning is explained in Section 4.2 of
+        <xref target="K2016" format="default" sectionFormat="of" derivedContent="K2016"/>.  When this extension is used, authentication
+        is based on certificates, not the external PSK.
+      </t>
+      <t pn="section-7-7">
+        In this extension, the external PSK preserves confidentiality if the
+        (EC)DH key agreement is ever broken by cryptanalysis or the future
+        invention of a large-scale quantum computer.  As long as the attacker
+        does not know the PSK and the key derivation algorithm remains
+        unbroken, the attacker cannot derive the session secrets, even if they
+        are able to compute the (EC)DH shared secret.  Should the attacker be
+        able compute the (EC)DH shared secret, the forward-secrecy advantages
+        traditionally associated with ephemeral (EC)DH keys will no longer be
+        relevant. Although the ephemeral private keys used during a given TLS
+        session are destroyed at the end of a session, preventing the attacker
+        from later accessing them, these private keys would nevertheless be
+        recoverable due to the break in the algorithm.  However, a more
+        general notion of "secrecy after key material is destroyed" would still
+        be achievable using external PSKs, if they are managed in a way that
+        ensures their destruction when they are no longer needed, and with
+        the assumption that the algorithms that use the external PSKs remain
+        quantum-safe.
+      </t>
+      <t pn="section-7-8">
+        TLS 1.3 key derivation makes use of the HMAC-based Key Derivation
+	Function (HKDF) algorithm, which depends
+        upon the HMAC <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="RFC2104"/> construction and a hash
+        function.  This extension provides the desired protection for the
+        session secrets, as long as HMAC with the selected hash function is
+         a pseudorandom function (PRF) <xref target="GGM1986" format="default" sectionFormat="of" derivedContent="GGM1986"/>.
+      </t>
+      <t pn="section-7-9">
+        This specification does not require that the external PSK is known only by
+        the client and server.  The external PSK may be known to a group.  Since
+        authentication depends on the public key in a certificate, knowledge of
+        the external PSK by other parties does not enable impersonation.  Since
+        confidentiality depends on the shared secret from (EC)DH, knowledge of
+        the external PSK by other parties does not enable eavesdropping.  However,
+        group members can record the traffic of other members and then decrypt it
+        if they ever gain access to a large-scale quantum computer.  Also, when
+        many parties know the external PSK, there are many opportunities for theft
+        of the external PSK by an attacker.  Once an attacker has the external PSK,
+        they can decrypt stored traffic if they ever gain access to a large-scale
+        quantum computer, in the same manner as a legitimate group member.
+      </t>
+      <t pn="section-7-10">
+
+        TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> takes a conservative approach to PSKs;
+        they are bound to a specific hash function and KDF.  By contrast,
+        TLS 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> allows PSKs to be used with any hash
+        function and the TLS 1.2 PRF.  Thus, the safest approach is to use a PSK
+        exclusively with TLS 1.2 or exclusively with TLS 1.3.  Given one PSK,
+        one can derive a PSK for exclusive use with TLS 1.2 and derive another
+        PSK for exclusive use with TLS 1.3 using the mechanism specified in
+        <xref target="I-D.ietf-tls-external-psk-importer" format="default" sectionFormat="of" derivedContent="IMPORT"/>.
+      </t>
+      <t pn="section-7-11">
+        TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> has received careful security analysis,
+        and the following informal reasoning shows that the addition of this
+        extension does not introduce any security defects.  This extension
+        requires the use of certificates for authentication, but the processing
+        of certificates is unchanged by this extension.  This extension places
+        an external PSK in the key schedule as part of the computation of the
+        Early Secret.  In the initial handshake without this extension, the
+        Early Secret is computed as:
+      </t>
+      <sourcecode markers="false" pn="section-7-12">
+   Early Secret = HKDF-Extract(0, 0)
+</sourcecode>
+      <t pn="section-7-13">
+        With this extension, the Early Secret is computed as:
+      </t>
+      <sourcecode markers="false" pn="section-7-14">
+   Early Secret = HKDF-Extract(External PSK, 0)
+</sourcecode>
+      <t pn="section-7-15">
+        Any entropy contributed by the external PSK can only make the Early
+        Secret better; the External PSK cannot make it worse.  For these two
+        reasons, TLS 1.3 continues to meet its security goals when this extension
+        is used.
+      </t>
+    </section>
+    <section anchor="privacy" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t pn="section-8-1">
+        <xref target="RFC8446" sectionFormat="of" section="E.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-E.6" derivedContent="RFC8446"/> discusses identity-exposure
+        attacks on PSKs.  The guidance in this section remains relevant.
+      </t>
+      <t pn="section-8-2">
+        This extension makes use of external PSKs to improve resilience against
+        attackers that gain access to a large-scale quantum computer in the
+        future.  This extension is always accompanied by the "pre_shared_key"
+        extension to provide the PSK identities in plaintext in the ClientHello
+        message.  Passive observation of the these PSK identities will aid an
+        attacker in tracking users of this extension.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.hoffman-c2pq" to="TRANSITION"/>
+    <displayreference target="I-D.ietf-tls-external-psk-importer" to="IMPORT"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t>This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t>This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="DH1976" target="https://ieeexplore.ieee.org/document/1055638" quoteTitle="true" derivedAnchor="DH1976">
+          <front>
+            <title>New Directions in Cryptography</title>
+            <author initials="W" surname="Diffie" fullname="Whitfield Diffie"/>
+            <author initials="M" surname="Hellman" fullname="Martin Hellman"/>
+            <date month="November" year="1976"/>
+          </front>
+          <refcontent>IEEE Transactions on Information Theory</refcontent>
+          <refcontent>Vol. 22, No. 6</refcontent>
+          <seriesInfo name="DOI" value="10.1109/TIT.1976.1055638"/>
+        </reference>
+        <reference anchor="FIPS186" quoteTitle="true" target="https://doi.org/10.6028/NIST.FIPS.186-4" derivedAnchor="FIPS186">
+          <front>
+            <title>Digital Signature Standard (DSS)</title>
+            <author>
+              <organization showOnFrontPage="true">NIST</organization>
+            </author>
+            <date year="2013" month="July"/>
+          </front>
+          <seriesInfo name="Federal Information Processing Standards Publication (FIPS)" value="186-4"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.FIPS.186-4"/>
+        </reference>
+        <reference anchor="GGM1986" quoteTitle="true" target="https://doi.org/10.1145/6490.6503" derivedAnchor="GGM1986">
+          <front>
+            <title>How to construct random functions</title>
+            <author initials="O" surname="Goldreich" fullname="Oded Goldreich"/>
+            <author initials="S" surname="Goldwasser" fullname="Shafi Goldwasser"/>
+            <author initials="S" surname="Micali" fullname="Silvio Micali"/>
+            <date year="1986" month="August"/>
+          </front>
+          <refcontent>Journal of the ACM</refcontent>
+          <refcontent>Vol. 33, No. 4</refcontent>
+          <refcontent>pp. 792-807</refcontent>
+          <seriesInfo name="DOI" value="10.1145/6490.6503"/>
+        </reference>
+        <reference anchor="IANA" target="https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml" quoteTitle="true" derivedAnchor="IANA">
+          <front>
+            <title>TLS ExtensionType Values</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="IEEE1363" target="https://ieeexplore.ieee.org/document/891000" quoteTitle="true" derivedAnchor="IEEE1363">
+          <front>
+            <title>IEEE Standard Specifications for Public-Key Cryptography</title>
+            <author>
+              <organization showOnFrontPage="true">IEEE</organization>
+            </author>
+            <date year="2000" month="August"/>
+          </front>
+          <seriesInfo name="IEEE Std" value="1363-2000"/>
+          <seriesInfo name="DOI" value="10.1109/IEEESTD.2000.92292"/>
+        </reference>
+        <reference anchor="I-D.ietf-tls-external-psk-importer" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-tls-external-psk-importer-03" derivedAnchor="IMPORT">
+          <front>
+            <title>Importing External PSKs for TLS</title>
+            <author initials="D" surname="Benjamin" fullname="David Benjamin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C" surname="Wood" fullname="Christopher Wood">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="February" day="15" year="2020"/>
+            <abstract>
+              <t>This document describes an interface for importing external PSK (Pre- Shared Key) into TLS 1.3.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-external-psk-importer-03"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-tls-external-psk-importer-03.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="K2016" target="https://dl.acm.org/doi/10.1145/2976749.2978325" quoteTitle="true" derivedAnchor="K2016">
+          <front>
+            <title>A Unilateral-to-Mutual Authentication Compiler for Key Exchange (with Applications to Client Authentication in TLS 1.3)</title>
+            <author initials="H" surname="Krawczyk" fullname="Hugo Krawczyk"/>
+            <date month="October" year="2016"/>
+          </front>
+          <refcontent>CCS '16: Proceedings of the 2016 ACM Communications Security</refcontent>
+          <refcontent>pp. 1438-50</refcontent>
+          <seriesInfo name="DOI" value="10.1145/2976749.2978325"/>
+        </reference>
+        <reference anchor="RFC2104" target="https://www.rfc-editor.org/info/rfc2104" quoteTitle="true" derivedAnchor="RFC2104">
+          <front>
+            <title>HMAC: Keyed-Hashing for Message Authentication</title>
+            <author initials="H." surname="Krawczyk" fullname="H. Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Bellare" fullname="M. Bellare">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Canetti" fullname="R. Canetti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="February"/>
+            <abstract>
+              <t>This document describes HMAC, a mechanism for message authentication using cryptographic hash functions. HMAC can be used with any iterative cryptographic hash function, e.g., MD5, SHA-1, in combination with a secret shared key.  The cryptographic strength of HMAC depends on the properties of the underlying hash function.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2104"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2104"/>
+        </reference>
+        <reference anchor="RFC4086" target="https://www.rfc-editor.org/info/rfc4086" quoteTitle="true" derivedAnchor="RFC4086">
+          <front>
+            <title>Randomness Requirements for Security</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Schiller" fullname="J. Schiller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Crocker" fullname="S. Crocker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="June"/>
+            <abstract>
+              <t>Security systems are built on strong cryptographic algorithms that foil pattern analysis attempts.  However, the security of these systems is dependent on generating secret quantities for passwords, cryptographic keys, and similar quantities.  The use of pseudo-random processes to generate secret quantities can result in pseudo-security. A sophisticated attacker may find it easier to reproduce the environment that produced the secret quantities and to search the resulting small set of possibilities than to locate the quantities in the whole of the potential number space.</t>
+              <t>Choosing random quantities to foil a resourceful and motivated adversary is surprisingly difficult.  This document points out many pitfalls in using poor entropy sources or traditional pseudo-random number generation techniques for generating such quantities.  It recommends the use of truly random hardware techniques and shows that the existing hardware on many systems can be used for this purpose. It provides suggestions to ameliorate the problem when a hardware solution is not available, and it gives examples of how large such quantities need to be for some applications.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="106"/>
+          <seriesInfo name="RFC" value="4086"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4086"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC8017" target="https://www.rfc-editor.org/info/rfc8017" quoteTitle="true" derivedAnchor="RFC8017">
+          <front>
+            <title>PKCS #1: RSA Cryptography Specifications Version 2.2</title>
+            <author initials="K." surname="Moriarty" fullname="K. Moriarty" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Kaliski" fullname="B. Kaliski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Jonsson" fullname="J. Jonsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Rusch" fullname="A. Rusch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="November"/>
+            <abstract>
+              <t>This document provides recommendations for the implementation of public-key cryptography based on the RSA algorithm, covering cryptographic primitives, encryption schemes, signature schemes with appendix, and ASN.1 syntax for representing keys and for identifying the schemes.</t>
+              <t>This document represents a republication of PKCS #1 v2.2 from RSA Laboratories' Public-Key Cryptography Standards (PKCS) series.  By publishing this RFC, change control is transferred to the IETF.</t>
+              <t>This document also obsoletes RFC 3447.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8017"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8017"/>
+        </reference>
+        <reference anchor="I-D.hoffman-c2pq" quoteTitle="true" target="https://tools.ietf.org/html/draft-hoffman-c2pq-06" derivedAnchor="TRANSITION">
+          <front>
+            <title>The Transition from Classical to Post-Quantum Cryptography</title>
+            <author initials="P" surname="Hoffman" fullname="Paul Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="November" day="25" year="2019"/>
+            <abstract>
+              <t>Quantum computing is the study of computers that use quantum features in calculations.  For over 20 years, it has been known that if very large, specialized quantum computers could be built, they could have a devastating effect on asymmetric classical cryptographic algorithms such as RSA and elliptic curve signatures and key exchange, as well as (but in smaller scale) on symmetric cryptographic algorithms such as block ciphers, MACs, and hash functions.  There has already been a great deal of study on how to create algorithms that will resist large, specialized quantum computers, but so far, the properties of those algorithms make them onerous to adopt before they are needed.  Small quantum computers are being built today, but it is still far from clear when large, specialized quantum computers will be built that can recover private or secret keys in classical algorithms at the key sizes commonly used today.  It is important to be able to predict when large, specialized quantum computers usable for cryptanalysis will be possible so that organization can change to post-quantum cryptographic algorithms well before they are needed.  This document describes quantum computing, how it might be used to attack classical cryptographic algorithms, and possibly how to predict when large, specialized quantum computers will become feasible.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-hoffman-c2pq-06"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-hoffman-c2pq-06.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acks" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.a-1">
+        Many thanks to
+        <contact fullname="Liliya Akhmetzyanova"/>,
+        <contact fullname="Roman Danyliw"/>,
+        <contact fullname="Christian Huitema"/>,
+        <contact fullname="Ben Kaduk"/>,
+	<contact fullname="Geoffrey Keating"/>,
+	<contact fullname="Hugo Krawczyk"/>,
+	<contact fullname="Mirja Kühlewind"/>,
+	<contact fullname="Nikos Mavrogiannopoulos"/>,
+	<contact fullname="Nick Sullivan"/>, 
+        <contact fullname="Martin Thomson"/>, and
+        <contact fullname="Peter Yee"/>
+        for their review and comments; their efforts have improved this document.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author fullname="Russ Housley" initials="R." surname="Housley">
+        <organization abbrev="Vigil Security" showOnFrontPage="true">Vigil Security, LLC</organization>
+        <address>
+          <postal>
+            <street>516 Dranesville Road</street>
+            <city>Herndon</city>
+            <region>VA</region>
+            <code>20170</code>
+            <country>United States of America</country>
+          </postal>
+          <email>housley@vigilsec.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

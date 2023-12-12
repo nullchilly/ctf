@@ -1,0 +1,1205 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tsvwg-fecframe-ext-08" indexInclude="true" ipr="trust200902" number="8680" prepTime="2020-01-14T14:57:44" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="6363" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tsvwg-fecframe-ext-08" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8680" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="FEC Framework Extension">Forward Error Correction (FEC) Framework Extension to Sliding Window Codes</title>
+    <seriesInfo name="RFC" value="8680" stream="IETF"/>
+    <author fullname="Vincent Roca" initials="V" surname="Roca">
+      <organization showOnFrontPage="true">INRIA</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <extaddr>Univ. Grenoble Alpes</extaddr>
+          <country>France</country>
+        </postal>
+        <email>vincent.roca@inria.fr</email>
+      </address>
+    </author>
+    <author fullname="Ali Begen" initials="A." surname="Begen">
+      <organization showOnFrontPage="true">Networked Media</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Konya</city>
+          <region/>
+          <code/>
+          <country>Turkey</country>
+        </postal>
+        <email>ali.begen@networked.media</email>
+      </address>
+    </author>
+    <date month="01" year="2020"/>
+    <workgroup>TSVWG</workgroup>
+    <keyword>FEC</keyword>
+    <keyword>FECFRAME</keyword>
+    <keyword>packet loss recovery</keyword>
+    <keyword>RLC</keyword>
+    <keyword>Sliding Window FEC Codes</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+RFC 6363 describes a framework for using Forward Error Correction (FEC)
+codes to provide protection against packet loss. The framework
+supports applying FEC to arbitrary packet flows over unreliable
+transport and is primarily intended for real-time, or streaming, media.
+However, FECFRAME as per RFC 6363 is restricted to block FEC codes.
+This document updates RFC 6363 to support FEC codes based on a
+sliding encoding window, in addition to block FEC codes, in a
+backward-compatible way.
+During multicast/broadcast real-time content delivery, the use of
+sliding window codes significantly improves robustness in harsh
+environments, with less repair traffic and lower FEC-related added latency.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8680" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions-and-abbreviatio">Definitions and Abbreviations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-summary-of-architecture-ove">Summary of Architecture Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-procedural-overview">Procedural Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-general">General</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sender-operation-with-slidi">Sender Operation with Sliding Window FEC Codes</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-receiver-operation-with-sli">Receiver Operation with Sliding Window FEC Codes</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-specification">Protocol Specification</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-general-2">General</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-fec-framework-configuration">FEC Framework Configuration Information</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-fec-scheme-requirements">FEC Scheme Requirements</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-feedback">Feedback</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-transport-protocols">Transport Protocols</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-congestion-control">Congestion Control</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-operations-and-management-c">Operations and Management Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t keepWithNext="true" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t keepWithNext="true" pn="section-toc.1-1.13.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-about-sliding-encoding-wind">About Sliding Encoding Window Management (Informational)</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t keepWithNext="true" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t keepWithNext="true" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1"> Many applications need to transport a continuous stream
+of packetized data from a source (sender) to one or more destinations
+(receivers) over networks that do not provide guaranteed packet delivery.
+In particular, packets may be lost, which is strictly the focus of this
+document: we assume that transmitted packets are either lost (e.g.,
+because of a congested router, a poor signal-to-noise ratio in a
+wireless network, or because the number of bit errors exceeds the
+correction capabilities of the physical-layer error-correcting code) or
+were received by the transport protocol without any corruption (i.e., the bit errors,
+if any, have been fixed by the physical-layer error-correcting code and therefore
+are hidden to the upper layers).
+</t>
+      <t pn="section-1-2">For these use cases, Forward Error Correction (FEC) applied within
+the transport or application layer is an efficient
+technique to improve packet transmission robustness in the presence of packet
+losses (or "erasures") without going through packet retransmissions that
+create a delay often incompatible with real-time constraints.
+The FEC Building Block defined in <xref target="RFC5052" format="default" sectionFormat="of" derivedContent="RFC5052"/> provides a
+framework for the definition of Content Delivery Protocols (CDPs) 
+that make use of separately defined FEC schemes. Any CDP
+defined according to the requirements of the FEC Building Block can then
+easily be used with any FEC scheme that is also defined according to
+the requirements of the FEC Building Block.
+</t>
+      <t pn="section-1-3">
+Then, FECFRAME <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/> provides a framework to define
+Content Delivery Protocols (CDPs) that provide FEC protection for arbitrary
+packet flows over an unreliable datagram service transport, such as UDP.
+It is primarily intended for real-time or streaming media applications
+that are using broadcast, multicast, or on-demand delivery. A subset of
+FECFRAME is currently part of the 3GPP Evolved Multimedia Broadcast/Multicast Service
+(eMBMS) standard <xref target="MBMSTS" format="default" sectionFormat="of" derivedContent="MBMSTS"/>.
+</t>
+      <t pn="section-1-4">
+However, <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/> only considers block FEC schemes defined in
+accordance with the FEC Building Block <xref target="RFC5052" format="default" sectionFormat="of" derivedContent="RFC5052"/>
+(e.g., <xref target="RFC6681" format="default" sectionFormat="of" derivedContent="RFC6681"/>, <xref target="RFC6816" format="default" sectionFormat="of" derivedContent="RFC6816"/>, or <xref target="RFC6865" format="default" sectionFormat="of" derivedContent="RFC6865"/>).
+These codes require the input flow(s) to be segmented into a sequence of blocks.
+Then, FEC encoding (at a sender or an encoding middlebox) and decoding (at a receiver
+or a decoding middlebox) are both performed on a per-block basis.
+For instance, if the current block encompasses the 100's to 119's source symbols
+(i.e., a block of size 20 symbols) of an input flow, encoding (and decoding) will
+be performed on this block independently of other blocks.
+This approach has major impacts on FEC encoding and decoding delays.
+The data packets of continuous media flow(s) may be passed to the transport layer
+immediately, without delay.
+But the block creation time, which depends on the number of source symbols in
+this block, impacts both the FEC encoding delay (since encoding requires that all
+source symbols be known) and, mechanically, the packet loss recovery delay at a
+receiver (since no repair symbol for the current block can be generated and
+therefore received before that time).
+Therefore, a good value for the block size is necessarily a balance between the
+maximum FEC decoding latency at the receivers (which must be in line with the most
+stringent real-time requirement of the protected flow(s), hence an incentive to
+reduce the block size) and the desired robustness against long loss bursts (which
+increases with the block size, hence an incentive to increase this size). 
+</t>
+      <t pn="section-1-5">
+This document updates <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/> in order to also support FEC codes
+based on a sliding encoding window (a.k.a., convolutional codes) <xref target="RFC8406" format="default" sectionFormat="of" derivedContent="RFC8406"/>.
+This encoding window, either fixed or variable size, slides over the set of
+source symbols.
+FEC encoding is launched whenever needed from the set of source symbols present
+in the sliding encoding window at that time.
+This approach significantly reduces FEC-related latency, since repair symbols can
+be generated and passed to the transport layer on the fly at any time and can be
+regularly received by receivers to quickly recover packet losses.
+Using sliding window FEC codes is therefore highly beneficial to real-time flows,
+one of the primary targets of FECFRAME.
+<xref target="RFC8681" format="default" sectionFormat="of" derivedContent="RFC8681"/> provides an  example of such a FEC scheme for FECFRAME,
+which is built upon the simple sliding window Random Linear Code (RLC).
+</t>
+      <t pn="section-1-6">
+This document is fully backward compatible with <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>. Indeed:
+</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-1-7">
+        <li pn="section-1-7.1"> This FECFRAME update does not prevent or compromise in any way the support
+	of block FEC codes. Both types of codes can nicely coexist, just like different
+	block FEC schemes can coexist.</li>
+        <li pn="section-1-7.2"> Each sliding window FEC scheme is associated with a specific FEC Encoding ID subject
+	to IANA registration, just like block FEC schemes.</li>
+        <li pn="section-1-7.3"> Any receiver -- for instance, a legacy receiver that only supports
+	block FEC schemes -- can easily identify the FEC scheme used in a FECFRAME session.
+	Indeed, the FEC Encoding ID that identifies the FEC scheme is carried in
+	FEC Framework Configuration Information (see <xref target="RFC6363" format="default" sectionFormat="of" section="5.5" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-5.5" derivedContent="RFC6363"/>).
+	For instance, when the Session Description Protocol (SDP) is used to carry the
+	FEC Framework Configuration Information, the FEC Encoding ID can be communicated
+	in the "encoding-id=" parameter of a "fec-repair-flow" attribute <xref target="RFC6364" format="default" sectionFormat="of" derivedContent="RFC6364"/>.
+	This mechanism is the basic approach for a FECFRAME receiver to determine
+	whether or not it supports the FEC scheme used in a given FECFRAME session. </li>
+      </ul>
+      <t pn="section-1-8">
+This document leverages on <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/> and reuses its structure.
+It proposes new sections specific to sliding window FEC codes whenever required.
+The only exception is <xref target="ArchitectureOverview" format="default" sectionFormat="of" derivedContent="Section 3"/>, which provides a quick
+summary of FECFRAME in order to facilitate the understanding of this document to readers
+not familiar with the concepts and terminology.
+</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <section anchor="definitionsAndAbbreviations" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-definitions-and-abbreviatio">Definitions and Abbreviations</name>
+        <t pn="section-2.1-1">The following list of definitions and abbreviations is copied from <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>,
+adding only the Block FEC Code, Sliding Window FEC Code, and Encoding/Decoding Window definitions (tagged
+with "ADDED"):
+</t>
+        <dl newline="true" spacing="normal" pn="section-2.1-2">
+          <dt pn="section-2.1-2.1">Application Data Unit (ADU):</dt>
+          <dd pn="section-2.1-2.2"> The unit of source data provided as
+a payload to the transport layer. 
+For instance, it can be a payload containing the result of the RTP packetization of a compressed video frame.
+</dd>
+          <dt pn="section-2.1-2.3">ADU Flow:</dt>
+          <dd pn="section-2.1-2.4"> A sequence of ADUs associated with a transport-layer flow
+      identifier (such as the standard 5-tuple {source IP address, source
+      port, destination IP address, destination port, transport
+      protocol}).</dd>
+          <dt pn="section-2.1-2.5">AL-FEC:</dt>
+          <dd pn="section-2.1-2.6"> Application-Layer Forward Error Correction.</dd>
+          <dt pn="section-2.1-2.7">Application Protocol:</dt>
+          <dd pn="section-2.1-2.8"> Control protocol used to establish and control
+      the source flow being protected, e.g., the Real-Time Streaming Protocol
+      (RTSP).</dd>
+          <dt pn="section-2.1-2.9">Content Delivery Protocol (CDP):</dt>
+          <dd pn="section-2.1-2.10"> A complete application protocol
+      specification that, through the use of the framework defined in this
+      document, is able to make use of FEC schemes to provide FEC
+      capabilities.</dd>
+          <dt pn="section-2.1-2.11">FEC Code:</dt>
+          <dd pn="section-2.1-2.12"> An algorithm for encoding data such that the encoded data
+      flow is resilient to data loss. Note that, in general, FEC codes may also
+      be used to make a data flow resilient to corruption, but that is not
+      considered in this document.</dd>
+          <dt pn="section-2.1-2.13">Block FEC Code: (ADDED)</dt>
+          <dd pn="section-2.1-2.14"> A FEC code that operates on blocks, i.e., for
+which the input flow <bcp14>MUST</bcp14> be segmented into a sequence of blocks,
+with FEC encoding and decoding being performed independently on a
+per-block basis.</dd>
+          <dt pn="section-2.1-2.15">Sliding Window FEC Code: (ADDED)</dt>
+          <dd pn="section-2.1-2.16"> A FEC code that can generate repair symbols
+on the fly, at any time, from the set of source symbols present in the sliding
+encoding window at that time.
+These codes are also known as convolutional codes.</dd>
+          <dt pn="section-2.1-2.17">FEC Framework:</dt>
+          <dd pn="section-2.1-2.18"> A protocol framework for the definition of Content
+      Delivery Protocols using FEC, such as the framework defined in this
+      document.</dd>
+          <dt pn="section-2.1-2.19">FEC Framework Configuration Information:</dt>
+          <dd pn="section-2.1-2.20"> Information that controls
+      the operation of the FEC Framework.</dd>
+          <dt pn="section-2.1-2.21">FEC Payload ID:</dt>
+          <dd pn="section-2.1-2.22"> Information that identifies the contents and provides positional information of a packet
+with respect to the FEC scheme.</dd>
+          <dt pn="section-2.1-2.23">FEC Repair Packet:</dt>
+          <dd pn="section-2.1-2.24"> At a sender (respectively, at a receiver), a
+      payload submitted to (respectively, received from) the transport
+      protocol containing one or more repair symbols along with a Repair FEC
+      Payload ID and possibly an RTP header.</dd>
+          <dt pn="section-2.1-2.25">FEC Scheme:</dt>
+          <dd pn="section-2.1-2.26"> A specification that defines the additional protocol
+      aspects required to use a particular FEC code with the FEC
+      Framework.</dd>
+          <dt pn="section-2.1-2.27">FEC Source Packet:</dt>
+          <dd pn="section-2.1-2.28"> At a sender (respectively, at a receiver), a
+      payload submitted to (respectively, received from) the transport
+      protocol containing an ADU along with an optional Explicit Source FEC
+      Payload ID.</dd>
+          <dt pn="section-2.1-2.29">Repair Flow:</dt>
+          <dd pn="section-2.1-2.30"> The packet flow carrying FEC data.</dd>
+          <dt pn="section-2.1-2.31">Repair FEC Payload ID:</dt>
+          <dd pn="section-2.1-2.32"> A FEC Payload ID specifically for use with
+      repair packets.</dd>
+          <dt pn="section-2.1-2.33">Source Flow:</dt>
+          <dd pn="section-2.1-2.34"> The packet flow to which FEC protection is to be
+      applied. A source flow consists of ADUs.</dd>
+          <dt pn="section-2.1-2.35">Source FEC Payload ID:</dt>
+          <dd pn="section-2.1-2.36"> A FEC Payload ID specifically for use with
+      source packets.</dd>
+          <dt pn="section-2.1-2.37">Source Protocol:</dt>
+          <dd pn="section-2.1-2.38"> A protocol used for the source flow being protected,
+      e.g., RTP.</dd>
+          <dt pn="section-2.1-2.39">Transport Protocol:</dt>
+          <dd pn="section-2.1-2.40"> The protocol used for the transport of the source and
+      repair flows. This protocol needs to provide an unreliable datagram
+      service, as UDP does (<xref target="RFC6363" sectionFormat="comma" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-7" derivedContent="RFC6363"/>).
+      </dd>
+          <dt pn="section-2.1-2.41">Encoding Window: (ADDED)</dt>
+          <dd pn="section-2.1-2.42"> Set of source symbols available at the sender/coding node
+      that are used (with a Sliding Window FEC code) to generate a repair symbol.</dd>
+          <dt pn="section-2.1-2.43">Decoding Window: (ADDED)</dt>
+          <dd pn="section-2.1-2.44"> Set of received or decoded source and repair symbols available
+          at a receiver that are used (with a Sliding Window FEC code) to
+          decode lost source symbols.</dd>
+          <dt pn="section-2.1-2.45">Code Rate:</dt>
+          <dd pn="section-2.1-2.46"> The ratio between the number of source symbols and the
+      number of encoding symbols. By definition, the code rate is such that 0
+      &lt; code rate &lt;= 1. A code rate close to 1 indicates that a small
+      number of repair symbols have been produced during the encoding
+      process.</dd>
+          <dt pn="section-2.1-2.47">Encoding Symbol:</dt>
+          <dd pn="section-2.1-2.48"> Unit of data generated by the encoding process. With
+      systematic codes, source symbols are part of the encoding symbols.</dd>
+          <dt pn="section-2.1-2.49">Packet Erasure Channel:</dt>
+          <dd pn="section-2.1-2.50"> A communication path where packets are either
+      lost (e.g., in our case, by a congested router, or because the number of
+      transmission errors exceeds the correction capabilities of the
+      physical-layer code) or received. When a packet is received, it is
+      assumed that this packet is not corrupted (i.e., in our case, the bit errors,
+      if any, are fixed by the physical-layer code and are therefore hidden to
+      the upper layers). </dd>
+          <dt pn="section-2.1-2.51">Repair Symbol:</dt>
+          <dd pn="section-2.1-2.52"> Encoding symbol that is not a source symbol.</dd>
+          <dt pn="section-2.1-2.53">Source Block:</dt>
+          <dd pn="section-2.1-2.54"> Group of ADUs that are to be FEC protected as a single
+      block.
+This notion is restricted to Block FEC codes.</dd>
+          <dt pn="section-2.1-2.55">Source Symbol:</dt>
+          <dd pn="section-2.1-2.56"> Unit of data used during the encoding process.</dd>
+          <dt pn="section-2.1-2.57">Systematic Code:</dt>
+          <dd pn="section-2.1-2.58"> FEC code in which the source symbols are part of the
+      encoding symbols.</dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t pn="section-2.2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="ArchitectureOverview" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-summary-of-architecture-ove">Summary of Architecture Overview</name>
+      <t pn="section-3-1">
+The architecture of <xref target="RFC6363" format="default" sectionFormat="of" section="3" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-3" derivedContent="RFC6363"/> equally applies to this
+FECFRAME extension and is not repeated here.
+However, this section includes a quick summary to facilitate the understanding of this
+document to readers not familiar with the concepts and terminology.
+</t>
+      <figure anchor="fig_archi" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-fecframe-architecture-at-a-">FECFRAME Architecture at a Sender</name>
+        <artwork name="" type="" align="left" alt="" pn="section-3-2.1">
++----------------------+
+|     Application      |
++----------------------+
+           |
+           | (1) Application Data Units (ADUs)
+           |
+           v
++----------------------+                           +----------------+
+|    FEC Framework     |                           |                |
+|                      |--------------------------&gt;|   FEC Scheme   |
+|(2) Construct source  |(3) Source Block           |                |
+|    blocks            |                           |(4) FEC Encoding|
+|(6) Construct FEC     |&lt;--------------------------|                |
+|    Source and Repair |                           |                |
+|    Packets           |(5) Explicit Source FEC    |                |
++----------------------+    Payload IDs            +----------------+
+           |                Repair FEC Payload IDs
+           |                Repair symbols
+           |
+           |(7) FEC Source and Repair Packets
+           v
++----------------------+
+|  Transport Protocol  |
++----------------------+
+</artwork>
+      </figure>
+      <t pn="section-3-3">
+The FECFRAME architecture is illustrated in <xref target="fig_archi" format="default" sectionFormat="of" derivedContent="Figure 1"/> for a block FEC scheme from the sender's
+point of view.
+It shows an application generating an ADU flow (other flows from other applications may coexist).
+These ADUs of variable size must be somehow mapped to source symbols of a fixed size (this fixed size
+is a requirement of all FEC schemes, which comes from the way mathematical
+operations are applied to the symbols' content).
+This is the goal of an ADU-to-symbols mapping process that is FEC scheme specific (see below).
+Once the source block is built, taking into account both the FEC scheme constraints (e.g., in terms
+of maximum source block size) and the application's flow constraints (e.g., in terms of real-time constraints),
+the associated source symbols are handed to the FEC scheme in order to produce an appropriate number
+of repair symbols.
+FEC Source Packets (containing ADUs) and FEC Repair Packets (containing one or more repair symbols each)
+are then generated and sent using an appropriate transport protocol (more
+precisely, <xref target="RFC6363" format="default" sectionFormat="of" section="7" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-7" derivedContent="RFC6363"/> requires a
+transport protocol providing an unreliable datagram service, such as UDP).
+In practice, FEC Source Packets may be passed to the transport layer as soon
+as available without having to wait for
+FEC encoding to take place.
+In that case, a copy of the associated source symbols needs to be kept within FECFRAME for future
+FEC encoding purposes.
+</t>
+      <t pn="section-3-4">
+At a receiver (not shown), FECFRAME processing operates in a similar way,
+taking as input the incoming FEC Source and Repair Packets received.  In case
+of FEC Source Packet losses, the FEC decoding of the associated block may
+recover all (in case of successful decoding) or a subset that is potentially empty
+(if decoding fails) of the missing source symbols.  After source-symbol-to-ADU
+mapping, when lost ADUs are recovered, they are then assigned to their
+respective flow (see below).
+
+ADUs are returned to the application(s), either in their initial transmission
+order (in which case all ADUs received after a lost ADU will be delayed until
+FEC decoding has taken place) or not (in which case each ADU is returned as
+soon as it is received or recovered), depending on the application
+requirements.
+</t>
+      <t pn="section-3-5">
+FECFRAME features two subtle mechanisms whose details are FEC scheme dependent:
+</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-3-6">
+        <li pn="section-3-6.1"> ADUs-to-source-symbols mapping:
+		in order to manage variable size ADUs, FECFRAME and FEC schemes can use small, fixed-size
+		symbols and create a mapping between ADUs and symbols.
+		The mapping details are
+      FEC scheme dependent and must be defined in the associated document.
+      For instance, with certain FEC schemes, to each ADU, this mechanism prepends a length field (plus a flow identifier; see below) and
+		pads the result to a multiple of the symbol size.
+		A small ADU may be mapped to a single source symbol, while a large one may be mapped to
+		multiple symbols.
+		</li>
+        <li pn="section-3-6.2"> Assignment of decoded ADUs to flows in multi-flow configurations:
+        when multiple flows are multiplexed over the same FECFRAME instance, a
+        problem is to assign a decoded ADU to the right flow (UDP port numbers
+        and IP addresses traditionally used to map incoming ADUs to flows are
+        not recovered during FEC decoding).        The mapping details are FEC
+	scheme dependent and must be 
+      defined in the associated document. For instance, with certain FEC 
+     schemes, to make it possible, at the
+        FECFRAME sending instance, each ADU is prepended with a flow
+        identifier (1 byte) during the ADU-to-source-symbols mapping (see
+        above).  The flow identifiers are also shared between all FECFRAME
+        instances as part of the FEC Framework Configuration Information.
+
+   The ADU Information (ADUI), which includes the flow identifier, length,
+   application payload, and padding, is then FEC protected.  Therefore, a
+   decoded ADUI contains enough information to assign the ADU to the right
+   flow. Note that a FEC scheme may also be restricted to the particular
+      case of a single flow over a FECFRAME instance; that would make
+      the above mechanism pointless.
+		</li>
+      </ul>
+      <t pn="section-3-7">
+A few aspects are not covered by FECFRAME, namely:
+</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-3-8">
+        <li pn="section-3-8.1">
+          <xref target="RFC6363" format="default" sectionFormat="of" section="8" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-8" derivedContent="RFC6363"/> does not detail any congestion control mechanisms and
+        only provides high-level normative requirements. </li>
+        <li pn="section-3-8.2"> The possibility of having feedback from receiver(s) is considered
+        out of scope, although such a mechanism may exist within the
+        application (e.g., through RTP Control Protocol (RTCP)
+        messages). </li>
+        <li pn="section-3-8.3"> Flow adaptation at a FECFRAME sender (e.g., how to set the FEC
+        code rate based on transmission conditions) is not detailed, but it
+        needs to comply with the congestion control normative requirements
+        (see above). </li>
+      </ul>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-procedural-overview">Procedural Overview</name>
+      <section anchor="generalProceduralOverview" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-general">General</name>
+        <t pn="section-4.1-1">
+The general considerations of <xref target="RFC6363" format="default" sectionFormat="of" section="4.1" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-4.1" derivedContent="RFC6363"/> that
+are specific to block FEC codes are not repeated here.
+</t>
+        <t pn="section-4.1-2">
+With a Sliding Window FEC code, the FEC Source Packet <bcp14>MUST</bcp14>
+contain information to identify the position occupied by
+the ADU within the source flow in terms specific to the
+FEC scheme.
+This information is known as the Source FEC Payload ID, and
+the FEC scheme is responsible for defining and interpreting it.
+</t>
+        <t pn="section-4.1-3">
+With a Sliding Window FEC code, the FEC Repair
+Packets <bcp14>MUST</bcp14> contain information that identifies the relationship
+between the contained repair payloads and the original source symbols
+used during encoding.
+This information is known as the Repair FEC Payload ID, and
+the FEC scheme is responsible for defining and interpreting it.
+</t>
+        <t pn="section-4.1-4">
+The sender operation (<xref target="RFC6363" format="default" sectionFormat="comma" section="4.2" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-4.2" derivedContent="RFC6363"/>)
+and receiver operation (<xref target="RFC6363" format="default" sectionFormat="comma" section="4.3" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-4.3" derivedContent="RFC6363"/>) are
+both specific to block FEC codes and are therefore omitted below.
+The following two sections detail similar operations for Sliding Window
+FEC codes.
+</t>
+      </section>
+      <section anchor="senderoperation-convolutional" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-sender-operation-with-slidi">Sender Operation with Sliding Window FEC Codes</name>
+        <t pn="section-4.2-1">
+With a Sliding Window FEC scheme, the following operations, illustrated in
+<xref target="senderfigure-convolutional" format="default" sectionFormat="of" derivedContent="Figure 2"/>
+for the generic case (non-RTP repair flows) and in
+<xref target="senderfigurertp-convolutional" format="default" sectionFormat="of" derivedContent="Figure 3"/>
+for the case of RTP repair flows, describe a possible way to generate compliant source and repair flows:
+</t>
+        <ol spacing="normal" type="1" start="1" pn="section-4.2-2">
+          <li pn="section-4.2-2.1" derivedCounter="1.">A new ADU is provided by the application.</li>
+          <li pn="section-4.2-2.2" derivedCounter="2.">The FEC Framework communicates this ADU to the FEC scheme.</li>
+          <li pn="section-4.2-2.3" derivedCounter="3.">The sliding encoding window is updated by the FEC scheme.
+    The ADU-to-source-symbol mapping as well as the encoding window management details
+    are both the responsibility of the FEC scheme and <bcp14>MUST</bcp14> be detailed there.
+    <xref target="codingwindow-possibleManagement" format="default" sectionFormat="of" derivedContent="Appendix A"/> provides non-normative hints about what
+	FEC scheme designers need to consider.</li>
+          <li pn="section-4.2-2.4" derivedCounter="4.">The Source FEC Payload ID information of the source packet is
+    determined by the FEC scheme. If required by the FEC scheme, the
+    Source FEC Payload ID is encoded into the Explicit Source FEC
+    Payload ID field and returned to the FEC Framework.</li>
+          <li pn="section-4.2-2.5" derivedCounter="5.">The FEC Framework constructs the FEC Source Packet according to
+Figure 6 in <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>,
+    using the Explicit Source FEC Payload ID
+    provided by the FEC scheme if applicable.</li>
+          <li pn="section-4.2-2.6" derivedCounter="6.">The FEC Source Packet is sent using normal transport-layer procedures.
+    This packet is sent using
+    the same ADU flow identification information as would have been
+    used for the original source packet if the FEC Framework were not
+    present (e.g., the source and destination addresses and UDP port numbers on the IP datagram carrying the
+    source packet will be the same whether or not the FEC Framework is applied).</li>
+          <li pn="section-4.2-2.7" derivedCounter="7.">When the FEC Framework needs to send one or several FEC Repair Packets (e.g., according
+    to the target code rate), it asks the FEC scheme to create one
+    or several repair packet payloads from the current sliding encoding window
+    along with their Repair FEC Payload ID.</li>
+          <li pn="section-4.2-2.8" derivedCounter="8.">The Repair FEC Payload IDs and repair packet payloads are provided back by the
+    FEC scheme to the FEC Framework.</li>
+          <li pn="section-4.2-2.9" derivedCounter="9.">The FEC Framework constructs FEC Repair Packets
+    according to Figure 7 in <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>, 
+    using the FEC Payload IDs and repair packet payloads provided by the FEC scheme.</li>
+          <li pn="section-4.2-2.10" derivedCounter="10.">The FEC Repair Packets are sent using normal transport-layer procedures.
+    The port(s) and multicast group(s) to be used for FEC Repair Packets are defined
+    in the FEC Framework Configuration Information.</li>
+        </ol>
+        <figure anchor="senderfigure-convolutional" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-sender-operation-with-slidin">Sender Operation with Sliding Window FEC Codes</name>
+          <artwork name="" type="" align="left" alt="" pn="section-4.2-3.1">
++----------------------+
+|     Application      |
++----------------------+
+           |
+           | (1) New Application Data Unit (ADU)
+           v 
++---------------------+                           +----------------+
+|    FEC Framework    |                           |   FEC Scheme   |
+|                     |--------------------------&gt;|                |
+|                     | (2) New ADU               |(3) Update of   |
+|                     |                           |    encoding    |
+|                     |&lt;--------------------------|    window      |
+|(5) Construct FEC    | (4) Explicit Source       |                |
+|    Source Packet    |     FEC Payload ID(s)     |(7) FEC         |
+|                     |&lt;--------------------------|    encoding    |
+|(9) Construct FEC    | (8) Repair FEC Payload ID |                |
+|    Repair Packet(s) |     + Repair symbol(s)    +----------------+
++---------------------+ 
+           | 
+           | (6)  FEC Source Packet 
+           | (10) FEC Repair Packets
+           v 
++----------------------+ 
+|  Transport Protocol  |
++----------------------+ 
+</artwork>
+        </figure>
+        <figure anchor="senderfigurertp-convolutional" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-sender-operation-with-sliding">Sender Operation with Sliding Window FEC Codes and RTP Repair Flows</name>
+          <artwork name="" type="" align="left" alt="" pn="section-4.2-4.1">
++----------------------+
+|     Application      |
++----------------------+
+           |
+           | (1) New Application Data Unit (ADU)
+           v 
++---------------------+                           +----------------+
+|    FEC Framework    |                           |   FEC Scheme   |
+|                     |--------------------------&gt;|                |
+|                     | (2) New ADU               |(3) Update of   |
+|                     |                           |    encoding    |
+|                     |&lt;--------------------------|    window      |
+|(5) Construct FEC    | (4) Explicit Source       |                |
+|    Source Packet    |     FEC Payload ID(s)     |(7) FEC         |
+|                     |&lt;--------------------------|    encoding    |
+|(9) Construct FEC    | (8) Repair FEC Payload ID |                |
+|    Repair Packet(s) |     + Repair symbol(s)    +----------------+
++---------------------+
+    |             |
+    |(6) Source   |(10) Repair payloads
+    |    packets  |
+    |      + -- -- -- -- -+
+    |      |     RTP      |
+    |      +-- -- -- -- --+
+    v             v                 
++----------------------+ 
+|  Transport Protocol  |
++----------------------+ 
+</artwork>
+        </figure>
+      </section>
+      <section anchor="receiveroperation-convolutional" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-receiver-operation-with-sli">Receiver Operation with Sliding Window FEC Codes</name>
+        <t pn="section-4.3-1">
+With a Sliding Window FEC scheme, the following operations are illustrated in
+<xref target="receiverfigure" format="default" sectionFormat="of" derivedContent="Figure 4"/> 
+for the generic case (non-RTP repair flows) and in
+<xref target="receiverfigurertp" format="default" sectionFormat="of" derivedContent="Figure 5"/>
+for the case of RTP repair flows.
+The only differences with respect to block FEC codes lie in steps (4) and (5).
+Therefore, this section does not repeat the other steps of
+<xref target="RFC6363" format="default" sectionFormat="of" section="4.3" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-4.3" derivedContent="RFC6363"/> ("Receiver Operation").
+The new steps (4) and (5) are:
+</t>
+        <ol type="1" start="4" spacing="normal" pn="section-4.3-2">
+          <li pn="section-4.3-2.1" derivedCounter="4."> The FEC scheme uses the received FEC Payload IDs (and derived
+	FEC Source Payload IDs when the Explicit Source FEC Payload ID field is not used)
+	to insert source and repair packets into the decoding window in the right way.
+	If at least one source packet is missing and at least one repair packet
+        has been received, then FEC decoding is attempted to recover the missing source payloads.
+	The FEC scheme determines whether source packets have been lost and whether
+	enough repair packets have been received to decode any or all of the missing
+	source payloads.</li>
+          <li pn="section-4.3-2.2" derivedCounter="5."> The FEC scheme returns the received and decoded ADUs to the
+	FEC Framework, along with indications of any ADUs that were missing and could
+	not be decoded.</li>
+        </ol>
+        <figure anchor="receiverfigure" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-receiver-operation-with-slid">Receiver Operation with Sliding Window FEC Codes</name>
+          <artwork name="" type="" align="left" alt="" pn="section-4.3-3.1">
++----------------------+
+|     Application      |
++----------------------+
+           ^
+           |(6) ADUs
+           |
++----------------------+                           +----------------+
+|    FEC Framework     |                           |   FEC Scheme   |
+|                      |&lt;--------------------------|                |
+|(2)Extract FEC Payload|(5) ADUs                   |(4) FEC Decoding|
+|   IDs and pass IDs &amp; |--------------------------&gt;|                |
+|   payloads to FEC    |(3) Explicit Source FEC    +----------------+
+|   scheme             |            Payload IDs
++----------------------+    Repair FEC Payload IDs
+           ^                Source payloads       
+           |                Repair payloads
+           |(1) FEC Source
+           |    and Repair Packets
++----------------------+ 
+|  Transport Protocol  |
++----------------------+
+</artwork>
+        </figure>
+        <figure anchor="receiverfigurertp" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-receiver-operation-with-slidi">Receiver Operation with Sliding Window FEC Codes and RTP Repair Flows</name>
+          <artwork name="" type="" align="left" alt="" pn="section-4.3-4.1">
++----------------------+
+|     Application      |
++----------------------+
+           ^
+           |(6) ADUs
+           |
++----------------------+                           +----------------+
+|    FEC Framework     |                           |   FEC Scheme   |
+|                      |&lt;--------------------------|                |
+|(2)Extract FEC Payload|(5) ADUs                   |(4) FEC Decoding|
+|   IDs and pass IDs &amp; |--------------------------&gt;|                |
+|   payloads to FEC    |(3) Explicit Source FEC    +----------------+
+|   scheme             |            Payload IDs
++----------------------+    Repair FEC Payload IDs
+    ^             ^         Source payloads
+    |             |         Repair payloads
+    |Source pkts  |Repair payloads
+    |             |
++-- |- -- -- -- -- -- -+
+|RTP| | RTP Processing | 
+|   | +-- -- -- --|-- -+
+| +-- -- -- -- -- |--+ |
+| | RTP Demux        | |
++-- -- -- -- -- -- -- -+ 
+           ^
+           |(1) FEC Source and Repair Packets
+           |         
++----------------------+ 
+|  Transport Protocol  |
++----------------------+
+</artwork>
+        </figure>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-protocol-specification">Protocol Specification</name>
+      <section anchor="generalProtocolSpecification" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-general-2">General</name>
+        <t pn="section-5.1-1">
+This section discusses the protocol elements for the FEC Framework specific to Sliding Window FEC schemes.
+The global formats of source data packets (i.e., <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>, Figure 6) and repair data packets (i.e., <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>, Figures 7 and 8) remain the same with Sliding Window FEC codes.
+They are not repeated here.
+</t>
+      </section>
+      <section anchor="config" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-fec-framework-configuration">FEC Framework Configuration Information</name>
+        <t pn="section-5.2-1">
+The FEC Framework Configuration Information considerations of <xref target="RFC6363" format="default" sectionFormat="of" section="5.5" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-5.5" derivedContent="RFC6363"/> equally
+apply to this FECFRAME extension and are not repeated here.
+</t>
+      </section>
+      <section anchor="fecscheme" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-fec-scheme-requirements">FEC Scheme Requirements</name>
+        <t pn="section-5.3-1">
+The FEC scheme requirements of <xref target="RFC6363" format="default" sectionFormat="of" section="5.6" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-5.6" derivedContent="RFC6363"/> mostly apply to this FECFRAME extension and
+are not repeated here.  An exception, though, is the "full specification of
+the FEC code", item (4), which is specific to block FEC codes.  
+In case of a Sliding Window FEC scheme, then the
+following item (4-bis) applies:
+</t>
+        <dl newline="true" spacing="normal" indent="4" pn="section-5.3-2">
+          <dt pn="section-5.3-2.1">4-bis.</dt>
+          <dd pn="section-5.3-2.2">
+            <t pn="section-5.3-2.2.1">A full specification of the Sliding Window FEC code.
+            </t>
+            <t pn="section-5.3-2.2.2">
+      This specification <bcp14>MUST</bcp14> precisely define the
+      valid FEC-Scheme-Specific Information values, the valid FEC
+      Payload ID values, and the valid packet payload sizes (where "packet
+      payload" refers to the space within a packet dedicated to carrying
+      encoding symbols).
+            </t>
+            <t pn="section-5.3-2.2.3">
+      Furthermore, given valid values of the FEC-Scheme-Specific Information, a
+      valid Repair FEC Payload ID value, a valid packet payload size, and a valid
+      encoding window (i.e., a set of source symbols), the specification
+      <bcp14>MUST</bcp14> uniquely define the values of the encoding symbol (or
+      symbols) to be included in the repair packet payload with the given Repair
+      FEC Payload ID value.
+            </t>
+          </dd>
+        </dl>
+        <t pn="section-5.3-3">
+Additionally, the FEC scheme associated with a Sliding Window FEC code:
+</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-5.3-4">
+          <li pn="section-5.3-4.1">
+            <bcp14>MUST</bcp14> define the relationships between ADUs and the associated source symbols (mapping).</li>
+          <li pn="section-5.3-4.2">
+            <bcp14>MUST</bcp14> define the management of the encoding window that slides over the set of ADUs.
+		<xref target="codingwindow-possibleManagement" format="default" sectionFormat="of" derivedContent="Appendix A"/> provides non-normative hints about what 
+      		FEC scheme designers need to consider.</li>
+          <li pn="section-5.3-4.3">
+            <bcp14>MUST</bcp14> define the management of the decoding window.
+	This usually consists of managing a system of linear equations (for a linear FEC code).</li>
+        </ul>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-feedback">Feedback</name>
+      <t pn="section-6-1">
+The discussion in <xref target="RFC6363" format="default" sectionFormat="of" section="6" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-6" derivedContent="RFC6363"/> equally applies to this FECFRAME extension and is not repeated
+here.
+</t>
+    </section>
+    <section anchor="TransportProtocols" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-transport-protocols">Transport Protocols</name>
+      <t pn="section-7-1">
+The discussion in <xref target="RFC6363" format="default" sectionFormat="of" section="7" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-7" derivedContent="RFC6363"/> equally applies to this
+FECFRAME extension and is not repeated here.
+</t>
+    </section>
+    <section anchor="sec_congestion" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-congestion-control">Congestion Control</name>
+      <t pn="section-8-1">
+The discussion in <xref target="RFC6363" format="default" sectionFormat="of" section="8" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-8" derivedContent="RFC6363"/> equally applies to this
+FECFRAME extension and is not repeated here.
+</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-9-1">
+This FECFRAME extension does not add any new security considerations.  All the
+considerations of <xref target="RFC6363" format="default" sectionFormat="of" section="9" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-9" derivedContent="RFC6363"/> apply to this document as well.  However, for the sake of
+completeness, the following goal can be added to the list provided in <xref target="RFC6363" format="default" sectionFormat="of" section="9.1" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-9.1" derivedContent="RFC6363"/> ("Problem
+Statement"):
+</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-9-2">
+        <li pn="section-9-2.1"> Attacks can try to corrupt source flows in order to modify the receiver application's behavior
+	(as opposed to just denying service).</li>
+      </ul>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-operations-and-management-c">Operations and Management Considerations</name>
+      <t pn="section-10-1">
+This FECFRAME extension does not add any new Operations and Management Considerations.
+All the considerations of <xref target="RFC6363" format="default" sectionFormat="of" section="10" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-10" derivedContent="RFC6363"/> apply to this document as well.
+</t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-11-1">
+This document has no IANA actions.
+</t>
+      <t pn="section-11-2">A FEC scheme for use with this FEC Framework is identified via its FEC Encoding ID.
+It is subject to IANA registration in the "FEC Framework (FECFRAME) FEC Encoding IDs" registry.
+All the rules of <xref target="RFC6363" format="default" sectionFormat="of" section="11" derivedLink="https://rfc-editor.org/rfc/rfc6363#section-11" derivedContent="RFC6363"/> apply and are not repeated here.
+</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-12">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-12.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC6363" target="https://www.rfc-editor.org/info/rfc6363" quoteTitle="true" derivedAnchor="RFC6363">
+          <front>
+            <title>Forward Error Correction (FEC) Framework</title>
+            <author initials="M." surname="Watson" fullname="M. Watson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Begen" fullname="A. Begen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Roca" fullname="V. Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="October"/>
+            <abstract>
+              <t>This document describes a framework for using Forward Error Correction (FEC) codes with applications in public and private IP networks to provide protection against packet loss.  The framework supports applying FEC to arbitrary packet flows over unreliable transport and is primarily intended for real-time, or streaming, media.  This framework can be used to define Content Delivery Protocols that provide FEC for streaming media delivery or other packet flows.  Content Delivery Protocols defined using this framework can support any FEC scheme (and associated FEC codes) that is compliant with various requirements defined in this document. Thus, Content Delivery Protocols can be defined that are not specific to a particular FEC scheme, and FEC schemes can be defined that are not specific to a particular Content Delivery Protocol.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6363"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6363"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-12.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="MBMSTS" target="http://ftp.3gpp.org/specs/html-info/26346.htm" quoteTitle="true" derivedAnchor="MBMSTS">
+          <front>
+            <title>Multimedia Broadcast/Multicast Service (MBMS); Protocols and codecs</title>
+            <seriesInfo name="3GPP TS" value="26.346"/>
+            <author>
+              <organization showOnFrontPage="true">3GPP</organization>
+            </author>
+            <date month="March" year="2009"/>
+          </front>
+        </reference>
+        <reference anchor="RFC5052" target="https://www.rfc-editor.org/info/rfc5052" quoteTitle="true" derivedAnchor="RFC5052">
+          <front>
+            <title>Forward Error Correction (FEC) Building Block</title>
+            <author initials="M." surname="Watson" fullname="M. Watson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Luby" fullname="M. Luby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Vicisano" fullname="L. Vicisano">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="August"/>
+            <abstract>
+              <t>This document describes how to use Forward Error Correction (FEC) codes to efficiently provide and/or augment reliability for bulk data transfer over IP multicast.  This document defines a framework for the definition of the information that needs to be communicated in order to use an FEC code for bulk data transfer, in addition to the encoded data itself, and for definition of formats and codes for communication of that information.  Both information communicated with the encoded data itself and information that needs to be communicated 'out-of-band' are considered.  The procedures for specifying new FEC codes, defining the information communication requirements associated with those codes and registering them with the Internet Assigned Numbers Authority (IANA) are also described.  The requirements on Content Delivery Protocols that wish to use FEC codes defined within this framework are also defined.  The companion document titled "The Use of Forward Error Correction (FEC) in Reliable Multicast" describes some applications of FEC codes for delivering content. This document obsoletes RFC 3452.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5052"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5052"/>
+        </reference>
+        <reference anchor="RFC6364" target="https://www.rfc-editor.org/info/rfc6364" quoteTitle="true" derivedAnchor="RFC6364">
+          <front>
+            <title>Session Description Protocol Elements for the Forward Error Correction (FEC) Framework</title>
+            <author initials="A." surname="Begen" fullname="A. Begen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="October"/>
+            <abstract>
+              <t>This document specifies the use of the Session Description Protocol (SDP) to describe the parameters required to signal the Forward Error Correction (FEC) Framework Configuration Information between the sender(s) and receiver(s).  This document also provides examples that show the semantics for grouping multiple source and repair flows together for the applications that simultaneously use multiple instances of the FEC Framework.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6364"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6364"/>
+        </reference>
+        <reference anchor="RFC6681" target="https://www.rfc-editor.org/info/rfc6681" quoteTitle="true" derivedAnchor="RFC6681">
+          <front>
+            <title>Raptor Forward Error Correction (FEC) Schemes for FECFRAME</title>
+            <author initials="M." surname="Watson" fullname="M. Watson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Stockhammer" fullname="T. Stockhammer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Luby" fullname="M. Luby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="August"/>
+            <abstract>
+              <t>This document describes Fully-Specified Forward Error Correction (FEC) Schemes for the Raptor and RaptorQ codes and their application to reliable delivery of media streams in the context of the FEC Framework.  The Raptor and RaptorQ codes are systematic codes, where a number of repair symbols are generated from a set of source symbols and sent in one or more repair flows in addition to the source symbols that are sent to the receiver(s) within a source flow.  The Raptor and RaptorQ codes offer close to optimal protection against arbitrary packet losses at a low computational complexity.  Six FEC Schemes are defined: two for the protection of arbitrary packet flows, two that are optimized for small source blocks, and two for the protection of a single flow that already contains a sequence number. Repair data may be sent over arbitrary datagram transport (e.g., UDP) or using RTP.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6681"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6681"/>
+        </reference>
+        <reference anchor="RFC6816" target="https://www.rfc-editor.org/info/rfc6816" quoteTitle="true" derivedAnchor="RFC6816">
+          <front>
+            <title>Simple Low-Density Parity Check (LDPC) Staircase Forward Error Correction (FEC) Scheme for FECFRAME</title>
+            <author initials="V." surname="Roca" fullname="V. Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Cunche" fullname="M. Cunche">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Lacan" fullname="J. Lacan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="December"/>
+            <abstract>
+              <t>This document describes a fully specified simple Forward Error Correction (FEC) scheme for Low-Density Parity Check (LDPC) Staircase codes that can be used to protect media streams along the lines defined by FECFRAME.  These codes have many interesting properties: they are systematic codes, they perform close to ideal codes in many use-cases, and they also feature very high encoding and decoding throughputs.  LDPC-Staircase codes are therefore a good solution to protect a single high bitrate source flow or to protect globally several mid-rate flows within a single FECFRAME instance.  They are also a good solution whenever the processing load of a software encoder or decoder must be kept to a minimum.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6816"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6816"/>
+        </reference>
+        <reference anchor="RFC6865" target="https://www.rfc-editor.org/info/rfc6865" quoteTitle="true" derivedAnchor="RFC6865">
+          <front>
+            <title>Simple Reed-Solomon Forward Error Correction (FEC) Scheme for FECFRAME</title>
+            <author initials="V." surname="Roca" fullname="V. Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Cunche" fullname="M. Cunche">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Lacan" fullname="J. Lacan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Bouabdallah" fullname="A. Bouabdallah">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Matsuzono" fullname="K. Matsuzono">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="February"/>
+            <abstract>
+              <t>This document describes a fully-specified simple Forward Error Correction (FEC) scheme for Reed-Solomon codes over the finite field (also known as the Galois Field) GF(2^^m), with 2 &lt;= m &lt;= 16, that can be used to protect arbitrary media streams along the lines defined by FECFRAME.  The Reed-Solomon codes considered have attractive properties, since they offer optimal protection against packet erasures and the source symbols are part of the encoding symbols, which can greatly simplify decoding.  However, the price to pay is a limit on the maximum source block size, on the maximum number of encoding symbols, and a computational complexity higher than that of the Low-Density Parity Check (LDPC) codes, for instance.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6865"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6865"/>
+        </reference>
+        <reference anchor="RFC8406" target="https://www.rfc-editor.org/info/rfc8406" quoteTitle="true" derivedAnchor="RFC8406">
+          <front>
+            <title>Taxonomy of Coding Techniques for Efficient Network Communications</title>
+            <author initials="B." surname="Adamson" fullname="B. Adamson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Adjih" fullname="C. Adjih">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bilbao" fullname="J. Bilbao">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Firoiu" fullname="V. Firoiu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Fitzek" fullname="F. Fitzek">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Ghanem" fullname="S. Ghanem">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lochin" fullname="E. Lochin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Masucci" fullname="A. Masucci">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M-J." surname="Montpetit" fullname="M-J. Montpetit">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Pedersen" fullname="M. Pedersen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Peralta" fullname="G. Peralta">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Roca" fullname="V. Roca" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Saxena" fullname="P. Saxena">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Sivakumar" fullname="S. Sivakumar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="June"/>
+            <abstract>
+              <t>This document summarizes recommended terminology for Network Coding concepts and constructs.  It provides a comprehensive set of terms in order to avoid ambiguities in future IRTF and IETF documents on Network Coding.  This document is the product of the Coding for Efficient Network Communications Research Group (NWCRG), and it is in line with the terminology used by the RFCs produced by the Reliable Multicast Transport (RMT) and FEC Framework (FECFRAME) IETF working groups.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8406"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8406"/>
+        </reference>
+        <reference anchor="RFC8681" target="https://www.rfc-editor.org/info/rfc8681" quoteTitle="true" derivedAnchor="RFC8681">
+          <front>
+            <title>Sliding Window Random Linear Code (RLC) Forward Erasure Correction (FEC) Schemes for FECFRAME</title>
+            <seriesInfo name="RFC" value="8681"/>
+            <seriesInfo name="DOI" value="10.17487/RFC8681"/>
+            <author initials="V" surname="Roca" fullname="Vincent Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B" surname="Teibi" fullname="Belkacem Teibi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2020"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section anchor="codingwindow-possibleManagement" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-about-sliding-encoding-wind">About Sliding Encoding Window Management (Informational)</name>
+      <t pn="section-appendix.a-1">
+The FEC Framework does not specify the management of the sliding encoding window, which is the responsibility of the FEC scheme.
+This annex only provides a few informational hints.
+</t>
+      <t pn="section-appendix.a-2">
+   Source symbols are added to the sliding encoding window each time a
+   new ADU is available at the sender after the ADU-to-source-symbol
+   mapping specific to the FEC scheme has been done.
+</t>
+      <t pn="section-appendix.a-3">
+Source symbols are removed from the sliding encoding window. For instance:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-appendix.a-4">
+        <li pn="section-appendix.a-4.1"> After a certain delay, when an "old" ADU of a real-time flow times out.
+		The source symbol retention delay in the sliding encoding window should therefore be initialized according to the real-time features of incoming flow(s) when applicable. </li>
+        <li pn="section-appendix.a-4.2"> Once the sliding encoding window has reached its maximum size (there is usually an upper limit to the sliding encoding window size).
+		In that case, the oldest symbol is removed each time a new source symbol is added. </li>
+      </ul>
+      <t pn="section-appendix.a-5">
+Several considerations can impact the management of this sliding encoding window:
+</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-appendix.a-6">
+        <li pn="section-appendix.a-6.1"> At the source flows level: real-time constraints can limit the
+	total time during which source symbols can remain in the encoding window. </li>
+        <li pn="section-appendix.a-6.2"> At the FEC code level: theoretical or practical limitations (e.g., because of computational complexity) can limit the number of source symbols in the encoding window. </li>
+        <li pn="section-appendix.a-6.3"> At the FEC scheme level: signaling and window management are intrinsically related.
+		For instance, an encoding window composed of a nonsequential set of source symbols requires appropriate signaling to inform a receiver of the composition of the encoding window, and the associated transmission overhead can limit the maximum encoding window size.
+		On the contrary, an encoding window always composed of a sequential set of source symbols simplifies signaling: providing the identity of the first source symbol plus its number is sufficient, which creates a fixed and relatively small transmission overhead.
+	</li>
+      </ul>
+    </section>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.b-1">
+The authors would like to thank Christer Holmberg, David Black, Gorry
+Fairhurst, Emmanuel Lochin, Spencer Dawkins, Ben Campbell, Benjamin Kaduk,
+Eric Rescorla, Adam Roach, and Greg Skinner for their valuable feedback on
+this document.  This document being an extension of <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>, the authors would also like to thank Mark Watson as the
+main author of that RFC.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Vincent Roca" initials="V" surname="Roca">
+        <organization showOnFrontPage="true">INRIA</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <extaddr>Univ. Grenoble Alpes</extaddr>
+            <country>France</country>
+          </postal>
+          <email>vincent.roca@inria.fr</email>
+        </address>
+      </author>
+      <author fullname="Ali Begen" initials="A." surname="Begen">
+        <organization showOnFrontPage="true">Networked Media</organization>
+        <address>
+          <postal>
+            <street/>
+            <city>Konya</city>
+            <region/>
+            <code/>
+            <country>Turkey</country>
+          </postal>
+          <email>ali.begen@networked.media</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

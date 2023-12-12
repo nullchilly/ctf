@@ -1,0 +1,2490 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-masque-connect-ip-13" number="9484" submissionType="IETF" category="std" consensus="true" updates="9298" obsoletes="" xml:lang="en" tocInclude="true" sortRefs="true" symRefs="true" prepTime="2023-10-19T12:59:40" indexInclude="true" scripts="Common,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-masque-connect-ip-13" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9484" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Proxying IP in HTTP</title>
+    <seriesInfo name="RFC" value="9484" stream="IETF"/>
+    <author initials="T." surname="Pauly" fullname="Tommy Pauly" role="editor">
+      <organization showOnFrontPage="true">Apple Inc.</organization>
+      <address>
+        <email>tpauly@apple.com</email>
+      </address>
+    </author>
+    <author initials="D." surname="Schinazi" fullname="David Schinazi">
+      <organization showOnFrontPage="true">Google LLC</organization>
+      <address>
+        <postal>
+          <street>1600 Amphitheatre Parkway</street>
+          <city>Mountain View</city>
+          <region>CA</region>
+          <code>94043</code>
+          <country>United States of America</country>
+        </postal>
+        <email>dschinazi.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author initials="A." surname="Chernyakhovsky" fullname="Alex Chernyakhovsky">
+      <organization showOnFrontPage="true">Google LLC</organization>
+      <address>
+        <email>achernya@google.com</email>
+      </address>
+    </author>
+    <author initials="M." surname="Kühlewind" fullname="Mirja Kühlewind">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <email>mirja.kuehlewind@ericsson.com</email>
+      </address>
+    </author>
+    <author initials="M." surname="Westerlund" fullname="Magnus Westerlund">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <email>magnus.westerlund@ericsson.com</email>
+      </address>
+    </author>
+    <date month="10" year="2023"/>
+    <area>tsv</area>
+    <workgroup>masque</workgroup>
+    <keyword>quic</keyword>
+    <keyword>http</keyword>
+    <keyword>datagram</keyword>
+    <keyword>VPN</keyword>
+    <keyword>proxy</keyword>
+    <keyword>tunnels</keyword>
+    <keyword>quic in udp in IP in quic</keyword>
+    <keyword>turtles all the way down</keyword>
+    <keyword>masque</keyword>
+    <keyword>http-ng</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes how to proxy IP packets in HTTP. This protocol is
+similar to UDP proxying in HTTP but allows transmitting arbitrary IP packets.
+More specifically, this document defines a protocol that allows an HTTP client
+to create an IP tunnel through an HTTP server that acts as an IP proxy. This
+document updates RFC 9298.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9484" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-definitions">Conventions and Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-configuration-of-clients">Configuration of Clients</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tunnelling-ip-over-http">Tunnelling IP over HTTP</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ip-proxy-handling">IP Proxy Handling</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-11-request">HTTP/1.1 Request</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-11-response">HTTP/1.1 Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-2-and-http-3-requests">HTTP/2 and HTTP/3 Requests</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.5">
+                <t indent="0" pn="section-toc.1-1.4.2.5.1"><xref derivedContent="4.5" format="counter" sectionFormat="of" target="section-4.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-2-and-http-3-responses">HTTP/2 and HTTP/3 Responses</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.6">
+                <t indent="0" pn="section-toc.1-1.4.2.6.1"><xref derivedContent="4.6" format="counter" sectionFormat="of" target="section-4.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-limiting-request-scope">Limiting Request Scope</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.7">
+                <t indent="0" pn="section-toc.1-1.4.2.7.1"><xref derivedContent="4.7" format="counter" sectionFormat="of" target="section-4.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-capsules">Capsules</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.7.2">
+                  <li pn="section-toc.1-1.4.2.7.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.7.2.1.1"><xref derivedContent="4.7.1" format="counter" sectionFormat="of" target="section-4.7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-address_assign-capsule">ADDRESS_ASSIGN Capsule</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.7.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.7.2.2.1"><xref derivedContent="4.7.2" format="counter" sectionFormat="of" target="section-4.7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-address_request-capsule">ADDRESS_REQUEST Capsule</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.7.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.7.2.3.1"><xref derivedContent="4.7.3" format="counter" sectionFormat="of" target="section-4.7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-route_advertisement-capsule">ROUTE_ADVERTISEMENT Capsule</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.8">
+                <t indent="0" pn="section-toc.1-1.4.2.8.1"><xref derivedContent="4.8" format="counter" sectionFormat="of" target="section-4.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ipv6-extension-headers">IPv6 Extension Headers</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-context-identifiers">Context Identifiers</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-datagram-payload-forma">HTTP Datagram Payload Format</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ip-packet-handling">IP Packet Handling</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-link-operation">Link Operation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-routing-operation">Routing Operation</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2.2.2">
+                  <li pn="section-toc.1-1.7.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.7.2.2.2.1.1"><xref derivedContent="7.2.1" format="counter" sectionFormat="of" target="section-7.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-error-signalling">Error Signalling</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples">Examples</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-remote-access-vpn">Remote Access VPN</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-site-to-site-vpn">Site-to-Site VPN</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="8.3" format="counter" sectionFormat="of" target="section-8.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ip-flow-forwarding">IP Flow Forwarding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.4">
+                <t indent="0" pn="section-toc.1-1.8.2.4.1"><xref derivedContent="8.4" format="counter" sectionFormat="of" target="section-8.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-proxied-connection-racing">Proxied Connection Racing</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-extensibility-consideration">Extensibility Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-performance-considerations">Performance Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mtu-considerations">MTU Considerations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ecn-considerations">ECN Considerations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.3">
+                <t indent="0" pn="section-toc.1-1.10.2.3.1"><xref derivedContent="10.3" format="counter" sectionFormat="of" target="section-10.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-differentiated-services-con">Differentiated Services Considerations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-upgrade-token-registra">HTTP Upgrade Token Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-masque-uri-suffixes-registr">MASQUE URI Suffixes Registry Creation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.3">
+                <t indent="0" pn="section-toc.1-1.12.2.3.1"><xref derivedContent="12.3" format="counter" sectionFormat="of" target="section-12.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updates-to-masque-well-know">Updates to masque Well-Known URI Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.4">
+                <t indent="0" pn="section-toc.1-1.12.2.4.1"><xref derivedContent="12.4" format="counter" sectionFormat="of" target="section-12.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-capsule-types-registra">HTTP Capsule Types Registrations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="13" format="counter" sectionFormat="of" target="section-13"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.13.2">
+              <li pn="section-toc.1-1.13.2.1">
+                <t indent="0" pn="section-toc.1-1.13.2.1.1"><xref derivedContent="13.1" format="counter" sectionFormat="of" target="section-13.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.13.2.2">
+                <t indent="0" pn="section-toc.1-1.13.2.2.1"><xref derivedContent="13.2" format="counter" sectionFormat="of" target="section-13.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">HTTP provides the CONNECT method (see <xref section="9.3.6" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-9.3.6" derivedContent="HTTP"/>) for
+creating a TCP <xref target="RFC9293" format="default" sectionFormat="of" derivedContent="TCP"/> tunnel to a destination and a similar mechanism
+for UDP <xref target="RFC9298" format="default" sectionFormat="of" derivedContent="CONNECT-UDP"/>. However, these mechanisms cannot tunnel other
+IP protocols <xref target="IANA-PN" format="default" sectionFormat="of" derivedContent="IANA-PN"/> nor convey fields of the IP header.</t>
+      <t indent="0" pn="section-1-2">This document describes a protocol for tunnelling IP through an HTTP server
+acting as an IP-specific proxy over HTTP. This can be used for various use
+cases, such as remote access VPN, site-to-site VPN, secure point-to-point
+communication, or general-purpose packet tunnelling.</t>
+      <t indent="0" pn="section-1-3">IP proxying operates similarly to UDP proxying <xref target="RFC9298" format="default" sectionFormat="of" derivedContent="CONNECT-UDP"/>,
+whereby the proxy itself is identified with an absolute URL, optionally
+containing the traffic's destination. Clients generate these URLs using a URI
+Template <xref target="RFC6570" format="default" sectionFormat="of" derivedContent="TEMPLATE"/>, as described in <xref target="client-config" format="default" sectionFormat="of" derivedContent="Section 3"/>.</t>
+      <t indent="0" pn="section-1-4">This protocol supports all existing versions of HTTP by using HTTP Datagrams
+<xref target="RFC9297" format="default" sectionFormat="of" derivedContent="HTTP-DGRAM"/>. When using HTTP/2 <xref target="RFC9113" format="default" sectionFormat="of" derivedContent="HTTP/2"/> or HTTP/3 <xref target="RFC9114" format="default" sectionFormat="of" derivedContent="HTTP/3"/>, it uses
+HTTP Extended CONNECT, as described in <xref target="RFC8441" format="default" sectionFormat="of" derivedContent="EXT-CONNECT2"/> and
+<xref target="RFC9220" format="default" sectionFormat="of" derivedContent="EXT-CONNECT3"/>. When using HTTP/1.x <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/>, it uses HTTP Upgrade, as
+      defined in <xref section="7.8" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-7.8" derivedContent="HTTP"/>.</t>
+      <t indent="0" pn="section-1-5">This document updates <xref target="RFC9298" format="default" sectionFormat="of" derivedContent="CONNECT-UDP"/> to change the "masque" well-known URI;
+see <xref target="iana-uri" format="default" sectionFormat="of" derivedContent="Section 12.3"/>.</t>
+    </section>
+    <section anchor="conventions-and-definitions" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-and-definitions">Conventions and Definitions</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+      <t indent="0" pn="section-2-2">In this document, we use the term "IP proxy" to refer to the HTTP server that
+responds to the IP proxying request. The term "client" is used in the HTTP
+sense; the client constructs the IP proxying request. If there are HTTP
+intermediaries (as defined in <xref section="3.7" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-3.7" derivedContent="HTTP"/>) between the client and
+the IP proxy, those are referred to as "intermediaries" in this document. The
+term "IP proxying endpoints" refers to both the client and the IP proxy.</t>
+      <t indent="0" pn="section-2-3">This document uses terminology from <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="QUIC"/>. Where this document
+defines protocol types, the definition format uses the notation from <xref section="1.3" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-1.3" derivedContent="QUIC"/>. This specification uses the variable-length integer encoding
+from <xref section="16" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-16" derivedContent="QUIC"/>. Variable-length integer values do not
+need to be encoded in the minimum number of bytes necessary.</t>
+      <t indent="0" pn="section-2-4">Note that, when the HTTP version in use does not support multiplexing streams
+(such as HTTP/1.1), any reference to "stream" in this document represents the
+entire connection.</t>
+    </section>
+    <section anchor="client-config" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-configuration-of-clients">Configuration of Clients</name>
+      <t indent="0" pn="section-3-1">Clients are configured to use IP proxying over HTTP via a URI Template
+<xref target="RFC6570" format="default" sectionFormat="of" derivedContent="TEMPLATE"/>. The URI Template <bcp14>MAY</bcp14> contain two variables: "target" and
+"ipproto"; see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>. The optionality of the variables needs to be
+considered when defining the template so that the variable is either
+self-identifying or possible to exclude in the syntax.</t>
+      <t indent="0" pn="section-3-2">Examples are shown below:</t>
+      <figure anchor="fig-template-examples" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-uri-template-examples">URI Template Examples</name>
+        <artwork align="left" pn="section-3-3.1">
+https://example.org/.well-known/masque/ip/{target}/{ipproto}/
+https://proxy.example.org:4443/masque/ip?t={target}&amp;i={ipproto}
+https://proxy.example.org:4443/masque/ip{?target,ipproto}
+https://masque.example.org/?user=bob
+</artwork>
+      </figure>
+      <t indent="0" pn="section-3-4">The following requirements apply to the URI Template:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-5">
+        <li pn="section-3-5.1">The URI Template <bcp14>MUST</bcp14> be a level 3 template or lower.</li>
+        <li pn="section-3-5.2">The URI Template <bcp14>MUST</bcp14> be in absolute form and <bcp14>MUST</bcp14> include non-empty scheme,
+authority, and path components.</li>
+        <li pn="section-3-5.3">The path component of the URI Template <bcp14>MUST</bcp14> start with a slash "/".</li>
+        <li pn="section-3-5.4">All template variables <bcp14>MUST</bcp14> be within the path or query components of the URI.</li>
+        <li pn="section-3-5.5">The URI Template <bcp14>MAY</bcp14> contain the two variables "target" and "ipproto" and <bcp14>MAY</bcp14>
+contain other variables. If the "target" or "ipproto" variables are included,
+their values <bcp14>MUST NOT</bcp14> be empty. Clients can instead use "*" to indicate
+wildcard or no-preference values; see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>.</li>
+        <li pn="section-3-5.6">The URI Template <bcp14>MUST NOT</bcp14> contain any non-ASCII Unicode characters and <bcp14>MUST</bcp14>
+only contain ASCII characters in the range 0x21-0x7E inclusive (note that
+percent-encoding is allowed; see <xref target="RFC3986" section="2.1" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3986#section-2.1" derivedContent="URI"/>).</li>
+        <li pn="section-3-5.7">The URI Template <bcp14>MUST NOT</bcp14> use Reserved Expansion ("+" operator), Fragment
+Expansion ("#" operator), Label Expansion with Dot-Prefix, Path Segment
+Expansion with Slash-Prefix, nor Path-Style Parameter Expansion with
+Semicolon-Prefix.</li>
+      </ul>
+      <t indent="0" pn="section-3-6">Clients <bcp14>SHOULD</bcp14> validate the requirements above; however, clients <bcp14>MAY</bcp14> use a
+general-purpose URI Template implementation that lacks this specific
+validation. If a client detects that any of the requirements above are not met
+by a URI Template, the client <bcp14>MUST</bcp14> reject its configuration and abort the
+request without sending it to the IP proxy.</t>
+      <t indent="0" pn="section-3-7">As with UDP proxying, some client configurations for IP proxies will only allow
+the user to configure the proxy host and proxy port. Clients with such
+limitations <bcp14>MAY</bcp14> attempt to access IP proxying capabilities using the default
+template, which is defined as:
+"https://$PROXY_HOST:$PROXY_PORT/.well-known/masque/ip/{target}/{ipproto}/",
+where $PROXY_HOST and $PROXY_PORT are the configured host and port of the IP
+proxy, respectively. IP proxy deployments <bcp14>SHOULD</bcp14> offer service at this location
+if they need to interoperate with such clients.</t>
+    </section>
+    <section anchor="tunnelling-ip-over-http" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-tunnelling-ip-over-http">Tunnelling IP over HTTP</name>
+      <t indent="0" pn="section-4-1">To allow negotiation of a tunnel for IP over HTTP, this document defines the
+"connect-ip" HTTP upgrade token. The resulting IP tunnels use the Capsule
+Protocol (see <xref section="3.2" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.2" derivedContent="HTTP-DGRAM"/>) with HTTP Datagrams in the format
+defined in <xref target="payload-format" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+      <t indent="0" pn="section-4-2">To initiate an IP tunnel associated with a single HTTP stream, a client issues
+a request containing the "connect-ip" upgrade token.</t>
+      <t indent="0" pn="section-4-3">When sending its IP proxying request, the client <bcp14>SHALL</bcp14> perform URI Template
+expansion to determine the path and query of its request; see <xref target="client-config" format="default" sectionFormat="of" derivedContent="Section 3"/>.</t>
+      <t indent="0" pn="section-4-4">By virtue of the definition of the Capsule Protocol (see <xref section="3.2" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.2" derivedContent="HTTP-DGRAM"/>), IP proxying requests do not carry any message content.
+Similarly, successful IP proxying responses also do not carry any message
+content.</t>
+      <t indent="0" pn="section-4-5">IP proxying over HTTP <bcp14>MUST</bcp14> be operated over TLS or QUIC encryption, or another
+equivalent encryption protocol, to provide confidentiality, integrity, and
+authentication.</t>
+      <section anchor="ip-proxy-handling" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-ip-proxy-handling">IP Proxy Handling</name>
+        <t indent="0" pn="section-4.1-1">Upon receiving an IP proxying request:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1-2">
+          <li pn="section-4.1-2.1">If the recipient is configured to use another HTTP server, it will act as an
+intermediary by forwarding the request to the other HTTP server. Note that
+such intermediaries may need to re-encode the request if they forward it
+using a version of HTTP that is different from the one used to receive it,
+as the request encoding differs by version (see below).</li>
+          <li pn="section-4.1-2.2">Otherwise, the recipient will act as an IP proxy. The IP proxy can choose to
+reject the IP proxying request. Otherwise, it extracts the optional "target"
+and "ipproto" variables from the URI it has reconstructed from the request
+headers, decodes their percent-encoding, and establishes an IP tunnel.</li>
+        </ul>
+        <t indent="0" pn="section-4.1-3">IP proxies <bcp14>MUST</bcp14> validate whether the decoded "target" and "ipproto" variables
+meet the requirements in <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>. If they do not, the IP proxy <bcp14>MUST</bcp14> treat the
+request as malformed; see <xref section="8.1.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.1.1" derivedContent="HTTP/2"/> and <xref section="4.1.2" sectionFormat="of" target="RFC9114" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9114#section-4.1.2" derivedContent="HTTP/3"/>.
+If the "target" variable is a DNS name, the IP proxy <bcp14>MUST</bcp14> perform DNS
+resolution (to obtain the corresponding IPv4 and/or IPv6 addresses via A and/or
+AAAA records) before replying to the HTTP request. If errors occur during this
+process, the IP proxy <bcp14>MUST</bcp14> reject the request and <bcp14>SHOULD</bcp14> send details using an
+appropriate Proxy-Status header field <xref target="RFC9209" format="default" sectionFormat="of" derivedContent="PROXY-STATUS"/>. For example,
+if DNS resolution returns an error, the proxy can use the <tt>dns_error</tt> proxy
+error type from <xref section="2.3.2" sectionFormat="of" target="RFC9209" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9209#section-2.3.2" derivedContent="PROXY-STATUS"/>.</t>
+        <t indent="0" pn="section-4.1-4">The lifetime of the IP forwarding tunnel is tied to the IP proxying request
+stream. The IP proxy <bcp14>MUST</bcp14> maintain all IP address and route assignments
+associated with the IP forwarding tunnel while the request stream is open. IP
+proxies <bcp14>MAY</bcp14> choose to tear down the tunnel due to a period of inactivity, but
+they <bcp14>MUST</bcp14> close the request stream when doing so.</t>
+        <t indent="0" pn="section-4.1-5">A successful IP proxying response (as defined in Sections <xref format="counter" target="resp1" sectionFormat="of" derivedContent="4.3"/> and <xref format="counter" target="resp23" sectionFormat="of" derivedContent="4.5"/>)
+indicates that the IP proxy has established an IP tunnel and is willing to
+proxy IP payloads. Any response other than a successful IP proxying response indicates that
+the request has failed; thus, the client <bcp14>MUST</bcp14> abort the request.</t>
+        <t indent="0" pn="section-4.1-6">Along with a successful IP proxying response, the IP proxy can send capsules to assign
+addresses and advertise routes to the client (<xref target="capsules" format="default" sectionFormat="of" derivedContent="Section 4.7"/>). The client can
+also assign addresses and advertise routes to the IP proxy for
+network-to-network routing.</t>
+      </section>
+      <section anchor="req1" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-http-11-request">HTTP/1.1 Request</name>
+        <t indent="0" pn="section-4.2-1">When using HTTP/1.1 <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/>, an IP proxying request will meet the following
+requirements:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.2-2">
+          <li pn="section-4.2-2.1">The method <bcp14>SHALL</bcp14> be "GET".</li>
+          <li pn="section-4.2-2.2">The request <bcp14>SHALL</bcp14> include a single Host header field containing the host
+and optional port of the IP proxy.</li>
+          <li pn="section-4.2-2.3">The request <bcp14>SHALL</bcp14> include a Connection header field with value "Upgrade"
+(note that this requirement is case-insensitive, as per <xref section="7.6.1" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-7.6.1" derivedContent="HTTP"/>).</li>
+          <li pn="section-4.2-2.4">The request <bcp14>SHALL</bcp14> include an Upgrade header field with value "connect-ip".</li>
+        </ul>
+        <t indent="0" pn="section-4.2-3">An IP proxying request that does not conform to these restrictions is
+malformed. The recipient of such a malformed request <bcp14>MUST</bcp14> respond with an error
+and <bcp14>SHOULD</bcp14> use the 400 (Bad Request) status code.</t>
+        <t indent="0" pn="section-4.2-4">For example, if the client is configured with URI Template
+"https://example.org/.well-known/masque/ip/{target}/{ipproto}/" and wishes to
+open an IP forwarding tunnel with no target or protocol limitations, it could
+send the following request:</t>
+        <figure anchor="fig-req-h1" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-example-http-11-request">Example HTTP/1.1 Request</name>
+          <sourcecode type="http-message" markers="false" pn="section-4.2-5.1">
+GET https://example.org/.well-known/masque/ip/*/*/ HTTP/1.1
+Host: example.org
+Connection: Upgrade
+Upgrade: connect-ip
+Capsule-Protocol: ?1
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="resp1" numbered="true" removeInRFC="false" toc="include" pn="section-4.3">
+        <name slugifiedName="name-http-11-response">HTTP/1.1 Response</name>
+        <t indent="0" pn="section-4.3-1">The server indicates a successful IP proxying response by replying with the following
+requirements:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.3-2">
+          <li pn="section-4.3-2.1">The HTTP status code on the response <bcp14>SHALL</bcp14> be 101 (Switching Protocols).</li>
+          <li pn="section-4.3-2.2">The response <bcp14>SHALL</bcp14> include a Connection header field with value "Upgrade"
+(note that this requirement is case-insensitive, as per <xref section="7.6.1" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-7.6.1" derivedContent="HTTP"/>).</li>
+          <li pn="section-4.3-2.3">The response <bcp14>SHALL</bcp14> include a single Upgrade header field with value
+"connect-ip".</li>
+          <li pn="section-4.3-2.4">The response <bcp14>SHALL</bcp14> meet the requirements of HTTP responses that start the
+Capsule Protocol; see <xref section="3.2" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.2" derivedContent="HTTP-DGRAM"/>.</li>
+        </ul>
+        <t indent="0" pn="section-4.3-3">If any of these requirements are not met, the client <bcp14>MUST</bcp14> treat this proxying
+attempt as failed and close the connection.</t>
+        <t indent="0" pn="section-4.3-4">For example, the server could respond with:</t>
+        <figure anchor="fig-resp-h1" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-example-http-11-response">Example HTTP/1.1 Response</name>
+          <sourcecode type="http-message" markers="false" pn="section-4.3-5.1">
+HTTP/1.1 101 Switching Protocols
+Connection: Upgrade
+Upgrade: connect-ip
+Capsule-Protocol: ?1
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="req23" numbered="true" removeInRFC="false" toc="include" pn="section-4.4">
+        <name slugifiedName="name-http-2-and-http-3-requests">HTTP/2 and HTTP/3 Requests</name>
+        <t indent="0" pn="section-4.4-1">When using HTTP/2 <xref target="RFC9113" format="default" sectionFormat="of" derivedContent="HTTP/2"/> or HTTP/3 <xref target="RFC9114" format="default" sectionFormat="of" derivedContent="HTTP/3"/>, IP proxying requests use HTTP
+Extended CONNECT. This requires that servers send an HTTP Setting, as specified
+in <xref target="RFC8441" format="default" sectionFormat="of" derivedContent="EXT-CONNECT2"/> and <xref target="RFC9220" format="default" sectionFormat="of" derivedContent="EXT-CONNECT3"/>, and that requests use HTTP
+pseudo-header fields with the following requirements:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.4-2">
+          <li pn="section-4.4-2.1">The :method pseudo-header field <bcp14>SHALL</bcp14> be "CONNECT".</li>
+          <li pn="section-4.4-2.2">The :protocol pseudo-header field <bcp14>SHALL</bcp14> be "connect-ip".</li>
+          <li pn="section-4.4-2.3">The :authority pseudo-header field <bcp14>SHALL</bcp14> contain the authority of the IP
+proxy.</li>
+          <li pn="section-4.4-2.4">The :path and :scheme pseudo-header fields <bcp14>SHALL NOT</bcp14> be empty. Their values
+<bcp14>SHALL</bcp14> contain the scheme and path from the URI Template after the URI
+Template expansion process has been completed; see <xref target="client-config" format="default" sectionFormat="of" derivedContent="Section 3"/>.
+Variables in the URI Template can determine the scope of the request, such as
+requesting full-tunnel IP packet forwarding, or a specific proxied flow; see
+<xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>.</li>
+        </ul>
+        <t indent="0" pn="section-4.4-3">An IP proxying request that does not conform to these restrictions is
+malformed; see <xref section="8.1.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.1.1" derivedContent="HTTP/2"/> and <xref section="4.1.2" sectionFormat="of" target="RFC9114" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9114#section-4.1.2" derivedContent="HTTP/3"/>.</t>
+        <t indent="0" pn="section-4.4-4">For example, if the client is configured with URI Template
+"https://example.org/.well-known/masque/ip/{target}/{ipproto}/" and wishes to
+open an IP forwarding tunnel with no target or protocol limitations, it could
+send the following request:</t>
+        <figure anchor="fig-req-h2" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-example-http-2-or-http-3-re">Example HTTP/2 or HTTP/3 Request</name>
+          <sourcecode type="http-message" markers="false" pn="section-4.4-5.1">
+HEADERS
+:method = CONNECT
+:protocol = connect-ip
+:scheme = https
+:path = /.well-known/masque/ip/*/*/
+:authority = example.org
+capsule-protocol = ?1
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="resp23" numbered="true" removeInRFC="false" toc="include" pn="section-4.5">
+        <name slugifiedName="name-http-2-and-http-3-responses">HTTP/2 and HTTP/3 Responses</name>
+        <t indent="0" pn="section-4.5-1">The server indicates a successful IP proxying response by replying with the following
+requirements:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.5-2">
+          <li pn="section-4.5-2.1">The HTTP status code on the response <bcp14>SHALL</bcp14> be in the 2xx (Successful) range.</li>
+          <li pn="section-4.5-2.2">The response <bcp14>SHALL</bcp14> meet the requirements of HTTP responses that start the
+Capsule Protocol; see <xref section="3.2" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.2" derivedContent="HTTP-DGRAM"/>.</li>
+        </ul>
+        <t indent="0" pn="section-4.5-3">If any of these requirements are not met, the client <bcp14>MUST</bcp14> treat this proxying
+attempt as failed and abort the request. As an example, any status code in the
+3xx range will be treated as a failure and cause the client to abort the
+request.</t>
+        <t indent="0" pn="section-4.5-4">For example, the server could respond with:</t>
+        <figure anchor="fig-resp-h2" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-example-http-2-or-http-3-res">Example HTTP/2 or HTTP/3 Response</name>
+          <sourcecode type="http-message" markers="false" pn="section-4.5-5.1">
+HEADERS
+:status = 200
+capsule-protocol = ?1
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="scope" numbered="true" removeInRFC="false" toc="include" pn="section-4.6">
+        <name slugifiedName="name-limiting-request-scope">Limiting Request Scope</name>
+        <t indent="0" pn="section-4.6-1">Unlike UDP proxying requests, which require specifying a target host, IP
+proxying requests can allow endpoints to send arbitrary IP packets to any host.
+The client can choose to restrict a given request to a specific IP prefix or IP
+protocol by adding parameters to its request. When the IP proxy knows that a
+request is scoped to a target prefix or protocol, it can leverage this
+information to optimize its resource allocation; for example, the IP proxy can
+assign the same public IP address to two IP proxying requests that are scoped
+to different prefixes and/or different protocols.</t>
+        <t indent="0" pn="section-4.6-2">The scope of the request is indicated by the client to the IP proxy via the
+"target" and "ipproto" variables of the URI Template; see <xref target="client-config" format="default" sectionFormat="of" derivedContent="Section 3"/>.
+Both the "target" and "ipproto" variables are optional; if they are not
+included, they are considered to carry the wildcard value "*".</t>
+        <dl spacing="normal" newline="true" indent="3" pn="section-4.6-3">
+          <dt pn="section-4.6-3.1">target:</dt>
+          <dd pn="section-4.6-3.2">
+            <t indent="0" pn="section-4.6-3.2.1">The variable "target" contains a hostname or IP prefix of a specific host to
+which the client wants to proxy packets. If the "target" variable is not
+specified or its value is "*", the client is requesting to communicate with
+any allowable host. "target" supports using DNS names, IPv6 prefixes, and IPv4
+prefixes. Note that IPv6 scoped addressing zone identifiers <xref target="RFC6874" format="default" sectionFormat="of" derivedContent="IPv6-ZONE-ID"/> are
+not supported. If the target is an IP prefix (IP address optionally followed by
+a percent-encoded slash followed by the prefix length in bits), the request
+will only support a single IP version. If the target is a hostname, the IP
+proxy is expected to perform DNS resolution to determine which route(s) to
+advertise to the client. The IP proxy <bcp14>SHOULD</bcp14> send a ROUTE_ADVERTISEMENT capsule
+that includes routes for all addresses that were resolved for the requested
+hostname, that are accessible to the IP proxy, and belong to an address family
+for which the IP proxy also sends an Assigned Address.</t>
+          </dd>
+          <dt pn="section-4.6-3.3">ipproto:</dt>
+          <dd pn="section-4.6-3.4">
+            <t indent="0" pn="section-4.6-3.4.1">The variable "ipproto" contains an Internet Protocol Number; see the defined list in the
+"Assigned Internet Protocol Numbers" IANA registry <xref target="IANA-PN" format="default" sectionFormat="of" derivedContent="IANA-PN"/>. If present, it
+specifies that a client only wants to proxy a specific IP protocol for this
+request. If the value is "*", or the variable is not included, the client is
+requesting to use any IP protocol. The IP protocol indicated in the "ipproto"
+variable represents an allowable next header value carried in IP headers that
+are directly sent in HTTP Datagrams (the outermost IP headers). ICMP traffic
+is always allowed, regardless of the value of this field.</t>
+          </dd>
+        </dl>
+        <t indent="0" pn="section-4.6-4">Using the terms IPv6address, IPv4address, and reg-name from <xref target="RFC3986" format="default" sectionFormat="of" derivedContent="URI"/>, the
+"target" and "ipproto" variables <bcp14>MUST</bcp14> adhere to the format in
+<xref target="target-format" format="default" sectionFormat="of" derivedContent="Figure 6"/>, using notation from <xref target="RFC5234" format="default" sectionFormat="of" derivedContent="ABNF"/>. Additionally:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.6-5">
+          <li pn="section-4.6-5.1">If "target" contains an IPv6 literal or prefix, the colons (":") <bcp14>MUST</bcp14> be
+percent-encoded. For example, if the target host is "2001:db8::42", it will
+be encoded in the URI as "2001%3Adb8%3A%3A42".</li>
+          <li pn="section-4.6-5.2">If present, the IP prefix length in "target" <bcp14>SHALL</bcp14> be preceded by a
+percent-encoded slash ("/"): "%2F". The IP prefix length <bcp14>MUST</bcp14> represent a
+decimal integer between 0 and the length of the IP address in bits, inclusive.</li>
+          <li pn="section-4.6-5.3">If "target" contains an IP prefix and the prefix length is strictly less than
+the length of the IP address in bits, the lower bits of the IP address that
+are not covered by the prefix length <bcp14>MUST</bcp14> all be set to 0.</li>
+          <li pn="section-4.6-5.4">"ipproto" <bcp14>MUST</bcp14> represent a decimal integer between 0 and 255 inclusive or
+the wildcard value "*".</li>
+        </ul>
+        <figure anchor="target-format" align="left" suppress-title="false" pn="figure-6">
+          <name slugifiedName="name-uri-template-variable-forma">URI Template Variable Format</name>
+          <sourcecode type="abnf" markers="false" pn="section-4.6-6.1">
+target = IPv6prefix / IPv4prefix / reg-name / "*"
+IPv6prefix = IPv6address ["%2F" 1*3DIGIT]
+IPv4prefix = IPv4address ["%2F" 1*2DIGIT]
+ipproto = 1*3DIGIT / "*"
+</sourcecode>
+        </figure>
+        <t indent="0" pn="section-4.6-7">IP proxies <bcp14>MAY</bcp14> perform access control using the scoping information provided by
+the client, i.e., if the client is not authorized to access any of the destinations
+included in the scope, then the IP proxy can immediately reject the request.</t>
+      </section>
+      <section anchor="capsules" numbered="true" removeInRFC="false" toc="include" pn="section-4.7">
+        <name slugifiedName="name-capsules">Capsules</name>
+        <t indent="0" pn="section-4.7-1">This document defines multiple new capsule types that allow endpoints to
+exchange IP configuration information. Both endpoints <bcp14>MAY</bcp14> send any number of
+these new capsules.</t>
+        <section anchor="addressassign-capsule" numbered="true" removeInRFC="false" toc="include" pn="section-4.7.1">
+          <name slugifiedName="name-address_assign-capsule">ADDRESS_ASSIGN Capsule</name>
+          <t indent="0" pn="section-4.7.1-1">The ADDRESS_ASSIGN capsule (capsule type 0x01) allows an endpoint to assign its peer a list of IP addresses or
+prefixes. Every capsule contains the full list of IP
+prefixes currently assigned to the receiver. Any of these addresses can be used
+as the source address on IP packets originated by the receiver of this capsule.</t>
+          <figure anchor="addr-assign-format" align="left" suppress-title="false" pn="figure-7">
+            <name slugifiedName="name-address_assign-capsule-form">ADDRESS_ASSIGN Capsule Format</name>
+            <artwork align="left" pn="section-4.7.1-2.1">
+ADDRESS_ASSIGN Capsule {
+  Type (i) = 0x01,
+  Length (i),
+  Assigned Address (..) ...,
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.1-3">The ADDRESS_ASSIGN capsule contains a sequence of zero or more Assigned
+Addresses.</t>
+          <figure anchor="assigned-addr-format" align="left" suppress-title="false" pn="figure-8">
+            <name slugifiedName="name-assigned-address-format">Assigned Address Format</name>
+            <artwork align="left" pn="section-4.7.1-4.1">
+Assigned Address {
+  Request ID (i),
+  IP Version (8),
+  IP Address (32..128),
+  IP Prefix Length (8),
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.1-5">Each Assigned Address contains the following fields:</t>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.7.1-6">
+            <dt pn="section-4.7.1-6.1">Request ID:</dt>
+            <dd pn="section-4.7.1-6.2">
+              <t indent="0" pn="section-4.7.1-6.2.1">Request identifier, encoded as a variable-length integer. If this address
+assignment is in response to an Address Request (see <xref target="addr_req" format="default" sectionFormat="of" derivedContent="Section 4.7.2"/>), then this
+field <bcp14>SHALL</bcp14> contain the value of the corresponding field in the request.
+Otherwise, this field <bcp14>SHALL</bcp14> be zero.</t>
+            </dd>
+            <dt pn="section-4.7.1-6.3">IP Version:</dt>
+            <dd pn="section-4.7.1-6.4">
+              <t indent="0" pn="section-4.7.1-6.4.1">IP Version of this address assignment, encoded as an unsigned 8-bit integer. It
+<bcp14>MUST</bcp14> be either 4 or 6.</t>
+            </dd>
+            <dt pn="section-4.7.1-6.5">IP Address:</dt>
+            <dd pn="section-4.7.1-6.6">
+              <t indent="0" pn="section-4.7.1-6.6.1">Assigned IP address. If the IP Version field has value 4, the IP Address
+field <bcp14>SHALL</bcp14> have a length of 32 bits. If the IP Version field has value 6, the
+IP Address field <bcp14>SHALL</bcp14> have a length of 128 bits.</t>
+            </dd>
+            <dt pn="section-4.7.1-6.7">IP Prefix Length:</dt>
+            <dd pn="section-4.7.1-6.8">
+              <t indent="0" pn="section-4.7.1-6.8.1">The number of bits in the IP address that are used to define the prefix that
+is being assigned, encoded as an unsigned 8-bit integer. This <bcp14>MUST</bcp14> be less than
+or equal to the length of the IP Address field in bits. If the prefix length
+is equal to the length of the IP address, the receiver of this capsule is
+allowed to send packets from a single source address. If the prefix length is
+less than the length of the IP address, the receiver of this capsule is allowed
+to send packets from any source address that falls within the prefix. If the
+prefix length is strictly less than the length of the IP address in bits, the
+lower bits of the IP Address field that are not covered by the prefix length
+<bcp14>MUST</bcp14> all be set to 0.</t>
+            </dd>
+          </dl>
+          <t indent="0" pn="section-4.7.1-7">If any of the capsule fields are malformed upon reception, the receiver of the
+capsule <bcp14>MUST</bcp14> follow the error-handling procedure defined in <xref section="3.3" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.3" derivedContent="HTTP-DGRAM"/>.</t>
+          <t indent="0" pn="section-4.7.1-8">If an ADDRESS_ASSIGN capsule does not contain an address that was previously
+transmitted in another ADDRESS_ASSIGN capsule, it indicates that the address
+has been removed. An ADDRESS_ASSIGN capsule can also be empty, indicating that
+all addresses have been removed.</t>
+          <t indent="0" pn="section-4.7.1-9">In some deployments of IP proxying in HTTP, an endpoint needs to be assigned an
+address by its peer before it knows what source address to set on its own
+packets. For example, in the remote access VPN case (<xref target="example-remote" format="default" sectionFormat="of" derivedContent="Section 8.1"/>), the
+client cannot send IP packets until it knows what address to use.
+In these
+deployments, the endpoint that is expecting an address assignment <bcp14>MUST</bcp14> send an
+ADDRESS_REQUEST capsule. This isn't required if the endpoint does not need any
+address assignment, for example, when it is configured out-of-band with static
+addresses.</t>
+          <t indent="0" pn="section-4.7.1-10">While ADDRESS_ASSIGN capsules are commonly sent in response to ADDRESS_REQUEST
+capsules, endpoints <bcp14>MAY</bcp14> send ADDRESS_ASSIGN capsules unprompted.</t>
+        </section>
+        <section anchor="addr_req" numbered="true" removeInRFC="false" toc="include" pn="section-4.7.2">
+          <name slugifiedName="name-address_request-capsule">ADDRESS_REQUEST Capsule</name>
+          <t indent="0" pn="section-4.7.2-1">The ADDRESS_REQUEST capsule (capsule type 0x02) allows an endpoint to request assignment of IP addresses from its peer.
+The capsule allows the endpoint to optionally indicate a preference for which
+address it would get assigned.</t>
+          <figure anchor="addr-req-format" align="left" suppress-title="false" pn="figure-9">
+            <name slugifiedName="name-address_request-capsule-for">ADDRESS_REQUEST Capsule Format</name>
+            <artwork align="left" pn="section-4.7.2-2.1">
+ADDRESS_REQUEST Capsule {
+  Type (i) = 0x02,
+  Length (i),
+  Requested Address (..) ...,
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.2-3">The ADDRESS_REQUEST capsule contains a sequence of one or more Requested
+Addresses.</t>
+          <figure anchor="requested-addr-format" align="left" suppress-title="false" pn="figure-10">
+            <name slugifiedName="name-requested-address-format">Requested Address Format</name>
+            <artwork align="left" pn="section-4.7.2-4.1">
+Requested Address {
+  Request ID (i),
+  IP Version (8),
+  IP Address (32..128),
+  IP Prefix Length (8),
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.2-5">Each Requested Address contains the following fields:</t>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.7.2-6">
+            <dt pn="section-4.7.2-6.1">Request ID:</dt>
+            <dd pn="section-4.7.2-6.2">
+              <t indent="0" pn="section-4.7.2-6.2.1">Request identifier, encoded as a variable-length integer. This is the
+identifier of this specific address request. Each request from a given endpoint
+carries a different identifier. Request IDs <bcp14>MUST NOT</bcp14> be reused by an endpoint
+and <bcp14>MUST NOT</bcp14> be zero.</t>
+            </dd>
+            <dt pn="section-4.7.2-6.3">IP Version:</dt>
+            <dd pn="section-4.7.2-6.4">
+              <t indent="0" pn="section-4.7.2-6.4.1">IP Version of this address request, encoded as an unsigned 8-bit integer. It
+<bcp14>MUST</bcp14> be either 4 or 6.</t>
+            </dd>
+            <dt pn="section-4.7.2-6.5">IP Address:</dt>
+            <dd pn="section-4.7.2-6.6">
+              <t indent="0" pn="section-4.7.2-6.6.1">Requested IP address. If the IP Version field has value 4, the IP Address
+field <bcp14>SHALL</bcp14> have a length of 32 bits. If the IP Version field has value 6, the
+IP Address field <bcp14>SHALL</bcp14> have a length of 128 bits.</t>
+            </dd>
+            <dt pn="section-4.7.2-6.7">IP Prefix Length:</dt>
+            <dd pn="section-4.7.2-6.8">
+              <t indent="0" pn="section-4.7.2-6.8.1">Length of the IP Prefix requested in bits, encoded as an unsigned 8-bit
+integer. It <bcp14>MUST</bcp14> be less than or equal to the length of the IP Address field in
+bits. If the prefix length is strictly less than the length of the IP address
+in bits, the lower bits of the IP Address field that are not covered by the
+prefix length <bcp14>MUST</bcp14> all be set to 0.</t>
+            </dd>
+          </dl>
+          <t indent="0" pn="section-4.7.2-7">If the IP address is all-zero (0.0.0.0 or ::), this indicates that the sender
+is requesting an address of that address family but does not have a preference
+for a specific address. In that scenario, the prefix length still indicates the
+sender's preference for the prefix length it is requesting.</t>
+          <t indent="0" pn="section-4.7.2-8">If any of the capsule fields are malformed upon reception, the receiver of the
+capsule <bcp14>MUST</bcp14> follow the error-handling procedure defined in <xref section="3.3" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.3" derivedContent="HTTP-DGRAM"/>.</t>
+          <t indent="0" pn="section-4.7.2-9">Upon receiving the ADDRESS_REQUEST capsule, an endpoint <bcp14>SHOULD</bcp14> assign one or
+more IP addresses to its peer and then respond with an ADDRESS_ASSIGN capsule
+to inform the peer of the assignment. For each Requested Address, the receiver
+of the ADDRESS_REQUEST capsule <bcp14>SHALL</bcp14> respond with an Assigned Address with a
+matching Request ID. If the requested address was assigned, the IP Address and
+IP Prefix Length fields in the Assigned Address response <bcp14>SHALL</bcp14> be set to the
+assigned values. If the requested address was not assigned, the IP address
+<bcp14>SHALL</bcp14> be all-zero, and the IP Prefix Length <bcp14>SHALL</bcp14> be the maximum length
+(0.0.0.0/32 or ::/128) to indicate that no address was assigned. These address
+rejections <bcp14>SHOULD NOT</bcp14> be included in subsequent ADDRESS_ASSIGN capsules. Note
+that other Assigned Address entries that do not correspond to any Request ID
+can also be contained in the same ADDRESS_ASSIGN response.</t>
+          <t indent="0" pn="section-4.7.2-10">If an endpoint receives an ADDRESS_REQUEST capsule that contains zero Requested
+Addresses, it <bcp14>MUST</bcp14> abort the IP proxying request stream.</t>
+          <t indent="0" pn="section-4.7.2-11">Note that the ordering of Requested Addresses does not carry any semantics.
+Similarly, the Request ID is only meant as a unique identifier; it does not
+convey any priority or importance.</t>
+        </section>
+        <section anchor="route-adv" numbered="true" removeInRFC="false" toc="include" pn="section-4.7.3">
+          <name slugifiedName="name-route_advertisement-capsule">ROUTE_ADVERTISEMENT Capsule</name>
+          <t indent="0" pn="section-4.7.3-1">The ROUTE_ADVERTISEMENT capsule (capsule type 0x03) allows an endpoint to communicate to its peer that it is willing
+to route traffic to a set of IP address ranges. This indicates that the sender
+has an existing route to each address range and notifies its peer that, if the
+receiver of the ROUTE_ADVERTISEMENT capsule sends IP packets for one of these
+ranges in HTTP Datagrams, the sender of the capsule will forward them along its
+preexisting route. Any address that is in one of the address ranges can be
+used as the destination address on IP packets originated by the receiver of
+this capsule.</t>
+          <figure anchor="route-adv-format" align="left" suppress-title="false" pn="figure-11">
+            <name slugifiedName="name-route_advertisement-capsule-">ROUTE_ADVERTISEMENT Capsule Format</name>
+            <artwork align="left" pn="section-4.7.3-2.1">
+ROUTE_ADVERTISEMENT Capsule {
+  Type (i) = 0x03,
+  Length (i),
+  IP Address Range (..) ...,
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.3-3">The ROUTE_ADVERTISEMENT capsule contains a sequence of zero or more IP Address
+Ranges.</t>
+          <figure anchor="addr-range-format" align="left" suppress-title="false" pn="figure-12">
+            <name slugifiedName="name-ip-address-range-format">IP Address Range Format</name>
+            <artwork align="left" pn="section-4.7.3-4.1">
+IP Address Range {
+  IP Version (8),
+  Start IP Address (32..128),
+  End IP Address (32..128),
+  IP Protocol (8),
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-4.7.3-5">Each IP Address Range contains the following fields:</t>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.7.3-6">
+            <dt pn="section-4.7.3-6.1">IP Version:</dt>
+            <dd pn="section-4.7.3-6.2">
+              <t indent="0" pn="section-4.7.3-6.2.1">IP Version of this range, encoded as an unsigned 8-bit integer. It <bcp14>MUST</bcp14> be
+either 4 or 6.</t>
+            </dd>
+            <dt pn="section-4.7.3-6.3">Start IP Address and End IP Address:</dt>
+            <dd pn="section-4.7.3-6.4">
+              <t indent="0" pn="section-4.7.3-6.4.1">Inclusive start and end IP address of the advertised range. If the IP Version
+field has value 4, these fields <bcp14>SHALL</bcp14> have a length of 32 bits. If the IP
+Version field has value 6, these fields <bcp14>SHALL</bcp14> have a length of 128 bits. The
+Start IP Address <bcp14>MUST</bcp14> be less than or equal to the End IP Address.</t>
+            </dd>
+            <dt pn="section-4.7.3-6.5">IP Protocol:</dt>
+            <dd pn="section-4.7.3-6.6">
+              <t indent="0" pn="section-4.7.3-6.6.1">The Internet Protocol Number for traffic that can be sent to this range,
+encoded as an unsigned 8-bit integer. If the value is 0, all protocols are
+allowed. If the value is not 0, it represents an allowable next header value
+carried in IP headers that are sent directly in HTTP Datagrams (the outermost
+IP headers). ICMP traffic is always allowed, regardless of the value of this
+field.</t>
+            </dd>
+          </dl>
+          <t indent="0" pn="section-4.7.3-7">If any of the capsule fields are malformed upon reception, the receiver of the
+capsule <bcp14>MUST</bcp14> follow the error-handling procedure defined in <xref section="3.3" sectionFormat="of" target="RFC9297" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9297#section-3.3" derivedContent="HTTP-DGRAM"/>.</t>
+          <t indent="0" pn="section-4.7.3-8">Upon receiving the ROUTE_ADVERTISEMENT capsule, an endpoint <bcp14>MAY</bcp14> update its
+local state regarding what its peer is willing to route (subject to local
+policy), such as by installing entries in a routing table.</t>
+          <t indent="0" pn="section-4.7.3-9">Each ROUTE_ADVERTISEMENT contains the full list of address ranges. If multiple
+ROUTE_ADVERTISEMENT capsules are sent in one direction, each
+ROUTE_ADVERTISEMENT capsule supersedes prior ones. In other words, if a given
+address range was present in a prior capsule but the most recently received
+ROUTE_ADVERTISEMENT capsule does not contain it, the receiver will consider
+that range withdrawn.</t>
+          <t indent="0" pn="section-4.7.3-10">If multiple ranges using the same IP protocol were to overlap, some routing
+table implementations might reject them. To prevent overlap, the ranges are
+ordered; this places the burden on the sender and makes verification by the
+receiver much simpler. If an IP Address Range A precedes an IP Address Range B
+in the same ROUTE_ADVERTISEMENT capsule, they <bcp14>MUST</bcp14> follow these requirements:</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.7.3-11">
+            <li pn="section-4.7.3-11.1">The IP Version of A <bcp14>MUST</bcp14> be less than or equal to the IP Version of B.</li>
+            <li pn="section-4.7.3-11.2">If the IP Version of A and B are equal, the IP Protocol of A <bcp14>MUST</bcp14> be less
+than or equal to the IP Protocol of B.</li>
+            <li pn="section-4.7.3-11.3">If the IP Version and IP Protocol of A and B are both equal, the End IP
+Address of A <bcp14>MUST</bcp14> be strictly less than the Start IP Address of B.</li>
+          </ul>
+          <t indent="0" pn="section-4.7.3-12">If an endpoint receives a ROUTE_ADVERTISEMENT capsule that does not meet these
+requirements, it <bcp14>MUST</bcp14> abort the IP proxying request stream.</t>
+          <t indent="0" pn="section-4.7.3-13">Since setting the IP protocol to zero indicates all protocols are allowed, the
+requirements above make it possible for two routes to overlap when one has its IP
+protocol set to zero and the other has it set to non-zero. Endpoints <bcp14>MUST NOT</bcp14> send a
+ROUTE_ADVERTISEMENT capsule with routes that overlap in such a way. Validating
+this requirement is <bcp14>OPTIONAL</bcp14>, but if an endpoint detects the violation, it <bcp14>MUST</bcp14>
+abort the IP proxying request stream.</t>
+        </section>
+      </section>
+      <section anchor="ipv6-extension-headers" numbered="true" removeInRFC="false" toc="include" pn="section-4.8">
+        <name slugifiedName="name-ipv6-extension-headers">IPv6 Extension Headers</name>
+        <t indent="0" pn="section-4.8-1">Both request scoping (see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>) and the ROUTE_ADVERTISEMENT capsule (see
+<xref target="route-adv" format="default" sectionFormat="of" derivedContent="Section 4.7.3"/>) use Internet Protocol Numbers. These numbers represent both upper
+layers (as defined in <xref section="2" sectionFormat="of" target="RFC8200" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8200#section-2" derivedContent="IPv6"/>, with examples that include TCP and
+UDP) and IPv6 extension headers (as defined in <xref section="4" sectionFormat="of" target="RFC8200" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8200#section-4" derivedContent="IPv6"/>, with examples
+that include Fragment and Options headers). IP proxies <bcp14>MAY</bcp14> reject requests to scope
+to protocol numbers that are used for extension headers. Upon receiving
+packets, implementations that support scoping or routing by Internet Protocol Number
+<bcp14>MUST</bcp14> walk the chain of extensions to find the outermost non-extension Internet Protocol
+Number to match against the scoping rule. Note that the ROUTE_ADVERTISEMENT
+capsule uses Internet Protocol Number 0 to indicate that all protocols are allowed;
+it does not restrict the route to the IPv6 Hop-by-Hop Options header
+(<xref section="4.3" sectionFormat="of" target="RFC8200" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8200#section-4.3" derivedContent="IPv6"/>).</t>
+      </section>
+    </section>
+    <section anchor="context-identifiers" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-context-identifiers">Context Identifiers</name>
+      <t indent="0" pn="section-5-1">The mechanism for proxying IP in HTTP defined in this document allows future
+extensions to exchange HTTP Datagrams that carry different semantics from IP
+payloads. Some of these extensions can augment IP payloads with additional data
+or compress IP header fields, while others can exchange data that is completely
+separate from IP payloads. In order to accomplish this, all HTTP Datagrams
+associated with IP proxying request streams start with a Context ID field; see
+<xref target="payload-format" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+      <t indent="0" pn="section-5-2">Context IDs are 62-bit integers (0 to 2<sup>62</sup>-1). Context IDs are
+encoded as variable-length integers; see <xref section="16" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-16" derivedContent="QUIC"/>. The Context ID
+value of 0 is reserved for IP payloads, while non-zero values are dynamically
+allocated. Non-zero even-numbered Context IDs are client-allocated, and
+odd-numbered Context IDs are proxy-allocated. The Context ID namespace is tied
+to a given HTTP request; it is possible for a Context ID with the same numeric
+value to be simultaneously allocated in distinct requests, potentially with
+different semantics. Context IDs <bcp14>MUST NOT</bcp14> be re-allocated within a given HTTP
+request but <bcp14>MAY</bcp14> be allocated in any order. The Context ID allocation
+restrictions to the use of even-numbered and odd-numbered Context IDs exist in
+order to avoid the need for synchronization between endpoints. However, once a
+Context ID has been allocated, those restrictions do not apply to the use of
+the Context ID; it can be used by either the client or the IP proxy,
+independent of which endpoint initially allocated it.</t>
+      <t indent="0" pn="section-5-3">Registration is the action by which an endpoint informs its peer of the
+semantics and format of a given Context ID. This document does not define how
+registration occurs. Future extensions <bcp14>MAY</bcp14> use HTTP header fields or capsules
+to register Context IDs. Depending on the method being used, it is possible for
+datagrams to be received with Context IDs that have not yet been registered.
+For instance, this can be due to reordering of the packet containing the
+datagram and the packet containing the registration message during transmission.</t>
+    </section>
+    <section anchor="payload-format" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-http-datagram-payload-forma">HTTP Datagram Payload Format</name>
+      <t indent="0" pn="section-6-1">When associated with IP proxying request streams, the HTTP Datagram Payload
+field of HTTP Datagrams (see <xref target="RFC9297" format="default" sectionFormat="of" derivedContent="HTTP-DGRAM"/>) has the format defined in
+<xref target="dgram-format" format="default" sectionFormat="of" derivedContent="Figure 13"/>. Note that, when HTTP Datagrams are encoded using QUIC DATAGRAM
+frames, the Context ID field defined below directly follows the Quarter Stream
+ID field that is at the start of the QUIC DATAGRAM frame payload:</t>
+      <figure anchor="dgram-format" align="left" suppress-title="false" pn="figure-13">
+        <name slugifiedName="name-ip-proxying-http-datagram-f">IP Proxying HTTP Datagram Format</name>
+        <artwork align="left" pn="section-6-2.1">
+IP Proxying HTTP Datagram Payload {
+  Context ID (i),
+  Payload (..),
+}
+</artwork>
+      </figure>
+      <t indent="0" pn="section-6-3">The IP Proxying HTTP Datagram Payload contains the following fields:</t>
+      <dl spacing="normal" newline="true" indent="3" pn="section-6-4">
+        <dt pn="section-6-4.1">Context ID:</dt>
+        <dd pn="section-6-4.2">
+          <t indent="0" pn="section-6-4.2.1">A variable-length integer that contains the value of the Context ID. If an
+HTTP/3 datagram that carries an unknown Context ID is received, the receiver
+<bcp14>SHALL</bcp14> either drop that datagram silently or buffer it temporarily (on the order
+of a round trip) while awaiting the registration of the corresponding Context
+ID.</t>
+        </dd>
+        <dt pn="section-6-4.3">Payload:</dt>
+        <dd pn="section-6-4.4">
+          <t indent="0" pn="section-6-4.4.1">The payload of the datagram, whose semantics depend on value of the previous
+field. Note that this field can be empty.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-6-5">IP packets are encoded using HTTP Datagrams with the Context ID set to zero.
+When the Context ID is set to zero, the Payload field contains a full IP packet
+(from the IP Version field until the last byte of the IP payload).</t>
+    </section>
+    <section anchor="ip-packet-handling" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-ip-packet-handling">IP Packet Handling</name>
+      <t indent="0" pn="section-7-1">This document defines a tunneling mechanism that is conceptually an IP link.
+However, because links are attached to IP routers, implementations might need
+to handle some of the responsibilities of IP routers if they do not delegate
+them to another implementation, such as a kernel.</t>
+      <section anchor="link-operation" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-link-operation">Link Operation</name>
+        <t indent="0" pn="section-7.1-1">The IP forwarding tunnels described in this document are not fully featured
+"interfaces" in the IPv6 addressing architecture sense <xref target="RFC4291" format="default" sectionFormat="of" derivedContent="IPv6-ADDR"/>.
+In particular, they do not necessarily have IPv6 link-local addresses.
+Additionally, IPv6 stateless autoconfiguration or router advertisement messages
+are not used in such interfaces, and neither is neighbor discovery.</t>
+        <t indent="0" pn="section-7.1-2">When using HTTP/2 or HTTP/3, a client <bcp14>MAY</bcp14> optimistically start sending proxied IP packets before receiving
+the response to its IP proxying request, noting however that those may not be
+processed by the IP proxy if it responds to the request with a failure or if
+the datagrams are received by the IP proxy before the request. Since receiving
+addresses and routes is required in order to know that a packet can be sent
+through the tunnel, such optimistic packets might be dropped by the IP proxy if
+it chooses to provide different addressing or routing information than what the
+client assumed.</t>
+        <t indent="0" pn="section-7.1-3">Note that it is possible for multiple proxied IP packets to be encapsulated in
+the same outer packet, for example, because a QUIC packet can carry more than one QUIC
+DATAGRAM frame. It is also possible for a proxied IP packet to span multiple
+outer packets, because a DATAGRAM capsule can be split across multiple QUIC or
+TCP packets.</t>
+      </section>
+      <section anchor="routing-operation" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-routing-operation">Routing Operation</name>
+        <t indent="0" pn="section-7.2-1">The requirements in this section are a repetition of requirements that apply to
+IP routers in general and might not apply to implementations of IP proxying
+that rely on external software for routing.</t>
+        <t indent="0" pn="section-7.2-2">When an endpoint receives an HTTP Datagram containing an IP packet, it will
+parse the packet's IP header, perform any local policy checks (e.g., source
+address validation), check their routing table to pick an outbound interface,
+and then send the IP packet on that interface or pass it to a local
+application. The endpoint can also choose to drop any received packets instead
+of forwarding them. If a received IP packet fails any correctness or policy
+checks, that is a forwarding error, not a protocol violation, as far as IP
+proxying is concerned; see <xref target="error-signal" format="default" sectionFormat="of" derivedContent="Section 7.2.1"/>. IP proxying endpoints <bcp14>MAY</bcp14>
+implement additional filtering policies on the IP packets they forward.</t>
+        <t indent="0" pn="section-7.2-3">In the other direction, when an endpoint receives an IP packet, it checks to see
+if the packet matches the routes mapped for an IP tunnel and performs the same
+forwarding checks as above before transmitting the packet over HTTP Datagrams.</t>
+        <t indent="0" pn="section-7.2-4">When IP proxying endpoints forward IP packets between different links, they
+will decrement the IP Hop Count (or TTL) upon encapsulation but not upon
+decapsulation. In other words, the Hop Count is decremented right before an IP
+packet is transmitted in an HTTP Datagram. This prevents infinite loops in the
+presence of routing loops and matches the choices in IPsec <xref target="RFC4301" format="default" sectionFormat="of" derivedContent="IPSEC"/>.
+This does not apply to IP packets generated by the IP proxying endpoint itself.</t>
+        <t indent="0" pn="section-7.2-5">Implementers need to ensure that they do not forward any link-local traffic
+beyond the IP proxying interface that it was received on. IP proxying endpoints
+also need to properly reply to packets destined to link-local multicast
+addresses.</t>
+        <t indent="0" pn="section-7.2-6">IPv6 requires that every link have an MTU of at least 1280 bytes <xref target="RFC8200" format="default" sectionFormat="of" derivedContent="IPv6"/>.
+Since IP proxying in HTTP conveys IP packets in HTTP Datagrams and those can in
+turn be sent in QUIC DATAGRAM frames that cannot be fragmented
+<xref target="RFC9221" format="default" sectionFormat="of" derivedContent="DGRAM"/>, the MTU of an IP tunnel can be limited by the MTU of the
+QUIC connection that IP proxying is operating over. This can lead to situations
+where the IPv6 minimum link MTU is violated. IP proxying endpoints that operate
+as routers and support IPv6 <bcp14>MUST</bcp14> ensure that the IP tunnel link MTU is at least
+1280 bytes (i.e., that they can send HTTP Datagrams with payloads of at least 1280
+bytes). This can be accomplished using various techniques:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.2-7">
+          <li pn="section-7.2-7.1">If both IP proxying endpoints know for certain that HTTP intermediaries are
+not in use, the endpoints can pad the QUIC INITIAL packets of the outer
+QUIC connection that IP proxying is running over. (Assuming QUIC version 1 is
+in use, the overhead is 1 byte for the type, 20 bytes for the maximal connection ID length, 4
+bytes for the maximal packet number length, 1 byte for the DATAGRAM frame type, 8 bytes
+for the maximal Quarter Stream ID, 1 byte for the zero Context ID, and 16 bytes for
+the Authenticated Encryption with Associated Data (AEAD) authentication tag, for a total of 51 bytes of overhead, which
+corresponds to padding QUIC INITIAL packets to 1331 bytes or more.)</li>
+          <li pn="section-7.2-7.2">IP proxying endpoints can also send ICMPv6 echo requests with 1232 bytes of
+data to ascertain the link MTU and tear down the tunnel if they do not
+receive a response. Unless endpoints have an out-of-band means of
+guaranteeing that the previous techniques are sufficient, they <bcp14>MUST</bcp14> use this
+method. If an endpoint does not know an IPv6 address of its peer, it can send
+the ICMPv6 echo request to the link-local all nodes multicast address
+(ff02::1).</li>
+        </ul>
+        <t indent="0" pn="section-7.2-8">If an endpoint is using QUIC DATAGRAM frames to convey IPv6 packets and it
+detects that the QUIC MTU is too low to allow sending 1280 bytes, it <bcp14>MUST</bcp14> abort
+the IP proxying request stream.</t>
+        <section anchor="error-signal" numbered="true" removeInRFC="false" toc="include" pn="section-7.2.1">
+          <name slugifiedName="name-error-signalling">Error Signalling</name>
+          <t indent="0" pn="section-7.2.1-1">Since IP proxying endpoints often forward IP packets onwards to other network
+interfaces, they need to handle errors in the forwarding process. For example,
+forwarding can fail if the endpoint does not have a route for the destination
+address, if it is configured to reject a destination prefix by policy, or if
+the MTU of the outgoing link is lower than the size of the packet to be
+forwarded. In such scenarios, IP proxying endpoints <bcp14>SHOULD</bcp14> use ICMP
+<xref target="RFC0792" format="default" sectionFormat="of" derivedContent="ICMP"/> <xref target="RFC4443" format="default" sectionFormat="of" derivedContent="ICMPv6"/> to signal the forwarding error to its
+peer by generating ICMP packets and sending them using HTTP Datagrams.</t>
+          <t indent="0" pn="section-7.2.1-2">Endpoints are free to select the most appropriate ICMP errors to send. Some
+examples that are relevant for IP proxying include the following:</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.2.1-3">
+            <li pn="section-7.2.1-3.1">For invalid source addresses, send Destination Unreachable (<xref section="3.1" sectionFormat="of" target="RFC4443" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4443#section-3.1" derivedContent="ICMPv6"/>) with code 5, "Source address failed ingress/egress policy".</li>
+            <li pn="section-7.2.1-3.2">For unroutable destination addresses, send Destination Unreachable (<xref section="3.1" sectionFormat="of" target="RFC4443" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4443#section-3.1" derivedContent="ICMPv6"/>) with code 0, "No route to destination", or code 1,
+"Communication with destination administratively prohibited".</li>
+            <li pn="section-7.2.1-3.3">For packets that cannot fit within the MTU of the outgoing link, send Packet
+Too Big (<xref section="3.2" sectionFormat="of" target="RFC4443" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4443#section-3.2" derivedContent="ICMPv6"/>).</li>
+          </ul>
+          <t indent="0" pn="section-7.2.1-4">In order to receive these errors, endpoints need to be prepared to receive ICMP
+packets. If an endpoint does not send ROUTE_ADVERTISEMENT capsules, such as a
+client opening an IP flow through an IP proxy, it <bcp14>SHOULD</bcp14> process proxied ICMP
+packets from its peer in order to receive these errors. Note that ICMP messages
+can originate from a source address different from that of the IP proxying
+peer and also from outside the target if scoping is in use (see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>).</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="examples" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-examples">Examples</name>
+      <t indent="0" pn="section-8-1">IP proxying in HTTP enables many different use cases that can benefit from IP
+packet proxying and tunnelling. These examples are provided to help illustrate
+some of the ways in which IP proxying in HTTP can be used.</t>
+      <section anchor="example-remote" numbered="true" removeInRFC="false" toc="include" pn="section-8.1">
+        <name slugifiedName="name-remote-access-vpn">Remote Access VPN</name>
+        <t indent="0" pn="section-8.1-1">The following example shows a point-to-network VPN setup, where a client
+receives a set of local addresses and can send to any remote host through the
+IP proxy. Such VPN setups can be either full-tunnel or split-tunnel.</t>
+        <figure anchor="diagram-tunnel" align="left" suppress-title="false" pn="figure-14">
+          <name slugifiedName="name-vpn-tunnel-setup">VPN Tunnel Setup</name>
+          <artset pn="section-8.1-2.1">
+            <artwork type="svg" align="left" pn="section-8.1-2.1.1"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 768 128" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px">
+                <path d="M 8,32 L 8,96" fill="none" stroke="black"/>
+                <path d="M 80,32 L 80,96" fill="none" stroke="black"/>
+                <path d="M 248,32 L 248,96" fill="none" stroke="black"/>
+                <path d="M 320,32 L 320,96" fill="none" stroke="black"/>
+                <path d="M 416,32 L 416,96" fill="none" stroke="black"/>
+                <path d="M 8,32 L 80,32" fill="none" stroke="black"/>
+                <path d="M 248,32 L 320,32" fill="none" stroke="black"/>
+                <path d="M 416,32 L 448,32" fill="none" stroke="black"/>
+                <path d="M 80,48 L 248,48" fill="none" stroke="black"/>
+                <path d="M 192,64 L 216,64" fill="none" stroke="black"/>
+                <path d="M 320,64 L 448,64" fill="none" stroke="black"/>
+                <path d="M 80,80 L 248,80" fill="none" stroke="black"/>
+                <path d="M 8,96 L 80,96" fill="none" stroke="black"/>
+                <path d="M 248,96 L 320,96" fill="none" stroke="black"/>
+                <path d="M 416,96 L 448,96" fill="none" stroke="black"/>
+                <polygon class="arrowhead" points="456,96 444,90.4 444,101.6" fill="black" transform="rotate(0,448,96)"/>
+                <polygon class="arrowhead" points="456,64 444,58.4 444,69.6" fill="black" transform="rotate(0,448,64)"/>
+                <polygon class="arrowhead" points="456,32 444,26.4 444,37.6" fill="black" transform="rotate(0,448,32)"/>
+                <polygon class="arrowhead" points="224,64 212,58.4 212,69.6" fill="black" transform="rotate(0,216,64)"/>
+                <polygon class="arrowhead" points="200,64 188,58.4 188,69.6" fill="black" transform="rotate(180,192,64)"/>
+                <g class="text">
+                  <text x="100" y="36">IP</text>
+                  <text x="120" y="36">A</text>
+                  <text x="212" y="36">IP</text>
+                  <text x="232" y="36">B</text>
+                  <text x="468" y="36">IP</text>
+                  <text x="488" y="36">D</text>
+                  <text x="284" y="52">IP</text>
+                  <text x="340" y="52">IP</text>
+                  <text x="360" y="52">C</text>
+                  <text x="44" y="68">Client</text>
+                  <text x="100" y="68">IP</text>
+                  <text x="140" y="68">Subnet</text>
+                  <text x="176" y="68">C</text>
+                  <text x="232" y="68">?</text>
+                  <text x="288" y="68">Proxy</text>
+                  <text x="468" y="68">IP</text>
+                  <text x="488" y="68">E</text>
+                  <text x="468" y="100">IP</text>
+                  <text x="496" y="100">...</text>
+                </g>
+              </svg>
+            </artwork>
+            <artwork type="ascii-art" align="left" pn="section-8.1-2.1.2">
++--------+ IP A          IP B +--------+           +---&gt; IP D
+|        +--------------------+   IP   | IP C      |
+| Client | IP Subnet C &lt;--&gt; ? |  Proxy +-----------+---&gt; IP E
+|        +--------------------+        |           |
++--------+                    +--------+           +---&gt; IP ...
+
+</artwork>
+          </artset>
+        </figure>
+        <t indent="0" pn="section-8.1-3">In this case, the client does not specify any scope in its request. The IP
+proxy assigns the client an IPv4 address (192.0.2.11) and a full-tunnel route
+of all IPv4 addresses (0.0.0.0/0). The client can then send to any IPv4 host
+using its assigned address as its source address.</t>
+        <figure anchor="fig-full-tunnel" align="left" suppress-title="false" pn="figure-15">
+          <name slugifiedName="name-vpn-full-tunnel-example">VPN Full-Tunnel Example</name>
+          <artwork align="left" pn="section-8.1-4.1">
+[[ From Client ]]             [[ From IP Proxy ]]
+
+SETTINGS
+  H3_DATAGRAM = 1
+
+                              SETTINGS
+                                ENABLE_CONNECT_PROTOCOL = 1
+                                H3_DATAGRAM = 1
+
+STREAM(44): HEADERS
+:method = CONNECT
+:protocol = connect-ip
+:scheme = https
+:path = /vpn
+:authority = proxy.example.com
+capsule-protocol = ?1
+
+                              STREAM(44): HEADERS
+                              :status = 200
+                              capsule-protocol = ?1
+
+STREAM(44): DATA
+Capsule Type = ADDRESS_REQUEST
+(Request ID = 1
+ IP Version = 4
+ IP Address = 0.0.0.0
+ IP Prefix Length = 32)
+
+                              STREAM(44): DATA
+                              Capsule Type = ADDRESS_ASSIGN
+                              (Request ID = 1
+                               IP Version = 4
+                               IP Address = 192.0.2.11
+                               IP Prefix Length = 32)
+
+                              STREAM(44): DATA
+                              Capsule Type = ROUTE_ADVERTISEMENT
+                              (IP Version = 4
+                               Start IP Address = 0.0.0.0
+                               End IP Address = 255.255.255.255
+                               IP Protocol = 0) // Any
+
+DATAGRAM
+Quarter Stream ID = 11
+Context ID = 0
+Payload = Encapsulated IP Packet
+
+                              DATAGRAM
+                              Quarter Stream ID = 11
+                              Context ID = 0
+                              Payload = Encapsulated IP Packet
+</artwork>
+        </figure>
+        <t indent="0" pn="section-8.1-5">A setup for a split-tunnel VPN (the case where the client can only access a
+specific set of private subnets) is quite similar. In this case, the advertised
+route is restricted to 192.0.2.0/24, rather than 0.0.0.0/0.</t>
+        <figure anchor="fig-split-tunnel" align="left" suppress-title="false" pn="figure-16">
+          <name slugifiedName="name-vpn-split-tunnel-example">VPN Split-Tunnel Example</name>
+          <artwork align="left" pn="section-8.1-6.1">
+[[ From Client ]]             [[ From IP Proxy ]]
+
+                              STREAM(44): DATA
+                              Capsule Type = ADDRESS_ASSIGN
+                              (Request ID = 0
+                               IP Version = 4
+                               IP Address = 192.0.2.42
+                               IP Prefix Length = 32)
+
+                              STREAM(44): DATA
+                              Capsule Type = ROUTE_ADVERTISEMENT
+                              (IP Version = 4
+                               Start IP Address = 192.0.2.0
+                               End IP Address = 192.0.2.41
+                               IP Protocol = 0) // Any
+                              (IP Version = 4
+                               Start IP Address = 192.0.2.43
+                               End IP Address = 192.0.2.255
+                               IP Protocol = 0) // Any
+</artwork>
+        </figure>
+      </section>
+      <section anchor="site-to-site-vpn" numbered="true" removeInRFC="false" toc="include" pn="section-8.2">
+        <name slugifiedName="name-site-to-site-vpn">Site-to-Site VPN</name>
+        <t indent="0" pn="section-8.2-1">The following example shows how to connect a branch office network to a
+corporate network such that all machines on those networks can communicate. In
+this example, the IP proxying client is attached to the branch office network
+192.0.2.0/24, and the IP proxy is attached to the corporate network
+203.0.113.0/24. There are legacy clients on the branch office network that only
+allow maintenance requests from machines on their subnet, so the IP proxy is
+provisioned with an IP address from that subnet.</t>
+        <figure anchor="diagram-s2s" align="left" suppress-title="false" pn="figure-17">
+          <name slugifiedName="name-site-to-site-vpn-example">Site-to-Site VPN Example</name>
+          <artset pn="section-8.2-2.1">
+            <artwork type="svg" align="left" pn="section-8.2-2.1.1"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 700 128" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px">
+                <path d="M 112,32 L 112,96" fill="none" stroke="black"/>
+                <path d="M 144,32 L 144,96" fill="none" stroke="black"/>
+                <path d="M 216,32 L 216,96" fill="none" stroke="black"/>
+                <path d="M 328,32 L 328,96" fill="none" stroke="black"/>
+                <path d="M 392,32 L 392,96" fill="none" stroke="black"/>
+                <path d="M 424,32 L 424,96" fill="none" stroke="black"/>
+                <path d="M 88,32 L 112,32" fill="none" stroke="black"/>
+                <path d="M 144,32 L 216,32" fill="none" stroke="black"/>
+                <path d="M 328,32 L 392,32" fill="none" stroke="black"/>
+                <path d="M 424,32 L 456,32" fill="none" stroke="black"/>
+                <path d="M 216,48 L 328,48" fill="none" stroke="black"/>
+                <path d="M 88,64 L 144,64" fill="none" stroke="black"/>
+                <path d="M 392,64 L 456,64" fill="none" stroke="black"/>
+                <path d="M 216,80 L 328,80" fill="none" stroke="black"/>
+                <path d="M 88,96 L 112,96" fill="none" stroke="black"/>
+                <path d="M 144,96 L 216,96" fill="none" stroke="black"/>
+                <path d="M 328,96 L 392,96" fill="none" stroke="black"/>
+                <path d="M 424,96 L 456,96" fill="none" stroke="black"/>
+                <polygon class="arrowhead" points="464,96 452,90.4 452,101.6" fill="black" transform="rotate(0,456,96)"/>
+                <polygon class="arrowhead" points="464,64 452,58.4 452,69.6" fill="black" transform="rotate(0,456,64)"/>
+                <polygon class="arrowhead" points="464,32 452,26.4 452,37.6" fill="black" transform="rotate(0,456,32)"/>
+                <polygon class="arrowhead" points="96,96 84,90.4 84,101.6" fill="black" transform="rotate(180,88,96)"/>
+                <polygon class="arrowhead" points="96,64 84,58.4 84,69.6" fill="black" transform="rotate(180,88,64)"/>
+                <polygon class="arrowhead" points="96,32 84,26.4 84,37.6" fill="black" transform="rotate(180,88,32)"/>
+                <g class="text">
+                  <text x="40" y="36">192.0.2.1</text>
+                  <text x="512" y="36">203.0.113.9</text>
+                  <text x="356" y="52">IP</text>
+                  <text x="40" y="68">192.0.2.2</text>
+                  <text x="180" y="68">Client</text>
+                  <text x="236" y="68">IP</text>
+                  <text x="284" y="68">Proxying</text>
+                  <text x="360" y="68">Proxy</text>
+                  <text x="512" y="68">203.0.113.8</text>
+                  <text x="40" y="100">192.0.2.3</text>
+                  <text x="512" y="100">203.0.113.7</text>
+                </g>
+              </svg>
+            </artwork>
+            <artwork type="ascii-art" align="left" pn="section-8.2-2.1.2">
+192.0.2.1 &lt;--+   +--------+             +-------+   +---&gt; 203.0.113.9
+             |   |        +-------------+  IP   |   |
+192.0.2.2 &lt;--+---+ Client | IP Proxying | Proxy +---+---&gt; 203.0.113.8
+             |   |        +-------------+       |   |
+192.0.2.3 &lt;--+   +--------+             +-------+   +---&gt; 203.0.113.7
+
+</artwork>
+          </artset>
+        </figure>
+        <t indent="0" pn="section-8.2-3">In this case, the client does not specify any scope in its request. The IP
+proxy assigns the client an IPv4 address (203.0.113.100) and a split-tunnel
+route to the corporate network (203.0.113.0/24). The client assigns the IP
+proxy an IPv4 address (192.0.2.200) and a split-tunnel route to the branch
+office network (192.0.2.0/24). This allows hosts on both networks to
+communicate with each other and allows the IP proxy to perform maintenance on
+legacy hosts in the branch office. Note that IP proxying endpoints will
+decrement the IP Hop Count (or TTL) when encapsulating forwarded packets, so
+protocols that require that field be set to 255 will not function.</t>
+        <figure anchor="fig-s2s" align="left" suppress-title="false" pn="figure-18">
+          <name slugifiedName="name-site-to-site-vpn-capsule-ex">Site-to-Site VPN Capsule Example</name>
+          <artwork align="left" pn="section-8.2-4.1">
+[[ From Client ]]             [[ From IP Proxy ]]
+
+SETTINGS
+  H3_DATAGRAM = 1
+
+                              SETTINGS
+                                ENABLE_CONNECT_PROTOCOL = 1
+                                H3_DATAGRAM = 1
+
+STREAM(44): HEADERS
+:method = CONNECT
+:protocol = connect-ip
+:scheme = https
+:path = /corp
+:authority = proxy.example.com
+capsule-protocol = ?1
+
+                              STREAM(44): HEADERS
+                              :status = 200
+                              capsule-protocol = ?1
+
+STREAM(44): DATA
+Capsule Type = ADDRESS_ASSIGN
+(Request ID = 0
+IP Version = 4
+IP Address = 192.0.2.200
+IP Prefix Length = 32)
+
+STREAM(44): DATA
+Capsule Type = ROUTE_ADVERTISEMENT
+(IP Version = 4
+Start IP Address = 192.0.2.0
+End IP Address = 192.0.2.255
+IP Protocol = 0) // Any
+
+                              STREAM(44): DATA
+                              Capsule Type = ADDRESS_ASSIGN
+                              (Request ID = 0
+                               IP Version = 4
+                               IP Address = 203.0.113.100
+                               IP Prefix Length = 32)
+
+                              STREAM(44): DATA
+                              Capsule Type = ROUTE_ADVERTISEMENT
+                              (IP Version = 4
+                               Start IP Address = 203.0.113.0
+                               End IP Address = 203.0.113.255
+                               IP Protocol = 0) // Any
+
+DATAGRAM
+Quarter Stream ID = 11
+Context ID = 0
+Payload = Encapsulated IP Packet
+
+                              DATAGRAM
+                              Quarter Stream ID = 11
+                              Context ID = 0
+                              Payload = Encapsulated IP Packet
+</artwork>
+        </figure>
+      </section>
+      <section anchor="ip-flow-forwarding" numbered="true" removeInRFC="false" toc="include" pn="section-8.3">
+        <name slugifiedName="name-ip-flow-forwarding">IP Flow Forwarding</name>
+        <t indent="0" pn="section-8.3-1">The following example shows an IP flow forwarding setup, where a client
+requests to establish a forwarding tunnel to target.example.com using the Stream Control Transmission Protocol (SCTP) (IP
+protocol 132) and receives a single local address and remote address it can
+use for transmitting packets. A similar approach could be used for any other IP
+protocol that isn't easily proxied with existing HTTP methods, such as ICMP,
+Encapsulating Security Payload (ESP), etc.</t>
+        <figure anchor="diagram-flow" align="left" suppress-title="false" pn="figure-19">
+          <name slugifiedName="name-proxied-flow-setup">Proxied Flow Setup</name>
+          <artset pn="section-8.3-2.1">
+            <artwork type="svg" align="left" pn="section-8.3-2.1.1"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 660 128" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px">
+                <path d="M 8,32 L 8,96" fill="none" stroke="black"/>
+                <path d="M 80,32 L 80,96" fill="none" stroke="black"/>
+                <path d="M 240,32 L 240,96" fill="none" stroke="black"/>
+                <path d="M 312,32 L 312,96" fill="none" stroke="black"/>
+                <path d="M 8,32 L 80,32" fill="none" stroke="black"/>
+                <path d="M 240,32 L 312,32" fill="none" stroke="black"/>
+                <path d="M 80,48 L 240,48" fill="none" stroke="black"/>
+                <path d="M 160,64 L 184,64" fill="none" stroke="black"/>
+                <path d="M 312,64 L 392,64" fill="none" stroke="black"/>
+                <path d="M 80,80 L 240,80" fill="none" stroke="black"/>
+                <path d="M 8,96 L 80,96" fill="none" stroke="black"/>
+                <path d="M 240,96 L 312,96" fill="none" stroke="black"/>
+                <polygon class="arrowhead" points="400,64 388,58.4 388,69.6" fill="black" transform="rotate(0,392,64)"/>
+                <polygon class="arrowhead" points="192,64 180,58.4 180,69.6" fill="black" transform="rotate(0,184,64)"/>
+                <polygon class="arrowhead" points="168,64 156,58.4 156,69.6" fill="black" transform="rotate(180,160,64)"/>
+                <g class="text">
+                  <text x="100" y="36">IP</text>
+                  <text x="120" y="36">A</text>
+                  <text x="204" y="36">IP</text>
+                  <text x="224" y="36">B</text>
+                  <text x="276" y="52">IP</text>
+                  <text x="332" y="52">IP</text>
+                  <text x="352" y="52">C</text>
+                  <text x="44" y="68">Client</text>
+                  <text x="124" y="68">IP</text>
+                  <text x="144" y="68">C</text>
+                  <text x="200" y="68">D</text>
+                  <text x="280" y="68">Proxy</text>
+                  <text x="412" y="68">IP</text>
+                  <text x="432" y="68">D</text>
+                </g>
+              </svg>
+            </artwork>
+            <artwork type="ascii-art" align="left" pn="section-8.3-2.1.2">
++--------+ IP A         IP B +--------+
+|        +-------------------+   IP   | IP C
+| Client |    IP C &lt;--&gt; D    |  Proxy +---------&gt; IP D
+|        +-------------------+        |
++--------+                   +--------+
+
+</artwork>
+          </artset>
+        </figure>
+        <t indent="0" pn="section-8.3-3">In this case, the client specifies both a target hostname and an Internet Protocol
+Number in the scope of its request, indicating that it only needs to
+communicate with a single host. The IP proxy is able to perform DNS resolution
+on behalf of the client and allocate a specific outbound socket for the client
+instead of allocating an entire IP address to the client. In this regard, the
+request is similar to a regular CONNECT proxy request.</t>
+        <t indent="0" pn="section-8.3-4">The IP proxy assigns a single IPv6 address to the client (2001:db8:1234::a) and
+a route to a single IPv6 host (2001:db8:3456::b) scoped to SCTP. The client
+can send and receive SCTP IP packets to the remote host.</t>
+        <figure anchor="fig-flow" align="left" suppress-title="false" pn="figure-20">
+          <name slugifiedName="name-proxied-sctp-flow-example">Proxied SCTP Flow Example</name>
+          <artwork align="left" pn="section-8.3-5.1">
+[[ From Client ]]             [[ From IP Proxy ]]
+
+SETTINGS
+  H3_DATAGRAM = 1
+
+                              SETTINGS
+                                ENABLE_CONNECT_PROTOCOL = 1
+                                H3_DATAGRAM = 1
+
+STREAM(44): HEADERS
+:method = CONNECT
+:protocol = connect-ip
+:scheme = https
+:path = /proxy?target=target.example.com&amp;ipproto=132
+:authority = proxy.example.com
+capsule-protocol = ?1
+
+                              STREAM(44): HEADERS
+                              :status = 200
+                              capsule-protocol = ?1
+
+                              STREAM(44): DATA
+                              Capsule Type = ADDRESS_ASSIGN
+                              (Request ID = 0
+                               IP Version = 6
+                               IP Address = 2001:db8:1234::a
+                               IP Prefix Length = 128)
+
+                              STREAM(44): DATA
+                              Capsule Type = ROUTE_ADVERTISEMENT
+                              (IP Version = 6
+                               Start IP Address = 2001:db8:3456::b
+                               End IP Address = 2001:db8:3456::b
+                               IP Protocol = 132)
+
+DATAGRAM
+Quarter Stream ID = 11
+Context ID = 0
+Payload = Encapsulated SCTP/IP Packet
+
+                              DATAGRAM
+                              Quarter Stream ID = 11
+                              Context ID = 0
+                              Payload = Encapsulated SCTP/IP Packet
+</artwork>
+        </figure>
+      </section>
+      <section anchor="proxied-connection-racing" numbered="true" removeInRFC="false" toc="include" pn="section-8.4">
+        <name slugifiedName="name-proxied-connection-racing">Proxied Connection Racing</name>
+        <t indent="0" pn="section-8.4-1">The following example shows a setup where a client is proxying UDP packets
+through an IP proxy in order to control connection establishment racing through
+an IP proxy, as defined in Happy Eyeballs <xref target="RFC8305" format="default" sectionFormat="of" derivedContent="HEv2"/>. This example is a
+variant of the proxied flow but highlights how IP-level proxying can enable
+new capabilities, even for TCP and UDP.</t>
+        <figure anchor="diagram-racing" align="left" suppress-title="false" pn="figure-21">
+          <name slugifiedName="name-proxied-connection-racing-s">Proxied Connection Racing Setup</name>
+          <artset pn="section-8.4-2.1">
+            <artwork type="svg" align="left" pn="section-8.4-2.1.1"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 708 144" class="diagram" text-anchor="middle" font-family="monospace" font-size="13px">
+                <path d="M 8,32 L 8,112" fill="none" stroke="black"/>
+                <path d="M 80,32 L 80,112" fill="none" stroke="black"/>
+                <path d="M 240,32 L 240,112" fill="none" stroke="black"/>
+                <path d="M 312,32 L 312,112" fill="none" stroke="black"/>
+                <path d="M 8,32 L 80,32" fill="none" stroke="black"/>
+                <path d="M 240,32 L 312,32" fill="none" stroke="black"/>
+                <path d="M 80,48 L 240,48" fill="none" stroke="black"/>
+                <path d="M 320,48 L 424,48" fill="none" stroke="black"/>
+                <path d="M 144,64 L 168,64" fill="none" stroke="black"/>
+                <path d="M 144,80 L 168,80" fill="none" stroke="black"/>
+                <path d="M 80,96 L 240,96" fill="none" stroke="black"/>
+                <path d="M 320,96 L 424,96" fill="none" stroke="black"/>
+                <path d="M 8,112 L 80,112" fill="none" stroke="black"/>
+                <path d="M 240,112 L 312,112" fill="none" stroke="black"/>
+                <polygon class="arrowhead" points="432,96 420,90.4 420,101.6" fill="black" transform="rotate(0,424,96)"/>
+                <polygon class="arrowhead" points="432,48 420,42.4 420,53.6" fill="black" transform="rotate(0,424,48)"/>
+                <polygon class="arrowhead" points="328,96 316,90.4 316,101.6" fill="black" transform="rotate(180,320,96)"/>
+                <polygon class="arrowhead" points="328,48 316,42.4 316,53.6" fill="black" transform="rotate(180,320,48)"/>
+                <polygon class="arrowhead" points="176,80 164,74.4 164,85.6" fill="black" transform="rotate(0,168,80)"/>
+                <polygon class="arrowhead" points="176,64 164,58.4 164,69.6" fill="black" transform="rotate(0,168,64)"/>
+                <polygon class="arrowhead" points="152,80 140,74.4 140,85.6" fill="black" transform="rotate(180,144,80)"/>
+                <polygon class="arrowhead" points="152,64 140,58.4 140,69.6" fill="black" transform="rotate(180,144,64)"/>
+                <g class="text">
+                  <text x="100" y="36">IP</text>
+                  <text x="120" y="36">A</text>
+                  <text x="204" y="36">IP</text>
+                  <text x="224" y="36">B</text>
+                  <text x="332" y="36">IP</text>
+                  <text x="352" y="36">C</text>
+                  <text x="444" y="52">IP</text>
+                  <text x="464" y="52">E</text>
+                  <text x="44" y="68">Client</text>
+                  <text x="108" y="68">IP</text>
+                  <text x="128" y="68">C</text>
+                  <text x="184" y="68">E</text>
+                  <text x="276" y="68">IP</text>
+                  <text x="128" y="84">D</text>
+                  <text x="184" y="84">F</text>
+                  <text x="280" y="84">Proxy</text>
+                  <text x="444" y="100">IP</text>
+                  <text x="464" y="100">F</text>
+                  <text x="332" y="116">IP</text>
+                  <text x="352" y="116">D</text>
+                </g>
+              </svg>
+            </artwork>
+            <artwork type="ascii-art" align="left" pn="section-8.4-2.1.2">
++--------+ IP A         IP B +--------+ IP C
+|        +-------------------+        |&lt;------------&gt; IP E
+| Client |  IP C &lt;--&gt; E      |   IP   |
+|        |     D &lt;--&gt; F      |  Proxy |
+|        +-------------------+        |&lt;------------&gt; IP F
++--------+                   +--------+ IP D
+
+</artwork>
+          </artset>
+        </figure>
+        <t indent="0" pn="section-8.4-3">As with proxied flows, the client specifies both a target hostname and an Internet
+Protocol Number in the scope of its request. When the IP proxy performs DNS
+resolution on behalf of the client, it can send the various remote address
+options to the client as separate routes. It can also ensure that the client
+has both IPv4 and IPv6 addresses assigned.</t>
+        <t indent="0" pn="section-8.4-4">The IP proxy assigns both an IPv4 address (192.0.2.3) and an IPv6
+address (2001:db8:1234::a) to the client, as well as an IPv4 route
+(198.51.100.2) and an IPv6 route (2001:db8:3456::b), which represent the
+resolved addresses of the target hostname, scoped to UDP. The client can send
+and receive UDP IP packets to either one of the IP proxy addresses to enable
+Happy Eyeballs through the IP proxy.</t>
+        <figure anchor="fig-listen" align="left" suppress-title="false" pn="figure-22">
+          <name slugifiedName="name-proxied-connection-racing-e">Proxied Connection Racing Example</name>
+          <artwork align="left" pn="section-8.4-5.1">
+[[ From Client ]]             [[ From IP Proxy ]]
+
+SETTINGS
+  H3_DATAGRAM = 1
+
+                              SETTINGS
+                                ENABLE_CONNECT_PROTOCOL = 1
+                                H3_DATAGRAM = 1
+
+STREAM(44): HEADERS
+:method = CONNECT
+:protocol = connect-ip
+:scheme = https
+:path = /proxy?target=target.example.com&amp;ipproto=17
+:authority = proxy.example.com
+capsule-protocol = ?1
+
+                              STREAM(44): HEADERS
+                              :status = 200
+                              capsule-protocol = ?1
+
+                              STREAM(44): DATA
+                              Capsule Type = ADDRESS_ASSIGN
+                              (Request ID = 0
+                               IP Version = 4
+                               IP Address = 192.0.2.3
+                               IP Prefix Length = 32),
+                              (Request ID = 0
+                               IP Version = 6
+                               IP Address = 2001:db8::1234:1234
+                               IP Prefix Length = 128)
+
+                              STREAM(44): DATA
+                              Capsule Type = ROUTE_ADVERTISEMENT
+                              (IP Version = 4
+                               Start IP Address = 198.51.100.2
+                               End IP Address = 198.51.100.2
+                               IP Protocol = 17),
+                              (IP Version = 6
+                               Start IP Address = 2001:db8:3456::b
+                               End IP Address = 2001:db8:3456::b
+                               IP Protocol = 17)
+...
+
+DATAGRAM
+Quarter Stream ID = 11
+Context ID = 0
+Payload = Encapsulated IPv6 Packet
+
+DATAGRAM
+Quarter Stream ID = 11
+Context ID = 0
+Payload = Encapsulated IPv4 Packet
+
+</artwork>
+        </figure>
+      </section>
+    </section>
+    <section anchor="extensibility-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-extensibility-consideration">Extensibility Considerations</name>
+      <t indent="0" pn="section-9-1">Extensions to IP proxying in HTTP can define behavior changes to this
+mechanism. Such extensions <bcp14>SHOULD</bcp14> define new capsule types to exchange
+configuration information if needed.  
+It is <bcp14>RECOMMENDED</bcp14> for extensions that
+modify addressing to specify that their extension capsules be sent before the
+ADDRESS_ASSIGN capsule and that they do not take effect until the
+ADDRESS_ASSIGN capsule is parsed. This allows modifications to address
+assignment to operate atomically. Similarly, extensions that modify routing
+<bcp14>SHOULD</bcp14> behave similarly with regard to the ROUTE_ADVERTISEMENT capsule.</t>
+    </section>
+    <section anchor="performance-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-10">
+      <name slugifiedName="name-performance-considerations">Performance Considerations</name>
+      <t indent="0" pn="section-10-1">Bursty traffic can often lead to temporally correlated packet losses; in turn,
+this can lead to suboptimal responses from congestion controllers in protocols
+running inside the tunnel. To avoid this, IP proxying endpoints <bcp14>SHOULD</bcp14> strive
+to avoid increasing burstiness of IP traffic; they <bcp14>SHOULD NOT</bcp14> queue packets in
+order to increase batching beyond the minimal amount required to take advantage
+of hardware offloads.</t>
+      <t indent="0" pn="section-10-2">When the protocol running inside the tunnel uses congestion control (e.g.,
+<xref target="RFC9293" format="default" sectionFormat="of" derivedContent="TCP"/> or <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="QUIC"/>), the proxied traffic will incur at least two nested
+congestion controllers. When tunneled packets are sent using QUIC DATAGRAM
+frames, the outer HTTP connection <bcp14>MAY</bcp14> disable congestion control for those
+packets that contain only QUIC DATAGRAM frames encapsulating IP packets.
+Implementers will benefit from reading the guidance in <xref section="3.1.11" sectionFormat="of" target="RFC8085" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8085#section-3.1.11" derivedContent="UDP-USAGE"/>.</t>
+      <t indent="0" pn="section-10-3">When the protocol running inside the tunnel uses loss recovery (e.g., <xref target="RFC9293" format="default" sectionFormat="of" derivedContent="TCP"/>
+or <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="QUIC"/>) and the outer HTTP connection runs over TCP, the proxied traffic
+will incur at least two nested loss recovery mechanisms. This can reduce
+performance, as both can sometimes independently retransmit the same data. To
+avoid this, IP proxying <bcp14>SHOULD</bcp14> be performed over HTTP/3 to allow leveraging the
+QUIC DATAGRAM frame.</t>
+      <section anchor="mtu-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-10.1">
+        <name slugifiedName="name-mtu-considerations">MTU Considerations</name>
+        <t indent="0" pn="section-10.1-1">When using HTTP/3 with the QUIC Datagram extension <xref target="RFC9221" format="default" sectionFormat="of" derivedContent="DGRAM"/>, IP packets are
+transmitted in QUIC DATAGRAM frames. Since these frames cannot be fragmented,
+they can only carry packets up to a given length determined by the QUIC
+connection configuration and the Path MTU (PMTU). If an endpoint is using QUIC
+DATAGRAM frames and it attempts to route an IP packet through the tunnel that
+will not fit inside a QUIC DATAGRAM frame, the IP proxy <bcp14>SHOULD NOT</bcp14> send the IP
+packet in a DATAGRAM capsule, as that defeats the end-to-end unreliability
+characteristic that methods such as Datagram Packetization Layer PMTU Discovery
+(DPLPMTUD) depend on <xref target="RFC8899" format="default" sectionFormat="of" derivedContent="DPLPMTUD"/>. In this scenario, the endpoint
+<bcp14>SHOULD</bcp14> drop the IP packet and send an ICMP Packet Too Big message to the sender
+of the dropped packet; see <xref section="3.2" sectionFormat="of" target="RFC4443" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4443#section-3.2" derivedContent="ICMPv6"/>.</t>
+      </section>
+      <section anchor="ecn-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-10.2">
+        <name slugifiedName="name-ecn-considerations">ECN Considerations</name>
+        <t indent="0" pn="section-10.2-1">If an IP proxying endpoint with a connection containing an IP proxying request
+stream disables congestion control, it cannot signal Explicit Congestion
+Notification (ECN) <xref target="RFC3168" format="default" sectionFormat="of" derivedContent="ECN"/> support on that outer connection. That is,
+the QUIC sender <bcp14>MUST</bcp14> mark all IP headers with the Not ECN-Capable Transport (Not-ECT) codepoint for QUIC
+packets that are outside of congestion control. The endpoint can still report
+ECN feedback via QUIC ACK_ECN frames or the TCP ECN-Echo (ECE) bit, as the peer might not
+have disabled congestion control.</t>
+        <t indent="0" pn="section-10.2-2">Conversely, if congestion control is not disabled on the outer congestion, the
+guidance in <xref target="RFC6040" format="default" sectionFormat="of" derivedContent="ECN-TUNNEL"/> about transferring ECN marks between inner
+and outer IP headers does not apply because the outer connection will react
+correctly to congestion notifications if it uses ECN. The inner traffic can
+also use ECN, independently of whether it is in use on the outer connection.</t>
+      </section>
+      <section anchor="dscp-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-10.3">
+        <name slugifiedName="name-differentiated-services-con">Differentiated Services Considerations</name>
+        <t indent="0" pn="section-10.3-1">Tunneled IP packets can have Differentiated Services Code Points (DSCPs)
+<xref target="RFC2474" format="default" sectionFormat="of" derivedContent="DSCP"/> set in the traffic class IP header field to request a
+particular per-hop behavior. If an IP proxying endpoint is configured as part
+of a Differentiated Services domain, it <bcp14>MAY</bcp14> implement traffic differentiation
+based on these markings. However, the use of HTTP can limit the possibilities
+for differentiated treatment of the tunneled IP packets on the path between the
+IP proxying endpoints.</t>
+        <t indent="0" pn="section-10.3-2">When an HTTP connection is congestion-controlled, marking packets with
+different DSCPs can lead to reordering between them, and that can in turn lead
+the underlying transport connection's congestion controller to perform poorly.
+If tunneled packets are subject to congestion control by the outer connection,
+they need to avoid carrying DSCP markings that are not equivalent in forwarding
+behavior to prevent this situation. In this scenario, the IP proxying endpoint
+<bcp14>MUST NOT</bcp14> copy the DSCP field from the inner IP header to the outer IP header of
+the packet carrying this packet. Instead, an application would need to use
+separate connections to the proxy, one for each DSCP. Note that this document
+does not define a way for requests to scope to particular DSCP values; such
+support is left to future extensions.</t>
+        <t indent="0" pn="section-10.3-3">If tunneled packets use QUIC datagrams and are not subject to congestion
+control by the outer connection, the IP proxying endpoints <bcp14>MAY</bcp14> translate the
+DSCP field value from the tunneled traffic to the outer IP header. IP proxying
+endpoints <bcp14>MUST NOT</bcp14> coalesce multiple inner packets into the same outer packet
+unless they have the same DSCP marking or an equivalent traffic class. Note
+that the ability to translate DSCP values is dependent on the tunnel ingress
+and egress belonging to the same Differentiated Service domain or not.</t>
+      </section>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-11">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-11-1">There are significant risks in allowing arbitrary clients to establish a tunnel
+that permits sending to arbitrary hosts, regardless of whether tunnels are
+scoped to specific hosts or not. Bad actors could abuse this capability to send
+traffic and have it attributed to the IP proxy. HTTP servers that support IP
+proxying <bcp14>SHOULD</bcp14> restrict its use to authenticated users. Depending on the
+deployment, possible authentication mechanisms include mutual TLS between IP
+proxying endpoints, HTTP-based authentication via the HTTP Authorization header
+<xref target="RFC9110" format="default" sectionFormat="of" derivedContent="HTTP"/>, or even bearer tokens. Proxies can enforce policies for authenticated
+users to further constrain client behavior or deal with possible abuse. For
+example, proxies can rate limit individual clients that send an excessively
+large amount of traffic through the proxy. As another example, proxies can
+restrict address (prefix) assignment to clients based on certain client
+attributes, such as geographic location.</t>
+      <t indent="0" pn="section-11-2">Address assignment can have privacy implications for endpoints. For example, if
+a proxy partitions its address space by the number of authenticated clients and
+then assigns distinct address ranges to each client, target hosts could use
+this information to determine when IP packets correspond to the same client.
+Avoiding such tracking vectors may be important for certain proxy deployments.
+Proxies <bcp14>SHOULD</bcp14> avoid persistent per-client address (prefix) assignment when
+possible.</t>
+      <t indent="0" pn="section-11-3">Falsifying IP source addresses in sent traffic has been common for denial-of-service 
+attacks. Implementations of this mechanism need to ensure that they do
+not facilitate such attacks. In particular, there are scenarios where an
+endpoint knows that its peer is only allowed to send IP packets from a given
+prefix. For example, that can happen through out-of-band configuration
+information or when allowed prefixes are shared via ADDRESS_ASSIGN capsules.
+In such scenarios, endpoints <bcp14>MUST</bcp14> follow the recommendations from
+<xref target="RFC2827" format="default" sectionFormat="of" derivedContent="BCP38"/> to prevent source address spoofing.</t>
+      <t indent="0" pn="section-11-4">Limiting request scope (see <xref target="scope" format="default" sectionFormat="of" derivedContent="Section 4.6"/>) allows two clients to share one of the
+proxy's external IP addresses if their requests are scoped to different Internet
+Protocol Numbers. If the proxy receives an ICMP packet destined for that
+external IP address, it has the option to forward it back to the clients.
+However, some of these ICMP packets carry part of the original IP packet that
+triggered the ICMP response. Forwarding such packets can accidentally divulge
+information about one client's traffic to another client. To avoid this,
+proxies that forward ICMP on shared external IP addresses <bcp14>MUST</bcp14> inspect the
+invoking packet included in the ICMP packet and only forward the ICMP packet to
+the client whose scoping matches the invoking packet.</t>
+      <t indent="0" pn="section-11-5">Implementers will benefit from reading the guidance in
+<xref target="RFC6169" format="default" sectionFormat="of" derivedContent="TUNNEL-SECURITY"/>. Since there are known risks with some IPv6
+extension headers (e.g., <xref target="RFC5095" format="default" sectionFormat="of" derivedContent="ROUTING-HDR"/>), implementers need to follow
+the latest guidance regarding handling of IPv6 extension headers.</t>
+      <t indent="0" pn="section-11-6">Transferring DSCP markings from inner to outer packets (see
+<xref target="dscp-considerations" format="default" sectionFormat="of" derivedContent="Section 10.3"/>) exposes end-to-end flow level information to an
+on-path observer between the IP proxying endpoints. This can potentially expose
+a single end-to-end flow. Because of this, such use of DSCPs in
+privacy-sensitive contexts is <bcp14>NOT RECOMMENDED</bcp14>.</t>
+      <t indent="0" pn="section-11-7">Opportunistic sending of IP packets (see <xref target="link-operation" format="default" sectionFormat="of" derivedContent="Section 7.1"/>) is not allowed
+in HTTP/1.x because a server could reject the HTTP Upgrade and
+attempt to parse the IP packets as a subsequent HTTP request,
+allowing request smuggling attacks; see <xref target="I-D.schwartz-httpbis-optimistic-upgrade" format="default" sectionFormat="of" derivedContent="OPTIMISTIC"/>.  In particular,
+an intermediary that re-encodes a request from HTTP/2 or 3 to
+HTTP/1.1 <bcp14>MUST NOT</bcp14> forward any received capsules until it has parsed a
+successful IP proxying response.
+      </t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-12">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="http-upgrade-token" numbered="true" removeInRFC="false" toc="include" pn="section-12.1">
+        <name slugifiedName="name-http-upgrade-token-registra">HTTP Upgrade Token Registration</name>
+        <t indent="0" pn="section-12.1-1">IANA has registered "connect-ip" in the "HTTP Upgrade
+Tokens" registry maintained at
+<eref target="https://www.iana.org/assignments/http-upgrade-tokens" brackets="angle"/>.</t>
+        <dl spacing="compact" newline="false" indent="3" pn="section-12.1-2">
+          <dt pn="section-12.1-2.1">Value:</dt>
+          <dd pn="section-12.1-2.2">
+            <t indent="0" pn="section-12.1-2.2.1">connect-ip</t>
+          </dd>
+          <dt pn="section-12.1-2.3">Description:</dt>
+          <dd pn="section-12.1-2.4">
+            <t indent="0" pn="section-12.1-2.4.1">Proxying of IP Payloads</t>
+          </dd>
+          <dt pn="section-12.1-2.5">Expected Version Tokens:</dt>
+          <dd pn="section-12.1-2.6">
+            <t indent="0" pn="section-12.1-2.6.1">None</t>
+          </dd>
+          <dt pn="section-12.1-2.7">References:</dt>
+          <dd pn="section-12.1-2.8">
+            <t indent="0" pn="section-12.1-2.8.1">RFC 9484</t>
+          </dd>
+        </dl>
+      </section>
+      <section anchor="iana-suffix" numbered="true" removeInRFC="false" toc="include" pn="section-12.2">
+        <name slugifiedName="name-masque-uri-suffixes-registr">MASQUE URI Suffixes Registry Creation</name>
+        <t indent="0" pn="section-12.2-1">IANA has created the "MASQUE URI Suffixes" registry 
+maintained at <eref target="https://www.iana.org/assignments/masque" brackets="angle"/>. The registration policy is Expert Review; see <xref section="4.5" sectionFormat="of" target="RFC8126" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8126#section-4.5" derivedContent="IANA-POLICY"/>. This new registry governs the path segment that
+immediately follows "masque" in paths that start with "/.well-known/masque/";
+see <eref target="https://www.iana.org/assignments/well-known-uris" brackets="angle"/> for the registration
+of "masque" in the "Well-Known URIs" registry.</t>
+        <t indent="0" pn="section-12.2-2">This new registry contains three
+columns:</t>
+        <dl spacing="compact" newline="false" indent="3" pn="section-12.2-3">
+          <dt pn="section-12.2-3.1">Path Segment:</dt>
+          <dd pn="section-12.2-3.2">
+            <t indent="0" pn="section-12.2-3.2.1">An ASCII string containing only characters allowed in tokens; see
+<xref section="5.6.2" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-5.6.2" derivedContent="HTTP"/>. Entries in this registry <bcp14>MUST</bcp14> all have distinct
+entries in this column.</t>
+          </dd>
+          <dt pn="section-12.2-3.3">Description:</dt>
+          <dd pn="section-12.2-3.4">
+            <t indent="0" pn="section-12.2-3.4.1">A description of the entry.</t>
+          </dd>
+          <dt pn="section-12.2-3.5">Reference:</dt>
+          <dd pn="section-12.2-3.6">
+            <t indent="0" pn="section-12.2-3.6.1">An optional reference defining the use of the entry.</t>
+          </dd>
+        </dl>
+        <t indent="0" pn="section-12.2-4">The registry's initial entries are as follows:</t>
+        <table anchor="iana-suffixes-table" align="center" pn="table-1">
+          <name slugifiedName="name-masque-uri-suffixes-registry">MASQUE URI Suffixes Registry</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Path Segment</th>
+              <th align="left" colspan="1" rowspan="1">Description</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">udp</td>
+              <td align="left" colspan="1" rowspan="1">UDP Proxying</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9298</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">ip</td>
+              <td align="left" colspan="1" rowspan="1">IP Proxying</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9484</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-12.2-6">Designated experts for this registry are advised that they should approve all
+requests as long as the expert believes that both (1) the requested Path
+Segment will not conflict with existing or expected future IETF work and (2)
+the use case is relevant to proxying.</t>
+      </section>
+      <section anchor="iana-uri" numbered="true" removeInRFC="false" toc="include" pn="section-12.3">
+        <name slugifiedName="name-updates-to-masque-well-know">Updates to masque Well-Known URI Registration</name>
+        <t indent="0" pn="section-12.3-1">IANA has updated the entry for the "masque"
+URI suffix in the "Well-Known URIs" registry maintained at
+<eref target="https://www.iana.org/assignments/well-known-uris" brackets="angle"/>.</t>
+        <t indent="0" pn="section-12.3-2">IANA has updated the "Reference" field to include this
+document and has replaced the "Related Information" field with
+"For sub-suffix allocations, see the registry at <eref target="https://www.iana.org/assignments/masque" brackets="angle"/>.".</t>
+      </section>
+      <section anchor="iana-types" numbered="true" removeInRFC="false" toc="include" pn="section-12.4">
+        <name slugifiedName="name-http-capsule-types-registra">HTTP Capsule Types Registrations</name>
+        <t indent="0" pn="section-12.4-1">IANA has added the following values to the "HTTP Capsule
+Types" registry maintained at
+<eref target="https://www.iana.org/assignments/masque" brackets="angle"/>.</t>
+        <table anchor="iana-capsules-table" align="center" pn="table-2">
+          <name slugifiedName="name-new-capsules">New Capsules</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="left" colspan="1" rowspan="1">Capsule Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0x01</td>
+              <td align="left" colspan="1" rowspan="1">ADDRESS_ASSIGN</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0x02</td>
+              <td align="left" colspan="1" rowspan="1">ADDRESS_REQUEST</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">0x03</td>
+              <td align="left" colspan="1" rowspan="1">ROUTE_ADVERTISEMENT</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-12.4-3">All of these new entries use the following values for these fields:</t>
+        <dl spacing="compact" newline="false" indent="3" pn="section-12.4-4">
+          <dt pn="section-12.4-4.1">Status:</dt>
+          <dd pn="section-12.4-4.2">
+            <t indent="0" pn="section-12.4-4.2.1">permanent</t>
+          </dd>
+          <dt pn="section-12.4-4.3">Reference:</dt>
+          <dd pn="section-12.4-4.4">
+            <t indent="0" pn="section-12.4-4.4.1">RFC 9484</t>
+          </dd>
+          <dt pn="section-12.4-4.5">Change Controller:</dt>
+          <dd pn="section-12.4-4.6">
+            <t indent="0" pn="section-12.4-4.6.1">IETF</t>
+          </dd>
+          <dt pn="section-12.4-4.7">Contact:</dt>
+          <dd pn="section-12.4-4.8">
+            <t indent="0" pn="section-12.4-4.8.1">masque@ietf.org</t>
+          </dd>
+          <dt pn="section-12.4-4.9">Notes:</dt>
+          <dd pn="section-12.4-4.10">
+            <t indent="0" pn="section-12.4-4.10.1">None</t>
+          </dd>
+        </dl>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC9112" to="HTTP/1.1"/>
+    <displayreference target="RFC9113" to="HTTP/2"/>
+    <displayreference target="RFC9114" to="HTTP/3"/>
+    <displayreference target="RFC9110" to="HTTP"/>
+    <displayreference target="RFC9293" to="TCP"/>
+    <displayreference target="RFC6570" to="TEMPLATE"/>
+    <displayreference target="RFC9297" to="HTTP-DGRAM"/>
+    <displayreference target="RFC8441" to="EXT-CONNECT2"/>
+    <displayreference target="RFC9220" to="EXT-CONNECT3"/>
+    <displayreference target="RFC9000" to="QUIC"/>
+    <displayreference target="RFC3986" to="URI"/>
+    <displayreference target="RFC9209" to="PROXY-STATUS"/>
+    <displayreference target="RFC5234" to="ABNF"/>
+    <displayreference target="RFC8200" to="IPv6"/>
+    <displayreference target="RFC9221" to="DGRAM"/>
+    <displayreference target="RFC0792" to="ICMP"/>
+    <displayreference target="RFC4443" to="ICMPv6"/>
+    <displayreference target="RFC3168" to="ECN"/>
+    <displayreference target="RFC2474" to="DSCP"/>
+    <displayreference target="RFC2827" to="BCP38"/>
+    <displayreference target="RFC8126" to="IANA-POLICY"/>
+    <displayreference target="RFC9298" to="CONNECT-UDP"/>
+    <displayreference target="RFC4291" to="IPv6-ADDR"/>
+    <displayreference target="RFC4301" to="IPSEC"/>
+    <displayreference target="RFC8305" to="HEv2"/>
+    <displayreference target="RFC8085" to="UDP-USAGE"/>
+    <displayreference target="RFC8899" to="DPLPMTUD"/>
+    <displayreference target="RFC6040" to="ECN-TUNNEL"/>
+    <displayreference target="RFC6169" to="TUNNEL-SECURITY"/>
+    <displayreference target="RFC5095" to="ROUTING-HDR"/>
+    <displayreference target="I-D.ietf-masque-ip-proxy-reqs" to="PROXY-REQS"/>
+    <displayreference target="RFC6874" to="IPv6-ZONE-ID"/>
+    <displayreference target="I-D.schwartz-httpbis-optimistic-upgrade" to="OPTIMISTIC"/>
+    <references pn="section-13">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-13.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC5234" target="https://www.rfc-editor.org/info/rfc5234" quoteTitle="true" derivedAnchor="ABNF">
+          <front>
+            <title>Augmented BNF for Syntax Specifications: ABNF</title>
+            <author fullname="D. Crocker" initials="D." role="editor" surname="Crocker"/>
+            <author fullname="P. Overell" initials="P." surname="Overell"/>
+            <date month="January" year="2008"/>
+            <abstract>
+              <t indent="0">Internet technical specifications often need to define a formal syntax. Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications. The current specification documents ABNF. It balances compactness and simplicity with reasonable representational power. The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges. This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="68"/>
+          <seriesInfo name="RFC" value="5234"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5234"/>
+        </reference>
+        <reference anchor="RFC2827" target="https://www.rfc-editor.org/info/rfc2827" quoteTitle="true" derivedAnchor="BCP38">
+          <front>
+            <title>Network Ingress Filtering: Defeating Denial of Service Attacks which employ IP Source Address Spoofing</title>
+            <author fullname="P. Ferguson" initials="P." surname="Ferguson"/>
+            <author fullname="D. Senie" initials="D." surname="Senie"/>
+            <date month="May" year="2000"/>
+            <abstract>
+              <t indent="0">This paper discusses a simple, effective, and straightforward method for using ingress traffic filtering to prohibit DoS (Denial of Service) attacks which use forged IP addresses to be propagated from 'behind' an Internet Service Provider's (ISP) aggregation point. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="38"/>
+          <seriesInfo name="RFC" value="2827"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2827"/>
+        </reference>
+        <reference anchor="RFC9221" target="https://www.rfc-editor.org/info/rfc9221" quoteTitle="true" derivedAnchor="DGRAM">
+          <front>
+            <title>An Unreliable Datagram Extension to QUIC</title>
+            <author fullname="T. Pauly" initials="T." surname="Pauly"/>
+            <author fullname="E. Kinnear" initials="E." surname="Kinnear"/>
+            <author fullname="D. Schinazi" initials="D." surname="Schinazi"/>
+            <date month="March" year="2022"/>
+            <abstract>
+              <t indent="0">This document defines an extension to the QUIC transport protocol to add support for sending and receiving unreliable datagrams over a QUIC connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9221"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9221"/>
+        </reference>
+        <reference anchor="RFC2474" target="https://www.rfc-editor.org/info/rfc2474" quoteTitle="true" derivedAnchor="DSCP">
+          <front>
+            <title>Definition of the Differentiated Services Field (DS Field) in the IPv4 and IPv6 Headers</title>
+            <author fullname="K. Nichols" initials="K." surname="Nichols"/>
+            <author fullname="S. Blake" initials="S." surname="Blake"/>
+            <author fullname="F. Baker" initials="F." surname="Baker"/>
+            <author fullname="D. Black" initials="D." surname="Black"/>
+            <date month="December" year="1998"/>
+            <abstract>
+              <t indent="0">This document defines the IP header field, called the DS (for differentiated services) field. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2474"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2474"/>
+        </reference>
+        <reference anchor="RFC3168" target="https://www.rfc-editor.org/info/rfc3168" quoteTitle="true" derivedAnchor="ECN">
+          <front>
+            <title>The Addition of Explicit Congestion Notification (ECN) to IP</title>
+            <author fullname="K. Ramakrishnan" initials="K." surname="Ramakrishnan"/>
+            <author fullname="S. Floyd" initials="S." surname="Floyd"/>
+            <author fullname="D. Black" initials="D." surname="Black"/>
+            <date month="September" year="2001"/>
+            <abstract>
+              <t indent="0">This memo specifies the incorporation of ECN (Explicit Congestion Notification) to TCP and IP, including ECN's use of two bits in the IP header. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3168"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3168"/>
+        </reference>
+        <reference anchor="RFC8441" target="https://www.rfc-editor.org/info/rfc8441" quoteTitle="true" derivedAnchor="EXT-CONNECT2">
+          <front>
+            <title>Bootstrapping WebSockets with HTTP/2</title>
+            <author fullname="P. McManus" initials="P." surname="McManus"/>
+            <date month="September" year="2018"/>
+            <abstract>
+              <t indent="0">This document defines a mechanism for running the WebSocket Protocol (RFC 6455) over a single stream of an HTTP/2 connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8441"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8441"/>
+        </reference>
+        <reference anchor="RFC9220" target="https://www.rfc-editor.org/info/rfc9220" quoteTitle="true" derivedAnchor="EXT-CONNECT3">
+          <front>
+            <title>Bootstrapping WebSockets with HTTP/3</title>
+            <author fullname="R. Hamilton" initials="R." surname="Hamilton"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The mechanism for running the WebSocket Protocol over a single stream of an HTTP/2 connection is equally applicable to HTTP/3, but the HTTP-version-specific details need to be specified. This document describes how the mechanism is adapted for HTTP/3.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9220"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9220"/>
+        </reference>
+        <reference anchor="RFC9110" target="https://www.rfc-editor.org/info/rfc9110" quoteTitle="true" derivedAnchor="HTTP">
+          <front>
+            <title>HTTP Semantics</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document describes the overall architecture of HTTP, establishes common terminology, and defines aspects of the protocol that are shared by all versions. In this definition are core protocol elements, extensibility mechanisms, and the "http" and "https" Uniform Resource Identifier (URI) schemes.</t>
+              <t indent="0">This document updates RFC 3864 and obsoletes RFCs 2818, 7231, 7232, 7233, 7235, 7538, 7615, 7694, and portions of 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="97"/>
+          <seriesInfo name="RFC" value="9110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9110"/>
+        </reference>
+        <reference anchor="RFC9297" target="https://www.rfc-editor.org/info/rfc9297" quoteTitle="true" derivedAnchor="HTTP-DGRAM">
+          <front>
+            <title>HTTP Datagrams and the Capsule Protocol</title>
+            <author fullname="D. Schinazi" initials="D." surname="Schinazi"/>
+            <author fullname="L. Pardue" initials="L." surname="Pardue"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document describes HTTP Datagrams, a convention for conveying multiplexed, potentially unreliable datagrams inside an HTTP connection.</t>
+              <t indent="0">In HTTP/3, HTTP Datagrams can be sent unreliably using the QUIC DATAGRAM extension. When the QUIC DATAGRAM frame is unavailable or undesirable, HTTP Datagrams can be sent using the Capsule Protocol, which is a more general convention for conveying data in HTTP connections.</t>
+              <t indent="0">HTTP Datagrams and the Capsule Protocol are intended for use by HTTP extensions, not applications.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9297"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9297"/>
+        </reference>
+        <reference anchor="RFC9112" target="https://www.rfc-editor.org/info/rfc9112" quoteTitle="true" derivedAnchor="HTTP/1.1">
+          <front>
+            <title>HTTP/1.1</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document specifies the HTTP/1.1 message syntax, message parsing, connection management, and related security concerns.</t>
+              <t indent="0">This document obsoletes portions of RFC 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="99"/>
+          <seriesInfo name="RFC" value="9112"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9112"/>
+        </reference>
+        <reference anchor="RFC9113" target="https://www.rfc-editor.org/info/rfc9113" quoteTitle="true" derivedAnchor="HTTP/2">
+          <front>
+            <title>HTTP/2</title>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <author fullname="C. Benfield" initials="C." role="editor" surname="Benfield"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2). HTTP/2 enables a more efficient use of network resources and a reduced latency by introducing field compression and allowing multiple concurrent exchanges on the same connection.</t>
+              <t indent="0">This document obsoletes RFCs 7540 and 8740.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9113"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9113"/>
+        </reference>
+        <reference anchor="RFC9114" target="https://www.rfc-editor.org/info/rfc9114" quoteTitle="true" derivedAnchor="HTTP/3">
+          <front>
+            <title>HTTP/3</title>
+            <author fullname="M. Bishop" initials="M." role="editor" surname="Bishop"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The QUIC transport protocol has several features that are desirable in a transport for HTTP, such as stream multiplexing, per-stream flow control, and low-latency connection establishment. This document describes a mapping of HTTP semantics over QUIC. This document also identifies HTTP/2 features that are subsumed by QUIC and describes how HTTP/2 extensions can be ported to HTTP/3.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9114"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9114"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="IANA-POLICY">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author fullname="M. Cotton" initials="M." surname="Cotton"/>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <author fullname="T. Narten" initials="T." surname="Narten"/>
+            <date month="June" year="2017"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters. To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper. For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed. This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC0792" target="https://www.rfc-editor.org/info/rfc792" quoteTitle="true" derivedAnchor="ICMP">
+          <front>
+            <title>Internet Control Message Protocol</title>
+            <author fullname="J. Postel" initials="J." surname="Postel"/>
+            <date month="September" year="1981"/>
+          </front>
+          <seriesInfo name="STD" value="5"/>
+          <seriesInfo name="RFC" value="792"/>
+          <seriesInfo name="DOI" value="10.17487/RFC0792"/>
+        </reference>
+        <reference anchor="RFC4443" target="https://www.rfc-editor.org/info/rfc4443" quoteTitle="true" derivedAnchor="ICMPv6">
+          <front>
+            <title>Internet Control Message Protocol (ICMPv6) for the Internet Protocol Version 6 (IPv6) Specification</title>
+            <author fullname="A. Conta" initials="A." surname="Conta"/>
+            <author fullname="S. Deering" initials="S." surname="Deering"/>
+            <author fullname="M. Gupta" initials="M." role="editor" surname="Gupta"/>
+            <date month="March" year="2006"/>
+            <abstract>
+              <t indent="0">This document describes the format of a set of control messages used in ICMPv6 (Internet Control Message Protocol). ICMPv6 is the Internet Control Message Protocol for Internet Protocol version 6 (IPv6). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="89"/>
+          <seriesInfo name="RFC" value="4443"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4443"/>
+        </reference>
+        <reference anchor="RFC8200" target="https://www.rfc-editor.org/info/rfc8200" quoteTitle="true" derivedAnchor="IPv6">
+          <front>
+            <title>Internet Protocol, Version 6 (IPv6) Specification</title>
+            <author fullname="S. Deering" initials="S." surname="Deering"/>
+            <author fullname="R. Hinden" initials="R." surname="Hinden"/>
+            <date month="July" year="2017"/>
+            <abstract>
+              <t indent="0">This document specifies version 6 of the Internet Protocol (IPv6). It obsoletes RFC 2460.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="86"/>
+          <seriesInfo name="RFC" value="8200"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8200"/>
+        </reference>
+        <reference anchor="RFC6874" target="https://www.rfc-editor.org/info/rfc6874" quoteTitle="true" derivedAnchor="IPv6-ZONE-ID">
+          <front>
+            <title>Representing IPv6 Zone Identifiers in Address Literals and Uniform Resource Identifiers</title>
+            <author fullname="B. Carpenter" initials="B." surname="Carpenter"/>
+            <author fullname="S. Cheshire" initials="S." surname="Cheshire"/>
+            <author fullname="R. Hinden" initials="R." surname="Hinden"/>
+            <date month="February" year="2013"/>
+            <abstract>
+              <t indent="0">This document describes how the zone identifier of an IPv6 scoped address, defined as in the IPv6 Scoped Address Architecture (RFC 4007), can be represented in a literal IPv6 address and in a Uniform Resource Identifier that includes such a literal address. It updates the URI Generic Syntax specification (RFC 3986) accordingly.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6874"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6874"/>
+        </reference>
+        <reference anchor="RFC9209" target="https://www.rfc-editor.org/info/rfc9209" quoteTitle="true" derivedAnchor="PROXY-STATUS">
+          <front>
+            <title>The Proxy-Status HTTP Response Header Field</title>
+            <author fullname="M. Nottingham" initials="M." surname="Nottingham"/>
+            <author fullname="P. Sikora" initials="P." surname="Sikora"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">This document defines the Proxy-Status HTTP response field to convey the details of an intermediary's response handling, including generated errors.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9209"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9209"/>
+        </reference>
+        <reference anchor="RFC9000" target="https://www.rfc-editor.org/info/rfc9000" quoteTitle="true" derivedAnchor="QUIC">
+          <front>
+            <title>QUIC: A UDP-Based Multiplexed and Secure Transport</title>
+            <author fullname="J. Iyengar" initials="J." role="editor" surname="Iyengar"/>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines the core of the QUIC transport protocol. QUIC provides applications with flow-controlled streams for structured communication, low-latency connection establishment, and network path migration. QUIC includes security measures that ensure confidentiality, integrity, and availability in a range of deployment circumstances. Accompanying documents describe the integration of TLS for key negotiation, loss detection, and an exemplary congestion control algorithm.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9000"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9000"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC9293" target="https://www.rfc-editor.org/info/rfc9293" quoteTitle="true" derivedAnchor="TCP">
+          <front>
+            <title>Transmission Control Protocol (TCP)</title>
+            <author fullname="W. Eddy" initials="W." role="editor" surname="Eddy"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies the Transmission Control Protocol (TCP). TCP is an important transport-layer protocol in the Internet protocol stack, and it has continuously evolved over decades of use and growth of the Internet. Over this time, a number of changes have been made to TCP as it was specified in RFC 793, though these have only been documented in a piecemeal fashion. This document collects and brings those changes together with the protocol specification from RFC 793. This document obsoletes RFC 793, as well as RFCs 879, 2873, 6093, 6429, 6528, and 6691 that updated parts of RFC 793. It updates RFCs 1011 and 1122, and it should be considered as a replacement for the portions of those documents dealing with TCP requirements. It also updates RFC 5961 by adding a small clarification in reset handling while in the SYN-RECEIVED state. The TCP header control bits from RFC 793 have also been updated based on RFC 3168.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="7"/>
+          <seriesInfo name="RFC" value="9293"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9293"/>
+        </reference>
+        <reference anchor="RFC6570" target="https://www.rfc-editor.org/info/rfc6570" quoteTitle="true" derivedAnchor="TEMPLATE">
+          <front>
+            <title>URI Template</title>
+            <author fullname="J. Gregorio" initials="J." surname="Gregorio"/>
+            <author fullname="R. Fielding" initials="R." surname="Fielding"/>
+            <author fullname="M. Hadley" initials="M." surname="Hadley"/>
+            <author fullname="M. Nottingham" initials="M." surname="Nottingham"/>
+            <author fullname="D. Orchard" initials="D." surname="Orchard"/>
+            <date month="March" year="2012"/>
+            <abstract>
+              <t indent="0">A URI Template is a compact sequence of characters for describing a range of Uniform Resource Identifiers through variable expansion. This specification defines the URI Template syntax and the process for expanding a URI Template into a URI reference, along with guidelines for the use of URI Templates on the Internet. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6570"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6570"/>
+        </reference>
+        <reference anchor="RFC3986" target="https://www.rfc-editor.org/info/rfc3986" quoteTitle="true" derivedAnchor="URI">
+          <front>
+            <title>Uniform Resource Identifier (URI): Generic Syntax</title>
+            <author fullname="T. Berners-Lee" initials="T." surname="Berners-Lee"/>
+            <author fullname="R. Fielding" initials="R." surname="Fielding"/>
+            <author fullname="L. Masinter" initials="L." surname="Masinter"/>
+            <date month="January" year="2005"/>
+            <abstract>
+              <t indent="0">A Uniform Resource Identifier (URI) is a compact sequence of characters that identifies an abstract or physical resource. This specification defines the generic URI syntax and a process for resolving URI references that might be in relative form, along with guidelines and security considerations for the use of URIs on the Internet. The URI syntax defines a grammar that is a superset of all valid URIs, allowing an implementation to parse the common components of a URI reference without knowing the scheme-specific requirements of every possible identifier. This specification does not define a generative grammar for URIs; that task is performed by the individual specifications of each URI scheme. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="66"/>
+          <seriesInfo name="RFC" value="3986"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3986"/>
+        </reference>
+      </references>
+      <references pn="section-13.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC9298" target="https://www.rfc-editor.org/info/rfc9298" quoteTitle="true" derivedAnchor="CONNECT-UDP">
+          <front>
+            <title>Proxying UDP in HTTP</title>
+            <author fullname="D. Schinazi" initials="D." surname="Schinazi"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document describes how to proxy UDP in HTTP, similar to how the HTTP CONNECT method allows proxying TCP in HTTP. More specifically, this document defines a protocol that allows an HTTP client to create a tunnel for UDP communications through an HTTP server that acts as a proxy.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9298"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9298"/>
+        </reference>
+        <reference anchor="RFC8899" target="https://www.rfc-editor.org/info/rfc8899" quoteTitle="true" derivedAnchor="DPLPMTUD">
+          <front>
+            <title>Packetization Layer Path MTU Discovery for Datagram Transports</title>
+            <author fullname="G. Fairhurst" initials="G." surname="Fairhurst"/>
+            <author fullname="T. Jones" initials="T." surname="Jones"/>
+            <author fullname="M. Tüxen" initials="M." surname="Tüxen"/>
+            <author fullname="I. Rüngeler" initials="I." surname="Rüngeler"/>
+            <author fullname="T. Völker" initials="T." surname="Völker"/>
+            <date month="September" year="2020"/>
+            <abstract>
+              <t indent="0">This document specifies Datagram Packetization Layer Path MTU Discovery (DPLPMTUD). This is a robust method for Path MTU Discovery (PMTUD) for datagram Packetization Layers (PLs). It allows a PL, or a datagram application that uses a PL, to discover whether a network path can support the current size of datagram. This can be used to detect and reduce the message size when a sender encounters a packet black hole. It can also probe a network path to discover whether the maximum packet size can be increased. This provides functionality for datagram transports that is equivalent to the PLPMTUD specification for TCP, specified in RFC 4821, which it updates. It also updates the UDP Usage Guidelines to refer to this method for use with UDP datagrams and updates SCTP.</t>
+              <t indent="0">The document provides implementation notes for incorporating Datagram PMTUD into IETF datagram transports or applications that use datagram transports.</t>
+              <t indent="0">This specification updates RFC 4960, RFC 4821, RFC 6951, RFC 8085, and RFC 8261.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8899"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8899"/>
+        </reference>
+        <reference anchor="RFC6040" target="https://www.rfc-editor.org/info/rfc6040" quoteTitle="true" derivedAnchor="ECN-TUNNEL">
+          <front>
+            <title>Tunnelling of Explicit Congestion Notification</title>
+            <author fullname="B. Briscoe" initials="B." surname="Briscoe"/>
+            <date month="November" year="2010"/>
+            <abstract>
+              <t indent="0">This document redefines how the explicit congestion notification (ECN) field of the IP header should be constructed on entry to and exit from any IP-in-IP tunnel. On encapsulation, it updates RFC 3168 to bring all IP-in-IP tunnels (v4 or v6) into line with RFC 4301 IPsec ECN processing. On decapsulation, it updates both RFC 3168 and RFC 4301 to add new behaviours for previously unused combinations of inner and outer headers. The new rules ensure the ECN field is correctly propagated across a tunnel whether it is used to signal one or two severity levels of congestion; whereas before, only one severity level was supported. Tunnel endpoints can be updated in any order without affecting pre-existing uses of the ECN field, thus ensuring backward compatibility. Nonetheless, operators wanting to support two severity levels (e.g., for pre-congestion notification -- PCN) can require compliance with this new specification. A thorough analysis of the reasoning for these changes and the implications is included. In the unlikely event that the new rules do not meet a specific need, RFC 4774 gives guidance on designing alternate ECN semantics, and this document extends that to include tunnelling issues. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6040"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6040"/>
+        </reference>
+        <reference anchor="RFC8305" target="https://www.rfc-editor.org/info/rfc8305" quoteTitle="true" derivedAnchor="HEv2">
+          <front>
+            <title>Happy Eyeballs Version 2: Better Connectivity Using Concurrency</title>
+            <author fullname="D. Schinazi" initials="D." surname="Schinazi"/>
+            <author fullname="T. Pauly" initials="T." surname="Pauly"/>
+            <date month="December" year="2017"/>
+            <abstract>
+              <t indent="0">Many communication protocols operating over the modern Internet use hostnames. These often resolve to multiple IP addresses, each of which may have different performance and connectivity characteristics. Since specific addresses or address families (IPv4 or IPv6) may be blocked, broken, or sub-optimal on a network, clients that attempt multiple connections in parallel have a chance of establishing a connection more quickly. This document specifies requirements for algorithms that reduce this user-visible delay and provides an example algorithm, referred to as "Happy Eyeballs". This document obsoletes the original algorithm description in RFC 6555.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8305"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8305"/>
+        </reference>
+        <reference anchor="IANA-PN" target="https://www.iana.org/assignments/protocol-numbers" quoteTitle="true" derivedAnchor="IANA-PN">
+          <front>
+            <title>Protocol Numbers</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="RFC4301" target="https://www.rfc-editor.org/info/rfc4301" quoteTitle="true" derivedAnchor="IPSEC">
+          <front>
+            <title>Security Architecture for the Internet Protocol</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <author fullname="K. Seo" initials="K." surname="Seo"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the "Security Architecture for IP", which is designed to provide security services for traffic at the IP layer. This document obsoletes RFC 2401 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4301"/>
+        </reference>
+        <reference anchor="RFC4291" target="https://www.rfc-editor.org/info/rfc4291" quoteTitle="true" derivedAnchor="IPv6-ADDR">
+          <front>
+            <title>IP Version 6 Addressing Architecture</title>
+            <author fullname="R. Hinden" initials="R." surname="Hinden"/>
+            <author fullname="S. Deering" initials="S." surname="Deering"/>
+            <date month="February" year="2006"/>
+            <abstract>
+              <t indent="0">This specification defines the addressing architecture of the IP Version 6 (IPv6) protocol. The document includes the IPv6 addressing model, text representations of IPv6 addresses, definition of IPv6 unicast addresses, anycast addresses, and multicast addresses, and an IPv6 node's required addresses.</t>
+              <t indent="0">This document obsoletes RFC 3513, "IP Version 6 Addressing Architecture". [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4291"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4291"/>
+        </reference>
+        <reference anchor="I-D.schwartz-httpbis-optimistic-upgrade" target="https://datatracker.ietf.org/doc/html/draft-schwartz-httpbis-optimistic-upgrade-00" quoteTitle="true" derivedAnchor="OPTIMISTIC">
+          <front>
+            <title>Security Considerations for Optimistic Use of HTTP Upgrade</title>
+            <author initials="B. M." surname="Schwartz" fullname="Benjamin M. Schwartz">
+              <organization showOnFrontPage="true">Meta Platforms, Inc.</organization>
+            </author>
+            <date month="August" day="21" year="2023"/>
+            <abstract>
+              <t indent="0">   The HTTP/1.1 Upgrade mechanism allows the client to request a change
+   to a new protocol.  This document discusses the security
+   considerations that apply to data sent by the client before this
+   request is confirmed, and updates RFC 9298 to avoid related security
+   issues.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-schwartz-httpbis-optimistic-upgrade-00"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-masque-ip-proxy-reqs" target="https://datatracker.ietf.org/doc/html/draft-ietf-masque-ip-proxy-reqs-03" quoteTitle="true" derivedAnchor="PROXY-REQS">
+          <front>
+            <title>Requirements for a MASQUE Protocol to Proxy IP Traffic</title>
+            <author initials="A." surname="Chernyakhovsky" fullname="Alex Chernyakhovsky">
+              <organization showOnFrontPage="true">Google LLC</organization>
+            </author>
+            <author initials="D." surname="McCall" fullname="Dallas McCall">
+              <organization showOnFrontPage="true">Google LLC</organization>
+            </author>
+            <author initials="D." surname="Schinazi" fullname="David Schinazi">
+              <organization showOnFrontPage="true">Google LLC</organization>
+            </author>
+            <date month="August" day="27" year="2021"/>
+            <abstract>
+              <t indent="0">   There is interest among MASQUE working group participants in
+   designing a protocol that can proxy IP traffic over HTTP.  This
+   document describes the set of requirements for such a protocol.
+
+   Discussion of this work is encouraged to happen on the MASQUE IETF
+   mailing list masque@ietf.org or on the GitHub repository which
+   contains the draft: https://github.com/ietf-wg-masque/draft-ietf-
+   masque-ip-proxy-reqs.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-masque-ip-proxy-reqs-03"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC5095" target="https://www.rfc-editor.org/info/rfc5095" quoteTitle="true" derivedAnchor="ROUTING-HDR">
+          <front>
+            <title>Deprecation of Type 0 Routing Headers in IPv6</title>
+            <author fullname="J. Abley" initials="J." surname="Abley"/>
+            <author fullname="P. Savola" initials="P." surname="Savola"/>
+            <author fullname="G. Neville-Neil" initials="G." surname="Neville-Neil"/>
+            <date month="December" year="2007"/>
+            <abstract>
+              <t indent="0">The functionality provided by IPv6's Type 0 Routing Header can be exploited in order to achieve traffic amplification over a remote path for the purposes of generating denial-of-service traffic. This document updates the IPv6 specification to deprecate the use of IPv6 Type 0 Routing Headers, in light of this security concern. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5095"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5095"/>
+        </reference>
+        <reference anchor="RFC6169" target="https://www.rfc-editor.org/info/rfc6169" quoteTitle="true" derivedAnchor="TUNNEL-SECURITY">
+          <front>
+            <title>Security Concerns with IP Tunneling</title>
+            <author fullname="S. Krishnan" initials="S." surname="Krishnan"/>
+            <author fullname="D. Thaler" initials="D." surname="Thaler"/>
+            <author fullname="J. Hoagland" initials="J." surname="Hoagland"/>
+            <date month="April" year="2011"/>
+            <abstract>
+              <t indent="0">A number of security concerns with IP tunnels are documented in this memo. The intended audience of this document includes network administrators and future protocol developers. The primary intent of this document is to raise the awareness level regarding the security issues with IP tunnels as deployed and propose strategies for the mitigation of those issues. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6169"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6169"/>
+        </reference>
+        <reference anchor="RFC8085" target="https://www.rfc-editor.org/info/rfc8085" quoteTitle="true" derivedAnchor="UDP-USAGE">
+          <front>
+            <title>UDP Usage Guidelines</title>
+            <author fullname="L. Eggert" initials="L." surname="Eggert"/>
+            <author fullname="G. Fairhurst" initials="G." surname="Fairhurst"/>
+            <author fullname="G. Shepherd" initials="G." surname="Shepherd"/>
+            <date month="March" year="2017"/>
+            <abstract>
+              <t indent="0">The User Datagram Protocol (UDP) provides a minimal message-passing transport that has no inherent congestion control mechanisms. This document provides guidelines on the use of UDP for the designers of applications, tunnels, and other protocols that use UDP. Congestion control guidelines are a primary focus, but the document also provides guidance on other topics, including message sizes, reliability, checksums, middlebox traversal, the use of Explicit Congestion Notification (ECN), Differentiated Services Code Points (DSCPs), and ports.</t>
+              <t indent="0">Because congestion control is critical to the stable operation of the Internet, applications and other protocols that choose to use UDP as an Internet transport must employ mechanisms to prevent congestion collapse and to establish some degree of fairness with concurrent traffic. They may also need to implement additional mechanisms, depending on how they use UDP.</t>
+              <t indent="0">Some guidance is also applicable to the design of other protocols (e.g., protocols layered directly on IP or via IP-based tunnels), especially when these protocols do not themselves provide congestion control.</t>
+              <t indent="0">This document obsoletes RFC 5405 and adds guidelines for multicast UDP usage.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="145"/>
+          <seriesInfo name="RFC" value="8085"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8085"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The design of this method was inspired by discussions in the MASQUE Working
+Group around <xref target="I-D.ietf-masque-ip-proxy-reqs" format="default" sectionFormat="of" derivedContent="PROXY-REQS"/>. The authors would
+like to thank participants in those discussions for their feedback.
+Additionally, <contact fullname="Mike Bishop"/>, <contact fullname="Lucas Pardue"/>, and <contact fullname="Alejandro Sedeño"/>
+provided valuable feedback on the document.</t>
+      <t indent="0" pn="section-appendix.a-2">Most of the text on client configuration is based on the corresponding text in
+<xref target="RFC9298" format="default" sectionFormat="of" derivedContent="CONNECT-UDP"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="T." surname="Pauly" fullname="Tommy Pauly" role="editor">
+        <organization showOnFrontPage="true">Apple Inc.</organization>
+        <address>
+          <email>tpauly@apple.com</email>
+        </address>
+      </author>
+      <author initials="D." surname="Schinazi" fullname="David Schinazi">
+        <organization showOnFrontPage="true">Google LLC</organization>
+        <address>
+          <postal>
+            <street>1600 Amphitheatre Parkway</street>
+            <city>Mountain View</city>
+            <region>CA</region>
+            <code>94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>dschinazi.ietf@gmail.com</email>
+        </address>
+      </author>
+      <author initials="A." surname="Chernyakhovsky" fullname="Alex Chernyakhovsky">
+        <organization showOnFrontPage="true">Google LLC</organization>
+        <address>
+          <email>achernya@google.com</email>
+        </address>
+      </author>
+      <author initials="M." surname="Kühlewind" fullname="Mirja Kühlewind">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <email>mirja.kuehlewind@ericsson.com</email>
+        </address>
+      </author>
+      <author initials="M." surname="Westerlund" fullname="Magnus Westerlund">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <email>magnus.westerlund@ericsson.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

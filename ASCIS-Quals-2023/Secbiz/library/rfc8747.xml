@@ -1,0 +1,1202 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ace-cwt-proof-of-possession-11" indexInclude="true" ipr="trust200902" number="8747" prepTime="2020-03-09T21:33:16" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ace-cwt-proof-of-possession-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8747" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Proof-of-Possession Key for CWTs">Proof-of-Possession Key Semantics for CBOR Web Tokens (CWTs)</title>
+    <seriesInfo name="RFC" value="8747" stream="IETF"/>
+    <author fullname="Michael B. Jones" initials="M." surname="Jones">
+      <organization showOnFrontPage="true">Microsoft</organization>
+      <address>
+        <email>mbj@microsoft.com</email>
+        <uri>https://self-issued.info/</uri>
+      </address>
+    </author>
+    <author initials="L." surname="Seitz" fullname="Ludwig Seitz">
+      <organization showOnFrontPage="true">Combitech</organization>
+      <address>
+        <postal>
+          <street>Djaeknegatan 31</street>
+          <city ascii="Malmo">Malmö</city>
+          <code>211 35</code>
+          <country>Sweden</country>
+        </postal>
+        <email>ludwig.seitz@combitech.se</email>
+      </address>
+    </author>
+    <author initials="G." surname="Selander" fullname="Göran Selander">
+      <organization showOnFrontPage="true">Ericsson AB</organization>
+      <address>
+        <postal>
+          <city>Kista</city>
+          <code>164 80</code>
+          <country>Sweden</country>
+        </postal>
+        <email>goran.selander@ericsson.com</email>
+      </address>
+    </author>
+    <author fullname="Samuel Erdtman" initials="S." surname="Erdtman">
+      <organization showOnFrontPage="true">Spotify</organization>
+      <address>
+        <email>erdtman@spotify.com</email>
+      </address>
+    </author>
+    <author fullname="Hannes Tschofenig" initials="H." surname="Tschofenig">
+      <organization showOnFrontPage="true">Arm Ltd.</organization>
+      <address>
+        <postal>
+          <street/>
+          <code>6060</code>
+          <city>Hall in Tirol</city>
+          <country>Austria</country>
+        </postal>
+        <email>Hannes.Tschofenig@arm.com</email>
+      </address>
+    </author>
+    <date month="03" year="2020"/>
+    <area>Security</area>
+    <workgroup>ACE</workgroup>
+    <keyword>CBOR Web Token</keyword>
+    <keyword>CWT</keyword>
+    <keyword>Proof-of-Possession</keyword>
+    <keyword>Holder-of-Key</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+        This specification describes how to declare in a CBOR Web Token (CWT)
+	(which is defined by RFC 8392)
+	that the presenter of the CWT possesses a particular proof-of-possession key.
+	Being able to prove possession of a key is also sometimes described as
+	being the holder-of-key.
+	This specification provides equivalent functionality to
+	"Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)" (RFC 7800)
+	but using Concise Binary Object Representation (CBOR) and CWTs
+	rather than JavaScript Object Notation (JSON) and JSON Web Tokens (JWTs).
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8747" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-representations-for-proof-o">Representations for Proof-of-Possession Keys</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-confirmation-claim">Confirmation Claim</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-representation-of-an-asymme">Representation of an Asymmetric Proof-of-Possession Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-representation-of-an-encryp">Representation of an Encrypted Symmetric Proof-of-Possession Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-representation-of-a-key-id-">Representation of a Key ID for a Proof-of-Possession Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.5.1"><xref derivedContent="3.5" format="counter" sectionFormat="of" target="section-3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-specifics-intentionally-not">Specifics Intentionally Not Specified</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-considerations">Operational Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cbor-web-token-claims-regis">CBOR Web Token Claims Registration</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2.1.2">
+                  <li pn="section-toc.1-1.7.2.1.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.7.2.1.2.1.1"><xref derivedContent="7.1.1" format="counter" sectionFormat="of" target="section-7.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-registry-contents">Registry Contents</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cwt-confirmation-methods-re">CWT Confirmation Methods Registry</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2.2.2">
+                  <li pn="section-toc.1-1.7.2.2.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.7.2.2.2.1.1"><xref derivedContent="7.2.1" format="counter" sectionFormat="of" target="section-7.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-registration-template">Registration Template</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.7.2.2.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.7.2.2.2.2.1"><xref derivedContent="7.2.2" format="counter" sectionFormat="of" target="section-7.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-initial-registry-contents">Initial Registry Contents</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="Introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+        This specification describes how a CBOR Web Token (CWT) <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/> can declare
+	that the presenter of the CWT possesses a particular proof-of-possession (PoP) key.
+	Proof of possession of a key is also sometimes described as
+	being the holder-of-key.
+	This specification provides equivalent functionality to
+	"Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)" <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/>
+	but using Concise Binary Object Representation (CBOR) <xref target="RFC7049" format="default" sectionFormat="of" derivedContent="RFC7049"/>
+	and CWTs <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>
+	rather than JavaScript Object Notation (JSON) <xref target="RFC8259" format="default" sectionFormat="of" derivedContent="RFC8259"/>
+	and JSON Web Tokens (JWTs) <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="JWT"/>.
+      </t>
+    </section>
+    <section anchor="Terminology" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", 
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as 
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+      <t pn="section-2-2">
+	This specification uses terms defined in
+	the CBOR Web Token (CWT) <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>,
+	CBOR Object Signing and Encryption (COSE) <xref target="RFC8152" format="default" sectionFormat="of" derivedContent="RFC8152"/>, and
+	Concise Binary Object Representation (CBOR) <xref target="RFC7049" format="default" sectionFormat="of" derivedContent="RFC7049"/>
+	specifications.
+      </t>
+      <t pn="section-2-3">
+	These terms are defined by this specification:
+      </t>
+      <dl newline="true" spacing="normal" pn="section-2-4">
+        <dt pn="section-2-4.1">Issuer</dt>
+        <dd pn="section-2-4.2">
+	    Party that creates the CWT and binds the claims about the subject to the
+	    proof-of-possession key.
+	  </dd>
+        <dt pn="section-2-4.3">Presenter</dt>
+        <dd pn="section-2-4.4">
+          <t pn="section-2-4.4.1">	    Party that proves possession of a private key (for asymmetric key cryptography)
+	    or secret key (for symmetric key cryptography) to a recipient of a CWT.
+          </t>
+          <t pn="section-2-4.4.2">
+	    In the context of OAuth, this party is also called the OAuth Client.
+          </t>
+        </dd>
+        <dt pn="section-2-4.5">Recipient</dt>
+        <dd pn="section-2-4.6">
+          <t pn="section-2-4.6.1">
+	    Party that receives the CWT containing the proof-of-possession key information from the presenter.
+          </t>
+          <t pn="section-2-4.6.2">
+	    In the context of OAuth, this party is also called the OAuth Resource Server.
+          </t>
+        </dd>
+      </dl>
+      <t pn="section-2-5">
+	This specification provides examples in CBOR extended diagnostic
+	notation, as defined in <xref target="RFC8610" sectionFormat="of" section="G" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8610#appendix-G" derivedContent="RFC8610"/>.
+	The examples include line breaks for readability.
+      </t>
+    </section>
+    <section anchor="PoP" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-representations-for-proof-o">Representations for Proof-of-Possession Keys</name>
+      <t pn="section-3-1">
+	By including a <tt>cnf</tt> (confirmation) claim in a CWT,
+	the issuer of the CWT declares that the presenter possesses a particular key
+	and that the recipient can cryptographically confirm that
+	the presenter has possession of that key.
+	The value of the <tt>cnf</tt> claim is a CBOR map
+	(which is defined in <xref target="RFC7049" sectionFormat="of" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7049#section-2.1" derivedContent="RFC7049"/>)
+	and the members of that map identify the proof-of-possession key.
+      </t>
+      <t pn="section-3-2">
+	The presenter can be identified in one of several ways by the CWT,
+	depending upon the application requirements.
+	For instance, some applications may use
+	the CWT <tt>sub</tt> (subject) claim <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>
+	to identify the presenter.
+	Other applications may use
+	the <tt>iss</tt> (issuer) claim <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>
+	to identify the presenter.
+	In some applications, the subject identifier might be relative to
+	the issuer identified by the <tt>iss</tt> claim.
+	The actual mechanism used is dependent upon the application.
+	The case in which the presenter is the subject of the CWT is analogous to
+	Security Assertion Markup Language (SAML) 2.0 <xref target="OASIS.saml-core-2.0-os" format="default" sectionFormat="of" derivedContent="OASIS.saml-core-2.0-os"/> SubjectConfirmation
+	usage. 
+      </t>
+      <section anchor="Confirmation" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-confirmation-claim">Confirmation Claim</name>
+        <t pn="section-3.1-1">
+  The <tt>cnf</tt> claim in the CWT is used to carry confirmation methods. Some of
+ them use proof-of-possession keys, while others do not. This design is
+ analogous to the SAML 2.0 <xref target="OASIS.saml-core-2.0-os" format="default" sectionFormat="of" derivedContent="OASIS.saml-core-2.0-os"/> SubjectConfirmation
+ element in which a number of different subject confirmation methods can
+ be included (including proof-of-possession key information).
+</t>
+        <t pn="section-3.1-2">
+	  The set of confirmation members that a
+	  CWT must contain to be considered valid is context dependent
+	  and is outside the scope of this specification.
+	  Specific applications of CWTs will require implementations
+	  to understand and process some confirmation members in particular ways.
+	  However, in the absence of such requirements, all confirmation members
+	  that are not understood by implementations <bcp14>MUST</bcp14> be ignored.
+        </t>
+        <t pn="section-3.1-3">
+	 <xref target="CnfReg" format="default" sectionFormat="of" derivedContent="Section 7.2"/>  establishes the
+	  IANA "CWT Confirmation Methods" registry for CWT <tt>cnf</tt>
+	  member values and registers the members defined by this specification.
+	  Other specifications can register
+	  other members used for confirmation, including other members for
+	  conveying proof-of-possession keys using different key
+	  representations.
+        </t>
+        <t pn="section-3.1-4">
+		The <tt>cnf</tt> claim value <bcp14>MUST</bcp14> represent only a single
+		proof-of-possession key. At most one of the <tt>COSE_Key</tt>
+		and <tt>Encrypted_COSE_Key</tt> confirmation values defined
+		in <xref target="fig_cborMappings" format="default" sectionFormat="of" derivedContent="Table 1"/> may be
+		present. Note that if an application 
+		needs to represent multiple proof-of-possession keys in the same CWT, one way
+		for it to achieve this is to use other claim names (in addition to
+		<tt>cnf</tt>) to hold the additional proof-of-possession
+		key information. These claims could use the same syntax and semantics as the
+		<tt>cnf</tt> claim. Those claims would be defined by
+		applications or other specifications and could be registered in the
+		IANA "CBOR Web Token (CWT) Claims" registry <xref target="IANA.CWT.Claims" format="default" sectionFormat="of" derivedContent="IANA.CWT.Claims"/>.
+        </t>
+        <table anchor="fig_cborMappings" align="center" pn="table-1">
+          <name slugifiedName="name-summary-of-the-cnf-names-ke">Summary of the <tt>cnf</tt> Names, Keys, and Value Types</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Name</th>
+              <th align="left" colspan="1" rowspan="1">Key</th>
+              <th align="left" colspan="1" rowspan="1">Value type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">COSE_Key</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">COSE_Key</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Encrypted_COSE_Key</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">COSE_Encrypt or COSE_Encrypt0</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">kid</td>
+              <td align="left" colspan="1" rowspan="1">3</td>
+              <td align="left" colspan="1" rowspan="1">binary string</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section anchor="PrivatePoP" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-representation-of-an-asymme">Representation of an Asymmetric Proof-of-Possession Key</name>
+        <t pn="section-3.2-1">
+	  When the key held by the presenter is an asymmetric private key,
+	  the <tt>COSE_Key</tt> member
+	  is a COSE_Key <xref target="RFC8152" format="default" sectionFormat="of" derivedContent="RFC8152"/>
+	  representing the corresponding asymmetric public key.
+	  The following example demonstrates such a declaration
+	  in the CWT Claims Set of a CWT:
+        </t>
+        <sourcecode type="cbor" markers="false" pn="section-3.2-2">
+ {
+ /iss/ 1 : "coaps://server.example.com",
+ /aud/ 3 : "coaps://client.example.org",
+ /exp/ 4 : 1879067471,
+ /cnf/ 8 :{
+   /COSE_Key/ 1 :{
+     /kty/ 1 : /EC2/ 2,
+     /crv/ -1 : /P-256/ 1,
+     /x/ -2 : h'd7cc072de2205bdc1537a543d53c60a6acb62eccd890c7fa27c9
+                e354089bbe13',
+     /y/ -3 : h'f95e1d4b851a2cc80fff87d8e23f22afb725d535e515d020731e
+                79a3b4e47120'
+    }
+  }
+}
+</sourcecode>
+        <t pn="section-3.2-3">
+	  The COSE_Key <bcp14>MUST</bcp14> contain the required key members
+	  for a COSE_Key of that key type 
+	  and <bcp14>MAY</bcp14> contain other COSE_Key members,
+	  including the <tt>kid</tt> (Key ID) member.
+        </t>
+        <t pn="section-3.2-4">
+	  The <tt>COSE_Key</tt> member <bcp14>MAY</bcp14> also be used for a COSE_Key
+	  representing a symmetric key, provided that the CWT is encrypted
+	  so that the key is not revealed to unintended parties.
+	  The means of encrypting a CWT is explained in <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>.
+	  If the CWT is not encrypted, the symmetric key <bcp14>MUST</bcp14>
+	  be encrypted as described in <xref target="SymmetricPoP" format="default" sectionFormat="of" derivedContent="Section 3.3"/>. This procedure is equivalent to 
+	  the one defined in <xref target="RFC7800" sectionFormat="of" section="3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7800#section-3.3" derivedContent="RFC7800"/>.
+        </t>
+      </section>
+      <section anchor="SymmetricPoP" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-representation-of-an-encryp">Representation of an Encrypted Symmetric Proof-of-Possession Key</name>
+        <t pn="section-3.3-1">
+	  When the key held by the presenter is a symmetric key,
+	  the <tt>Encrypted_COSE_Key</tt> member
+	  is an encrypted COSE_Key <xref target="RFC8152" format="default" sectionFormat="of" derivedContent="RFC8152"/>
+	  representing the symmetric key
+	  encrypted to a key known to the recipient
+	  using COSE_Encrypt or COSE_Encrypt0.
+        </t>
+        <t pn="section-3.3-2">
+	  The following example
+	  illustrates a symmetric key that could subsequently be encrypted for use in the
+	  <tt>Encrypted_COSE_Key</tt> member:
+        </t>
+        <sourcecode type="cbor" markers="false" pn="section-3.3-3">
+{
+ /kty/ 1 : /Symmetric/ 4,
+ /alg/ 3 : /HMAC 256-256/ 5,
+ /k/ -1 : h'6684523ab17337f173500e5728c628547cb37df
+            e68449c65f885d1b73b49eae1'
+}
+</sourcecode>
+        <t pn="section-3.3-4">
+	  The COSE_Key representation
+	  is used as the plaintext when encrypting the key.
+        </t>
+        <t pn="section-3.3-5">
+	  The following example CWT Claims Set of a CWT
+	  illustrates the use of an encrypted symmetric key as the
+	  <tt>Encrypted_COSE_Key</tt> member value:
+        </t>
+        <sourcecode type="cbor" markers="false" pn="section-3.3-6">
+{
+ /iss/ 1 : "coaps://server.example.com",
+ /sub/ 2 : "24400320",
+ /aud/ 3: "s6BhdRkqt3",
+ /exp/ 4 : 1311281970,
+ /iat/ 5 : 1311280970,
+ /cnf/ 8 : {
+ /Encrypted_COSE_Key/ 2 : [
+    /protected header/ h'A1010A' /{ \alg\ 1:10 \AES-CCM-16-64-128\}/,
+    /unprotected header/ { / iv / 5: h'636898994FF0EC7BFCF6D3F95B'},
+    /ciphertext/  h'0573318A3573EB983E55A7C2F06CADD0796C9E584F1D0E3E
+                    A8C5B052592A8B2694BE9654F0431F38D5BBC8049FA7F13F'
+   ]
+  }
+}
+</sourcecode>
+        <t pn="section-3.3-7">
+	The example above was generated with the key:
+        </t>
+        <artwork name="" type="" align="left" alt="" pn="section-3.3-8">
+h'6162630405060708090a0b0c0d0e0f10'
+</artwork>
+      </section>
+      <section anchor="KidPoP" numbered="true" toc="include" removeInRFC="false" pn="section-3.4">
+        <name slugifiedName="name-representation-of-a-key-id-">Representation of a Key ID for a Proof-of-Possession Key</name>
+        <t pn="section-3.4-1">
+	  The proof-of-possession key can also be identified using
+	  a Key ID instead of communicating the actual key,
+	  provided the recipient is able to obtain the identified key
+	  using the Key ID.
+
+	  In this case,
+	  the issuer of a CWT declares that the presenter possesses a particular key
+	  and that the recipient can cryptographically confirm
+	  the presenter's proof of possession of the key by including a
+	  <tt>cnf</tt> claim in the CWT
+	  whose value is a CBOR map containing a <tt>kid</tt> member
+	  identifying the key.
+        </t>
+        <t pn="section-3.4-2">
+	  The following example demonstrates such a declaration
+	  in the CWT Claims Set of a CWT:
+        </t>
+        <sourcecode type="cbor" markers="false" pn="section-3.4-3">
+{
+ /iss/ 1 : "coaps://as.example.com",
+ /aud/ 3 : "coaps://resource.example.org",
+ /exp/ 4 : 1361398824,
+ /cnf/ 8 : {
+   /kid/ 3 : h'dfd1aa976d8d4575a0fe34b96de2bfad'
+  }
+}
+</sourcecode>
+        <t pn="section-3.4-4">
+	  The content of the <tt>kid</tt> value is application specific.
+	  For instance, some applications may choose to use a cryptographic hash of the public key
+	  value as the <tt>kid</tt> value.
+        </t>
+        <t pn="section-3.4-5">
+	  Note that the use of a Key ID to identify a proof-of-possession key
+	  needs to be carefully circumscribed, 
+	  as described below and in <xref target="Operational" format="default" sectionFormat="of" derivedContent="Section 6"/>.
+	  In cases where the Key ID is not a cryptographic value derived from the key
+	  or where not all of the parties involved are validating the cryptographic derivation,
+	  implementers should expect collisions where different keys are assigned the same Key ID.
+	  Recipients of a CWT with a PoP key linked through only a Key ID should be prepared to handle
+	  such situations.
+        </t>
+        <t pn="section-3.4-6">
+	  In the world of constrained Internet of Things (IoT) devices,
+	  there is frequently a restriction on the size of Key IDs,
+	  either because of table constraints or a desire to keep message sizes small.
+        </t>
+        <t pn="section-3.4-7">Note that the value of a Key ID for a specific key is not
+	necessarily the same for different parties. When sending a COSE
+	encrypted message with a shared key, the Key ID may be different on
+	both sides of the conversation,	with the appropriate one being included
+	in the message based on the recipient of the message.
+        </t>
+      </section>
+      <section anchor="NotSpecified" numbered="true" toc="include" removeInRFC="false" pn="section-3.5">
+        <name slugifiedName="name-specifics-intentionally-not">Specifics Intentionally Not Specified</name>
+        <t pn="section-3.5-1">
+	  Proof of possession is often demonstrated by having the presenter sign
+	  a value determined by the recipient using the key possessed by the presenter.
+	  This value is sometimes called a "nonce" or a "challenge".
+          There are, however, also other means to demonstrate freshness of the exchange
+	  and to link the proof-of-possession key to the participating parties,
+	  as demonstrated by various authentication and key exchange protocols.
+        </t>
+        <t pn="section-3.5-2">
+	  The means of communicating the nonce and the nature of its contents
+	  are intentionally not described in this specification,
+	  as different protocols will communicate this information in different ways.
+	  Likewise, the means of communicating the signed nonce is also not specified,
+	  as this is also protocol specific.
+        </t>
+        <t pn="section-3.5-3">
+	  Note that other means of proving possession of the key
+	  exist, which could be used in conjunction with a CWT's confirmation key.
+	  Applications making use of such alternate means are encouraged
+	  to register them in the IANA "CBOR Web Token (CWT) Confirmation Methods" registry
+	  established in <xref target="CnfReg" format="default" sectionFormat="of" derivedContent="Section 7.2"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-4-1">
+        All the security considerations that
+        are discussed in <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/> also apply here.
+        In addition, proof of possession introduces its own unique security issues.
+	Possessing a key is only valuable if it is kept secret.
+	Appropriate means must be used to ensure that unintended parties
+	do not learn private key or symmetric key values.
+      </t>
+      <t pn="section-4-2">
+	Applications utilizing proof of possession <bcp14>SHOULD</bcp14> also utilize audience restriction,
+	as described in <xref target="RFC8392" sectionFormat="of" section="3.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8392#section-3.1.3" derivedContent="RFC8392"/>,
+	because it provides additional protections.
+	Audience restriction can be used by recipients to reject messages intended for different recipients.
+	(Of course, applications not using proof of possession can also benefit
+	from using audience restriction to reject messages intended for different recipients.)
+      </t>
+      <t pn="section-4-3">
+	CBOR Web Tokens with proof-of-possession keys are used in context of an architecture,
+	such as the ACE OAuth Framework <xref target="I-D.ietf-ace-oauth-authz" format="default" sectionFormat="of" derivedContent="ACE-OAUTH"/>,
+	in which protocols are used by a presenter to request these tokens
+	and to subsequently use them with recipients.
+	Proof of possession only provides the intended security gains when the
+	proof is known to be current and not subject to replay attacks;
+	security protocols using mechanisms such as nonces and timestamps can be used to
+	avoid the risk of replay when performing proof of possession for a
+	token.
+
+	Note that a discussion of the architecture or specific protocols that
+	CWTs with proof-of-possession keys are used with is beyond the scope of this specification.
+      </t>
+      <t pn="section-4-4">
+	As is the case with other information included in a CWT,
+	it is necessary to apply data origin authentication and integrity protection
+	(via a keyed message digest or a digital signature).
+	Data origin authentication ensures that the recipient of the CWT
+	learns about the entity that created the CWT,
+	since this will be important for any policy decisions.
+	Integrity protection prevents an adversary from changing
+	any elements conveyed within the CWT payload.
+	Special care has to be applied when carrying symmetric keys inside the CWT
+	since those not only require integrity protection
+	but also confidentiality protection.
+      </t>
+      <t pn="section-4-5">
+	As described in Section <xref target="RFC7515" section="6" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7515#section-6" derivedContent="JWS">Key
+	Identification</xref> and Appendix <xref target="RFC7515" section="D" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7515#appendix-D" derivedContent="JWS">Notes on Key Selection</xref> of <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="JWS"/>, it is important to make 
+	explicit trust decisions about the keys. 
+	Proof-of-possession signatures made with keys
+	not meeting the application's trust criteria <bcp14>MUST NOT</bcp14> be relied upon.
+      </t>
+    </section>
+    <section anchor="Privacy" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t pn="section-5-1">
+	A proof-of-possession key can be used as a correlation handle if the same key
+	is used on multiple occasions.
+	Thus, for privacy reasons, it is recommended that different proof-of-possession keys
+	be used when interacting with different parties.
+      </t>
+    </section>
+    <section anchor="Operational" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-operational-considerations">Operational Considerations</name>
+      <t pn="section-6-1">
+	The use of CWTs with proof-of-possession keys requires additional information
+	to be shared between the involved parties in order to ensure correct processing.
+	The recipient needs to be able to use credentials to verify the authenticity and
+	integrity of the CWT. Furthermore, the recipient may need to be able to decrypt
+	either the whole CWT or the encrypted parts thereof (see <xref target="SymmetricPoP" format="default" sectionFormat="of" derivedContent="Section 3.3"/>).
+	This requires the recipient to know information about the issuer.
+	Likewise, there needs to be agreement between the issuer and the recipient
+	about the claims being used (which is also true of CWTs in general).
+      </t>
+      <t pn="section-6-2">
+	When an issuer creates a CWT containing a Key ID claim, it needs to make sure that
+	it does not issue another CWT with different claims containing the same Key ID
+	within the lifetime of the CWTs, unless intentionally desired.
+	Failure to do so may allow one party to impersonate another party,
+	with the potential to gain additional privileges.
+	A case where such reuse of a Key ID would be intentional is when a presenter obtains
+	a CWT with different claims (e.g., extended scope) for the same recipient but wants to
+	continue using an existing security association (e.g., a DTLS session) bound to the key
+	identified by the Key ID.
+	Likewise, if PoP keys are used for multiple different kinds of CWTs in an application
+	and the PoP keys are identified by Key IDs, care must be taken to keep the keys
+	for the different kinds of CWTs segregated so that an attacker cannot
+	cause the wrong PoP key to be used by using a valid Key ID
+	for the wrong kind of CWT.
+	Using an audience restriction for the CWT would be one strategy to mitigate this risk.
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-7-1">
+	The following registration procedure is used for all the
+	registries established by this specification.
+      </t>
+      <t pn="section-7-2">
+	Values are registered on a Specification Required
+	<xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/> basis after a three-week review period on the &lt;cwt-reg-review@ietf.org&gt; mailing
+	list, on the advice of one or more designated experts. However, to allow for the
+	allocation of values prior to publication, the designated experts may approve
+	registration once they are satisfied that such a specification will be published.
+      </t>
+      <t pn="section-7-3">
+	Registration requests sent to the mailing list for review should use
+	an appropriate subject
+	(e.g., "Request to Register CWT Confirmation Method: example").
+	Registration requests that are undetermined for
+	a period longer than 21 days can be brought directly to IANA's attention
+	(using the iana@iana.org mailing list) for resolution.
+      </t>
+      <t pn="section-7-4">
+	Designated experts should determine whether a registration request contains
+	enough information for the registry to be populated with the new values and
+	whether the proposed new functionality already exists.
+	In the case of an incomplete registration
+	or an attempt to register already existing functionality,
+	the designated experts should ask for corrections or reject the registration.
+      </t>
+      <t pn="section-7-5">
+	It is suggested that multiple designated experts be appointed who are able to
+	represent the perspectives of different applications using this specification
+	in order to enable broadly informed review of registration decisions.
+	In cases where a registration decision could be perceived as
+	creating a conflict of interest for a particular expert,
+	that expert should defer to the judgment of the other experts.
+      </t>
+      <section anchor="ClaimsRegistry" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-cbor-web-token-claims-regis">CBOR Web Token Claims Registration</name>
+        <t pn="section-7.1-1">
+	  This specification registers the <tt>cnf</tt> claim in the IANA
+	  "CBOR Web Token (CWT) Claims" registry <xref target="IANA.CWT.Claims" format="default" sectionFormat="of" derivedContent="IANA.CWT.Claims"/>,
+	  established by <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/>.
+        </t>
+        <section anchor="ClaimsContents" numbered="true" toc="include" removeInRFC="false" pn="section-7.1.1">
+          <name slugifiedName="name-registry-contents">Registry Contents</name>
+          <ul spacing="normal" bare="false" empty="false" pn="section-7.1.1-1">
+            <li pn="section-7.1.1-1.1">
+		Claim Name: <tt>cnf</tt>
+            </li>
+            <li pn="section-7.1.1-1.2">
+		Claim Description: Confirmation
+	      </li>
+            <li pn="section-7.1.1-1.3">
+		JWT Claim Name: <tt>cnf</tt>
+            </li>
+            <li pn="section-7.1.1-1.4">
+		Claim Key: 8
+	      </li>
+            <li pn="section-7.1.1-1.5">
+		Claim Value Type(s): map
+	      </li>
+            <li pn="section-7.1.1-1.6">
+		Change Controller: IESG
+	      </li>
+            <li pn="section-7.1.1-1.7">
+		Specification Document(s): <xref target="Confirmation" format="default" sectionFormat="of" derivedContent="Section 3.1"/> of RFC 8747
+	      </li>
+          </ul>
+        </section>
+      </section>
+      <section anchor="CnfReg" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-cwt-confirmation-methods-re">CWT Confirmation Methods Registry</name>
+        <t pn="section-7.2-1">
+	  This specification establishes the
+	  IANA "CWT Confirmation Methods" registry
+	  for CWT <tt>cnf</tt> member values.
+	  The registry records the confirmation method member
+	  and a reference to the specification that defines it.
+        </t>
+        <section anchor="CnfTemplate" numbered="true" toc="include" removeInRFC="false" pn="section-7.2.1">
+          <name slugifiedName="name-registration-template">Registration Template</name>
+          <dl newline="true" spacing="normal" pn="section-7.2.1-1">
+            <dt pn="section-7.2.1-1.1">Confirmation Method Name:</dt>
+            <dd pn="section-7.2.1-1.2">
+                The human-readable name requested (e.g., "kid").
+              </dd>
+            <dt pn="section-7.2.1-1.3">Confirmation Method Description:</dt>
+            <dd pn="section-7.2.1-1.4">
+                Brief description of the confirmation method (e.g., "Key Identifier").
+              </dd>
+            <dt pn="section-7.2.1-1.5">JWT Confirmation Method Name:</dt>
+            <dd pn="section-7.2.1-1.6">
+		Claim Name of the equivalent JWT confirmation method value,
+		as registered in the "JSON Web Token Claims" subregistry in
+		the "JSON Web Token (JWT)" registry <xref target="IANA.JWT" format="default" sectionFormat="of" derivedContent="IANA.JWT"/>.
+		CWT claims should normally have a corresponding JWT claim.
+		If a corresponding JWT claim would not make sense,
+		the designated experts can choose to accept registrations
+		for which the JWT Claim Name is listed as "N/A".
+	      </dd>
+            <dt pn="section-7.2.1-1.7">Confirmation Key:</dt>
+            <dd pn="section-7.2.1-1.8">
+		CBOR map key value for the confirmation method.
+	      </dd>
+            <dt pn="section-7.2.1-1.9">Confirmation Value Type(s):</dt>
+            <dd pn="section-7.2.1-1.10">
+		CBOR types that can be used for the confirmation method value.
+	      </dd>
+            <dt pn="section-7.2.1-1.11">Change Controller:</dt>
+            <dd pn="section-7.2.1-1.12">
+                For Standards Track RFCs, list the "IESG". For others, give the name of the
+                responsible party.
+              </dd>
+            <dt pn="section-7.2.1-1.13">Specification Document(s):</dt>
+            <dd pn="section-7.2.1-1.14">
+                Reference to the document or documents that specify the parameter,
+		preferably including URIs that
+		can be used to retrieve copies of the documents.
+		An indication of the relevant
+		sections may also be included but is not required.
+		Note that the designated experts and IANA must be able to obtain
+		copies of the specification document(s) to perform their work.
+              </dd>
+          </dl>
+        </section>
+        <section anchor="CnfContents" numbered="true" toc="include" removeInRFC="false" pn="section-7.2.2">
+          <name slugifiedName="name-initial-registry-contents">Initial Registry Contents</name>
+          <ul spacing="compact" bare="false" empty="false" pn="section-7.2.2-1">
+            <li pn="section-7.2.2-1.1">
+                Confirmation Method Name: <tt>COSE_Key</tt>
+            </li>
+            <li pn="section-7.2.2-1.2">
+                Confirmation Method Description: COSE_Key Representing Public
+		Key
+            </li>
+            <li pn="section-7.2.2-1.3">
+	      JWT Confirmation Method Name: <tt>jwk</tt>
+            </li>
+            <li pn="section-7.2.2-1.4">
+	      Confirmation Key: 1
+	    </li>
+            <li pn="section-7.2.2-1.5">
+	      Confirmation Value Type(s): COSE_Key structure
+	    </li>
+            <li pn="section-7.2.2-1.6">
+                Change Controller: IESG
+            </li>
+            <li pn="section-7.2.2-1.7">
+                Specification Document(s): <xref target="PrivatePoP" format="default" sectionFormat="of" derivedContent="Section 3.2"/> of RFC 8747
+            </li>
+          </ul>
+          <ul spacing="compact" bare="false" empty="false" pn="section-7.2.2-2">
+            <li pn="section-7.2.2-2.1">
+                Confirmation Method Name: <tt>Encrypted_COSE_Key</tt>
+            </li>
+            <li pn="section-7.2.2-2.2">
+                Confirmation Method Description: Encrypted COSE_Key
+            </li>
+            <li pn="section-7.2.2-2.3">
+	      JWT Confirmation Method Name: <tt>jwe</tt>
+            </li>
+            <li pn="section-7.2.2-2.4">
+	      Confirmation Key: 2
+	    </li>
+            <li pn="section-7.2.2-2.5">
+	      Confirmation Value Type(s): COSE_Encrypt or COSE_Encrypt0
+	      structure (with an optional corresponding COSE_Encrypt or
+	      COSE_Encrypt0 tag)
+	    </li>
+            <li pn="section-7.2.2-2.6">
+                Change Controller: IESG
+            </li>
+            <li pn="section-7.2.2-2.7">
+                Specification Document(s): <xref target="SymmetricPoP" format="default" sectionFormat="of" derivedContent="Section 3.3"/> of RFC 8747
+            </li>
+          </ul>
+          <ul spacing="compact" bare="false" empty="false" pn="section-7.2.2-3">
+            <li pn="section-7.2.2-3.1">
+                Confirmation Method Name: <tt>kid</tt>
+            </li>
+            <li pn="section-7.2.2-3.2">
+                Confirmation Method Description: Key Identifier
+            </li>
+            <li pn="section-7.2.2-3.3">
+	      JWT Confirmation Method Name: <tt>kid</tt>
+            </li>
+            <li pn="section-7.2.2-3.4">
+	      Confirmation Key: 3
+	    </li>
+            <li pn="section-7.2.2-3.5">
+	      Confirmation Value Type(s): binary string
+	    </li>
+            <li pn="section-7.2.2-3.6">
+                Change Controller: IESG
+            </li>
+            <li pn="section-7.2.2-3.7">
+                Specification Document(s): <xref target="KidPoP" format="default" sectionFormat="of" derivedContent="Section 3.4"/> of RFC 8747
+            </li>
+          </ul>
+        </section>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-ace-oauth-authz" to="ACE-OAUTH"/>
+    <displayreference target="RFC7515" to="JWS"/>
+    <displayreference target="RFC7519" to="JWT"/>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="IANA.CWT.Claims" target="https://www.iana.org/assignments/cwt" quoteTitle="true" derivedAnchor="IANA.CWT.Claims">
+          <front>
+            <title>CBOR Web Token Claims</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC7049" target="https://www.rfc-editor.org/info/rfc7049" quoteTitle="true" derivedAnchor="RFC7049">
+          <front>
+            <title>Concise Binary Object Representation (CBOR)</title>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="October"/>
+            <abstract>
+              <t>The Concise Binary Object Representation (CBOR) is a data format whose design goals include the possibility of extremely small code size, fairly small message size, and extensibility without the need for version negotiation.  These design goals make it different from earlier binary serializations such as ASN.1 and MessagePack.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7049"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7049"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t>Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t>To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t>This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8152" target="https://www.rfc-editor.org/info/rfc8152" quoteTitle="true" derivedAnchor="RFC8152">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE)</title>
+            <author initials="J." surname="Schaad" fullname="J. Schaad">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="July"/>
+            <abstract>
+              <t>Concise Binary Object Representation (CBOR) is a data format designed for small code size and small message size.  There is a need for the ability to have basic security services defined for this data format. This document defines the CBOR Object Signing and Encryption (COSE) protocol.  This specification describes how to create and process signatures, message authentication codes, and encryption using CBOR for serialization.  This specification additionally describes how to represent cryptographic keys using CBOR.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8152"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8152"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8392" target="https://www.rfc-editor.org/info/rfc8392" quoteTitle="true" derivedAnchor="RFC8392">
+          <front>
+            <title>CBOR Web Token (CWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Wahlstroem" fullname="E. Wahlstroem">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Erdtman" fullname="S. Erdtman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="May"/>
+            <abstract>
+              <t>CBOR Web Token (CWT) is a compact means of representing claims to be transferred between two parties.  The claims in a CWT are encoded in the Concise Binary Object Representation (CBOR), and CBOR Object Signing and Encryption (COSE) is used for added application-layer security protection.  A claim is a piece of information asserted about a subject and is represented as a name/value pair consisting of a claim name and a claim value.  CWT is derived from JSON Web Token (JWT) but uses CBOR rather than JSON.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8392"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8392"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.ietf-ace-oauth-authz" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-ace-oauth-authz-21" derivedAnchor="ACE-OAUTH">
+          <front>
+            <title>Authentication and Authorization for Constrained Environments (ACE) using the OAuth 2.0 Framework (ACE-OAuth)</title>
+            <author initials="L" surname="Seitz" fullname="Ludwig Seitz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G" surname="Selander" fullname="Goeran Selander">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E" surname="Wahlstroem" fullname="Erik Wahlstroem">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S" surname="Erdtman" fullname="Samuel Erdtman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H" surname="Tschofenig" fullname="Hannes Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="February" day="14" year="2019"/>
+            <abstract>
+              <t>This specification defines a framework for authentication and authorization in Internet of Things (IoT) environments called ACE- OAuth.  The framework is based on a set of building blocks including OAuth 2.0 and CoAP, thus making a well-known and widely used authorization solution suitable for IoT devices.  Existing specifications are used where possible, but where the constraints of IoT devices require it, extensions are added and profiles are defined.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-ace-oauth-authz-21"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-ace-oauth-authz-21.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="IANA.JWT" target="https://www.iana.org/assignments/jwt" quoteTitle="true" derivedAnchor="IANA.JWT">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515" quoteTitle="true" derivedAnchor="JWS">
+          <front>
+            <title>JSON Web Signature (JWS)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t>JSON Web Signature (JWS) represents content secured with digital signatures or Message Authentication Codes (MACs) using JSON-based data structures.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and an IANA registry defined by that specification.  Related encryption capabilities are described in the separate JSON Web Encryption (JWE) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7515"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7515"/>
+        </reference>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519" quoteTitle="true" derivedAnchor="JWT">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t>JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties.  The claims in a JWT are encoded as a JSON object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or integrity protected with a Message Authentication Code (MAC) and/or encrypted.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        <reference anchor="OASIS.saml-core-2.0-os" target="https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf" quoteTitle="true" derivedAnchor="OASIS.saml-core-2.0-os">
+          <front>
+            <title>Assertions and Protocol for the OASIS Security Assertion Markup Language (SAML) V2.0</title>
+            <author fullname="Scott Cantor" initials="S." surname="Cantor">
+              <organization showOnFrontPage="true">Internet2</organization>
+              <address>
+                <email>cantor.2@osu.edu</email>
+              </address>
+            </author>
+            <author fullname="John Kemp" initials="J." surname="Kemp">
+              <organization showOnFrontPage="true">Nokia</organization>
+              <address>
+                <email>John.Kemp@nokia.com</email>
+              </address>
+            </author>
+            <author fullname="Rob Philpott" initials="R." surname="Philpott">
+              <organization showOnFrontPage="true">RSA Security</organization>
+              <address>
+                <email>rphilpott@rsasecurity.com</email>
+              </address>
+            </author>
+            <author fullname="Eve Maler" initials="E." surname="Maler">
+              <organization showOnFrontPage="true">Sun Microsystems</organization>
+              <address>
+                <email>eve.maler@sun.com</email>
+              </address>
+            </author>
+            <date year="2005" month="March"/>
+          </front>
+          <seriesInfo name="OASIS Standard" value="saml-core-2.0-os"/>
+        </reference>
+        <reference anchor="RFC7800" target="https://www.rfc-editor.org/info/rfc7800" quoteTitle="true" derivedAnchor="RFC7800">
+          <front>
+            <title>Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="April"/>
+            <abstract>
+              <t>This specification describes how to declare in a JSON Web Token (JWT) that the presenter of the JWT possesses a particular proof-of- possession key and how the recipient can cryptographically confirm proof of possession of the key by the presenter.  Being able to prove possession of a key is also sometimes described as the presenter being a holder-of-key.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7800"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7800"/>
+        </reference>
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259" quoteTitle="true" derivedAnchor="RFC8259">
+          <front>
+            <title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author initials="T." surname="Bray" fullname="T. Bray" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="December"/>
+            <abstract>
+              <t>JavaScript Object Notation (JSON) is a lightweight, text-based, language-independent data interchange format.  It was derived from the ECMAScript Programming Language Standard.  JSON defines a small set of formatting rules for the portable representation of structured data.</t>
+              <t>This document removes inconsistencies with other specifications of JSON, repairs specification errors, and offers experience-based interoperability guidance.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8259"/>
+        </reference>
+        <reference anchor="RFC8610" target="https://www.rfc-editor.org/info/rfc8610" quoteTitle="true" derivedAnchor="RFC8610">
+          <front>
+            <title>Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures</title>
+            <author initials="H." surname="Birkholz" fullname="H. Birkholz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Vigano" fullname="C. Vigano">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="June"/>
+            <abstract>
+              <t>This document proposes a notational convention to express Concise Binary Object Representation (CBOR) data structures (RFC 7049).  Its main goal is to provide an easy and unambiguous way to express structures for protocol messages and data formats that use CBOR or JSON.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8610"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8610"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.a-1">
+	Thanks to the following people for their reviews of the specification:
+        <contact fullname="Roman Danyliw"/>,
+	<contact fullname="Christer Holmberg"/>,
+	<contact fullname="Benjamin Kaduk"/>,
+	<contact fullname="Mirja Kühlewind"/>,
+	<contact fullname="Yoav Nir"/>,
+	<contact fullname="Michael Richardson"/>,
+	<contact fullname="Adam Roach"/>,
+	<contact fullname="Éric Vyncke"/>,
+        and
+	<contact fullname="Jim Schaad"/>.
+      </t>
+      <t pn="section-appendix.a-2"><contact fullname="Ludwig Seitz"/> and <contact fullname="Göran       Selander"/> worked on this document as part of 
+    the CelticPlus projects CyberWI and CRITISEC, with funding from Vinnova.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Michael B. Jones" initials="M." surname="Jones">
+        <organization showOnFrontPage="true">Microsoft</organization>
+        <address>
+          <email>mbj@microsoft.com</email>
+          <uri>https://self-issued.info/</uri>
+        </address>
+      </author>
+      <author initials="L." surname="Seitz" fullname="Ludwig Seitz">
+        <organization showOnFrontPage="true">Combitech</organization>
+        <address>
+          <postal>
+            <street>Djaeknegatan 31</street>
+            <city ascii="Malmo">Malmö</city>
+            <code>211 35</code>
+            <country>Sweden</country>
+          </postal>
+          <email>ludwig.seitz@combitech.se</email>
+        </address>
+      </author>
+      <author initials="G." surname="Selander" fullname="Göran Selander">
+        <organization showOnFrontPage="true">Ericsson AB</organization>
+        <address>
+          <postal>
+            <city>Kista</city>
+            <code>164 80</code>
+            <country>Sweden</country>
+          </postal>
+          <email>goran.selander@ericsson.com</email>
+        </address>
+      </author>
+      <author fullname="Samuel Erdtman" initials="S." surname="Erdtman">
+        <organization showOnFrontPage="true">Spotify</organization>
+        <address>
+          <email>erdtman@spotify.com</email>
+        </address>
+      </author>
+      <author fullname="Hannes Tschofenig" initials="H." surname="Tschofenig">
+        <organization showOnFrontPage="true">Arm Ltd.</organization>
+        <address>
+          <postal>
+            <street/>
+            <code>6060</code>
+            <city>Hall in Tirol</city>
+            <country>Austria</country>
+          </postal>
+          <email>Hannes.Tschofenig@arm.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

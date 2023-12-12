@@ -1,0 +1,544 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-extra-sieve-mailboxid-09" indexInclude="true" ipr="trust200902" number="9042" prepTime="2021-06-30T18:45:53" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="5228" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-extra-sieve-mailboxid-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9042" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Sieve MAILBOXID">Sieve Email Filtering: Delivery by MAILBOXID</title>
+    <seriesInfo name="RFC" value="9042" stream="IETF"/>
+    <author role="editor" initials="B." surname="Gondwana" fullname="Bron Gondwana">
+      <organization showOnFrontPage="true">Fastmail</organization>
+      <address>
+        <postal>
+          <extaddr>Level 2</extaddr>
+          <street>114 William St</street>
+          <city>Melbourne</city>
+          <region>VIC</region>
+          <code>3000</code>
+          <country>Australia</country>
+        </postal>
+        <email>brong@fastmailteam.com</email>
+        <uri>https://www.fastmail.com</uri>
+      </address>
+    </author>
+    <date month="06" year="2021"/>
+    <area>Applications</area>
+    <workgroup>EXTRA</workgroup>
+    <keyword>sieve</keyword>
+    <keyword>email</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The OBJECTID capability of IMAP (RFC 8474) allows clients to
+identify mailboxes by a unique identifier that survives renaming.</t>
+      <t indent="0" pn="section-abstract-2">This document extends the Sieve email filtering language (RFC 5228) to
+allow using that same unique identifier as a target for fileinto rules
+and for testing the existence of mailboxes.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9042" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-used-in-this-do">Conventions Used in This Document</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sieve-capability-string">Sieve Capability String</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-argument-mailboxid-to-comma">Argument :mailboxid to Command fileinto</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-mailbox-ex">Interaction with Mailbox Extension</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-special-us">Interaction with Special-Use Extension</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-fcc-extens">Interaction with FCC Extension</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-test-mailboxidexists">Test mailboxidexists</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-variables-">Interaction with Variables Extension</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">Sieve rules <xref target="RFC5228" format="default" sectionFormat="of" derivedContent="RFC5228"/> are sometimes created using graphical interfaces,
+which allow users to select the mailbox to be used as a target for a rule.</t>
+      <t indent="0" pn="section-1-2">If that mailbox is renamed, the client may also update its internal
+representation of the rule and update the Sieve script to match;
+however, this is a multistep process and subject to partial failures.
+Also, if the folder is renamed by a different mechanism (e.g., another
+IMAP client), the rules will get out of sync.</t>
+      <t indent="0" pn="section-1-3">By telling fileinto to reference the immutable MAILBOXID specified
+by <xref target="RFC8474" format="default" sectionFormat="of" derivedContent="RFC8474"/>, using the extension specified herein, Sieve rules can
+continue to target the same mailbox, even if it gets renamed.</t>
+    </section>
+    <section anchor="conventions-used-in-this-document" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-used-in-this-do">Conventions Used in This Document</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="sieve-capability-string" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-sieve-capability-string">Sieve Capability String</name>
+      <t indent="0" pn="section-3-1">Scripts that use the extensions defined in this document <bcp14>MUST</bcp14> explicitly require
+the capability "mailboxid".</t>
+      <t indent="0" pn="section-3-2">Example:</t>
+      <sourcecode type="" markers="false" pn="section-3-3">
+require "mailboxid";
+</sourcecode>
+    </section>
+    <section anchor="argument-mailboxid-to-command-fileinto" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-argument-mailboxid-to-comma">Argument :mailboxid to Command fileinto</name>
+      <t indent="0" pn="section-4-1">Normally, the fileinto command delivers the message in the mailbox
+specified using its positional mailbox argument.  However, if the
+optional :mailboxid argument is also specified, the fileinto
+command first checks whether a mailbox exists in the user's personal
+namespace <xref target="RFC2342" format="default" sectionFormat="of" derivedContent="RFC2342"/> with the specified MAILBOXID <xref target="RFC8474" format="default" sectionFormat="of" derivedContent="RFC8474"/>.</t>
+      <t indent="0" pn="section-4-2">If a matching mailbox is found, that mailbox is used for delivery.</t>
+      <t indent="0" pn="section-4-3">If there is no such mailbox, the fileinto action proceeds as it would
+without the :mailboxid argument.</t>
+      <t indent="0" pn="section-4-4">The tagged argument :mailboxid to fileinto consumes one additional token,
+a string containing the OBJECTID of the target mailbox.</t>
+      <t indent="0" pn="section-4-5">Example:</t>
+      <sourcecode type="" markers="false" pn="section-4-6">
+require "fileinto";
+require "mailboxid";
+
+if header :contains ["from"] "coyote" {
+    fileinto :mailboxid "F6352ae03-b7f5-463c-896f-d8b48ee3"
+             "INBOX.harassment";
+}
+</sourcecode>
+      <section anchor="interaction-with-mailbox-extension" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-interaction-with-mailbox-ex">Interaction with Mailbox Extension</name>
+        <t indent="0" pn="section-4.1-1">For servers that also support the mailbox extension defined in <xref target="RFC5490" format="default" sectionFormat="of" derivedContent="RFC5490"/>, if both the
+:create and :mailboxid arguments are provided to a fileinto command and
+no matching mailbox is found, then a new mailbox will be created.</t>
+        <t indent="0" pn="section-4.1-2">This new mailbox will have the name specified by the positional mailbox
+argument (<xref target="RFC5228" sectionFormat="comma" section="4.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5228#section-4.1" derivedContent="RFC5228"/>); however, it will get a different MAILBOXID
+(chosen by the server) rather than the one specified by the :mailboxid
+argument to fileinto.</t>
+        <t indent="0" pn="section-4.1-3">Example:</t>
+        <sourcecode type="" markers="false" pn="section-4.1-4">
+require "fileinto";
+require "mailboxid";
+require "mailbox";
+
+fileinto :mailboxid "Fnosuch"
+         :create
+         "INBOX.no-such-folder";
+            # creates INBOX.no-such-folder, but it doesn't
+            # get the "Fnosuch" mailboxid.
+</sourcecode>
+      </section>
+      <section anchor="interaction-with-specialuse-extension" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-interaction-with-special-us">Interaction with Special-Use Extension</name>
+        <t indent="0" pn="section-4.2-1">For servers that also support delivery to special-use mailboxes <xref target="RFC8579" format="default" sectionFormat="of" derivedContent="RFC8579"/>,
+it is an error to specify both :mailboxid and :specialuse in the same
+fileinto command.</t>
+        <t indent="0" pn="section-4.2-2">Advanced filtering based on both special-use and MAILBOXID can be
+built with explicit specialuse_exists and mailboxidexists tests.</t>
+        <aside pn="section-4.2-3">
+          <t indent="0" pn="section-4.2-3.1">Note to developers of Sieve generation tools:</t>
+          <t indent="0" pn="section-4.2-3.2">It is advisable to use
+special-use rather than MAILBOXID when creating rules that are based
+on a special-use purpose (e.g., delivery directly to the Junk folder
+based on a header that was added by a scanning agent earlier in the
+mail flow).</t>
+        </aside>
+      </section>
+    </section>
+    <section anchor="interaction-with-fcc-extension" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-interaction-with-fcc-extens">Interaction with FCC Extension</name>
+      <t indent="0" pn="section-5-1">This document extends the definition of the :fcc argument defined in
+<xref target="RFC8580" format="default" sectionFormat="of" derivedContent="RFC8580"/> so that it can optionally be used with the :mailboxid
+argument.  The syntax for FCC is extended here using ABNF <xref target="RFC5234" format="default" sectionFormat="of" derivedContent="RFC5234"/>:</t>
+      <sourcecode type="abnf" markers="false" pn="section-5-2">
+MAILBOXID-OPT = ":mailboxid" objectid
+
+FCC-OPTS =/ MAILBOXID-OPT
+</sourcecode>
+      <t indent="0" pn="section-5-3">If the optional :mailboxid argument is specified with :fcc, it
+instructs the Sieve interpreter to check whether a mailbox exists
+with the specific MAILBOXID.  If such a mailbox exists, the generated
+message is filed into that mailbox.  Otherwise, the generated message
+is filed into the :fcc target mailbox.</t>
+      <t indent="0" pn="section-5-4">As with fileinto, it is an error to specify both :mailboxid
+and :specialuse for the same fcc rule.</t>
+      <t indent="0" pn="section-5-5">Example:</t>
+      <sourcecode type="" markers="false" pn="section-5-6">
+require ["enotify", "fcc", "mailboxid"];
+notify :fcc "INBOX.Sent"
+       :mailboxid "F6352ae03-b7f5-463c-896f-d8b48ee3"
+       :message "You got mail!"
+       "mailto:ken@example.com";
+</sourcecode>
+    </section>
+    <section anchor="test-mailboxidexists" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-test-mailboxidexists">Test mailboxidexists</name>
+      <t indent="0" pn="section-6-1">Usage: mailboxidexists &lt;mailbox-objectids: string-list&gt;</t>
+      <t indent="0" pn="section-6-2">The mailboxidexists test is true if every string argument provided is the MAILBOXID of a mailbox that exists in the mailstore and that allows the user in whose context the Sieve script runs to deliver messages into it.</t>
+      <t indent="0" pn="section-6-3">When the mailstore is an IMAP server that also supports IMAP
+Access Control List (ACL) <xref target="RFC4314" format="default" sectionFormat="of" derivedContent="RFC4314"/>, delivery is allowed if the user has the 'p' or 'i' rights for the mailbox (see
+   <xref target="RFC4314" sectionFormat="of" section="5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4314#section-5.2" derivedContent="RFC4314"/>).</t>
+      <t indent="0" pn="section-6-4"> When the mailstore is an IMAP server that does not support IMAP ACL, delivery is allowed if the READ-WRITE response code is present for the mailbox when selected by the user (see <xref target="RFC3501" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3501#section-7.1" derivedContent="RFC3501"/>).</t>
+      <t indent="0" pn="section-6-5">Note that a successful mailboxidexists test for a mailbox doesn't
+necessarily mean that a "fileinto :mailboxid" action on this mailbox
+would succeed.  For example, the fileinto action might put the user over
+quota.  The mailboxidexists test only verifies existence of the
+mailbox and whether the user in whose context the Sieve script runs
+has permissions to execute fileinto on it.</t>
+      <t indent="0" pn="section-6-6">Example:</t>
+      <sourcecode type="" markers="false" pn="section-6-7">
+require "fileinto";
+require "mailboxid";
+
+if header :contains ["from"] "coyote" {
+    if mailboxidexists "F6352ae03-b7f5-463c-896f-d8b48ee3" {
+        fileinto :mailboxid "F6352ae03-b7f5-463c-896f-d8b48ee3"
+                            "INBOX.name.will.not.be.used";
+    } else {
+        fileinto "INBOX.harassment";
+    }
+}
+</sourcecode>
+      <aside pn="section-6-8">
+        <t indent="0" pn="section-6-8.1">Note to implementers:</t>
+        <t indent="0" pn="section-6-8.2">This test behaves identically to the
+mailboxexists test defined in <xref target="RFC5490" format="default" sectionFormat="of" derivedContent="RFC5490"/> but operates on
+MAILBOXIDs rather than mailbox names.</t>
+      </aside>
+    </section>
+    <section anchor="interaction-with-variables-extension" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-interaction-with-variables-">Interaction with Variables Extension</name>
+      <t indent="0" pn="section-7-1">There is no special interaction defined; however, as an OBJECTID
+is a string in this document, OBJECTID values can contain
+variable expansions if <xref target="RFC5229" format="default" sectionFormat="of" derivedContent="RFC5229"/> is enabled.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">Because MAILBOXID is always generated by the server, implementations
+<bcp14>MUST NOT</bcp14> allow Sieve to make an end run around this protection by
+creating mailboxes with the specified ID by using :create and
+:mailboxid in a fileinto rule for a nonexistent mailbox.</t>
+      <t indent="0" pn="section-8-2">Implementers are referred to the Security Considerations sections
+of <xref target="RFC5228" format="default" sectionFormat="of" derivedContent="RFC5228"/> and <xref target="RFC8474" format="default" sectionFormat="of" derivedContent="RFC8474"/>.</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">IANA has added the following capability to the "Sieve Extensions" registry
+at <eref brackets="angle" target="https://www.iana.org/assignments/sieve-extensions"/>:</t>
+      <dl newline="false" spacing="compact" indent="3" pn="section-9-2">
+        <dt pn="section-9-2.1">Capability name:</dt>
+        <dd pn="section-9-2.2">mailboxid</dd>
+        <dt pn="section-9-2.3">Description:</dt>
+        <dd pn="section-9-2.4">adds a test for checking mailbox existence by OBJECTID
+             and new optional arguments to fileinto and :fcc that
+             allow selecting the destination mailbox by OBJECTID.</dd>
+        <dt pn="section-9-2.5">RFC number:</dt>
+        <dd pn="section-9-2.6">RFC 9042</dd>
+        <dt pn="section-9-2.7">Contact address:</dt>
+        <dd pn="section-9-2.8">EXTRA discussion list &lt;extra@ietf.org&gt;</dd>
+      </dl>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC2342" target="https://www.rfc-editor.org/info/rfc2342" quoteTitle="true" derivedAnchor="RFC2342">
+          <front>
+            <title>IMAP4 Namespace</title>
+            <author initials="M." surname="Gahrns" fullname="M. Gahrns">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Newman" fullname="C. Newman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="May"/>
+            <abstract>
+              <t indent="0">This document defines a NAMESPACE command that allows a client to discover the prefixes of namespaces used by a server for personal mailboxes, other users' mailboxes, and shared mailboxes.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2342"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2342"/>
+        </reference>
+        <reference anchor="RFC5228" target="https://www.rfc-editor.org/info/rfc5228" quoteTitle="true" derivedAnchor="RFC5228">
+          <front>
+            <title>Sieve: An Email Filtering Language</title>
+            <author initials="P." surname="Guenther" fullname="P. Guenther" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Showalter" fullname="T. Showalter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t indent="0">This document describes a language for filtering email messages at time of final delivery.  It is designed to be implementable on either a mail client or mail server.  It is meant to be extensible, simple, and independent of access protocol, mail architecture, and operating system.  It is suitable for running on a mail server where users may not be allowed to execute arbitrary programs, such as on black box Internet Message Access Protocol (IMAP) servers, as the base language has no variables, loops, or ability to shell out to external programs.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5228"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5228"/>
+        </reference>
+        <reference anchor="RFC5234" target="https://www.rfc-editor.org/info/rfc5234" quoteTitle="true" derivedAnchor="RFC5234">
+          <front>
+            <title>Augmented BNF for Syntax Specifications: ABNF</title>
+            <author initials="D." surname="Crocker" fullname="D. Crocker" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Overell" fullname="P. Overell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t indent="0">Internet technical specifications often need to define a formal syntax.  Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications.  The current specification documents ABNF. It balances compactness and simplicity with reasonable representational power.  The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges.  This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="68"/>
+          <seriesInfo name="RFC" value="5234"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5234"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8474" target="https://www.rfc-editor.org/info/rfc8474" quoteTitle="true" derivedAnchor="RFC8474">
+          <front>
+            <title>IMAP Extension for Object Identifiers</title>
+            <author initials="B." surname="Gondwana" fullname="B. Gondwana" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="September"/>
+            <abstract>
+              <t indent="0">This document updates RFC 3501 (IMAP4rev1) with persistent identifiers on mailboxes and messages to allow clients to more efficiently reuse cached data when resources have changed location on the server.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8474"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8474"/>
+        </reference>
+        <reference anchor="RFC8580" target="https://www.rfc-editor.org/info/rfc8580" quoteTitle="true" derivedAnchor="RFC8580">
+          <front>
+            <title>Sieve Extension: File Carbon Copy (FCC)</title>
+            <author initials="K." surname="Murchison" fullname="K. Murchison">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Gondwana" fullname="B. Gondwana">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="May"/>
+            <abstract>
+              <t indent="0">The Sieve email filtering language provides a number of action commands, some of which can generate additional messages on behalf of the user.  This document defines an extension to such commands to allow a copy of any generated message to be filed into a target mailbox.</t>
+              <t indent="0">This document updates RFCs 5230 and 5435 by adding a new tagged argument to the Vacation and Notify actions, respectively.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8580"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8580"/>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC3501" target="https://www.rfc-editor.org/info/rfc3501" quoteTitle="true" derivedAnchor="RFC3501">
+          <front>
+            <title>INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1</title>
+            <author initials="M." surname="Crispin" fullname="M. Crispin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="March"/>
+            <abstract>
+              <t indent="0">The Internet Message Access Protocol, Version 4rev1 (IMAP4rev1) allows a client to access and manipulate electronic mail messages on a server. IMAP4rev1 permits manipulation of mailboxes (remote message folders) in a way that is functionally equivalent to local folders.  IMAP4rev1 also provides the capability for an offline client to resynchronize with the server. IMAP4rev1 includes operations for creating, deleting, and renaming mailboxes, checking for new messages, permanently removing messages, setting and clearing flags, RFC 2822 and RFC 2045 parsing, searching, and selective fetching of message attributes, texts, and portions thereof.  Messages in IMAP4rev1 are accessed by the use of numbers. These numbers are either message sequence numbers or unique identifiers. IMAP4rev1 supports a single server.  A mechanism for accessing configuration information to support multiple IMAP4rev1 servers is discussed in RFC 2244. IMAP4rev1 does not specify a means of posting mail; this function is handled by a mail transfer protocol such as RFC 2821.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3501"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3501"/>
+        </reference>
+        <reference anchor="RFC4314" target="https://www.rfc-editor.org/info/rfc4314" quoteTitle="true" derivedAnchor="RFC4314">
+          <front>
+            <title>IMAP4 Access Control List (ACL) Extension</title>
+            <author initials="A." surname="Melnikov" fullname="A. Melnikov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="December"/>
+            <abstract>
+              <t indent="0">The Access Control List (ACL) extension (RFC 2086) of the Internet Message Access Protocol (IMAP) permits mailbox access control lists to be retrieved and manipulated through the IMAP protocol.</t>
+              <t indent="0">This document is a revision of RFC 2086.  It defines several new access control rights and clarifies which rights are required for different IMAP commands.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4314"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4314"/>
+        </reference>
+        <reference anchor="RFC5229" target="https://www.rfc-editor.org/info/rfc5229" quoteTitle="true" derivedAnchor="RFC5229">
+          <front>
+            <title>Sieve Email Filtering: Variables Extension</title>
+            <author initials="K." surname="Homme" fullname="K. Homme">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t indent="0">In advanced mail filtering rule sets, it is useful to keep state or configuration details across rules.  This document updates the Sieve filtering language (RFC 5228) with an extension to support variables. The extension changes the interpretation of strings, adds an action to store data in variables, and supplies a new test so that the value of a string can be examined.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5229"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5229"/>
+        </reference>
+        <reference anchor="RFC5490" target="https://www.rfc-editor.org/info/rfc5490" quoteTitle="true" derivedAnchor="RFC5490">
+          <front>
+            <title>The Sieve Mail-Filtering Language -- Extensions for Checking Mailbox Status and Accessing Mailbox Metadata</title>
+            <author initials="A." surname="Melnikov" fullname="A. Melnikov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="March"/>
+            <abstract>
+              <t indent="0">This memo defines an extension to the Sieve mail filtering language (RFC 5228) for accessing mailbox and server annotations, checking for mailbox existence, and controlling mailbox creation on "fileinto" action.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5490"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5490"/>
+        </reference>
+        <reference anchor="RFC8579" target="https://www.rfc-editor.org/info/rfc8579" quoteTitle="true" derivedAnchor="RFC8579">
+          <front>
+            <title>Sieve Email Filtering: Delivering to Special-Use Mailboxes</title>
+            <author initials="S." surname="Bosch" fullname="S. Bosch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="May"/>
+            <abstract>
+              <t indent="0">The SPECIAL-USE capability of the IMAP protocol (RFC 6154) allows clients to identify special-use mailboxes, e.g., where draft or sent messages should be put.  This simplifies client configuration.  In contrast, the Sieve mail filtering language (RFC 5228) currently has no such capability.  This memo defines a Sieve extension that fills this gap: it adds a test for checking whether a special-use attribute is assigned for a particular mailbox or any mailbox, and it adds the ability to file messages into a mailbox identified solely by a special-use attribute.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8579"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8579"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">This document borrows heavily from <xref target="RFC5490" format="default" sectionFormat="of" derivedContent="RFC5490"/> for the matching
+mailboxexists test and from <xref target="RFC8579" format="default" sectionFormat="of" derivedContent="RFC8579"/> for an example of modifying
+the fileinto command.</t>
+      <t indent="0" pn="section-appendix.a-2">Thanks to <contact fullname="Ned Freed"/>, <contact fullname="Ken Murchison"/>, and <contact fullname="Alexey Melnikov"/> for feedback
+on the EXTRA mailing list.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author role="editor" initials="B." surname="Gondwana" fullname="Bron Gondwana">
+        <organization showOnFrontPage="true">Fastmail</organization>
+        <address>
+          <postal>
+            <extaddr>Level 2</extaddr>
+            <street>114 William St</street>
+            <city>Melbourne</city>
+            <region>VIC</region>
+            <code>3000</code>
+            <country>Australia</country>
+          </postal>
+          <email>brong@fastmailteam.com</email>
+          <uri>https://www.fastmail.com</uri>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

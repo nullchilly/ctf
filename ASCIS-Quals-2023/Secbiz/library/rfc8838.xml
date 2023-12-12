@@ -1,0 +1,1989 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ice-trickle-21" indexInclude="true" ipr="trust200902" number="8838" prepTime="2021-01-17T17:24:49" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ice-trickle-21" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8838" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Trickle ICE">Trickle ICE: Incremental Provisioning of Candidates for the Interactive Connectivity Establishment (ICE) Protocol</title>
+    <seriesInfo name="RFC" value="8838" stream="IETF"/>
+    <author fullname="Emil Ivov" initials="E." surname="Ivov">
+      <organization abbrev="8x8 / Jitsi" showOnFrontPage="true">8x8, Inc. / Jitsi</organization>
+      <address>
+        <postal>
+          <street>675 Creekside Way</street>
+          <city>Campbell</city>
+          <region>CA</region>
+          <code>95008</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 512 420 6968</phone>
+        <email>emcho@jitsi.org</email>
+      </address>
+    </author>
+    <author fullname="Justin Uberti" initials="J." surname="Uberti">
+      <organization showOnFrontPage="true">Google</organization>
+      <address>
+        <postal>
+          <street>747 6th Street S</street>
+          <city>Kirkland</city>
+          <region>WA</region>
+          <code>98033</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 857 288 8888</phone>
+        <email>justin@uberti.name</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <postal>
+          <street>P.O. Box 787</street>
+          <city>Parker</city>
+          <region>CO</region>
+          <code>80134</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 720 256 6756</phone>
+        <email>stpeter@mozilla.com</email>
+        <uri>https://www.mozilla.com/</uri>
+      </address>
+    </author>
+    <date month="01" year="2021"/>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+        This document describes "Trickle ICE", an extension to the Interactive
+        Connectivity Establishment (ICE) protocol that enables ICE agents
+        to begin connectivity checks while they are still gathering 
+        candidates, by incrementally exchanging candidates over time instead
+        of all at once. This method can considerably accelerate the process 
+        of establishing a communication session.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8838" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-determining-support-for-tri">Determining Support for Trickle ICE</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-generating-the-initial-ice-">Generating the Initial ICE Description</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-the-initial-ice-de">Handling the Initial ICE Description and Generating the Initial ICE Response</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-the-initial-ice-re">Handling the Initial ICE Response</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-forming-checklists">Forming Checklists</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-performing-connectivity-che">Performing Connectivity Checks</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-gathering-and-conveying-new">Gathering and Conveying Newly Gathered Local Candidates</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-pairing-newly-gathered-loca">Pairing Newly Gathered Local Candidates</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-receiving-trickled-candidat">Receiving Trickled Candidates</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-inserting-trickled-candidat">Inserting Trickled Candidate Pairs into a Checklist</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="13" format="counter" sectionFormat="of" target="section-13"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-generating-an-end-of-candid">Generating an End-of-Candidates Indication</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="14" format="counter" sectionFormat="of" target="section-14"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-receiving-an-end-of-candida">Receiving an End-of-Candidates Indication</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="15" format="counter" sectionFormat="of" target="section-15"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-subsequent-exchanges-and-ic">Subsequent Exchanges and ICE Restarts</xref></t>
+          </li>
+          <li pn="section-toc.1-1.16">
+            <t indent="0" pn="section-toc.1-1.16.1"><xref derivedContent="16" format="counter" sectionFormat="of" target="section-16"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-half-trickle">Half Trickle</xref></t>
+          </li>
+          <li pn="section-toc.1-1.17">
+            <t indent="0" pn="section-toc.1-1.17.1"><xref derivedContent="17" format="counter" sectionFormat="of" target="section-17"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-preserving-candidate-order-">Preserving Candidate Order While Trickling</xref></t>
+          </li>
+          <li pn="section-toc.1-1.18">
+            <t indent="0" pn="section-toc.1-1.18.1"><xref derivedContent="18" format="counter" sectionFormat="of" target="section-18"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-for-using-prot">Requirements for Using Protocols</xref></t>
+          </li>
+          <li pn="section-toc.1-1.19">
+            <t indent="0" pn="section-toc.1-1.19.1"><xref derivedContent="19" format="counter" sectionFormat="of" target="section-19"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.20">
+            <t indent="0" pn="section-toc.1-1.20.1"><xref derivedContent="20" format="counter" sectionFormat="of" target="section-20"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.21">
+            <t indent="0" pn="section-toc.1-1.21.1"><xref derivedContent="21" format="counter" sectionFormat="of" target="section-21"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.21.2">
+              <li pn="section-toc.1-1.21.2.1">
+                <t indent="0" pn="section-toc.1-1.21.2.1.1"><xref derivedContent="21.1" format="counter" sectionFormat="of" target="section-21.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.21.2.2">
+                <t indent="0" pn="section-toc.1-1.21.2.2.1"><xref derivedContent="21.2" format="counter" sectionFormat="of" target="section-21.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.22">
+            <t indent="0" pn="section-toc.1-1.22.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-regular-ic">Interaction with Regular ICE</xref></t>
+          </li>
+          <li pn="section-toc.1-1.23">
+            <t indent="0" pn="section-toc.1-1.23.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-ice-lite">Interaction with ICE-Lite</xref></t>
+          </li>
+          <li pn="section-toc.1-1.24">
+            <t indent="0" pn="section-toc.1-1.24.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.25">
+            <t indent="0" pn="section-toc.1-1.25.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+        The Interactive Connectivity Establishment (ICE) protocol 
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> describes how an ICE agent 
+        gathers candidates, exchanges candidates with a peer ICE 
+        agent, and creates candidate pairs. Once the pairs have been 
+        gathered, the ICE agent will perform connectivity checks and 
+        eventually nominate and select pairs that will be used for 
+        sending and receiving data within a communication session.
+      </t>
+      <t indent="0" pn="section-1-2">
+        Following the procedures in <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>
+        can lead to somewhat lengthy establishment times for communication
+        sessions, because candidate gathering often involves querying Session
+        Traversal Utilities for NAT (STUN) servers <xref target="RFC5389" format="default" sectionFormat="of" derivedContent="RFC5389"/> and allocating relayed candidates on Traversal
+        Using Relay NAT (TURN) servers <xref target="RFC5766" format="default" sectionFormat="of" derivedContent="RFC5766"/>. Although many ICE procedures can be completed in
+        parallel, the pacing requirements from <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> still need to be followed.
+      </t>
+      <t indent="0" pn="section-1-3">
+        This document defines "Trickle ICE", a supplementary mode of ICE 
+        operation in which candidates can be exchanged 
+        incrementally as soon as they become available (and simultaneously 
+        with the gathering of other candidates). Connectivity checks can 
+        also start as soon as candidate pairs have been created. Because 
+        Trickle ICE enables candidate gathering and connectivity checks
+        to be done in parallel, the method can considerably accelerate
+        the process of establishing a communication session.
+      </t>
+      <t indent="0" pn="section-1-4">
+        This document also defines how to discover support for
+        Trickle ICE, how the procedures in <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> are 
+        modified or supplemented when using Trickle ICE, and how a Trickle 
+        ICE agent can interoperate with an ICE agent compliant to 
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+      </t>
+      <t indent="0" pn="section-1-5">
+        This document does not define any protocol-specific usage of Trickle 
+        ICE. Instead, protocol-specific details for Trickle ICE are defined 
+        in separate usage documents.
+        Examples of such documents are 
+        <xref target="RFC8840" format="default" sectionFormat="of" derivedContent="RFC8840"/> (which defines usage 
+        with the Session Initiation Protocol (SIP) <xref target="RFC3261" format="default" sectionFormat="of" derivedContent="RFC3261"/> 
+        and the Session Description Protocol (SDP) <xref target="RFC4566" format="default" sectionFormat="of" derivedContent="RFC4566"/>) and 
+        <xref target="XEP-0176" format="default" sectionFormat="of" derivedContent="XEP-0176"/> (which defines usage with the Extensible Messaging and Presence Protocol (XMPP) 
+        <xref target="RFC6120" format="default" sectionFormat="of" derivedContent="RFC6120"/>). However, some of the examples in the 
+        document use SDP and the Offer/Answer model <xref target="RFC3264" format="default" sectionFormat="of" derivedContent="RFC3264"/> 
+        to explain the underlying concepts.
+      </t>
+      <t indent="0" pn="section-1-6">
+        The following diagram illustrates a successful Trickle ICE exchange with a
+        using protocol that follows the Offer/Answer model:
+      </t>
+      <figure anchor="fig-flow" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-flow">Flow</name>
+        <artwork name="" type="" align="left" alt="" pn="section-1-7.1">
+        Alice                                            Bob
+          |                     Offer                     |
+          |----------------------------------------------&gt;|
+          |            Additional Candidates              |
+          |----------------------------------------------&gt;|
+          |                     Answer                    |
+          |&lt;----------------------------------------------|
+          |            Additional Candidates              |
+          |&lt;----------------------------------------------|
+          | Additional Candidates and Connectivity Checks |
+          |&lt;---------------------------------------------&gt;|
+          |&lt;========== CONNECTION ESTABLISHED ===========&gt;|
+        </artwork>
+      </figure>
+      <t indent="0" pn="section-1-8">
+        The main body of this document is structured to describe the behavior 
+        of Trickle ICE agents in roughly the order of operations and interactions 
+        during an ICE session:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-1-9">
+        <li pn="section-1-9.1" derivedCounter="1.">Determining support for Trickle ICE</li>
+        <li pn="section-1-9.2" derivedCounter="2.">Generating the initial ICE description</li>
+        <li pn="section-1-9.3" derivedCounter="3.">Handling the initial ICE description and generating the initial ICE response</li>
+        <li pn="section-1-9.4" derivedCounter="4.">Handling the initial ICE response</li>
+        <li pn="section-1-9.5" derivedCounter="5.">Forming checklists, pruning candidates, performing connectivity checks, etc.</li>
+        <li pn="section-1-9.6" derivedCounter="6.">Gathering and conveying candidates after the initial ICE description and response</li>
+        <li pn="section-1-9.7" derivedCounter="7.">Handling inbound trickled candidates</li>
+        <li pn="section-1-9.8" derivedCounter="8.">Generating and handling the end-of-candidates indication</li>
+        <li pn="section-1-9.9" derivedCounter="9.">Handling ICE restarts</li>
+      </ol>
+      <t indent="0" pn="section-1-10">
+        There is quite a bit of operational experience with the technique behind 
+        Trickle ICE, going back as far as 2005 (when the XMPP Jingle extension 
+        defined a "dribble mode" as specified in <xref target="XEP-0176" format="default" sectionFormat="of" derivedContent="XEP-0176"/>); this 
+        document incorporates feedback from those who have implemented and 
+        deployed the technique over the years.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+      </t>
+      <t indent="0" pn="section-2-2">
+        This specification makes use of all terminology defined 
+        for Interactive Connectivity Establishment in
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>. In addition, it defines the following terms:
+      </t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-2-3">
+        <dt pn="section-2-3.1">Empty Checklist:</dt>
+        <dd pn="section-2-3.2">
+            A checklist that initially does not contain any candidate pairs 
+            because they will be incrementally added as they are trickled.
+           (This scenario does not arise with a regular ICE agent, because all 
+           candidate pairs are known when the agent creates the checklist set.)
+          </dd>
+        <dt pn="section-2-3.3">Full Trickle:</dt>
+        <dd pn="section-2-3.4">
+            The typical mode of operation for Trickle ICE agents, in which
+            the initial ICE description can include any number of candidates (even
+            zero candidates) and does not need to include a full generation
+            of candidates as in half trickle.
+          </dd>
+        <dt pn="section-2-3.5">Generation:</dt>
+        <dd pn="section-2-3.6">
+            All of the candidates conveyed within an ICE session (correlated
+            with a particular Username Fragment and Password combination).
+          </dd>
+        <dt pn="section-2-3.7">Half Trickle:</dt>
+        <dd pn="section-2-3.8">
+            A Trickle ICE mode of operation in which the initiator gathers
+            a full generation of candidates strictly before creating
+            and conveying the initial ICE description. Once conveyed, 
+            this candidate information can be
+            processed by regular ICE agents, which do not require support
+            for Trickle ICE. It also allows Trickle-ICE-capable
+            responders to still gather candidates and perform
+            connectivity checks in a non-blocking way, thus providing roughly 
+            "half" the advantages of Trickle ICE. The half-trickle mechanism
+            is mostly meant for use when the responder's support for Trickle
+            ICE cannot be confirmed prior to conveying the initial ICE description.
+          </dd>
+        <dt pn="section-2-3.9">ICE Description:</dt>
+        <dd pn="section-2-3.10">
+            Any attributes related to the ICE session (other than candidates) 
+            required to configure an ICE agent. These include but are not 
+            limited to the Username Fragment, the Password, and other attributes.
+          </dd>
+        <dt pn="section-2-3.11">Trickled Candidates:</dt>
+        <dd pn="section-2-3.12">
+            Candidates that a Trickle ICE agent conveys after conveying or responding to the initial 
+            ICE description, but within 
+            the same ICE session.  Trickled candidates can be conveyed in 
+            parallel with candidate gathering and connectivity checks.
+          </dd>
+        <dt pn="section-2-3.13">Trickling:</dt>
+        <dd pn="section-2-3.14">
+            The act of incrementally conveying trickled candidates.
+          </dd>
+      </dl>
+    </section>
+    <section anchor="support" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-determining-support-for-tri">Determining Support for Trickle ICE</name>
+      <t indent="0" pn="section-3-1">
+        To fully support Trickle ICE, using protocols
+        <bcp14>SHOULD</bcp14> incorporate one of the following mechanisms so that implementations
+        can determine whether Trickle ICE is supported:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-3-2">
+        <li pn="section-3-2.1" derivedCounter="1.">
+            Provide a capabilities discovery method so that agents can verify 
+            support of Trickle ICE prior to initiating a session (XMPP's
+            <xref target="XEP-0030" format="default" sectionFormat="of" derivedContent="XEP-0030">Service Discovery</xref> is 
+            one such mechanism).
+          </li>
+        <li pn="section-3-2.2" derivedCounter="2.">
+            Make support for Trickle ICE mandatory so that user agents
+            can assume support.
+          </li>
+      </ol>
+      <t indent="0" pn="section-3-3">
+        If a using protocol does not provide a method of determining
+        ahead of time whether Trickle ICE is supported, agents can make use of 
+        the half-trickle procedure described in <xref target="half-trickle" format="default" sectionFormat="of" derivedContent="Section 16"/>.
+      </t>
+      <t indent="0" pn="section-3-4">
+        Prior to conveying the initial ICE description, agents that implement using protocols
+        that support capabilities discovery can attempt to verify whether or 
+        not the remote party supports Trickle ICE. If an agent determines 
+        that the remote party does not support Trickle ICE, it <bcp14>MUST</bcp14> fall back 
+        to using regular ICE or abandon the entire session.
+      </t>
+      <t indent="0" pn="section-3-5">
+
+        Even if a using protocol does not include a capabilities discovery 
+        method, a user agent can provide an indication within the ICE description 
+        that it supports Trickle ICE by communicating an ICE option of 'trickle'.  
+        This token <bcp14>MUST</bcp14> be provided either at the session level or, if at the data 
+        stream level, for every data stream (an agent <bcp14>MUST NOT</bcp14> specify Trickle ICE 
+        support for some data streams but not others).
+
+        Note: The encoding of the 'trickle' ICE option, and the message(s) used to 
+        carry it to the peer, are protocol specific; for instance, the encoding for 
+        SDP <xref target="RFC4566" format="default" sectionFormat="of" derivedContent="RFC4566"/> is defined in
+        <xref target="RFC8840" format="default" sectionFormat="of" derivedContent="RFC8840"/>.
+      </t>
+      <t indent="0" pn="section-3-6">
+        Dedicated discovery semantics and half trickle are needed only prior 
+        to initiation of an ICE session. After an ICE session is established
+        and Trickle ICE support is confirmed for both parties, either
+        agent can use full trickle for subsequent exchanges (see also
+        <xref target="subsequent" format="default" sectionFormat="of" derivedContent="Section 15"/>).
+      </t>
+    </section>
+    <section anchor="initial" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-generating-the-initial-ice-">Generating the Initial ICE Description</name>
+      <t indent="0" pn="section-4-1">
+        An ICE agent can start gathering candidates as soon as it has an
+        indication that communication is imminent (e.g., a user-interface
+        cue or an explicit request to initiate a communication session). Unlike in
+        regular ICE, in Trickle ICE implementations do not need to
+        gather candidates in a blocking manner. Therefore, unless half
+        trickle is being used, the user experience is improved if the 
+        initiating agent generates and transmits its initial ICE description 
+        as early as possible (thus enabling the remote party to start 
+        gathering and trickling candidates).
+      </t>
+      <t indent="0" pn="section-4-2">
+        An initiator <bcp14>MAY</bcp14> include any mix of candidates when conveying
+        the initial ICE description. This includes the possibility of conveying 
+        all the candidates the initiator plans to use
+        (as in half trickle), conveying only a 
+        publicly reachable IP address (e.g., a candidate at a data 
+        relay that is known to not be behind a firewall), or conveying 
+        no candidates at all (in which case the initiator can obtain the 
+        responder's initial candidate list sooner, and the responder can begin 
+        candidate gathering more quickly).
+      </t>
+      <t indent="0" pn="section-4-3">
+        For candidates included in the initial ICE description, the methods 
+        for calculating priorities and foundations, determining redundancy 
+        of candidates, and the like work just as in regular ICE 
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-handling-the-initial-ice-de">Handling the Initial ICE Description and Generating the Initial ICE Response</name>
+      <t indent="0" pn="section-5-1">
+        When a responder receives the initial ICE description, it will first check if
+        the ICE description or initiator indicates support for Trickle ICE as explained 
+        in <xref target="support" format="default" sectionFormat="of" derivedContent="Section 3"/>. If not, the responder <bcp14>MUST</bcp14>
+        process the initial ICE description according to regular ICE procedures 
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> (or, if no ICE support is detected at all,
+        according to relevant processing rules for the using
+        protocol, such as Offer/Answer processing rules <xref target="RFC3264" format="default" sectionFormat="of" derivedContent="RFC3264"/>).
+        However, if support for Trickle ICE is confirmed, a responder will 
+        automatically assume support for regular ICE as well. 
+      </t>
+      <t indent="0" pn="section-5-2">
+        If the initial ICE description indicates support for Trickle ICE, the 
+        responder will determine its role and start gathering and prioritizing
+        candidates; while doing so, it will also respond by conveying an 
+        initial ICE response, so that both the initiator 
+        and the responder can form checklists and begin connectivity checks.
+      </t>
+      <t indent="0" pn="section-5-3">
+        A responder can respond to the initial ICE description at any point while
+        gathering candidates. The initial ICE response <bcp14>MAY</bcp14> contain any set of
+        candidates, including all candidates or no candidates. (The benefit of 
+        including no candidates is to convey the initial ICE response as 
+        quickly as possible, so that both parties can consider the 
+        ICE session to be under active negotiation as soon as 
+        possible.) 
+      </t>
+      <t indent="0" pn="section-5-4">
+        As noted in <xref target="support" format="default" sectionFormat="of" derivedContent="Section 3"/>, in using protocols that use 
+        SDP, the initial ICE response can indicate support for Trickle ICE 
+        by including a token of 'trickle' in the ice-options attribute.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-handling-the-initial-ice-re">Handling the Initial ICE Response</name>
+      <t indent="0" pn="section-6-1">
+        When processing the initial ICE response, the initiator follows regular ICE
+        procedures to determine its role, after which it
+        forms checklists (<xref target="checklists" format="default" sectionFormat="of" derivedContent="Section 7"/>)
+        and performs connectivity checks (<xref target="checks" format="default" sectionFormat="of" derivedContent="Section 8"/>).
+      </t>
+    </section>
+    <section anchor="checklists" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-forming-checklists">Forming Checklists</name>
+      <t indent="0" pn="section-7-1">
+        According to regular ICE procedures <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, 
+        in order for candidate pairing 
+        to be possible and for redundant candidates to be pruned, the 
+        candidates would need to be provided in the initial ICE description
+        and initial ICE response.
+        By contrast, under Trickle ICE, checklists can be empty until 
+        candidates are conveyed or received. Therefore, a Trickle ICE agent
+        handles checklist formation and candidate pairing in a slightly different
+        way than a regular ICE agent: the agent still forms the checklists, but 
+        it populates a given checklist only after it actually has candidate 
+        pairs for that checklist. Every checklist is initially placed in the 
+        Running state, even if the checklist is empty (this is consistent
+        with <xref target="RFC8445" sectionFormat="of" section="6.1.2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.1" derivedContent="RFC8445"/>).
+      </t>
+    </section>
+    <section anchor="checks" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-performing-connectivity-che">Performing Connectivity Checks</name>
+      <t indent="0" pn="section-8-1">
+        As specified in <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, whenever timer 
+        Ta fires, only checklists in the Running state will be picked 
+        when scheduling connectivity checks for candidate pairs.
+        Therefore, a Trickle ICE agent <bcp14>MUST</bcp14> keep each checklist in 
+        the Running state as long as it expects candidate pairs to be 
+        incrementally added to the checklist. After that, the checklist 
+        state is set according to the procedures in
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+      </t>
+      <t indent="0" pn="section-8-2">
+        Whenever timer Ta fires and an empty checklist is picked, no action 
+        is performed for the list. Without waiting for timer Ta to expire 
+        again, the agent selects the next checklist in the Running state, 
+        in accordance with <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.4.2" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.4.2" derivedContent="RFC8445"/>.
+      </t>
+      <t indent="0" pn="section-8-3">
+        <xref target="RFC8445" format="default" sectionFormat="of" section="7.2.5.4" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-7.2.5.4" derivedContent="RFC8445"/>
+        requires that agents update checklists and timer states upon 
+        completing a connectivity check transaction. During such an 
+        update, regular ICE agents would set the state of a checklist 
+        to Failed if both of the following two conditions are satisfied:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-4">
+        <li pn="section-8-4.1">
+            all of the pairs in the checklist are in either the
+            Failed state or the Succeeded state; and
+          </li>
+        <li pn="section-8-4.2">
+            there is not a pair in the valid list for each component 
+            of the data stream.
+          </li>
+      </ul>
+      <t indent="0" pn="section-8-5">
+        With Trickle ICE, the above situation would often occur when
+        candidate gathering and trickling are still in progress, even
+        though it is quite possible that future checks will succeed. For
+        this reason, Trickle ICE agents add the following conditions to
+        the above list:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-6">
+        <li pn="section-8-6.1">
+            all candidate gathering has completed, and the agent
+            is not expecting to discover any new local candidates; and
+          </li>
+        <li pn="section-8-6.2">
+            the remote agent has conveyed an end-of-candidates indication
+            for that checklist as described in
+            <xref target="end-of-candidates.send" format="default" sectionFormat="of" derivedContent="Section 13"/>.
+          </li>
+      </ul>
+    </section>
+    <section anchor="trickle-send" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-gathering-and-conveying-new">Gathering and Conveying Newly Gathered Local Candidates</name>
+      <t indent="0" pn="section-9-1">
+        After Trickle ICE agents have conveyed initial ICE descriptions
+        and initial ICE responses, they will most
+        likely continue gathering new local candidates as STUN, TURN,
+        and other non-host candidate gathering mechanisms begin to
+        yield results. Whenever an agent discovers such a new candidate,
+        it will compute its priority, type, foundation, and component ID
+        according to regular ICE procedures.
+      </t>
+      <t indent="0" pn="section-9-2">
+        The new candidate is then checked for redundancy against the
+        existing list of local candidates. If its transport address and
+        base match those of an existing candidate, it will be considered
+        redundant and will be ignored. This would often happen for
+        server-reflexive candidates that match the host addresses they
+        were obtained from (e.g., when the latter are public IPv4
+        addresses). Contrary to regular ICE, Trickle ICE agents will
+        consider the new candidate redundant regardless of its priority.
+      </t>
+      <t indent="0" pn="section-9-3">
+        Next, the agent "trickles" the newly discovered
+        candidate(s) to the remote agent. The actual delivery of the new
+        candidates is handled by a using protocol such as SIP or XMPP.
+        Trickle ICE imposes no restrictions on the way this is done 
+        (e.g., some using protocols might
+        choose not to trickle updates for server-reflexive
+        candidates and instead rely on the discovery of peer-reflexive ones).
+      </t>
+      <t indent="0" pn="section-9-4">
+        When candidates are trickled, the using protocol <bcp14>MUST</bcp14> deliver each 
+        candidate (and any end-of-candidates indication as described in
+        <xref target="end-of-candidates.send" format="default" sectionFormat="of" derivedContent="Section 13"/>) to the receiving Trickle ICE implementation 
+        exactly once
+        and in the same order it was conveyed. If the using protocol 
+        provides any candidate retransmissions, they need to be hidden 
+        from the ICE implementation.
+      </t>
+      <t indent="0" pn="section-9-5">
+        Also, candidate trickling needs to be correlated to a specific
+        ICE session, so that if there is an ICE restart, any
+        delayed updates for a previous session can be recognized as such
+        and ignored by the receiving party.  For example, using protocols
+        that signal candidates via SDP might include a Username
+        Fragment value in the corresponding a=candidate line, such as:
+      </t>
+      <sourcecode type="sdp" markers="false" pn="section-9-6">
+  a=candidate:1 1 UDP 2130706431 2001:db8::1 5000 typ host ufrag 8hhY
+</sourcecode>
+      <t indent="0" pn="section-9-7">
+        Or, as another example, WebRTC implementations might include a Username
+        Fragment in the JavaScript objects that represent candidates.
+      </t>
+      <t indent="0" pn="section-9-8">
+        Note: The using protocol needs to provide a mechanism for both
+        parties to indicate and agree on the ICE session in force
+        (as identified by the Username Fragment and Password combination),
+        so that they have a consistent view of which candidates are
+        to be paired.  This is especially important in the case of ICE
+        restarts (see <xref target="subsequent" format="default" sectionFormat="of" derivedContent="Section 15"/>).
+      </t>
+      <t indent="0" pn="section-9-9">
+        Note: A using protocol might prefer not to
+        trickle server-reflexive candidates to entities that are known
+        to be publicly accessible and where sending a direct STUN
+        binding request is likely to reach the destination faster than
+        the trickle update that travels through the signaling path.
+      </t>
+    </section>
+    <section anchor="local-pairing" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-pairing-newly-gathered-loca">Pairing Newly Gathered Local Candidates</name>
+      <t indent="0" pn="section-10-1">
+        As a Trickle ICE agent gathers local candidates, it needs
+        to form candidate pairs; this works as described in
+        the ICE specification <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, with the 
+        following provisos:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-10-2">
+        <li pn="section-10-2.1" derivedCounter="1.">
+            A Trickle ICE agent <bcp14>MUST NOT</bcp14> pair a local candidate until it
+            has been trickled to the remote party.
+          </li>
+        <li pn="section-10-2.2" derivedCounter="2.">
+            Once the agent has conveyed the local candidate to the remote 
+            party, the agent checks if any remote candidates are currently 
+            known for this same stream and component. If not, the agent
+            merely adds the new candidate to the list of local candidates
+            (without pairing it).
+          </li>
+        <li pn="section-10-2.3" derivedCounter="3.">
+            Otherwise, if the agent has already learned of one or more
+            remote candidates for this stream and component, it attempts
+            to pair the new local candidate as described in the ICE
+            specification <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+          </li>
+        <li pn="section-10-2.4" derivedCounter="4.">
+            If a newly formed pair has a local candidate whose type is server-reflexive, 
+            the agent <bcp14>MUST</bcp14> replace the local candidate with its 
+            base before completing the relevant redundancy tests.
+          </li>
+        <li pn="section-10-2.5" derivedCounter="5.">
+            The agent prunes redundant pairs by following the rules
+            in <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.4" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.4" derivedContent="RFC8445"/> but checks
+            existing pairs only if they have a state of Waiting or Frozen;
+            this avoids removal of pairs for which connectivity checks are 
+            in flight (a state of In‑Progress) or for which connectivity 
+            checks have already yielded a definitive result (a state of
+            Succeeded or Failed).
+          </li>
+        <li pn="section-10-2.6" derivedCounter="6.">
+            If, after completing the relevant redundancy tests, the checklist where the 
+            pair is to be added already contains the maximum number of candidate 
+            pairs (100 by default as per <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>), the agent
+            <bcp14>SHOULD</bcp14> discard any pairs in the Failed state to make room for the 
+            new pair. If there are no such pairs, the agent <bcp14>SHOULD</bcp14> discard a
+            pair with a lower priority than the new pair in order to make room
+            for the new pair, until the number of pairs is equal to the maximum
+            number of pairs. This processing is consistent with 
+            <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.5" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.5" derivedContent="RFC8445"/>.
+          </li>
+      </ol>
+    </section>
+    <section anchor="trickle-recv" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-receiving-trickled-candidat">Receiving Trickled Candidates</name>
+      <t indent="0" pn="section-11-1">
+        At any time during an ICE session, a Trickle ICE agent might receive
+        new candidates from the remote agent, from which it will attempt to
+        form a candidate pair; this works as described in the ICE specification 
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, with the following provisos:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-11-2">
+        <li pn="section-11-2.1" derivedCounter="1.">
+            The agent checks if any local candidates are currently known for 
+            this same stream and component. If not, the agent merely adds the 
+            new candidate to the list of remote candidates (without pairing it).
+          </li>
+        <li pn="section-11-2.2" derivedCounter="2.">
+            Otherwise, if the agent has already gathered one or more
+            local candidates for this stream and component, it attempts
+            to pair the new remote candidate as described in the ICE
+            specification <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+          </li>
+        <li pn="section-11-2.3" derivedCounter="3.">
+            If a newly formed pair has a local candidate whose type is server-reflexive, the agent <bcp14>MUST</bcp14> replace the local candidate with its 
+            base before completing the redundancy check in the next step.
+          </li>
+        <li pn="section-11-2.4" derivedCounter="4.">
+          <t indent="0" pn="section-11-2.4.1">
+            The agent prunes redundant pairs as described below but checks
+            existing pairs only if they have a state of Waiting or Frozen;
+            this avoids removal of pairs for which connectivity checks are 
+            in flight (a state of In-Progress) or for which connectivity 
+            checks have already yielded a definitive result (a state of
+            Succeeded or Failed).
+          </t>
+          <ol spacing="normal" type="A" indent="adaptive" start="1" pn="section-11-2.4.2">
+            <li pn="section-11-2.4.2.1" derivedCounter="A.">
+                If the agent finds a redundancy between two pairs and one of 
+                those pairs contains a newly received remote candidate whose 
+                type is peer-reflexive, the agent <bcp14>SHOULD</bcp14> discard the
+                pair containing that candidate, set the priority of the
+                existing pair to the priority of the discarded pair, and
+                re-sort the checklist.
+                (This policy helps to eliminate
+                problems with remote peer-reflexive candidates for which
+                a STUN Binding request is received before signaling of the
+                candidate is trickled to the receiving agent, such as a
+                different view of pair priorities between the local agent
+                and the remote agent, because the same candidate could be
+                perceived as peer-reflexive by one agent and as server-reflexive
+                by the other agent.)
+
+              </li>
+            <li pn="section-11-2.4.2.2" derivedCounter="B.">
+                The agent then applies the rules defined in 
+                 <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.4" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.4" derivedContent="RFC8445"/>.
+              </li>
+          </ol>
+        </li>
+        <li pn="section-11-2.5" derivedCounter="5.">
+            If, after completing the relevant redundancy tests, the checklist where the 
+            pair is to be added already contains the maximum number of candidate 
+            pairs (100 by default as per <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>), the agent
+            <bcp14>SHOULD</bcp14> discard any pairs in the Failed state to make room for the 
+            new pair. If there are no such pairs, the agent <bcp14>SHOULD</bcp14> discard a
+            pair with a lower priority than the new pair in order to make room
+            for the new pair, until the number of pairs is equal to the maximum
+            number of pairs. This processing is consistent with 
+            <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.5" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.5" derivedContent="RFC8445"/>.
+          </li>
+      </ol>
+    </section>
+    <section anchor="trickle-insert" numbered="true" toc="include" removeInRFC="false" pn="section-12">
+      <name slugifiedName="name-inserting-trickled-candidat">Inserting Trickled Candidate Pairs into a Checklist</name>
+      <t indent="0" pn="section-12-1">
+        After a local agent has trickled a candidate and formed a candidate 
+        pair from that local candidate (<xref target="trickle-send" format="default" sectionFormat="of" derivedContent="Section 9"/>), or after 
+        a remote agent has received a trickled candidate and formed a candidate 
+        pair from that remote candidate (<xref target="trickle-recv" format="default" sectionFormat="of" derivedContent="Section 11"/>), a Trickle 
+        ICE agent adds the new candidate pair to a checklist as defined in 
+        this section.
+      </t>
+      <t indent="0" pn="section-12-2">
+        As an aid to understanding the procedures defined in this section, 
+        consider the following tabular representation of all checklists in 
+        an agent (note that initially for one of the foundations, i.e., f5, 
+        there are no candidate pairs): 
+      </t>
+      <table anchor="checklist_table" align="center" pn="table-1">
+        <name slugifiedName="name-example-of-checklist-state">Example of Checklist State</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-12-4">
+        Each row in the table represents a component for a given data
+        stream (e.g., s1 and s2 might be the RTP and RTP Control Protocol (RTCP) components
+        for audio) and thus a single checklist in the checklist set. 
+        Each column represents one foundation. Each cell represents one 
+        candidate pair. In the tables shown in this section, "F" stands 
+        for "frozen", "W" stands for "waiting", and "S" stands for 
+        "succeeded"; in addition, "^^" is used to notate newly added 
+        candidate pairs.
+      </t>
+      <t indent="0" pn="section-12-5">
+        When an agent commences ICE processing, in accordance with 
+         <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.6" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.6" derivedContent="RFC8445"/>, for each 
+        foundation it will unfreeze the pair with the lowest component 
+        ID and, if the component IDs are equal, with the highest priority 
+        (this is the topmost candidate pair in every column).
+        This initial state is shown in the following table.
+      </t>
+      <table anchor="fig-checklist-initial" align="center" pn="table-2">
+        <name slugifiedName="name-initial-checklist-state">Initial Checklist State</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-12-7">
+        Then, as the checks proceed (see 
+        <xref target="RFC8445" format="default" sectionFormat="of" section="7.2.5.4" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-7.2.5.4" derivedContent="RFC8445"/>), for each pair 
+        that enters the Succeeded state (denoted here by "S"),
+        the agent will unfreeze all pairs for all data streams with the same
+        foundation (e.g., if the pair in column 1, row 1 succeeds then
+        the agent will unfreeze the pairs in column 1, rows 2, 3, and 4). 
+      </t>
+      <table anchor="fig-checklist-succeeded" align="center" pn="table-3">
+        <name slugifiedName="name-checklist-state-with-succee">Checklist State with Succeeded Candidate Pair</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">S</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-12-9">
+        Trickle ICE preserves all of these rules as they apply to 
+        "static" checklist sets. This implies that if 
+        a Trickle ICE agent were to begin connectivity checks with all 
+        of its pairs already present, the way that pair states change 
+        is indistinguishable from that of a regular ICE agent. 
+      </t>
+      <t indent="0" pn="section-12-10">
+        Of course, the major difference with Trickle ICE is that checklist 
+        sets can be dynamically updated because candidates can 
+        arrive after connectivity checks have started. When this happens, an 
+        agent sets the state of the newly formed pair as described below.
+      </t>
+      <t indent="0" pn="section-12-11">
+        Rule 1: If the newly formed pair has the lowest component ID and, 
+        if the component IDs are equal, the highest priority of any candidate 
+        pair for this foundation (i.e., if it is the topmost pair in the 
+        column), set the state to Waiting. For example, this would be the 
+        case if the newly formed pair were placed in column 5, row 1. This 
+        rule is consistent with <xref target="RFC8445" format="default" sectionFormat="of" section="6.1.2.6" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1.2.6" derivedContent="RFC8445"/>.
+      </t>
+      <table anchor="fig-checklist-rule1" align="center" pn="table-4">
+        <name slugifiedName="name-checklist-state-with-newly-">Checklist State with Newly Formed Pair, Rule 1</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">S</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">^W^</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-12-13"> 
+        Rule 2: If there is at least one pair in the Succeeded state for 
+        this foundation, set the state to Waiting. For example, this would be 
+        the case if the pair in column 5, row 1 succeeded and the newly formed 
+        pair were placed in column 5, row 2. This rule is consistent with 
+        <xref target="RFC8445" format="default" sectionFormat="of" section="7.2.5.3.3" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-7.2.5.3.3" derivedContent="RFC8445"/>.
+      </t>
+      <table anchor="fig-checklist-rule2" align="center" pn="table-5">
+        <name slugifiedName="name-checklist-state-with-newly-f">Checklist State with Newly Formed Pair, Rule 2</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">S</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">S</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">^W^</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-12-15">
+        Rule 3: In all other cases, set the state to Frozen. For example, 
+        this would be the case if the newly formed pair were placed in
+        column 3, row 3.
+      </t>
+      <table anchor="fig-checklist-rule3" align="center" pn="table-6">
+        <name slugifiedName="name-checklist-state-with-newly-fo">Checklist State with Newly Formed Pair, Rule 3</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">f1</th>
+            <th align="left" colspan="1" rowspan="1">f2</th>
+            <th align="left" colspan="1" rowspan="1">f3</th>
+            <th align="left" colspan="1" rowspan="1">f4</th>
+            <th align="left" colspan="1" rowspan="1">f5</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s1 (Audio.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">S</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">S</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s2 (Audio.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">F</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s3 (Video.RTP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">^F^</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">s4 (Video.RTCP)</td>
+            <td align="left" colspan="1" rowspan="1">W</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">  </td>
+            <td align="left" colspan="1" rowspan="1">
+	  </td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="end-of-candidates.send" numbered="true" toc="include" removeInRFC="false" pn="section-13">
+      <name slugifiedName="name-generating-an-end-of-candid">Generating an End-of-Candidates Indication</name>
+      <t indent="0" pn="section-13-1">
+        Once all candidate gathering is completed or expires for an
+        ICE session associated with a specific data stream, the agent will generate an
+        "end-of-candidates" indication for that session and convey it to
+        the remote agent via the signaling channel. Although the exact form of
+        the indication depends on the using protocol, the indication
+        <bcp14>MUST</bcp14> specify the generation (Username Fragment and Password combination), so that an agent
+        can correlate the end-of-candidates indication with a particular ICE
+        session. The indication can be conveyed in the following ways:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-13-2">
+        <li pn="section-13-2.1">As part of an initiation request (which would typically be the case with 
+             the initial ICE description for half trickle)</li>
+        <li pn="section-13-2.2">Along with the last candidate an agent can send for a stream</li>
+        <li pn="section-13-2.3">As a standalone notification (e.g., after STUN Binding requests 
+             or TURN Allocate requests to a server time out and the agent 
+             is no longer actively gathering candidates)</li>
+      </ul>
+      <t indent="0" pn="section-13-3">
+        Conveying an end-of-candidates indication in a timely manner is important 
+        in order to avoid ambiguities and speed up the conclusion of ICE processing. 
+        In particular: 
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-13-4">
+        <li pn="section-13-4.1">
+            A controlled Trickle ICE agent <bcp14>SHOULD</bcp14> convey an end-of-candidates 
+            indication after it has completed gathering for a data stream, 
+            unless ICE processing terminates before the agent has had a chance 
+            to complete gathering. 
+          </li>
+        <li pn="section-13-4.2">
+            A controlling agent <bcp14>MAY</bcp14> conclude ICE processing prior to conveying 
+            end-of-candidates indications for all streams.  However, it is 
+            <bcp14>RECOMMENDED</bcp14> for a controlling agent to convey end-of-candidates 
+            indications whenever possible for the sake of consistency and to 
+            keep middleboxes and controlled agents up-to-date on the state of 
+            ICE processing.
+          </li>
+      </ul>
+      <t indent="0" pn="section-13-5">
+        When conveying an end-of-candidates indication during trickling
+        (rather than as a part of the initial ICE description or a response thereto), 
+        it is the responsibility of the
+        using protocol to define methods for associating the
+        indication with one or more specific data streams.
+      </t>
+      <t indent="0" pn="section-13-6">
+        An agent <bcp14>MAY</bcp14> also choose to generate an end-of-candidates
+        indication before candidate gathering has actually completed, if the
+        agent determines that gathering has continued for more than an
+        acceptable period of time. However, an agent <bcp14>MUST NOT</bcp14> convey any
+        more candidates after it has conveyed an end-of-candidates
+        indication.
+      </t>
+      <t indent="0" pn="section-13-7">
+        When performing half trickle, an agent <bcp14>SHOULD</bcp14> convey an
+        end-of-candidates indication together with its initial ICE description unless
+        it is planning to potentially trickle additional candidates (e.g., in
+        case the remote party turns out to support Trickle ICE).
+      </t>
+      <t indent="0" pn="section-13-8">
+        After an agent conveys the end-of-candidates indication, it will
+        update the state of the corresponding checklist as explained
+        in <xref target="checks" format="default" sectionFormat="of" derivedContent="Section 8"/>. Past that point, an
+        agent <bcp14>MUST NOT</bcp14> trickle any new candidates within this ICE session. 
+        Therefore, adding new candidates to the 
+        negotiation is possible only through an ICE restart (see
+        <xref target="subsequent" format="default" sectionFormat="of" derivedContent="Section 15"/>).
+      </t>
+      <t indent="0" pn="section-13-9">
+        This specification does not
+        override regular ICE semantics for concluding ICE processing.
+        Therefore, even if end-of-candidates indications are conveyed,
+        an agent will still need to go through pair nomination. Also, if
+        pairs have been nominated for components and data streams, ICE
+        processing <bcp14>MAY</bcp14> still conclude even if end-of-candidates
+        indications have not been received for all streams. In all cases,
+        an agent <bcp14>MUST NOT</bcp14> trickle any new candidates within an ICE session
+        after nomination of a candidate pair as described in 
+        <xref target="RFC8445" format="default" sectionFormat="of" section="8.1.1" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-8.1.1" derivedContent="RFC8445"/>. 
+      </t>
+    </section>
+    <section anchor="end-of-candidates.recv" numbered="true" toc="include" removeInRFC="false" pn="section-14">
+      <name slugifiedName="name-receiving-an-end-of-candida">Receiving an End-of-Candidates Indication</name>
+      <t indent="0" pn="section-14-1">
+        Receiving an end-of-candidates indication enables an agent to
+        update checklist states and, in case valid pairs do not exist
+        for every component in every data stream, determine that ICE
+        processing has failed. It also enables an agent to speed up the
+        conclusion of ICE processing when a candidate pair has been validated
+        but uses a lower-preference transport such as
+        TURN. In such situations, an implementation <bcp14>MAY</bcp14> choose to wait
+        and see if higher-priority candidates are received; in this case,
+        the end-of-candidates indication provides a notification that such
+        candidates are not forthcoming.
+      </t>
+      <t indent="0" pn="section-14-2">
+        When an agent receives an end-of-candidates indication for a 
+        specific data stream, it will update the state of the relevant 
+        checklist as per <xref target="checks" format="default" sectionFormat="of" derivedContent="Section 8"/> (which might lead to 
+        some checklists being marked as Failed). 
+        If the checklist is 
+        still in the Running state after the update, the agent will note that an end-of-candidates indication has been
+        received and take it into account in future updates
+        to the checklist.
+      </t>
+      <t indent="0" pn="section-14-3">
+        After an agent has received an end-of-candidates indication, it 
+        <bcp14>MUST</bcp14> ignore any newly received candidates for that data 
+        stream or data session. 
+      </t>
+    </section>
+    <section anchor="subsequent" numbered="true" toc="include" removeInRFC="false" pn="section-15">
+      <name slugifiedName="name-subsequent-exchanges-and-ic">Subsequent Exchanges and ICE Restarts</name>
+      <t indent="0" pn="section-15-1">
+        Before conveying an end-of-candidates indication, 
+        either agent <bcp14>MAY</bcp14> convey subsequent candidate information at any time allowed
+        by the using protocol. When this happens, agents will use semantics from
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> (e.g., checking of the 
+        Username Fragment and Password combination) to determine whether or not
+        the new candidate information requires an ICE restart.  
+      </t>
+      <t indent="0" pn="section-15-2">
+        If an ICE restart
+        occurs, the agents can assume that Trickle ICE is still supported
+        if support was determined previously; thus, they can engage in Trickle ICE 
+        behavior as they would in an initial exchange of ICE descriptions where
+        support was determined through a capabilities discovery method.
+      </t>
+    </section>
+    <section anchor="half-trickle" numbered="true" toc="include" removeInRFC="false" pn="section-16">
+      <name slugifiedName="name-half-trickle">Half Trickle</name>
+      <t indent="0" pn="section-16-1">
+        In half trickle, the initiator conveys the initial ICE description
+        with a usable but not necessarily full generation of candidates. This 
+        ensures that the ICE description can be processed by a regular ICE 
+        responder and is mostly meant for use in cases where support for 
+        Trickle ICE cannot be confirmed prior to conveying the initial ICE 
+        description.  The initial ICE description indicates support for 
+        Trickle ICE, so that the responder can respond with something less 
+        than a full generation of candidates and then trickle the rest.  
+        The initial ICE description for half trickle can contain 
+        an end-of-candidates indication, although this is not mandatory
+        because if trickle support is confirmed, then the initiator can
+        choose to trickle additional candidates before it conveys an
+        end-of-candidates indication.
+      </t>
+      <t indent="0" pn="section-16-2">
+        The half-trickle mechanism can be used in cases where there is
+        no way for an agent to verify in advance whether a remote
+        party supports Trickle ICE. Because the initial ICE description contains
+        a full generation of candidates, it can thus be handled by a regular
+        ICE agent, while still allowing a Trickle ICE agent to use
+        the optimization defined in this specification. This prevents
+        negotiation from failing in the former case while still giving
+        roughly half the Trickle ICE benefits in the latter.
+      </t>
+      <t indent="0" pn="section-16-3">
+        Use of half trickle is only necessary during an initial
+        exchange of ICE descriptions. After both parties have received 
+        an ICE description from their peer, they can each reliably
+        determine Trickle ICE support and use it for all subsequent
+        exchanges (see <xref target="subsequent" format="default" sectionFormat="of" derivedContent="Section 15"/>).
+      </t>
+      <t indent="0" pn="section-16-4">
+        In some instances, using half trickle might bring more than 
+        just half the improvement in terms of user experience. 
+
+
+        This 
+        can happen when an agent starts gathering candidates upon user-interface 
+        cues that the user will soon be initiating an interaction, 
+        such as activity on a keypad or the phone going off hook. This 
+        would mean that some or all of the candidate
+        gathering could be completed before the agent actually
+        needs to convey the candidate information. Because the responder will be able
+        to trickle candidates, both agents will be able to start
+        connectivity checks and complete ICE processing earlier than
+        with regular ICE and potentially even as early as with full
+        trickle.
+      </t>
+      <t indent="0" pn="section-16-5">
+        However, such anticipation is not always possible. For
+        example, a multipurpose user agent or a WebRTC web page where
+        communication is a non-central feature (e.g., calling a support
+        line in case of a problem with the main features) would not
+        necessarily have a way of distinguishing between call
+        intentions and other user activity. In such cases, using full
+        trickle is most likely to result in an ideal user experience.
+        Even so, using half trickle would be an improvement over regular
+        ICE because it would result in a better experience for responders.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-17">
+      <name slugifiedName="name-preserving-candidate-order-">Preserving Candidate Order While Trickling</name>
+      <t indent="0" pn="section-17-1">
+        One important aspect of regular ICE is that connectivity checks
+        for a specific foundation and component are attempted
+        simultaneously by both agents, so that any firewalls or NATs
+        fronting the agents would whitelist both endpoints and allow
+        all except for the first ("suicide") packets to go through. This
+        is also important to unfreezing candidates at the right time. While 
+        not crucial, preserving this behavior in Trickle ICE is likely to 
+        improve ICE performance.
+      </t>
+      <t indent="0" pn="section-17-2">
+        To achieve this, when trickling candidates, agents <bcp14>SHOULD</bcp14> respect the 
+        order of components as reflected by their component IDs; that is,
+        candidates for a given component 
+        <bcp14>SHOULD NOT</bcp14> be conveyed prior to candidates for a component with a 
+        lower ID number within the same foundation. In addition, candidates 
+        <bcp14>SHOULD</bcp14> be paired, following the procedures in <xref target="trickle-insert" format="default" sectionFormat="of" derivedContent="Section 12"/>, 
+        in the same order they are conveyed.
+      </t>
+      <t indent="0" pn="section-17-3">
+        For example, the following SDP description contains two
+        components (RTP and RTCP) and two foundations (host and 
+        server-reflexive):
+      </t>
+      <sourcecode type="sdp" markers="false" pn="section-17-4">
+  v=0
+  o=jdoe 2890844526 2890842807 IN IP4 10.0.1.1
+  s=
+  c=IN IP4 10.0.1.1
+  t=0 0
+  a=ice-pwd:asd88fgpdd777uzjYhagZg
+  a=ice-ufrag:8hhY
+  m=audio 5000 RTP/AVP 0
+  a=rtpmap:0 PCMU/8000
+  a=candidate:1 1 UDP 2130706431 10.0.1.1 5000 typ host
+  a=candidate:1 2 UDP 2130706431 10.0.1.1 5001 typ host
+  a=candidate:2 1 UDP 1694498815 192.0.2.3 5000 typ srflx
+      raddr 10.0.1.1 rport 8998
+  a=candidate:2 2 UDP 1694498815 192.0.2.3 5001 typ srflx
+      raddr 10.0.1.1 rport 8998
+</sourcecode>
+      <t indent="0" pn="section-17-5">
+        For this candidate information, the RTCP host candidate would not be conveyed
+        prior to the RTP host candidate. Similarly, the RTP server-reflexive
+        candidate would be conveyed together with or prior to the
+        RTCP server-reflexive candidate.
+      </t>
+    </section>
+    <section anchor="reqs" numbered="true" toc="include" removeInRFC="false" pn="section-18">
+      <name slugifiedName="name-requirements-for-using-prot">Requirements for Using Protocols</name>
+      <t indent="0" pn="section-18-1">
+        In order to fully enable the use of Trickle ICE, this specification
+        defines the following requirements for using protocols.
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-18-2">
+        <li pn="section-18-2.1">
+            A using protocol <bcp14>SHOULD</bcp14> provide a way for parties to advertise 
+            and discover support for Trickle ICE before an ICE 
+            session begins (see <xref target="support" format="default" sectionFormat="of" derivedContent="Section 3"/>).
+          </li>
+        <li pn="section-18-2.2">
+            A using protocol <bcp14>MUST</bcp14> provide methods for incrementally
+            conveying (i.e., "trickling") additional candidates after 
+            conveying the initial ICE description (see 
+            <xref target="trickle-send" format="default" sectionFormat="of" derivedContent="Section 9"/>).
+          </li>
+        <li pn="section-18-2.3">
+            A using protocol <bcp14>MUST</bcp14> deliver each trickled candidate 
+            or end-of-candidates indication exactly once
+            and in the same order it was conveyed (see 
+            <xref target="trickle-send" format="default" sectionFormat="of" derivedContent="Section 9"/>).
+          </li>
+        <li pn="section-18-2.4">
+            A using protocol <bcp14>MUST</bcp14> provide a mechanism for both parties 
+            to indicate and agree on the ICE session in force
+            (see <xref target="trickle-send" format="default" sectionFormat="of" derivedContent="Section 9"/>).
+          </li>
+        <li pn="section-18-2.5">
+            A using protocol <bcp14>MUST</bcp14> provide a way for parties to communicate the
+            end-of-candidates indication, which <bcp14>MUST</bcp14> specify the particular
+            ICE session to which the indication applies (see <xref target="end-of-candidates.send" format="default" sectionFormat="of" derivedContent="Section 13"/>).
+          </li>
+      </ul>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-19">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-19-1">
+        IANA has registered the following ICE option in the "ICE
+        Options" subregistry of the "Interactive Connectivity Establishment
+        (ICE) registry", following the procedures defined in
+        <xref target="RFC6336" format="default" sectionFormat="of" derivedContent="RFC6336"/>.
+      </t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-19-2">
+        <dt pn="section-19-2.1">ICE Option:</dt>
+        <dd pn="section-19-2.2">trickle</dd>
+        <dt pn="section-19-2.3">Contact:</dt>
+        <dd pn="section-19-2.4">IESG &lt;iesg@ietf.org&gt;</dd>
+        <dt pn="section-19-2.5">Change controller:</dt>
+        <dd pn="section-19-2.6">IESG</dd>
+        <dt pn="section-19-2.7">Description:</dt>
+        <dd pn="section-19-2.8">
+            An ICE option of 'trickle' indicates support for incremental
+            communication of ICE candidates.
+          </dd>
+        <dt pn="section-19-2.9">Reference:</dt>
+        <dd pn="section-19-2.10">RFC 8838</dd>
+      </dl>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-20">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-20-1">
+        This specification inherits most of its semantics from
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, and as a result, all security
+        considerations described there apply to Trickle ICE.
+      </t>
+      <t indent="0" pn="section-20-2">
+        If the privacy implications of revealing host addresses on an
+        endpoint device are a concern (see, for example, the discussion
+        in <xref target="RFC8828" format="default" sectionFormat="of" derivedContent="RFC8828"/> and in 
+        <xref target="RFC8445" section="19" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-19" derivedContent="RFC8445"/>), agents can generate ICE descriptions that contain no
+        candidates and then only trickle candidates that do not reveal
+        host addresses (e.g., relayed candidates).
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-21">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-21.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8445" target="https://www.rfc-editor.org/info/rfc8445" quoteTitle="true" derivedAnchor="RFC8445">
+          <front>
+            <title>Interactive Connectivity Establishment (ICE): A Protocol for Network Address Translator (NAT) Traversal</title>
+            <author initials="A." surname="Keranen" fullname="A. Keranen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Holmberg" fullname="C. Holmberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="July"/>
+            <abstract>
+              <t indent="0">This document describes a protocol for Network Address Translator (NAT) traversal for UDP-based communication.  This protocol is called Interactive Connectivity Establishment (ICE).  ICE makes use of the Session Traversal Utilities for NAT (STUN) protocol and its extension, Traversal Using Relay NAT (TURN).</t>
+              <t indent="0">This document obsoletes RFC 5245.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8445"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8445"/>
+        </reference>
+      </references>
+      <references pn="section-21.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC1918" target="https://www.rfc-editor.org/info/rfc1918" quoteTitle="true" derivedAnchor="RFC1918">
+          <front>
+            <title>Address Allocation for Private Internets</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Moskowitz" fullname="B. Moskowitz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Karrenberg" fullname="D. Karrenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G. J." surname="de Groot" fullname="G. J. de Groot">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lear" fullname="E. Lear">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1996" month="February"/>
+            <abstract>
+              <t indent="0">This document describes address allocation for private internets.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="5"/>
+          <seriesInfo name="RFC" value="1918"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1918"/>
+        </reference>
+        <reference anchor="RFC3261" target="https://www.rfc-editor.org/info/rfc3261" quoteTitle="true" derivedAnchor="RFC3261">
+          <front>
+            <title>SIP: Session Initiation Protocol</title>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Camarillo" fullname="G. Camarillo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Johnston" fullname="A. Johnston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Peterson" fullname="J. Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Sparks" fullname="R. Sparks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Schooler" fullname="E. Schooler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2002" month="June"/>
+            <abstract>
+              <t indent="0">This document describes Session Initiation Protocol (SIP), an application-layer control (signaling) protocol for creating, modifying, and terminating sessions with one or more participants.  These sessions include Internet telephone calls, multimedia distribution, and multimedia conferences.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3261"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3261"/>
+        </reference>
+        <reference anchor="RFC3264" target="https://www.rfc-editor.org/info/rfc3264" quoteTitle="true" derivedAnchor="RFC3264">
+          <front>
+            <title>An Offer/Answer Model with Session Description Protocol (SDP)</title>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2002" month="June"/>
+            <abstract>
+              <t indent="0">This document defines a mechanism by which two entities can make use of the Session Description Protocol (SDP) to arrive at a common view of a multimedia session between them.  In the model, one participant offers the other a description of the desired session from their perspective, and the other participant answers with the desired session from their perspective.  This offer/answer model is most useful in unicast sessions where information from both participants is needed for the complete view of the session.  The offer/answer model is used by protocols like the Session Initiation Protocol (SIP).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3264"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3264"/>
+        </reference>
+        <reference anchor="RFC4566" target="https://www.rfc-editor.org/info/rfc4566" quoteTitle="true" derivedAnchor="RFC4566">
+          <front>
+            <title>SDP: Session Description Protocol</title>
+            <author initials="M." surname="Handley" fullname="M. Handley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Perkins" fullname="C. Perkins">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="July"/>
+            <abstract>
+              <t indent="0">This memo defines the Session Description Protocol (SDP).  SDP is intended for describing multimedia sessions for the purposes of session announcement, session invitation, and other forms of multimedia session initiation.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4566"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4566"/>
+        </reference>
+        <reference anchor="RFC4787" target="https://www.rfc-editor.org/info/rfc4787" quoteTitle="true" derivedAnchor="RFC4787">
+          <front>
+            <title>Network Address Translation (NAT) Behavioral Requirements for Unicast UDP</title>
+            <author initials="F." surname="Audet" fullname="F. Audet" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Jennings" fullname="C. Jennings">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="January"/>
+            <abstract>
+              <t indent="0">This document defines basic terminology for describing different types of Network Address Translation (NAT) behavior when handling Unicast UDP and also defines a set of requirements that would allow many applications, such as multimedia communications or online gaming, to work consistently.  Developing NATs that meet this set of requirements will greatly increase the likelihood that these applications will function properly.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="127"/>
+          <seriesInfo name="RFC" value="4787"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4787"/>
+        </reference>
+        <reference anchor="RFC5389" target="https://www.rfc-editor.org/info/rfc5389" quoteTitle="true" derivedAnchor="RFC5389">
+          <front>
+            <title>Session Traversal Utilities for NAT (STUN)</title>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Mahy" fullname="R. Mahy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Matthews" fullname="P. Matthews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Wing" fullname="D. Wing">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="October"/>
+            <abstract>
+              <t indent="0">Session Traversal Utilities for NAT (STUN) is a protocol that serves as a tool for other protocols in dealing with Network Address Translator (NAT) traversal.  It can be used by an endpoint to determine the IP address and port allocated to it by a NAT.  It can also be used to check connectivity between two endpoints, and as a keep-alive protocol to maintain NAT bindings.  STUN works with many existing NATs, and does not require any special behavior from them.</t>
+              <t indent="0">STUN is not a NAT traversal solution by itself.  Rather, it is a tool to be used in the context of a NAT traversal solution.  This is an important change from the previous version of this specification (RFC 3489), which presented STUN as a complete solution.</t>
+              <t indent="0">This document obsoletes RFC 3489.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5389"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5389"/>
+        </reference>
+        <reference anchor="RFC5766" target="https://www.rfc-editor.org/info/rfc5766" quoteTitle="true" derivedAnchor="RFC5766">
+          <front>
+            <title>Traversal Using Relays around NAT (TURN): Relay Extensions to Session Traversal Utilities for NAT (STUN)</title>
+            <author initials="R." surname="Mahy" fullname="R. Mahy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Matthews" fullname="P. Matthews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="April"/>
+            <abstract>
+              <t indent="0">If a host is located behind a NAT, then in certain situations it can be impossible for that host to communicate directly with other hosts (peers).  In these situations, it is necessary for the host to use the services of an intermediate node that acts as a communication relay.  This specification defines a protocol, called TURN (Traversal Using Relays around NAT), that allows the host to control the operation of the relay and to exchange packets with its peers using the relay.  TURN differs from some other relay control protocols in that it allows a client to communicate with multiple peers using a single relay address.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5766"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5766"/>
+        </reference>
+        <reference anchor="RFC6120" target="https://www.rfc-editor.org/info/rfc6120" quoteTitle="true" derivedAnchor="RFC6120">
+          <front>
+            <title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="March"/>
+            <abstract>
+              <t indent="0">The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language (XML) that enables the near-real-time exchange of structured yet extensible data between any two or more network entities.  This document defines XMPP's core protocol methods: setup and teardown of XML streams, channel encryption, authentication, error handling, and communication primitives for messaging, network availability ("presence"), and request-response interactions.  This document obsoletes RFC 3920.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6120"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6120"/>
+        </reference>
+        <reference anchor="RFC6336" target="https://www.rfc-editor.org/info/rfc6336" quoteTitle="true" derivedAnchor="RFC6336">
+          <front>
+            <title>IANA Registry for Interactive Connectivity Establishment (ICE) Options</title>
+            <author initials="M." surname="Westerlund" fullname="M. Westerlund">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Perkins" fullname="C. Perkins">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="July"/>
+            <abstract>
+              <t indent="0">It has been identified that "Interactive Connectivity Establishment (ICE): A Protocol for Network Address Translator (NAT) Traversal for Offer/Answer Protocols" (RFC 5245) is missing a registry for ICE options.  This document defines this missing IANA registry and updates RFC 5245.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6336"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6336"/>
+        </reference>
+        <reference anchor="RFC8828" target="https://www.rfc-editor.org/info/rfc8828" quoteTitle="true" derivedAnchor="RFC8828">
+          <front>
+            <title>WebRTC IP Address Handling Requirements</title>
+            <author initials="J" surname="Uberti" fullname="Justin Uberti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G" surname="Shieh" fullname="Guo-wei Shieh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="RFC" value="8828"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8828"/>
+        </reference>
+        <reference anchor="RFC8840" target="https://www.rfc-editor.org/info/rfc8840" quoteTitle="true" derivedAnchor="RFC8840">
+          <front>
+            <title>A Session Initiation Protocol (SIP) Usage for Incremental Provisioning of Candidates for the Interactive Connectivity Establishment (Trickle ICE)</title>
+            <author initials="E" surname="Ivov" fullname="Emil Ivov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T" surname="Stach" fullname="Thomas Stach">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E" surname="Marocco" fullname="Enrico Marocco">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C" surname="Holmberg" fullname="Christer Holmberg">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="RFC" value="8840"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8840"/>
+        </reference>
+        <reference anchor="XEP-0030" quoteTitle="true" derivedAnchor="XEP-0030">
+          <front>
+            <title>XEP-0030: Service Discovery</title>
+            <seriesInfo name="XMPP Standards Foundation," value="XEP-0030"/>
+            <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+              <organization abbrev="Cisco" showOnFrontPage="true">Cisco</organization>
+            </author>
+            <author initials="P." surname="Millard" fullname="Peter Millard">
+          </author>
+            <author initials="R." surname="Eatmon" fullname="Ryan Eatmon">
+          </author>
+            <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+          </author>
+            <date month="June" year="2008"/>
+          </front>
+        </reference>
+        <reference anchor="XEP-0176" quoteTitle="true" derivedAnchor="XEP-0176">
+          <front>
+            <title>XEP-0176: Jingle ICE-UDP Transport Method</title>
+            <seriesInfo name="XMPP Standards Foundation," value="XEP-0176"/>
+            <author initials="J." surname="Beda" fullname="Joe Beda">
+              <organization abbrev="Google" showOnFrontPage="true">Google</organization>
+            </author>
+            <author initials="S." surname="Ludwig" fullname="Scott Ludwig">
+              <organization abbrev="Google" showOnFrontPage="true">Google</organization>
+            </author>
+            <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+          </author>
+            <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+              <organization abbrev="Cisco" showOnFrontPage="true">Cisco</organization>
+            </author>
+            <author initials="S." surname="Egan" fullname="Sean Egan">
+              <organization abbrev="Google" showOnFrontPage="true">Google</organization>
+            </author>
+            <author initials="R." surname="McQueen" fullname="Robert McQueen">
+              <organization abbrev="Collabora" showOnFrontPage="true">Collabora</organization>
+            </author>
+            <date month="June" year="2009"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section anchor="interaction" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-interaction-with-regular-ic">Interaction with Regular ICE</name>
+      <t indent="0" pn="section-appendix.a-1">
+        The ICE protocol was designed to be flexible enough to
+        work in and adapt to as many network environments as
+        possible. Despite that flexibility, ICE as specified in
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> does not by itself support Trickle 
+        ICE. This section describes how trickling of candidates 
+        interacts with ICE.
+      </t>
+      <t indent="0" pn="section-appendix.a-2">
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> describes the conditions required to
+        update checklists and timer states while an ICE agent is in the
+        Running state. These conditions are verified upon transaction
+        completion, and one of them stipulates that:
+      </t>
+      <blockquote pn="section-appendix.a-3">
+        <t indent="0" pn="section-appendix.a-3.1">
+   if there is not a
+   valid pair in the valid list for each component of the data stream
+   associated with the checklist, the state of the checklist is set to
+   Failed.
+        </t>
+      </blockquote>
+      <t indent="0" pn="section-appendix.a-4">
+        This could be a problem and cause ICE processing to fail
+        prematurely in a number of scenarios. Consider the following
+        case:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.a-5">
+        <li pn="section-appendix.a-5.1" derivedCounter="1.">
+            Alice and Bob are both located in different networks with
+            Network Address Translation (NAT). Alice and Bob themselves
+            have different addresses, but both networks use the same
+            private internet block (e.g., the "20-bit block"
+            172.16/12 specified in <xref target="RFC1918" format="default" sectionFormat="of" derivedContent="RFC1918"/>).
+          </li>
+        <li pn="section-appendix.a-5.2" derivedCounter="2.">
+            Alice conveys to Bob the candidate 172.16.0.1, which also happens
+            to correspond to an existing host on Bob's network.
+          </li>
+        <li pn="section-appendix.a-5.3" derivedCounter="3.">
+            Bob creates a candidate pair from his host candidate and
+            172.16.0.1, puts this one pair into a checklist, and starts
+            checks.
+          </li>
+        <li pn="section-appendix.a-5.4" derivedCounter="4.">
+            These checks reach the host at 172.16.0.1 in Bob's network,
+            which responds with an ICMP "port unreachable" error; per
+            <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>, Bob marks the transaction as
+            Failed.
+          </li>
+      </ol>
+      <t indent="0" pn="section-appendix.a-6">
+        At this point, the checklist only contains a Failed pair, and
+        the valid list is empty. 
+        This causes the data stream and
+        potentially all ICE processing to fail, even though Trickle ICE agents
+        can subsequently convey candidates that could succeed.
+      </t>
+      <t indent="0" pn="section-appendix.a-7">
+        A similar race condition would occur if the initial ICE description from
+        Alice contains only candidates that can be determined as
+        unreachable from
+        any of the candidates that Bob has gathered (e.g., this would be the
+        case if Bob's candidates only contain IPv4 addresses and the
+        first candidate that he receives from Alice is an IPv6 one).
+      </t>
+      <t indent="0" pn="section-appendix.a-8">
+        Another potential problem could arise when a non-Trickle
+        ICE implementation initiates an interaction with a Trickle ICE 
+        implementation. Consider the following case:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.a-9">
+        <li pn="section-appendix.a-9.1" derivedCounter="1.">
+            Alice's client has a non-Trickle ICE implementation.
+          </li>
+        <li pn="section-appendix.a-9.2" derivedCounter="2.">
+            Bob's client has support for Trickle ICE.
+          </li>
+        <li pn="section-appendix.a-9.3" derivedCounter="3.">
+            Alice and Bob are behind NATs with address-dependent
+            filtering <xref target="RFC4787" format="default" sectionFormat="of" derivedContent="RFC4787"/>.
+          </li>
+        <li pn="section-appendix.a-9.4" derivedCounter="4.">
+            Bob has two STUN servers, but one of them is currently
+            unreachable.
+          </li>
+      </ol>
+      <t indent="0" pn="section-appendix.a-10">
+        After Bob's agent receives Alice's initial ICE description, it would 
+        immediately start connectivity checks. It would also start gathering
+        candidates, which would take a long time because of the unreachable
+        STUN server. By the time Bob's answer is ready and conveyed to
+        Alice, Bob's connectivity checks might have failed: until
+        Alice gets Bob's answer, she won't be able to start connectivity
+        checks and punch holes in her NAT. The NAT would hence be
+        filtering Bob's checks as originating from an unknown endpoint.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-interaction-with-ice-lite">Interaction with ICE-Lite</name>
+      <t indent="0" pn="section-appendix.b-1">
+        The behavior of ICE-lite agents that are capable of Trickle ICE does not
+        require any particular rules other than those already defined
+        in this specification and <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>. This section
+        is hence provided only for informational purposes.
+      </t>
+      <t indent="0" pn="section-appendix.b-2">
+        An ICE-lite agent would generate candidate information 
+        as per <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> and 
+        would indicate support for Trickle ICE. Given
+        that the candidate information will contain a full generation of candidates,
+        it would also be accompanied by an end-of-candidates indication.
+      </t>
+      <t indent="0" pn="section-appendix.b-3">
+        When performing full trickle, a full ICE implementation could
+        convey the initial ICE description or response thereto with no candidates. After receiving 
+        a response that
+        identifies the remote agent as an ICE-lite implementation, the
+        initiator can choose to not trickle any additional
+        candidates. The same is also true in the case when the ICE-lite
+        agent initiates the interaction and the full ICE agent is the responder. In
+        these cases, the connectivity checks would be enough for the ICE-lite
+        implementation to discover all potentially useful
+        candidates as peer-reflexive. The following example illustrates
+        one such ICE session using SDP syntax:
+      </t>
+      <figure anchor="fig-ice-lite" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-example">Example</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b-4.1">
+        ICE-Lite                                          Bob
+         Agent
+           |   Offer (a=ice-lite a=ice-options:trickle)    |
+           |----------------------------------------------&gt;|
+           |                                               |no cand
+           |         Answer (a=ice-options:trickle)        |trickling
+           |&lt;----------------------------------------------|
+           |              Connectivity Checks              |
+           |&lt;---------------------------------------------&gt;|
+  peer rflx|                                               |
+ cand disco|                                               |
+           |&lt;========== CONNECTION ESTABLISHED ===========&gt;|
+        </artwork>
+      </figure>
+      <t indent="0" pn="section-appendix.b-5">
+        In addition to reducing signaling traffic, this approach also
+        removes the need to discover STUN Bindings or make TURN 
+        allocations, which can considerably lighten ICE processing.
+      </t>
+    </section>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.c-1">   
+        The authors would like to thank
+	<contact fullname="Bernard Aboba"/>,
+        <contact fullname="Flemming Andreasen"/>,
+	<contact fullname="Rajmohan Banavi"/>,
+	<contact fullname="Taylor Brandstetter"/>,
+	<contact fullname="Philipp Hancke"/>,
+	<contact fullname="Christer Holmberg"/>,
+        <contact fullname="Ari Keränen"/>,
+	<contact fullname="Paul Kyzivat"/>,
+	<contact fullname="Jonathan Lennox"/>,
+	<contact fullname="Enrico Marocco"/>,
+	<contact fullname="Pal Martinsen"/>,
+        <contact fullname="Nils Ohlmeier"/>,
+	<contact fullname="Thomas Stach"/>,
+	<contact fullname="Peter Thatcher"/>,
+	<contact fullname="Martin Thomson"/>,
+	<contact fullname="Brandon Williams"/>, and
+        <contact fullname="Dale Worley"/> for their reviews and
+        suggestions on improving this document.  <contact fullname="Sarah         Banks"/>, <contact fullname="Roni Even"/>, and <contact fullname="David Mandelberg"/> completed OPSDIR, GenART, and security
+        reviews, respectively. Thanks also to <contact fullname="Ari Keränen"/> and <contact fullname="Peter Thatcher"/>
+        in their role as chairs and <contact fullname="Ben Campbell"/> in his role as responsible
+        Area Director.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Emil Ivov" initials="E." surname="Ivov">
+        <organization abbrev="8x8 / Jitsi" showOnFrontPage="true">8x8, Inc. / Jitsi</organization>
+        <address>
+          <postal>
+            <street>675 Creekside Way</street>
+            <city>Campbell</city>
+            <region>CA</region>
+            <code>95008</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 512 420 6968</phone>
+          <email>emcho@jitsi.org</email>
+        </address>
+      </author>
+      <author fullname="Justin Uberti" initials="J." surname="Uberti">
+        <organization showOnFrontPage="true">Google</organization>
+        <address>
+          <postal>
+            <street>747 6th Street S</street>
+            <city>Kirkland</city>
+            <region>WA</region>
+            <code>98033</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 857 288 8888</phone>
+          <email>justin@uberti.name</email>
+        </address>
+      </author>
+      <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <postal>
+            <street>P.O. Box 787</street>
+            <city>Parker</city>
+            <region>CO</region>
+            <code>80134</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 720 256 6756</phone>
+          <email>stpeter@mozilla.com</email>
+          <uri>https://www.mozilla.com/</uri>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

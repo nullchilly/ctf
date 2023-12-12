@@ -1,0 +1,774 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tls-external-psk-importer-08" indexInclude="true" ipr="trust200902" number="9258" prepTime="2022-07-25T12:48:24" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-external-psk-importer-08" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9258" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Importing External PSKs for TLS 1.3">Importing External Pre-Shared Keys (PSKs) for TLS 1.3</title>
+    <seriesInfo name="RFC" value="9258" stream="IETF"/>
+    <author initials="D." surname="Benjamin" fullname="David Benjamin">
+      <organization showOnFrontPage="true">Google, LLC.</organization>
+      <address>
+        <email>davidben@google.com</email>
+      </address>
+    </author>
+    <author initials="C. A." surname="Wood" fullname="Christopher A. Wood">
+      <organization showOnFrontPage="true">Cloudflare</organization>
+      <address>
+        <email>caw@heapingbits.net</email>
+      </address>
+    </author>
+    <date month="07" year="2022"/>
+    <area>sec</area>
+    <workgroup>tls</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes an interface for importing external Pre-Shared Keys (PSKs) into TLS 1.3.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9258" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-definitions">Conventions and Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview">Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-psk-importer">PSK Importer</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-external-psk-diversificatio">External PSK Diversification</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-binder-key-derivation">Binder Key Derivation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deprecating-hash-functions">Deprecating Hash Functions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-incremental-deployment">Incremental Deployment</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-addressing-selfie">Addressing Selfie</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> supports Pre-Shared Key (PSK) authentication, wherein PSKs
+can be established via session tickets from prior connections or via some external, out-of-band
+mechanism. The protocol mandates that each PSK only be used with a single hash function.
+This was done to simplify protocol analysis. TLS 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/>, in contrast,
+has no such requirement, as a PSK may be used with any hash algorithm and the
+TLS 1.2 pseudorandom function (PRF). While there is no known way in which the same
+external PSK might produce related output in TLS 1.3 and prior versions, only limited
+analysis has been done.  Applications <bcp14>SHOULD</bcp14> provision separate PSKs for (D)TLS 1.3 and
+prior versions. In cases where this is not possible (e.g., there are already-deployed
+external PSKs or provisioning is otherwise limited), reusing external PSKs across different
+versions of TLS may produce related outputs, which may, in turn, lead to security problems;
+see <xref target="RFC8446" sectionFormat="of" section="E.7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-E.7" derivedContent="RFC8446"/>.</t>
+      <t indent="0" pn="section-1-2">To mitigate such problems, this document specifies a PSK importer
+interface by which external PSKs may be imported and subsequently bound to a specific
+key derivation function (KDF) and hash function for use in TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>
+and DTLS 1.3 <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>. In particular, it describes a
+mechanism for importing PSKs derived from external PSKs by including the target KDF,
+(D)TLS protocol version, and an optional context string to ensure uniqueness. This process yields a set of candidate
+PSKs, each of which are bound to a target KDF and protocol, that are separate from those
+used in (D)TLS 1.2 and prior versions. This expands what would normally have been a single
+PSK and identity into a set of PSKs and identities.</t>
+    </section>
+    <section anchor="conventions-and-definitions" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-conventions-and-definitions">Conventions and Definitions</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="terminology" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-3-1">The following terms are used throughout this document:</t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-3-2">
+        <dt pn="section-3-2.1">External PSK (EPSK):</dt>
+        <dd pn="section-3-2.2">A PSK established or provisioned out of band (i.e., not
+from a TLS connection) that is a tuple of (Base Key, External Identity, Hash).</dd>
+        <dt pn="section-3-2.3">Base Key:</dt>
+        <dd pn="section-3-2.4">The secret value of an EPSK.</dd>
+        <dt pn="section-3-2.5">External Identity:</dt>
+        <dd pn="section-3-2.6">A sequence of bytes used to identify an EPSK.</dd>
+        <dt pn="section-3-2.7">Target protocol:</dt>
+        <dd pn="section-3-2.8">The protocol for which a PSK is imported for use.</dd>
+        <dt pn="section-3-2.9">Target KDF:</dt>
+        <dd pn="section-3-2.10">The KDF for which a PSK is imported for use.</dd>
+        <dt pn="section-3-2.11">Imported PSK (IPSK):</dt>
+        <dd pn="section-3-2.12">A TLS PSK derived from an EPSK, optional context string,
+	target protocol, and target KDF.</dd>
+        <dt pn="section-3-2.13">Non-imported PSK:</dt>
+        <dd pn="section-3-2.14">An EPSK that is used directly as a TLS PSK without being imported.</dd>
+        <dt pn="section-3-2.15">Imported Identity:</dt>
+        <dd pn="section-3-2.16">A sequence of bytes used to identify an IPSK.</dd>
+      </dl>
+      <t indent="0" pn="section-3-3">This document uses presentation language from <xref target="RFC8446" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-3" derivedContent="RFC8446"/>.</t>
+    </section>
+    <section anchor="overview" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-overview">Overview</name>
+      <t indent="0" pn="section-4-1">The PSK importer interface mirrors that of the TLS exporter interface (see <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>)
+in that it diversifies a key based on some contextual information. In contrast to the exporter
+interface, wherein output uniqueness is achieved via an explicit label and context string,
+the PSK importer interface defined herein takes an external PSK and identity and "imports" it into
+TLS, creating a set of "derived" PSKs and identities that are each unique. Each of these
+derived PSKs are bound to a target protocol, KDF identifier, and optional context string.
+Additionally, the resulting PSK binder keys are modified with a new derivation label
+to prevent confusion with non-imported PSKs. Through this interface, importing external
+PSKs with different identities yields distinct PSK binder keys.</t>
+      <t indent="0" pn="section-4-2">Imported keys do not require negotiation for use since a client and server will not agree upon
+identities if imported incorrectly. Endpoints may incrementally deploy PSK importer support
+by offering non-imported PSKs for TLS versions prior to TLS 1.3.
+Non-imported and imported PSKs
+are not equivalent since their identities are different. See <xref target="rollout" format="default" sectionFormat="of" derivedContent="Section 7"/> for more details.</t>
+      <t indent="0" pn="section-4-3">Endpoints that import external keys <bcp14>MUST NOT</bcp14> use the keys that are input to the
+import process for any purpose other than the importer, and they <bcp14>MUST NOT</bcp14> use the derived
+keys for any purpose other than TLS PSKs. Moreover, each external PSK fed to the
+importer process <bcp14>MUST</bcp14> be associated with one hash function at most.  This
+is analogous to the rules in <xref target="RFC8446" sectionFormat="of" section="4.2.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.11" derivedContent="RFC8446"/>. See <xref target="security-considerations" format="default" sectionFormat="of" derivedContent="Section 8"/> for
+more discussion.</t>
+    </section>
+    <section anchor="psk-import" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-psk-importer">PSK Importer</name>
+      <t indent="0" pn="section-5-1">This section describes the PSK importer interface and its underlying diversification
+mechanism and binder key computation modification.</t>
+      <section anchor="external-psk-diversification" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-external-psk-diversificatio">External PSK Diversification</name>
+        <t indent="0" pn="section-5.1-1">As input, the PSK importer interface takes an EPSK with External Identity <tt>external_identity</tt> and base key <tt>epsk</tt>
+(as defined in <xref target="terminology" format="default" sectionFormat="of" derivedContent="Section 3"/>) along with an optional context. It then transforms the input into a set of PSKs
+and imported identities for use in a connection based on target protocols and KDFs.
+In particular, for each supported target protocol <tt>target_protocol</tt> and KDF <tt>target_kdf</tt>,
+	the importer constructs an ImportedIdentity structure as follows:</t>
+        <sourcecode name="" type="" markers="false" pn="section-5.1-2">
+struct {
+   opaque external_identity&lt;1...2^16-1&gt;;
+   opaque context&lt;0..2^16-1&gt;;
+   uint16 target_protocol;
+   uint16 target_kdf;
+} ImportedIdentity;
+</sourcecode>
+        <t indent="0" pn="section-5.1-3">The list of ImportedIdentity.target_kdf values is maintained by IANA as described in <xref target="IANA" format="default" sectionFormat="of" derivedContent="Section 10"/>.
+External PSKs <bcp14>MUST NOT</bcp14> be imported for (D)TLS 1.2 or prior versions. See <xref target="rollout" format="default" sectionFormat="of" derivedContent="Section 7"/> for
+discussion on how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions
+coexist for incremental deployment.</t>
+        <t indent="0" pn="section-5.1-4">ImportedIdentity.context <bcp14>MUST</bcp14> include the context used to determine the EPSK, if any exists.
+For example, ImportedIdentity.context may include information about peer roles or identities
+to mitigate Selfie-style reflection attacks <xref target="Selfie" format="default" sectionFormat="of" derivedContent="Selfie"/>. See <xref target="mitigate-selfie" format="default" sectionFormat="of" derivedContent="Appendix A"/> for more details.
+Since the EPSK is a key derived from an external protocol or sequence of protocols,
+ImportedIdentity.context <bcp14>MUST</bcp14> include a channel binding for the deriving protocols
+<xref target="RFC5056" format="default" sectionFormat="of" derivedContent="RFC5056"/>. The details of this binding are protocol specific and out of scope for
+this document.</t>
+        <t indent="0" pn="section-5.1-5">ImportedIdentity.target_protocol <bcp14>MUST</bcp14> be the (D)TLS protocol version for which the
+PSK is being imported. For example, TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> uses 0x0304, which will
+therefore also be used by QUICv1 <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="QUIC"/>. Note that this means the number
+of PSKs derived from an EPSK is a function of the number of target protocols.</t>
+        <t indent="0" pn="section-5.1-6">Given an ImportedIdentity and corresponding EPSK with base key <tt>epsk</tt>, an imported PSK
+IPSK with base key <tt>ipskx</tt> is computed as follows:</t>
+        <artwork name="" type="" align="left" alt="" pn="section-5.1-7">
+   epskx = HKDF-Extract(0, epsk)
+   ipskx = HKDF-Expand-Label(epskx, "derived psk",
+                             Hash(ImportedIdentity), L)
+</artwork>
+        <t indent="0" pn="section-5.1-8">L corresponds to the KDF output length of ImportedIdentity.target_kdf as defined in <xref target="IANA" format="default" sectionFormat="of" derivedContent="Section 10"/>.	
+For hash-based KDFs, such as HKDF_SHA256 (0x0001), this is the length of the hash function
+output, e.g., 32 octets for SHA256. This is required for the IPSK to be of length suitable
+for supported ciphersuites. Internally, HKDF-Expand-Label uses a label corresponding to
+ImportedIdentity.target_protocol (e.g., "tls13" for TLS 1.3, as per <xref target="RFC8446" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-7.1" derivedContent="RFC8446"/>
+or "dtls13" for DTLS 1.3, as per <xref target="RFC9147" sectionFormat="of" section="5.10" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9147#section-5.10" derivedContent="RFC9147"/>).</t>
+        <t indent="0" pn="section-5.1-9">The identity of <tt>ipskx</tt> as sent on the wire is ImportedIdentity, i.e., the serialized content
+of ImportedIdentity is used as the content of PskIdentity.identity in the PSK extension.
+The corresponding PSK input for the TLS 1.3 key schedule is "ipskx".</t>
+        <t indent="0" pn="section-5.1-10">As the maximum size of the PSK extension is 2<sup>16</sup> - 1 octets, an Imported Identity that exceeds
+this size is likely to cause a decoding error. Therefore, the PSK importer interface <bcp14>SHOULD</bcp14> reject
+any ImportedIdentity that exceeds this size.</t>
+        <t indent="0" pn="section-5.1-11">The hash function used for HMAC-based Key Derivation Function (HKDF) <xref target="RFC5869" format="default" sectionFormat="of" derivedContent="RFC5869"/> is that which is associated with the EPSK.
+It is not the hash function associated with ImportedIdentity.target_kdf. If the EPSK
+does not have such an associated hash function, SHA-256 <xref target="SHA2" format="default" sectionFormat="of" derivedContent="SHA2"/> <bcp14>SHOULD</bcp14> be used.
+Diversifying EPSK by ImportedIdentity.target_kdf ensures
+that an IPSK is only used as input keying material to one KDF at most, thus satisfying
+the requirements in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>. See <xref target="security-considerations" format="default" sectionFormat="of" derivedContent="Section 8"/> for more details.</t>
+        <t indent="0" pn="section-5.1-12">Endpoints <bcp14>SHOULD</bcp14> generate a compatible <tt>ipskx</tt> for each target ciphersuite they offer.
+For example, importing a key for TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 would
+yield two PSKs: one for HKDF-SHA256 and another for HKDF-SHA384. In contrast, if
+TLS_AES_128_GCM_SHA256 and TLS_CHACHA20_POLY1305_SHA256 are supported, only one
+derived key is necessary. Each ciphersuite uniquely identifies the target KDF.
+Future specifications that change the way the KDF is negotiated will need to update this
+specification to make clear how target KDFs are determined for the import process.</t>
+        <t indent="0" pn="section-5.1-13">EPSKs <bcp14>MAY</bcp14> be imported before the start of a connection if the target KDFs, protocols, and
+context string(s) are known a priori. EPSKs <bcp14>MAY</bcp14> also be imported for early data use
+if they are bound to the protocol settings and configuration that are required for
+sending early data. Minimally, this means that the Application-Layer Protocol Negotiation (ALPN) value
+<xref target="RFC7301" format="default" sectionFormat="of" derivedContent="RFC7301"/>, QUIC transport parameters (if used for QUIC), and any other relevant
+parameters that are negotiated for early data <bcp14>MUST</bcp14> be provisioned alongside these EPSKs.</t>
+      </section>
+      <section anchor="schedule" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-binder-key-derivation">Binder Key Derivation</name>
+        <t indent="0" pn="section-5.2-1">To prevent confusion between imported and non-imported PSKs, imported PSKs change
+the PSK binder key derivation label. In particular, the standard TLS 1.3 PSK binder
+key computation is defined as follows:</t>
+        <artwork name="" type="" align="left" alt="" pn="section-5.2-2">
+           0
+           |
+           v
+ PSK -&gt;  HKDF-Extract = Early Secret
+           |
+           +-----&gt; Derive-Secret(., "ext binder" | "res binder", "")
+           |                     = binder_key
+           V
+</artwork>
+        <t indent="0" pn="section-5.2-3">Imported PSKs use the string "imp binder" rather than "ext binder" or "res binder"
+when deriving <tt>binder_key</tt>.
+This means the binder key is computed as follows:</t>
+        <artwork name="" type="" align="left" alt="" pn="section-5.2-4">
+           0
+           |
+           v
+ PSK -&gt;  HKDF-Extract = Early Secret
+           |
+           +-----&gt; Derive-Secret(., "ext binder"
+           |                      | "res binder"
+           |                      | "imp binder", "")
+           |                     = binder_key
+           V
+</artwork>
+        <t indent="0" pn="section-5.2-5">This new label ensures a client and server will negotiate use of an external PSK if
+and only if (a) both endpoints import the PSK or (b) neither endpoint imports the
+PSK. As <tt>binder_key</tt> is a leaf key, changing its computation does not affect any
+other key.</t>
+      </section>
+    </section>
+    <section anchor="deprecating-hash-functions" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-deprecating-hash-functions">Deprecating Hash Functions</name>
+      <t indent="0" pn="section-6-1">If a client or server wishes to deprecate a hash function and no longer use it for TLS 1.3,
+it removes the corresponding KDF from the set of target KDFs used for importing keys.
+This does not affect the KDF operation used to derive imported PSKs.</t>
+    </section>
+    <section anchor="rollout" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-incremental-deployment">Incremental Deployment</name>
+      <t indent="0" pn="section-7-1">In deployments that already have PSKs provisioned and in use with TLS 1.2, attempting
+to incrementally deploy the importer mechanism would result in concurrent use of
+the already-provisioned PSK directly as both a TLS 1.2 PSK and an EPSK, which, in turn, could mean that the same KDF and key would be used in two different protocol contexts.
+This is not a recommended configuration; see <xref target="security-considerations" format="default" sectionFormat="of" derivedContent="Section 8"/> for more details.
+However, the benefits of using TLS 1.3 and PSK importers may prove sufficiently
+compelling that existing deployments choose to enable this noncompliant configuration for
+a brief transition period while new software (using TLS 1.3 and importers) is deployed.
+Operators are advised to make any such transition period as short as possible.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">The PSK importer security goals can be roughly stated as follows: avoid PSK reuse across
+      KDFs while properly authenticating endpoints. When modeled as computational extractors, KDFs
+assume that input keying material (IKM) is sampled from some "source" probability distribution
+and that any two IKM values are chosen independently of each other <xref target="Kraw10" format="default" sectionFormat="of" derivedContent="Kraw10"/>. This source-independence requirement implies that the same IKM value cannot be used for two different
+KDFs.</t>
+      <t indent="0" pn="section-8-2">PSK-based authentication is functionally equivalent to session resumption in that a connection
+uses existing key material to authenticate both endpoints. Following the work of
+<xref target="BAA15" format="default" sectionFormat="of" derivedContent="BAA15"/>, this is a form of compound authentication. Loosely
+speaking, compound authentication is the property that an execution of multiple authentication
+protocols, wherein at least one is uncompromised, jointly authenticates all protocols. Therefore, authenticating with an externally provisioned PSK should ideally authenticate both
+the TLS connection and the external provisioning process. Typically, the external provisioning process
+produces a PSK and corresponding context from which the PSK was derived and in which it should
+be used. If available, this is used as the ImportedIdentity.context value. We refer to an
+external PSK without such context as "context-free".</t>
+      <t indent="0" pn="section-8-3">Thus, in considering the source-independence and compound authentication requirements, the PSK
+importer interface described in this document aims to achieve the following goals:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-8-4">
+        <li pn="section-8-4.1" derivedCounter="1.">Externally provisioned PSKs imported into a TLS connection achieve compound authentication
+of the provisioning process and connection.</li>
+        <li pn="section-8-4.2" derivedCounter="2.">Context-free PSKs only achieve authentication within the context of a single connection.</li>
+        <li pn="section-8-4.3" derivedCounter="3.">Imported PSKs are not used as IKM for two different KDFs.</li>
+        <li pn="section-8-4.4" derivedCounter="4.">Imported PSKs do not collide with future protocol versions and KDFs.</li>
+      </ol>
+      <t indent="0" pn="section-8-5">There are no known related outputs or security issues caused from the process
+for computing imported PSKs from an external PSK and the processing of existing
+external PSKs used in (D)TLS 1.2 and below, as noted in <xref target="rollout" format="default" sectionFormat="of" derivedContent="Section 7"/>. However,
+only limited analysis has been done, which is an additional reason why applications
+<bcp14>SHOULD</bcp14> provision separate PSKs for (D)TLS 1.3 and prior versions, even when the
+importer interface is used in (D)TLS 1.3.</t>
+      <t indent="0" pn="section-8-6">The PSK importer does not prevent applications from constructing non-importer PSK identities
+that collide with imported PSK identities.</t>
+    </section>
+    <section anchor="privacy-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-9-1">External PSK identities are commonly static by design so that endpoints may use them to
+look up keying material. As a result, for some systems and use cases, this identity
+may become a persistent tracking identifier.</t>
+      <t indent="0" pn="section-9-2">Note also that ImportedIdentity.context is visible in cleartext on the wire as part of
+the PSK identity. Unless otherwise protected by a mechanism such as TLS Encrypted
+ClientHello <xref target="I-D.ietf-tls-esni" format="default" sectionFormat="of" derivedContent="ECH"/>, applications <bcp14>SHOULD NOT</bcp14> put sensitive information
+in this field.</t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-10-1">IANA has created the "TLS KDF Identifiers" registry under the existing "Transport Layer Security (TLS) Parameters" registry.</t>
+      <t indent="0" pn="section-10-2">The entries in the registry are as follows:</t>
+      <table anchor="kdf-registry" align="center" pn="table-1">
+        <name slugifiedName="name-tls-kdf-identifiers-registr">TLS KDF Identifiers Registry</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Value</th>
+            <th align="left" colspan="1" rowspan="1">KDF Description</th>
+            <th align="left" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">0x0000</td>
+            <td align="left" colspan="1" rowspan="1">Reserved</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9258</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">0x0001</td>
+            <td align="left" colspan="1" rowspan="1">HKDF_SHA256</td>
+            <td align="left" colspan="1" rowspan="1">
+              <xref target="RFC5869" format="default" sectionFormat="of" derivedContent="RFC5869"/></td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">0x0002</td>
+            <td align="left" colspan="1" rowspan="1">HKDF_SHA384</td>
+            <td align="left" colspan="1" rowspan="1">
+              <xref target="RFC5869" format="default" sectionFormat="of" derivedContent="RFC5869"/></td>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-10-4">New target KDF values are allocated according to the following process:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-10-5">
+        <li pn="section-10-5.1">Values in the range 0x0000-0xfeff are assigned via Specification Required <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.</li>
+        <li pn="section-10-5.2">Values in the range 0xff00-0xffff are reserved for Private Use <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.</li>
+      </ul>
+      <t indent="0" pn="section-10-6">The procedures for requesting values in the Specification Required space are specified in <xref target="RFC8447" sectionFormat="of" section="17" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8447#section-17" derivedContent="RFC8447"/>.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-tls-esni" to="ECH"/>
+    <displayreference target="RFC9000" to="QUIC"/>
+    <references pn="section-11">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-11.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5056" target="https://www.rfc-editor.org/info/rfc5056" quoteTitle="true" derivedAnchor="RFC5056">
+          <front>
+            <title>On the Use of Channel Bindings to Secure Channels</title>
+            <author initials="N." surname="Williams" fullname="N. Williams">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="November"/>
+            <abstract>
+              <t indent="0">The concept of channel binding allows applications to establish that the two end-points of a secure channel at one network layer are the same as at a higher layer by binding authentication at the higher layer to the channel at the lower layer.  This allows applications to delegate session protection to lower layers, which has various performance benefits.</t>
+              <t indent="0">This document discusses and formalizes the concept of channel binding to secure channels.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5056"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5056"/>
+        </reference>
+        <reference anchor="RFC5869" target="https://www.rfc-editor.org/info/rfc5869" quoteTitle="true" derivedAnchor="RFC5869">
+          <front>
+            <title>HMAC-based Extract-and-Expand Key Derivation Function (HKDF)</title>
+            <author initials="H." surname="Krawczyk" fullname="H. Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Eronen" fullname="P. Eronen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="May"/>
+            <abstract>
+              <t indent="0">This document specifies a simple Hashed Message Authentication Code (HMAC)-based key derivation function (HKDF), which can be used as a building block in various protocols and applications.  The key derivation function (KDF) is intended to support a wide range of applications and requirements, and is conservative in its use of cryptographic hash functions.  This document is not an Internet  Standards Track specification; it is published for informational  purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5869"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5869"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC8447" target="https://www.rfc-editor.org/info/rfc8447" quoteTitle="true" derivedAnchor="RFC8447">
+          <front>
+            <title>IANA Registry Updates for TLS and DTLS</title>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Turner" fullname="S. Turner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document describes a number of changes to TLS and DTLS IANA registries that range from adding notes to the registry all the way to changing the registration policy.  These changes were mostly motivated by WG review of the TLS- and DTLS-related registries undertaken as part of the TLS 1.3 development process.</t>
+              <t indent="0">This document updates the following RFCs: 3749, 5077, 4680, 5246, 5705, 5878, 6520, and 7301.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8447"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8447"/>
+        </reference>
+        <reference anchor="RFC9147" target="https://www.rfc-editor.org/info/rfc9147" quoteTitle="true" derivedAnchor="RFC9147">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="April"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Datagram Transport Layer Security (DTLS) protocol. DTLS 1.3 allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">The DTLS 1.3 protocol is based on the Transport Layer Security (TLS) 1.3 protocol and provides equivalent security guarantees with the exception of order protection / non-replayability.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.</t>
+              <t indent="0">This document obsoletes RFC 6347.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9147"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9147"/>
+        </reference>
+      </references>
+      <references pn="section-11.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="BAA15" target="https://doi.org/10.14722/ndss.2015.23277" quoteTitle="true" derivedAnchor="BAA15">
+          <front>
+            <title>Verified Contributive Channel Bindings for Compound Authentication</title>
+            <author initials="K" surname="Bhargavan" fullname="Karthikeyan Bhargavan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A" surname="Delignat-Lavaud" fullname="Antoine Delignat-Lavaud">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A" surname="Pironti" fullname="Alfredo Pironti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="February" year="2015"/>
+          </front>
+          <refcontent>Proceedings 2015 Network and Distributed System Security</refcontent>
+          <seriesInfo name="DOI" value="10.14722/ndss.2015.23277"/>
+        </reference>
+        <reference anchor="I-D.ietf-tls-esni" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-14" derivedAnchor="ECH">
+          <front>
+            <title>TLS Encrypted Client Hello</title>
+            <author fullname="Eric Rescorla">
+              <organization showOnFrontPage="true">RTFM, Inc.</organization>
+            </author>
+            <author fullname="Kazuho Oku">
+              <organization showOnFrontPage="true">Fastly</organization>
+            </author>
+            <author fullname="Nick Sullivan">
+              <organization showOnFrontPage="true">Cloudflare</organization>
+            </author>
+            <author fullname="Christopher A. Wood">
+              <organization showOnFrontPage="true">Cloudflare</organization>
+            </author>
+            <date month="February" day="13" year="2022"/>
+            <abstract>
+              <t indent="0">   This document describes a mechanism in Transport Layer Security (TLS)
+   for encrypting a ClientHello message under a server public key.
+
+Discussion Venues
+
+   This note is to be removed before publishing as an RFC.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/tlswg/draft-ietf-tls-esni
+   (https://github.com/tlswg/draft-ietf-tls-esni).
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-esni-14"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-ietf-tls-esni-14.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Kraw10" target="https://eprint.iacr.org/2010/264" quoteTitle="true" derivedAnchor="Kraw10">
+          <front>
+            <title>Cryptographic Extraction and Key Derivation: The HKDF Scheme</title>
+            <author initials="H" surname="Krawczyk" fullname="Hugo Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="May" year="2010"/>
+          </front>
+          <refcontent>Proceedings of Crypto 2010</refcontent>
+        </reference>
+        <reference anchor="RFC9000" target="https://www.rfc-editor.org/info/rfc9000" quoteTitle="true" derivedAnchor="QUIC">
+          <front>
+            <title>QUIC: A UDP-Based Multiplexed and Secure Transport</title>
+            <author initials="J." surname="Iyengar" fullname="J. Iyengar" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Thomson" fullname="M. Thomson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="May"/>
+            <abstract>
+              <t indent="0">This document defines the core of the QUIC transport protocol.  QUIC provides applications with flow-controlled streams for structured communication, low-latency connection establishment, and network path migration. QUIC includes security measures that ensure confidentiality, integrity, and availability in a range of deployment circumstances.  Accompanying documents describe the integration of TLS for key negotiation, loss detection, and an exemplary congestion control algorithm.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9000"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9000"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC7301" target="https://www.rfc-editor.org/info/rfc7301" quoteTitle="true" derivedAnchor="RFC7301">
+          <front>
+            <title>Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension</title>
+            <author initials="S." surname="Friedl" fullname="S. Friedl">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Popov" fullname="A. Popov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Langley" fullname="A. Langley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Stephan" fullname="E. Stephan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="July"/>
+            <abstract>
+              <t indent="0">This document describes a Transport Layer Security (TLS) extension for application-layer protocol negotiation within the TLS handshake. For instances in which multiple application protocols are supported on the same TCP or UDP port, this extension allows the application layer to negotiate which protocol will be used within the TLS connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7301"/>
+        </reference>
+        <reference anchor="Selfie" target="https://eprint.iacr.org/2019/347.pdf" quoteTitle="true" derivedAnchor="Selfie">
+          <front>
+            <title>Selfie: reflections on TLS 1.3 with PSK</title>
+            <author initials="N" surname="Drucker" fullname="Nir Drucker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S" surname="Gueron" fullname="Shay Gueron">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="May" year="2021"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1007/s00145-021-09387-y"/>
+        </reference>
+        <reference anchor="SHA2" target="https://doi.org/10.6028/NIST.FIPS.180-4" quoteTitle="true" derivedAnchor="SHA2">
+          <front>
+            <title>Secure Hash Standard (SHS)</title>
+            <author>
+              <organization showOnFrontPage="true">National Institute of Standards and Technology</organization>
+            </author>
+            <date year="2015" month="August"/>
+          </front>
+          <seriesInfo name="FIPS PUB" value="180-4"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.FIPS.180-4"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="mitigate-selfie" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-addressing-selfie">Addressing Selfie</name>
+      <t indent="0" pn="section-appendix.a-1">The Selfie attack <xref target="Selfie" format="default" sectionFormat="of" derivedContent="Selfie"/> relies on a misuse of the PSK interface.
+The PSK interface makes the implicit assumption that each PSK
+is known only to one client and one server. If multiple clients or
+multiple servers with distinct roles share a PSK, TLS only
+authenticates the entire group. A node successfully authenticates
+its peer as being in the group whether the peer is another node
+or itself. Note that this case can also occur when there are two
+      nodes sharing a PSK without predetermined roles.</t>
+      <t indent="0" pn="section-appendix.a-2">Applications that require authenticating finer-grained roles while still
+configuring a single shared PSK across all nodes can resolve this
+mismatch either by exchanging roles over the TLS connection after
+the handshake or by incorporating the roles of both the client and the server
+into the IPSK context string. For instance, if an application
+identifies each node by the Media Access Control (MAC) address, it could use the following
+context string.</t>
+      <sourcecode name="" type="" markers="false" pn="section-appendix.a-3">
+  struct {
+    opaque client_mac&lt;0..2^8-1&gt;;
+    opaque server_mac&lt;0..2^8-1&gt;;
+  } Context;
+</sourcecode>
+      <t indent="0" pn="section-appendix.a-4">If an attacker then redirects a ClientHello intended for one node to a different
+node, including the node that generated the ClientHello, the receiver will
+compute a different context string and the handshake will not complete.</t>
+      <t indent="0" pn="section-appendix.a-5">Note that, in this scenario, there is still a single shared PSK across all nodes,
+so each node must be trusted not to impersonate another node's role.</t>
+    </section>
+    <section anchor="acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.b-1">The authors thank <contact fullname="Eric Rescorla"/> and <contact fullname="Martin Thomson"/> for discussions that led to the
+production of this document, as well as <contact fullname="Christian Huitema"/> for input regarding privacy
+considerations of external PSKs. <contact fullname="John Preuß Mattsson"/> provided input regarding PSK importer
+deployment considerations. <contact fullname="Hugo Krawczyk"/> provided guidance for the security considerations.
+<contact fullname="Martin Thomson"/>, <contact fullname="Jonathan Hoyland"/>, <contact fullname="Scott Hollenbeck"/>, <contact fullname="Benjamin Kaduk"/>, and others all
+provided reviews, feedback, and suggestions for improving the document.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="D." surname="Benjamin" fullname="David Benjamin">
+        <organization showOnFrontPage="true">Google, LLC.</organization>
+        <address>
+          <email>davidben@google.com</email>
+        </address>
+      </author>
+      <author initials="C. A." surname="Wood" fullname="Christopher A. Wood">
+        <organization showOnFrontPage="true">Cloudflare</organization>
+        <address>
+          <email>caw@heapingbits.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

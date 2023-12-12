@@ -1,0 +1,704 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tcpm-hystartplusplus-14" indexInclude="true" ipr="trust200902" number="9406" prepTime="2023-05-15T12:04:04" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tcpm-hystartplusplus-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9406" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="HyStart++">HyStart++: Modified Slow Start for TCP</title>
+    <seriesInfo name="RFC" value="9406" stream="IETF"/>
+    <author initials="P." surname="Balasubramanian" fullname="Praveen Balasubramanian">
+      <organization showOnFrontPage="true">Confluent</organization>
+      <address>
+        <postal>
+          <street>899 West Evelyn Ave</street>
+          <city>Mountain View</city>
+          <region>CA</region>
+          <code>94041</code>
+          <country>United States of America</country>
+        </postal>
+        <email>pravb.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author initials="Y." surname="Huang" fullname="Yi Huang">
+      <organization showOnFrontPage="true">Microsoft</organization>
+      <address>
+        <postal>
+          <street>One Microsoft Way</street>
+          <city>Redmond</city>
+          <region>WA</region>
+          <code>98052</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 425 703 0447</phone>
+        <email>huanyi@microsoft.com</email>
+      </address>
+    </author>
+    <author initials="M." surname="Olson" fullname="Matt Olson">
+      <organization showOnFrontPage="true">Microsoft</organization>
+      <address>
+        <postal>
+          <street>One Microsoft Way</street>
+          <city>Redmond</city>
+          <region>WA</region>
+          <code>98052</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 425 538 8598</phone>
+        <email>maolson@microsoft.com</email>
+      </address>
+    </author>
+    <date month="05" year="2023"/>
+    <area>tsv</area>
+    <workgroup>tcpm</workgroup>
+    <keyword>TCP</keyword>
+    <keyword>congestion control</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1"> This document describes HyStart++, a simple modification to
+      the slow start phase of congestion control algorithms.
+      Slow start can overshoot the ideal send rate
+      in many cases, causing high packet loss and poor performance. 
+      HyStart++ uses increase in round-trip delay as a heuristic to 
+      find an exit point before possible overshoot.
+      It also adds a mitigation to prevent jitter from causing
+      premature slow start exit. 
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9406" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions">Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-hystart-algorithm">HyStart++ Algorithm</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-summary">Summary</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-details">Algorithm Details</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tuning-constants-and-other-">Tuning Constants and Other Considerations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deployments-and-performance">Deployments and Performance Evaluations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1"> <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/> describes the slow start
+      congestion control algorithm for TCP. The slow start
+      algorithm is used when the congestion window (cwnd)
+      is less than the slow start threshold (ssthresh). 
+      During slow start, in the absence of packet loss signals,
+      TCP increases the cwnd exponentially to probe the network capacity.
+      This fast growth can overshoot the ideal sending rate
+      and cause significant packet loss that cannot always
+      be recovered efficiently.
+      </t>
+      <t indent="0" pn="section-1-2">HyStart++ builds upon Hybrid Start (HyStart), originally described in
+      <xref target="HyStart" format="default" sectionFormat="of" derivedContent="HyStart"/>. HyStart++ uses increase in
+      round-trip delay as a signal to exit
+      slow start before potential packet loss occurs as a result
+      of overshoot. This is one of two algorithms specified in
+      <xref target="HyStart" format="default" sectionFormat="of" derivedContent="HyStart"/> for finding a safe exit point for
+      slow start. After the slow start exit, a new
+      Conservative Slow Start (CSS) phase is used to determine
+       whether the slow start exit was premature and to resume
+       slow start. This mitigation improves performance in the
+       presence of jitter.
+      HyStart++ reduces packet loss and retransmissions, and
+      improves goodput in lab measurements and real-world
+      deployments.
+      </t>
+      <t indent="0" pn="section-1-3">  While this document describes HyStart++ for TCP, it can
+      also be used for other transport protocols that use slow start,
+      such as QUIC <xref target="RFC9002" format="default" sectionFormat="of" derivedContent="RFC9002"/>
+      or the Stream Control Transmission Protocol (SCTP) <xref target="RFC9260" format="default" sectionFormat="of" derivedContent="RFC9260"/>. 
+      </t>
+    </section>
+    <section anchor="term" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+      "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+      "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+      "<bcp14>SHOULD NOT</bcp14>",
+      "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+      "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+      are to be interpreted as described in BCP 14
+      <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+      when, they appear in all capitals, as shown here.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-definitions">Definitions</name>
+      <t indent="0" pn="section-3-1"> To aid the reader, we repeat some definitions from
+      <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>:
+      </t>
+      <dl spacing="normal" newline="false" indent="3" pn="section-3-2">
+        <dt pn="section-3-2.1"> SENDER MAXIMUM SEGMENT SIZE (SMSS):</dt>
+        <dd pn="section-3-2.2">The size of the
+      largest segment that the sender can transmit. This value can be
+      based on the maximum transmission unit of the network, the Path
+      MTU Discovery algorithm <xref target="RFC1191" format="default" sectionFormat="of" derivedContent="RFC1191"/>
+          <xref target="RFC4821" format="default" sectionFormat="of" derivedContent="RFC4821"/>, RMSS (see next item),
+      or other factors. The size does not include the TCP/IP headers
+      and options.</dd>
+        <dt pn="section-3-2.3"> RECEIVER MAXIMUM SEGMENT SIZE (RMSS):</dt>
+        <dd pn="section-3-2.4">The
+      size of the largest segment that the receiver is willing to accept.
+      This is the value specified in the MSS option sent by the
+      receiver during connection startup.  Or, if the MSS option
+      is not used, it is 536 bytes <xref target="RFC1122" format="default" sectionFormat="of" derivedContent="RFC1122"/>.
+      The size does not include the TCP/IP headers and
+      options.</dd>
+        <dt pn="section-3-2.5"> RECEIVER WINDOW (rwnd):</dt>
+        <dd pn="section-3-2.6">The most recently advertised
+      receiver window.</dd>
+        <dt pn="section-3-2.7"> CONGESTION WINDOW (cwnd):</dt>
+        <dd pn="section-3-2.8">A TCP state variable that
+      limits the amount of data a TCP can send.
+      At any given time, a TCP <bcp14>MUST NOT</bcp14> send
+      data with a sequence number higher than the sum of the highest
+      acknowledged sequence number and the minimum of the cwnd and rwnd.</dd>
+      </dl>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-hystart-algorithm">HyStart++ Algorithm</name>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-summary">Summary</name>
+        <t indent="0" pn="section-4.1-1"> <xref target="HyStart" format="default" sectionFormat="of" derivedContent="HyStart"/> specifies two algorithms
+        (a "Delay Increase" algorithm and an "Inter-Packet Arrival"
+        algorithm) to be run in parallel to detect that the sending
+        rate has reached capacity. In practice, the Inter-Packet
+        Arrival algorithm does not perform well and is not able
+        to detect congestion early, primarily due to ACK compression.
+        The idea of the Delay Increase algorithm is to look for
+        spikes in RTT (round-trip time), which suggest that the
+        bottleneck buffer is filling up. 
+        </t>
+        <t indent="0" pn="section-4.1-2"> In HyStart++, a TCP sender uses standard slow start
+        and then uses the Delay Increase algorithm to trigger an
+        exit from slow start. But instead of going straight from
+        slow start to congestion avoidance, the sender spends a
+        number of RTTs in a Conservative Slow Start (CSS) phase
+        to determine whether the exit from slow start was premature.
+        During CSS, the congestion window is grown exponentially in a
+        fashion similar to regular slow start, but with a smaller exponential base,
+        resulting in less aggressive growth.
+        If the RTT reduces during CSS, it's concluded that the RTT
+        spike was not related to congestion caused by the connection
+        sending at a rate greater than the ideal send rate, and the
+        connection resumes slow start. If the RTT inflation
+        persists throughout CSS, the connection enters congestion
+        avoidance.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-algorithm-details">Algorithm Details</name>
+        <t indent="0" pn="section-4.2-1"> The following pseudocode uses a limit, L, to control the
+        aggressiveness of the cwnd increase during both standard slow
+        start and CSS. While an arriving ACK may newly acknowledge an
+        arbitrary number of bytes, the HyStart++ algorithm limits the
+        number of those bytes applied to increase the cwnd to L*SMSS bytes. </t>
+        <t indent="0" pn="section-4.2-2"> lastRoundMinRTT and currentRoundMinRTT are initialized
+        to infinity at the initialization time.  currRTT is the RTT
+        sampled from the latest incoming ACK and initialized to
+        infinity. </t>
+        <sourcecode markers="false" pn="section-4.2-3">
+lastRoundMinRTT = infinity
+currentRoundMinRTT = infinity
+currRTT = infinity
+</sourcecode>
+        <t indent="0" pn="section-4.2-4">HyStart++ measures rounds using sequence numbers, as
+        follows:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.2-5">
+          <li pn="section-4.2-5.1">Define windowEnd as a sequence number initialized to SND.NXT.</li>
+          <li pn="section-4.2-5.2">When windowEnd is ACKed, the current round ends and windowEnd
+        is set to SND.NXT.</li>
+        </ul>
+        <t indent="0" pn="section-4.2-6"> At the start of each round during standard slow start
+        <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/> and CSS, initialize the variables 
+        used to compute the last round's and current round's minimum RTT:
+        </t>
+        <sourcecode markers="false" pn="section-4.2-7">
+lastRoundMinRTT = currentRoundMinRTT
+currentRoundMinRTT = infinity
+rttSampleCount = 0
+</sourcecode>
+        <t indent="0" pn="section-4.2-8"> For each arriving ACK in slow start, where N is the
+        number of previously unacknowledged bytes acknowledged
+        in the arriving ACK: </t>
+        <t indent="0" pn="section-4.2-9">Update the cwnd: </t>
+        <sourcecode markers="false" pn="section-4.2-10">
+  cwnd = cwnd + min(N, L * SMSS)
+</sourcecode>
+        <t indent="0" pn="section-4.2-11"> Keep track of the minimum observed RTT: </t>
+        <sourcecode markers="false" pn="section-4.2-12">
+  currentRoundMinRTT = min(currentRoundMinRTT, currRTT)
+  rttSampleCount += 1
+</sourcecode>
+        <t indent="0" pn="section-4.2-13">For rounds where at least N_RTT_SAMPLE RTT samples have been
+obtained and currentRoundMinRTT and lastRoundMinRTT are valid,
+check to see if delay increase triggers slow start exit:</t>
+        <sourcecode markers="false" pn="section-4.2-14">
+if ((rttSampleCount &gt;= N_RTT_SAMPLE) AND
+    (currentRoundMinRTT != infinity) AND
+    (lastRoundMinRTT != infinity))
+  RttThresh = max(MIN_RTT_THRESH,
+    min(lastRoundMinRTT / MIN_RTT_DIVISOR, MAX_RTT_THRESH))
+  if (currentRoundMinRTT &gt;= (lastRoundMinRTT + RttThresh))
+    cssBaselineMinRtt = currentRoundMinRTT
+    exit slow start and enter CSS
+</sourcecode>
+        <t indent="0" pn="section-4.2-15"> For each arriving ACK in CSS, where N is the number
+        of previously unacknowledged bytes acknowledged in
+        the arriving ACK:</t>
+        <t indent="0" pn="section-4.2-16"> Update the cwnd: </t>
+        <sourcecode markers="false" pn="section-4.2-17">
+cwnd = cwnd + (min(N, L * SMSS) / CSS_GROWTH_DIVISOR)
+</sourcecode>
+        <t indent="0" pn="section-4.2-18"> Keep track of the minimum observed RTT: </t>
+        <sourcecode markers="false" pn="section-4.2-19">
+currentRoundMinRTT = min(currentRoundMinRTT, currRTT)
+rttSampleCount += 1
+</sourcecode>
+        <t indent="0" pn="section-4.2-20"> For CSS rounds where at least N_RTT_SAMPLE RTT
+            samples have been obtained, check to see if the current round's
+            minRTT drops below baseline (cssBaselineMinRtt) indicating that
+            slow start exit was spurious:
+        </t>
+        <sourcecode markers="false" pn="section-4.2-21">
+if (currentRoundMinRTT &lt; cssBaselineMinRtt)
+  cssBaselineMinRtt = infinity
+  resume slow start including HyStart++
+</sourcecode>
+        <t indent="0" pn="section-4.2-22"> CSS lasts at most CSS_ROUNDS rounds. If the transition
+        into CSS happens in the middle of a round, that partial
+        round counts towards the limit. </t>
+        <t indent="0" pn="section-4.2-23"> If CSS_ROUNDS rounds are complete,
+        enter congestion avoidance by setting the ssthresh to the current cwnd.  </t>
+        <sourcecode markers="false" pn="section-4.2-24">
+ssthresh = cwnd
+</sourcecode>
+        <t indent="0" pn="section-4.2-25"> If loss or Explicit Congestion Notification (ECN) marking is observed at any time during
+        standard slow start or CSS, enter congestion avoidance 
+        by setting the ssthresh to the current cwnd.
+</t>
+        <sourcecode markers="false" pn="section-4.2-26">
+ssthresh = cwnd
+</sourcecode>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-tuning-constants-and-other-">Tuning Constants and Other Considerations</name>
+        <t indent="0" pn="section-4.3-1"> It is <bcp14>RECOMMENDED</bcp14> that a HyStart++ implementation use
+      the following constants:
+        </t>
+        <sourcecode markers="false" pn="section-4.3-2">
+MIN_RTT_THRESH = 4 msec
+MAX_RTT_THRESH = 16 msec
+MIN_RTT_DIVISOR = 8
+N_RTT_SAMPLE = 8
+CSS_GROWTH_DIVISOR = 4
+CSS_ROUNDS = 5
+L = infinity if paced, L = 8 if non-paced
+</sourcecode>
+        <t indent="0" pn="section-4.3-3"> These constants have been determined with lab measurements
+      and real-world deployments. An implementation <bcp14>MAY</bcp14> tune them for
+      different network characteristics. 
+        </t>
+        <t indent="0" pn="section-4.3-4"> The delay increase sensitivity is determined
+      by MIN_RTT_THRESH and MAX_RTT_THRESH. Smaller values of
+      MIN_RTT_THRESH may cause spurious exits from slow start. Larger
+      values of MAX_RTT_THRESH may result in slow start not exiting
+      until loss is encountered for connections on large RTT paths.
+        </t>
+        <t indent="0" pn="section-4.3-5">MIN_RTT_DIVISOR is a fraction of RTT to compute the delay threshold. 
+      A smaller value would mean a larger threshold and thus less sensitivity to 
+      delay increase, and vice versa. 
+        </t>
+        <t indent="0" pn="section-4.3-6"> While all TCP implementations are <bcp14>REQUIRED</bcp14> to take at least one RTT
+      sample each round, implementations of HyStart++ are <bcp14>RECOMMENDED</bcp14> to take 
+      at least N_RTT_SAMPLE RTT samples. Using lower values of N_RTT_SAMPLE will
+      lower the accuracy of the measured RTT for the round;
+      higher values will improve accuracy at the cost of more
+      processing. 
+        </t>
+        <t indent="0" pn="section-4.3-7"> The minimum value of CSS_GROWTH_DIVISOR <bcp14>MUST</bcp14> be at least 2.
+      A value of 1 results in the same aggressive behavior as regular
+      slow start. Values larger than 4 
+      will cause the algorithm to be less aggressive and maybe less
+      performant.
+        </t>
+        <t indent="0" pn="section-4.3-8"> Smaller values of CSS_ROUNDS may miss detecting jitter,
+      and larger values may limit performance.
+        </t>
+        <t indent="0" pn="section-4.3-9"> Packet pacing <xref target="ASA00" format="default" sectionFormat="of" derivedContent="ASA00"/> is a possible mechanism to 
+      avoid large bursts and their associated harm. A paced TCP implementation <bcp14>SHOULD</bcp14> 
+      use L = infinity. Burst concerns are mitigated by pacing, and this
+      setting allows for optimal cwnd growth on modern networks. 
+        </t>
+        <t indent="0" pn="section-4.3-10"> For TCP implementations that pace to mitigate burst concerns, L 
+      values smaller than infinity may suffer performance problems due to slow 
+      cwnd growth in high-speed networks. For non-paced TCP implementations, L values 
+      smaller than 8 may suffer performance problems due to slow cwnd growth in high-speed networks; L values larger than 8 may cause an increase in burstiness 
+      and thereby loss rates, and result in poor performance.
+        </t>
+        <t indent="0" pn="section-4.3-11"> An implementation <bcp14>SHOULD</bcp14> use HyStart++ only for the
+      initial slow start (when the ssthresh is at its initial value
+      of arbitrarily high per <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>) and fall
+      back to using standard slow start for the remainder of
+      the connection lifetime. This is acceptable because subsequent
+      slow starts will use the discovered ssthresh value to exit slow
+      start and avoid the overshoot problem. An implementation <bcp14>MAY</bcp14>
+      use HyStart++ to grow the restart window
+      <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/> after a long idle period. 
+        </t>
+        <t indent="0" pn="section-4.3-12">
+      In application-limited scenarios, the amount of data in
+      flight could fall below the bandwidth-delay product (BDP) and 
+      result in smaller RTT samples, which can trigger an exit back to 
+      slow start. It is expected that a connection might oscillate 
+      between CSS and slow start in such scenarios. But this behavior
+      will neither result in a connection prematurely entering
+      congestion avoidance nor cause overshooting compared to
+      slow start.
+        </t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-deployments-and-performance">Deployments and Performance Evaluations</name>
+      <t indent="0" pn="section-5-1"> At the time of this writing, HyStart++ as described
+        in this document has been default enabled for all TCP
+        connections in the Windows operating system for over
+        two years with pacing disabled and an actual L = 8.
+      </t>
+      <t indent="0" pn="section-5-2"> In lab measurements with Windows TCP, HyStart++ shows
+        goodput improvements as well as reductions in packet
+        loss and retransmissions compared to standard slow start.
+        For example, across a variety of tests on a 100 Mbps link
+        with a bottleneck buffer size of bandwidth-delay product,
+        HyStart++ reduces bytes retransmitted by 50% and
+        retransmission timeouts (RTOs) by 36%.
+      </t>
+      <t indent="0" pn="section-5-3"> In an A/B test where we compared an implementation of HyStart++
+        (based on an earlier draft version of this document) to
+        standard slow start across a large Windows device
+        population, out of 52 billion TCP connections, 0.7% of
+        connections move from 1 RTO to 0 RTOs and another 0.7% of
+        connections move from 2 RTOs to 1 RTO with HyStart++.
+        This test did not focus on send-heavy connections, and
+        the impact on send-heavy connections is likely much
+        higher. We plan to conduct more such production
+        experiments to gather more data in the future. 
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1"> HyStart++ enhances slow start and inherits the general
+      security considerations discussed in <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>.
+      </t>
+      <t indent="0" pn="section-6-2">An attacker can cause HyStart++ to exit slow start prematurely
+      and impair the performance of a TCP connection by, for example,
+      dropping data packets or their acknowledgments.</t>
+      <t indent="0" pn="section-6-3">The ACK division attack outlined in <xref target="SCWA99" format="default" sectionFormat="of" derivedContent="SCWA99"/> does not affect
+      HyStart++ because the congestion window increase in HyStart++ is based
+      on the number of bytes newly acknowledged in each arriving ACK rather than by
+      a particular constant on each arriving ACK.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5681" target="https://www.rfc-editor.org/info/rfc5681" quoteTitle="true" derivedAnchor="RFC5681">
+          <front>
+            <title>TCP Congestion Control</title>
+            <author fullname="M. Allman" initials="M." surname="Allman"/>
+            <author fullname="V. Paxson" initials="V." surname="Paxson"/>
+            <author fullname="E. Blanton" initials="E." surname="Blanton"/>
+            <date month="September" year="2009"/>
+            <abstract>
+              <t indent="0">This document defines TCP's four intertwined congestion control algorithms: slow start, congestion avoidance, fast retransmit, and fast recovery.  In addition, the document specifies how TCP should begin transmission after a relatively long idle period, as well as discussing various acknowledgment generation methods.  This document obsoletes RFC 2581. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5681"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5681"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="ASA00" target="https://doi.org/10.1109/INFCOM.2000.832483" quoteTitle="true" derivedAnchor="ASA00">
+          <front>
+            <title>Understanding the performance of TCP pacing</title>
+            <author initials="A." surname="Aggarwal">
+          </author>
+            <author initials="S." surname="Savage">
+          </author>
+            <author initials="T." surname="Anderson">
+          </author>
+            <date month="March" year="2000"/>
+          </front>
+          <refcontent>Proceedings IEEE INFOCOM 2000</refcontent>
+          <seriesInfo name="DOI" value="10.1109/INFCOM.2000.832483"/>
+        </reference>
+        <reference anchor="HyStart" target="https://doi.org/10.1016/j.comnet.2011.01.014" quoteTitle="true" derivedAnchor="HyStart">
+          <front>
+            <title>Taming the elephants: New TCP slow start</title>
+            <author initials="S." surname="Ha">
+          </author>
+            <author initials="I." surname="Rhee">
+          </author>
+            <date month="June" year="2011"/>
+          </front>
+          <refcontent>Computer Networks vol. 55, no. 9, pp. 2092-2110</refcontent>
+          <seriesInfo name="DOI" value="10.1016/j.comnet.2011.01.014"/>
+        </reference>
+        <reference anchor="RFC1122" target="https://www.rfc-editor.org/info/rfc1122" quoteTitle="true" derivedAnchor="RFC1122">
+          <front>
+            <title>Requirements for Internet Hosts - Communication Layers</title>
+            <author fullname="R. Braden" initials="R." role="editor" surname="Braden"/>
+            <date month="October" year="1989"/>
+            <abstract>
+              <t indent="0">This RFC is an official specification for the Internet community.  It incorporates by reference, amends, corrects, and supplements the primary protocol standards documents relating to hosts. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="3"/>
+          <seriesInfo name="RFC" value="1122"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1122"/>
+        </reference>
+        <reference anchor="RFC1191" target="https://www.rfc-editor.org/info/rfc1191" quoteTitle="true" derivedAnchor="RFC1191">
+          <front>
+            <title>Path MTU discovery</title>
+            <author fullname="J. Mogul" initials="J." surname="Mogul"/>
+            <author fullname="S. Deering" initials="S." surname="Deering"/>
+            <date month="November" year="1990"/>
+            <abstract>
+              <t indent="0">This memo describes a technique for dynamically discovering the maximum transmission unit (MTU) of an arbitrary internet path.  It specifies a small change to the way routers generate one type of ICMP message.  For a path that passes through a router that has not been so changed, this technique might not discover the correct Path MTU, but it will always choose a Path MTU as accurate as, and in many cases more accurate than, the Path MTU that would be chosen by current practice. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="1191"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1191"/>
+        </reference>
+        <reference anchor="RFC4821" target="https://www.rfc-editor.org/info/rfc4821" quoteTitle="true" derivedAnchor="RFC4821">
+          <front>
+            <title>Packetization Layer Path MTU Discovery</title>
+            <author fullname="M. Mathis" initials="M." surname="Mathis"/>
+            <author fullname="J. Heffner" initials="J." surname="Heffner"/>
+            <date month="March" year="2007"/>
+            <abstract>
+              <t indent="0">This document describes a robust method for Path MTU Discovery (PMTUD) that relies on TCP or some other Packetization Layer to probe an Internet path with progressively larger packets.  This method is described as an extension to RFC 1191 and RFC 1981, which specify ICMP-based Path MTU Discovery for IP versions 4 and 6, respectively. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4821"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4821"/>
+        </reference>
+        <reference anchor="RFC9002" target="https://www.rfc-editor.org/info/rfc9002" quoteTitle="true" derivedAnchor="RFC9002">
+          <front>
+            <title>QUIC Loss Detection and Congestion Control</title>
+            <author fullname="J. Iyengar" initials="J." role="editor" surname="Iyengar"/>
+            <author fullname="I. Swett" initials="I." role="editor" surname="Swett"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document describes loss detection and congestion control mechanisms for QUIC.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9002"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9002"/>
+        </reference>
+        <reference anchor="RFC9260" target="https://www.rfc-editor.org/info/rfc9260" quoteTitle="true" derivedAnchor="RFC9260">
+          <front>
+            <title>Stream Control Transmission Protocol</title>
+            <author fullname="R. Stewart" initials="R." surname="Stewart"/>
+            <author fullname="M. Tüxen" initials="M." surname="Tüxen"/>
+            <author fullname="K. Nielsen" initials="K." surname="Nielsen"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">This document describes the Stream Control Transmission Protocol (SCTP) and obsoletes RFC 4960. It incorporates the specification of the chunk flags registry from RFC 6096 and the specification of the I bit of DATA chunks from RFC 7053. Therefore, RFCs 6096 and 7053 are also obsoleted by this document. In addition, RFCs 4460 and 8540, which describe errata for SCTP, are obsoleted by this document.</t>
+              <t indent="0">SCTP was originally designed to transport Public Switched Telephone Network (PSTN) signaling messages over IP networks. It is also suited to be used for other applications, for example, WebRTC.</t>
+              <t indent="0">SCTP is a reliable transport protocol operating on top of a connectionless packet network, such as IP. It offers the following services to its users:</t>
+              <t indent="0">The design of SCTP includes appropriate congestion avoidance behavior and resistance to flooding and masquerade attacks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9260"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9260"/>
+        </reference>
+        <reference anchor="SCWA99" target="https://doi.org/10.1145/505696.505704" quoteTitle="true" derivedAnchor="SCWA99">
+          <front>
+            <title>TCP congestion control with a misbehaving receiver</title>
+            <author initials="S." surname="Savage">
+          </author>
+            <author initials="N." surname="Cardwell">
+          </author>
+            <author initials="D." surname="Wetherall">
+          </author>
+            <author initials="T." surname="Anderson">
+          </author>
+            <date month="October" year="1999"/>
+          </front>
+          <refcontent>ACM SIGCOMM Computer Communication Review, vol. 29, issue 5, pp. 71-78</refcontent>
+          <seriesInfo name="DOI" value="10.1145/505696.505704"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1"> During the discussions of this work on the TCPM mailing list and in working group meetings, 
+        helpful comments, critiques, and reviews were received from (listed alphabetically by last name)
+        <contact fullname="Mark Allman"/>, <contact fullname="Bob Briscoe"/>, <contact fullname="Neal Cardwell"/>, <contact fullname="Yuchung Cheng"/>, <contact fullname="Junho Choi"/>, <contact fullname="Martin Duke"/>, <contact fullname="Reese Enghardt"/>, 
+        <contact fullname="Christian Huitema"/>, <contact fullname="Ilpo Järvinen"/>, <contact fullname="Yoshifumi Nishida"/>, <contact fullname="Randall Stewart"/>, and <contact fullname="Michael Tüxen"/>.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="P." surname="Balasubramanian" fullname="Praveen Balasubramanian">
+        <organization showOnFrontPage="true">Confluent</organization>
+        <address>
+          <postal>
+            <street>899 West Evelyn Ave</street>
+            <city>Mountain View</city>
+            <region>CA</region>
+            <code>94041</code>
+            <country>United States of America</country>
+          </postal>
+          <email>pravb.ietf@gmail.com</email>
+        </address>
+      </author>
+      <author initials="Y." surname="Huang" fullname="Yi Huang">
+        <organization showOnFrontPage="true">Microsoft</organization>
+        <address>
+          <postal>
+            <street>One Microsoft Way</street>
+            <city>Redmond</city>
+            <region>WA</region>
+            <code>98052</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 425 703 0447</phone>
+          <email>huanyi@microsoft.com</email>
+        </address>
+      </author>
+      <author initials="M." surname="Olson" fullname="Matt Olson">
+        <organization showOnFrontPage="true">Microsoft</organization>
+        <address>
+          <postal>
+            <street>One Microsoft Way</street>
+            <city>Redmond</city>
+            <region>WA</region>
+            <code>98052</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 425 538 8598</phone>
+          <email>maolson@microsoft.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,2082 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ipsecme-rfc8229bis-09" indexInclude="true" ipr="trust200902" number="9329" obsoletes="8229" prepTime="2022-11-30T09:11:19" scripts="Common,Latin" sortRefs="false" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ipsecme-rfc8229bis-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9329" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="TCP Encapsulation of IKE &amp; IPsec Packets">TCP Encapsulation of Internet Key Exchange Protocol (IKE) and IPsec Packets</title>
+    <seriesInfo name="RFC" value="9329" stream="IETF"/>
+    <author fullname="Tommy Pauly" initials="T." surname="Pauly">
+      <organization showOnFrontPage="true">Apple Inc.</organization>
+      <address>
+        <postal>
+          <street>1 Infinite Loop</street>
+          <city>Cupertino</city>
+          <region>California</region>
+          <code>95014</code>
+          <country>United States of America</country>
+        </postal>
+        <email>tpauly@apple.com</email>
+      </address>
+    </author>
+    <author initials="V." surname="Smyslov" fullname="Valery Smyslov">
+      <organization showOnFrontPage="true">ELVIS-PLUS</organization>
+      <address>
+        <postal>
+          <street>PO Box 81</street>
+          <city>Moscow (Zelenograd)</city>
+          <code>124460</code>
+          <country>Russian Federation</country>
+        </postal>
+        <phone>+7 495 276 0211</phone>
+        <email>svan@elvis.ru</email>
+      </address>
+    </author>
+    <date month="11" year="2022"/>
+    <area>sec</area>
+    <workgroup>ipsecme</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1"> This document describes a method to transport Internet Key Exchange
+        Protocol (IKE) and IPsec packets over a TCP connection for traversing
+        network middleboxes that may block IKE negotiation over UDP.  This
+        method, referred to as "TCP encapsulation", involves sending both IKE
+        packets for Security Association (SA) establishment and Encapsulating
+        Security Payload (ESP) packets over a TCP connection.  This method is
+        intended to be used as a fallback option when IKE cannot be
+        negotiated over UDP.
+      </t>
+      <t indent="0" pn="section-abstract-2">TCP encapsulation for IKE and IPsec was defined in RFC 8229.
+        This document clarifies the specification for TCP encapsulation by including
+        additional clarifications obtained during implementation and deployment
+        of this method. This documents obsoletes RFC 8229.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9329" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-prior-work-and-motivation">Prior Work and Motivation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology-and-notation">Terminology and Notation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-configuration">Configuration</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-encapsulated-data-forma">TCP-Encapsulated Data Formats</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-encapsulated-ike-messag">TCP-Encapsulated IKE Message Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-encapsulated-esp-packet">TCP-Encapsulated ESP Packet Format</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-encapsulated-stream-pre">TCP-Encapsulated Stream Prefix</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-applicability">Applicability</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-recommended-fallback-from-u">Recommended Fallback from UDP</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-tcp-encapsulation">Using TCP Encapsulation</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-connection-establishment-an">Connection Establishment and Teardown</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-retransmissions">Retransmissions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cookies-and-puzzles">Cookies and Puzzles</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2.3.2">
+                  <li pn="section-toc.1-1.6.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.6.2.3.2.1.1"><xref derivedContent="6.3.1" format="counter" sectionFormat="of" target="section-6.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-statelessness-versus-delay-">Statelessness versus Delay of SA Establishment</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t indent="0" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-error-handling-in-ike_sa_in">Error Handling in IKE_SA_INIT</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.5">
+                <t indent="0" pn="section-toc.1-1.6.2.5.1"><xref derivedContent="6.5" format="counter" sectionFormat="of" target="section-6.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-nat-detection-payloads">NAT-Detection Payloads</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.6">
+                <t indent="0" pn="section-toc.1-1.6.2.6.1"><xref derivedContent="6.6" format="counter" sectionFormat="of" target="section-6.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-nat-keepalive-packets">NAT-Keepalive Packets</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.7">
+                <t indent="0" pn="section-toc.1-1.6.2.7.1"><xref derivedContent="6.7" format="counter" sectionFormat="of" target="section-6.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dead-peer-detection-and-tra">Dead Peer Detection and Transport Keepalives</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.8">
+                <t indent="0" pn="section-toc.1-1.6.2.8.1"><xref derivedContent="6.8" format="counter" sectionFormat="of" target="section-6.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implications-of-tcp-encapsu">Implications of TCP Encapsulation on IPsec SA Processing</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-ikev2-exte">Interaction with IKEv2 Extensions</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mobike-protocol">MOBIKE Protocol</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ike-redirect">IKE Redirect</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-session-resumption">IKEv2 Session Resumption</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-protocol-support-for-">IKEv2 Protocol Support for High Availability</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-fragmentation">IKEv2 Fragmentation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-middlebox-considerations">Middlebox Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-performance-considerations">Performance Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-in-tcp">TCP-in-TCP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-added-reliability-for-unrel">Added Reliability for Unreliable Protocols</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.3">
+                <t indent="0" pn="section-toc.1-1.9.2.3.1"><xref derivedContent="9.3" format="counter" sectionFormat="of" target="section-9.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-quality-of-service-markings">Quality-of-Service Markings</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.4">
+                <t indent="0" pn="section-toc.1-1.9.2.4.1"><xref derivedContent="9.4" format="counter" sectionFormat="of" target="section-9.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-maximum-segment-size">Maximum Segment Size</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.5">
+                <t indent="0" pn="section-toc.1-1.9.2.5.1"><xref derivedContent="9.5" format="counter" sectionFormat="of" target="section-9.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tunneling-ecn-in-tcp">Tunneling ECN in TCP</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-tcp-encapsulation-wit">Using TCP Encapsulation with TLS</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-exchanges-of-tcp-en">Example Exchanges of TCP Encapsulation with TLS 1.3</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.14.2">
+              <li pn="section-toc.1-1.14.2.1">
+                <t indent="0" pn="section-toc.1-1.14.2.1.1"><xref derivedContent="B.1" format="counter" sectionFormat="of" target="section-appendix.b.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-establishing-an-ike-session">Establishing an IKE Session</xref></t>
+              </li>
+              <li pn="section-toc.1-1.14.2.2">
+                <t indent="0" pn="section-toc.1-1.14.2.2.1"><xref derivedContent="B.2" format="counter" sectionFormat="of" target="section-appendix.b.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deleting-an-ike-session">Deleting an IKE Session</xref></t>
+              </li>
+              <li pn="section-toc.1-1.14.2.3">
+                <t indent="0" pn="section-toc.1-1.14.2.3.1"><xref derivedContent="B.3" format="counter" sectionFormat="of" target="section-appendix.b.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-re-establishing-an-ike-sess">Re-establishing an IKE Session</xref></t>
+              </li>
+              <li pn="section-toc.1-1.14.2.4">
+                <t indent="0" pn="section-toc.1-1.14.2.4.1"><xref derivedContent="B.4" format="counter" sectionFormat="of" target="section-appendix.b.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-mobike-between-udp-an">Using MOBIKE between UDP and TCP Encapsulation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.16">
+            <t indent="0" pn="section-toc.1-1.16.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1"> The Internet Key Exchange Protocol version 2 (IKEv2) <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> is a
+        protocol for establishing IPsec Security Associations (SAs) using
+        IKE messages over UDP for control traffic and using Encapsulating
+        Security Payload (ESP) messages <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> for encrypted data traffic.
+        Many network middleboxes that filter traffic on public hotspots block
+        all UDP traffic, including IKE and IPsec, but allow TCP connections
+        through because they appear to be web traffic.  Devices on these
+        networks that need to use IPsec (to access private enterprise
+        networks, to route Voice over IP calls to carrier networks
+        because of security policies, etc.) are unable to establish IPsec SAs.
+        This document defines a method for encapsulating IKE control messages
+        as well as ESP data messages within a TCP connection. Note that Authentication Header (AH) is not supported by this specification.
+      </t>
+      <t indent="0" pn="section-1-2"> Using TCP as a transport for IPsec packets adds the third option (below) to the
+        list of traditional IPsec transports:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-1-3"><li pn="section-1-3.1" derivedCounter="1.">Direct.  Usually, IKE negotiations begin over UDP port 500.  If
+          no Network Address Translation (NAT) device is detected between
+          the Initiator and the Responder, then subsequent IKE packets are
+          sent over UDP port 500 and IPsec data packets are sent
+          using ESP.</li>
+        <li pn="section-1-3.2" derivedCounter="2.">UDP Encapsulation.  Described in <xref target="RFC3948" format="default" sectionFormat="of" derivedContent="RFC3948"/>.  If a NAT is detected between the
+          Initiator and the Responder, then subsequent IKE packets are sent
+          over UDP port 4500 with 4 bytes of zero at the start of the
+          UDP payload, and ESP packets are sent out over UDP port 4500.
+          Some implementations default to using UDP encapsulation even when no NAT is
+          detected on the path, as some middleboxes do not support IP
+          protocols other than TCP and UDP.</li>
+        <li pn="section-1-3.3" derivedCounter="3.">TCP Encapsulation.  Described in this document.  If the other two methods are not available or
+          appropriate, IKE negotiation packets as well as ESP packets can
+          be sent over a single TCP connection to the peer.</li>
+      </ol>
+      <t indent="0" pn="section-1-4"> Direct use of ESP or UDP encapsulation should be preferred by
+        IKE implementations due to performance concerns when using
+        TCP encapsulation (<xref target="perf" format="default" sectionFormat="of" derivedContent="Section 9"/>).  Most implementations should use
+        TCP encapsulation only on networks where negotiation over UDP has
+        been attempted without receiving responses from the peer or if a
+        network is known to not support UDP.</t>
+      <section anchor="prior" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-prior-work-and-motivation">Prior Work and Motivation</name>
+        <t indent="0" pn="section-1.1-1"> Encapsulating IKE connections within TCP streams is a common approach
+          to solve the problem of UDP packets being blocked by network
+          middleboxes.  The specific goals of this document are as follows:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1.1-2">
+          <li pn="section-1.1-2.1">To promote interoperability by defining a standard method of
+            framing IKE and ESP messages within TCP streams.</li>
+          <li pn="section-1.1-2.2">To be compatible with the current IKEv2 standard without requiring
+            modifications or extensions.</li>
+          <li pn="section-1.1-2.3">To use IKE over UDP by default to avoid the overhead of other
+            alternatives that always rely on TCP or Transport Layer Security
+            (TLS) <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.</li>
+        </ul>
+        <t indent="0" pn="section-1.1-3">Some previous alternatives include:</t>
+        <dl newline="true" spacing="normal" indent="3" pn="section-1.1-4">
+          <dt pn="section-1.1-4.1">Cellular Network Access:</dt>
+          <dd pn="section-1.1-4.2">
+            Interworking Wireless LAN (IWLAN) uses IKEv2 to create secure
+            connections to cellular carrier networks for making voice calls
+            and accessing other network services over Wi-Fi networks. 3GPP has
+            recommended that IKEv2 and ESP packets be sent within a TLS
+            connection to be able to establish connections on restrictive
+            networks.
+            </dd>
+          <dt pn="section-1.1-4.3">ISAKMP over TCP:</dt>
+          <dd pn="section-1.1-4.4">
+            Various non-standard extensions to the Internet Security
+            Association and Key Management Protocol (ISAKMP) have been
+            deployed that send IPsec traffic over TCP or TCP-like packets.
+            </dd>
+          <dt pn="section-1.1-4.5">Secure Sockets Layer (SSL) VPNs:</dt>
+          <dd pn="section-1.1-4.6">
+            Many proprietary VPN solutions use a combination of TLS and IPsec
+            in order to provide reliability.  These often run on TCP port 443.
+            </dd>
+          <dt pn="section-1.1-4.7">IKEv2 over TCP:</dt>
+          <dd pn="section-1.1-4.8">
+            IKEv2 over TCP as described in <xref target="I-D.ietf-ipsecme-ike-tcp" format="default" sectionFormat="of" derivedContent="IPSECME-IKE-TCP"/> is used to avoid UDP
+            fragmentation.
+            </dd>
+        </dl>
+        <t indent="0" pn="section-1.1-5">
+
+          TCP encapsulation for IKE and IPsec was defined in <xref target="RFC8229" format="default" sectionFormat="of" derivedContent="RFC8229"/>.
+          This document updates the specification for TCP encapsulation by including
+          additional clarifications obtained during implementation and deployment
+          of this method.
+        </t>
+        <t indent="0" pn="section-1.1-6">In particular:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1.1-7">
+          <li pn="section-1.1-7.1">The interpretation of the Length field preceding every message is clarified (<xref target="format" format="default" sectionFormat="of" derivedContent="Section 3"/>).</li>
+          <li pn="section-1.1-7.2">The use of the NAT_DETECTION_*_IP notifications is clarified 
+            (Sections <xref format="counter" target="fallback" sectionFormat="of" derivedContent="5.1"/>, <xref format="counter" target="nat-det" sectionFormat="of" derivedContent="6.5"/>, 
+            and <xref format="counter" target="mobike" sectionFormat="of" derivedContent="7.1"/>).</li>
+          <li pn="section-1.1-7.3">Retransmission behavior is clarified (<xref target="retr" format="default" sectionFormat="of" derivedContent="Section 6.2"/>).</li>
+          <li pn="section-1.1-7.4">The use of cookies and puzzles is described in more detail (<xref target="cookie-puzzle" format="default" sectionFormat="of" derivedContent="Section 6.3"/>).</li>
+          <li pn="section-1.1-7.5">Error handling is clarified (<xref target="errors" format="default" sectionFormat="of" derivedContent="Section 6.4"/>).</li>
+          <li pn="section-1.1-7.6">Implications of TCP encapsulation on IPsec SA processing are expanded (<xref target="ipsec" format="default" sectionFormat="of" derivedContent="Section 6.8"/>).</li>
+          <li pn="section-1.1-7.7">
+            <xref target="extensions" format="default" sectionFormat="of" derivedContent="Section 7"/> describing interactions with other IKEv2 extensions is added.</li>
+          <li pn="section-1.1-7.8">The interaction of TCP encapsulation with IKEv2 Mobility and Multihoming (MOBIKE) is clarified (<xref target="mobike" format="default" sectionFormat="of" derivedContent="Section 7.1"/>).</li>
+          <li pn="section-1.1-7.9">The recommendation for TLS encapsulation (<xref target="tls" format="default" sectionFormat="of" derivedContent="Appendix A"/>) now includes TLS 1.3.</li>
+          <li pn="section-1.1-7.10">Examples of TLS encapsulation are provided using TLS 1.3 (<xref target="tls-example" format="default" sectionFormat="of" derivedContent="Appendix B"/>).</li>
+          <li pn="section-1.1-7.11">More security considerations are added.</li>
+        </ul>
+      </section>
+      <section anchor="mustshouldmay" numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-terminology-and-notation">Terminology and Notation</name>
+        <t indent="0" pn="section-1.2-1"> This document distinguishes between the IKE peer that initiates TCP
+          connections to be used for TCP encapsulation and the roles of
+          Initiator and Responder for particular IKE messages.  During the
+          course of IKE exchanges, the role of IKE Initiator and Responder may
+          swap for a given SA (as with IKE SA rekeys), while the Initiator of
+          the TCP connection is still responsible for tearing down the TCP
+          connection and re-establishing it if necessary.  For this reason,
+          this document will use the term "TCP Originator" to indicate the IKE
+          peer that initiates TCP connections.  The peer that receives TCP
+          connections will be referred to as the "TCP Responder".  If an IKE SA
+          is rekeyed one or more times, the TCP Originator <bcp14>MUST</bcp14> remain the peer
+          that originally initiated the first IKE SA.
+        </t>
+        <t indent="0" pn="section-1.2-2">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="config" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-configuration">Configuration</name>
+      <t indent="0" pn="section-2-1">One of the main reasons to use TCP encapsulation is that UDP traffic
+        may be entirely blocked on a network.  Because of this, support for
+        TCP encapsulation is not specifically negotiated in the IKE exchange.
+        Instead, support for TCP encapsulation must be preconfigured on both
+        the TCP Originator and the TCP Responder.</t>
+      <t indent="0" pn="section-2-2">Compliant implementations <bcp14>MUST</bcp14> support TCP encapsulation on TCP port 4500,
+        which is reserved for IPsec NAT traversal.</t>
+      <t indent="0" pn="section-2-3">Beyond a flag indicating support for TCP encapsulation, the
+        configuration for each peer can include the following optional
+        parameters:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-4">
+        <li pn="section-2-4.1">Alternate TCP ports on which the specific TCP Responder listens
+          for incoming connections.  Note that the TCP Originator may
+          initiate TCP connections to the TCP Responder from any local port.</li>
+        <li pn="section-2-4.2">An extra framing protocol to use on top of TCP to further
+          encapsulate the stream of IKE and IPsec packets.  See <xref target="tls" format="default" sectionFormat="of" derivedContent="Appendix A"/>
+          for a detailed discussion.</li>
+      </ul>
+      <t indent="0" pn="section-2-5">Since TCP encapsulation of IKE and IPsec packets adds overhead and
+        has potential performance trade-offs compared to direct or
+        UDP-encapsulated SAs (as described in <xref target="perf" format="default" sectionFormat="of" derivedContent="Section 9"/>), implementations
+        <bcp14>SHOULD</bcp14> prefer ESP direct or UDP-encapsulated SAs over
+        TCP-encapsulated SAs when possible.
+      </t>
+    </section>
+    <section anchor="format" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-tcp-encapsulated-data-forma">TCP-Encapsulated Data Formats</name>
+      <t indent="0" pn="section-3-1">Like UDP encapsulation, TCP encapsulation uses the first 4 bytes
+        of a message to differentiate IKE and ESP messages.  TCP
+        encapsulation also adds a 16-bit Length field that precedes every message
+        to define the boundaries of messages within a stream.  
+		The value in this field is equal to the length of the original message
+		plus the length of the field itself, in octets.  If the first 32 bits
+		of the message are zeros (a non-ESP marker), then the contents comprise an
+        IKE message.  Otherwise, the contents comprise an ESP message.
+        AH messages are not supported for TCP
+        encapsulation.
+      </t>
+      <t indent="0" pn="section-3-2">Although a TCP stream may be able to send very long messages,
+        implementations <bcp14>SHOULD</bcp14> limit message lengths to match the lengths
+        used for UDP encapsulation of ESP messages. 
+	The maximum message length is used as the effective MTU 
+        for connections that are being encrypted using ESP, 
+        so the maximum message length will influence characteristics of these
+        connections, such as the TCP Maximum Segment Size (MSS).
+      </t>
+      <t indent="0" pn="section-3-3">Due to the fact that the Length field is 16 bits and includes both the message length and the 
+        length of the field itself, it is impossible to encapsulate messages greater than 65533 
+        octets in length. In most cases, this is not a problem. Note that a similar
+        limitation exists for encapsulation ESP in UDP <xref target="RFC3948" format="default" sectionFormat="of" derivedContent="RFC3948"/>.
+      </t>
+      <t indent="0" pn="section-3-4">The minimum size of an encapsulated message is 1 octet 
+        (for NAT-keepalive packets, see <xref target="nat-ka" format="default" sectionFormat="of" derivedContent="Section 6.6"/>). Empty messages 
+        (where the Length field equals 2) <bcp14>MUST</bcp14> be silently ignored by receiver. 
+      </t>
+      <t indent="0" pn="section-3-5">Note that this method of encapsulation will also work for placing IKE
+        and ESP messages within any protocol that presents a stream
+        abstraction, beyond TCP.
+      </t>
+      <section anchor="format-ike" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-tcp-encapsulated-ike-messag">TCP-Encapsulated IKE Message Format</name>
+        <figure anchor="f-format-ike" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-ike-message-format-for-tcp-">IKE Message Format for TCP Encapsulation</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.1-1.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+                                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                |            Length             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         Non-ESP Marker                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                     IKE Message (RFC 7296)                    ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.1-2"> The IKE message is preceded by a 16-bit Length field in network byte
+          order that specifies the length of the IKE message (including the
+          non-ESP marker) within the TCP stream.  As with IKE over UDP
+          port 4500, a zeroed 32-bit non-ESP marker is inserted before the
+          start of the IKE header in order to differentiate the traffic from
+          ESP traffic between the same addresses and ports.
+        </t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-3.1-3">
+          <dt pn="section-3.1-3.1">Length (2 octets, unsigned integer):</dt>
+          <dd pn="section-3.1-3.2"> Length of the IKE message,
+            including the Length field and non-ESP marker. The value in the Length
+			field <bcp14>MUST NOT</bcp14> be 0 or 1. The receiver <bcp14>MUST</bcp14> treat these values as
+			fatal errors and <bcp14>MUST</bcp14> close the TCP connection.
+            </dd>
+          <dt pn="section-3.1-3.3">Non-ESP Marker (4 octets):</dt>
+          <dd pn="section-3.1-3.4">Four zero-valued bytes.</dd>
+        </dl>
+      </section>
+      <section anchor="format-esp" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-tcp-encapsulated-esp-packet">TCP-Encapsulated ESP Packet Format</name>
+        <figure anchor="f-format-esp" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-esp-packet-format-for-tcp-e">ESP Packet Format for TCP Encapsulation</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.2-1.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+                                +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                |            Length             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                     ESP Packet (RFC 4303)                     ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.2-2">The ESP packet is preceded by a 16-bit Length field in network byte
+          order that specifies the length of the ESP packet within the TCP
+          stream.</t>
+        <t indent="0" pn="section-3.2-3">The Security Parameter Index (SPI) field <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> in the ESP header
+          <bcp14>MUST NOT</bcp14> be a zero value.</t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-3.2-4">
+          <dt pn="section-3.2-4.1">Length (2 octets, unsigned integer):</dt>
+          <dd pn="section-3.2-4.2">Length of the ESP
+          packet, including the Length field. The value in the Length field
+          <bcp14>MUST NOT</bcp14> be 0 or 1. The receiver <bcp14>MUST</bcp14>
+          treat these values as fatal errors and <bcp14>MUST</bcp14> close TCP
+          connection.</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="prefix" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-tcp-encapsulated-stream-pre">TCP-Encapsulated Stream Prefix</name>
+      <t indent="0" pn="section-4-1">Each stream of bytes used for IKE and IPsec encapsulation <bcp14>MUST</bcp14> begin
+        with a fixed sequence of 6 bytes as a magic value, containing the
+        characters "IKETCP" as ASCII values.
+      </t>
+      <figure anchor="f-prefix" align="left" suppress-title="false" pn="figure-3">
+        <name slugifiedName="name-tcp-encapsulated-stream-pref">TCP-Encapsulated Stream Prefix</name>
+        <artwork name="" type="" align="left" alt="" pn="section-4-2.1">
+   0      1      2      3      4      5
++------+------+------+------+------+------+
+| 0x49 | 0x4b | 0x45 | 0x54 | 0x43 | 0x50 |
++------+------+------+------+------+------+</artwork>
+      </figure>
+      <t indent="0" pn="section-4-3">This value is intended to
+        identify and validate that the TCP connection is being used for TCP
+        encapsulation as defined in this document, to avoid conflicts with
+        the prevalence of previous non-standard protocols that used TCP
+        port 4500.  This value is only sent once, by the TCP Originator only,
+        at the beginning of the TCP stream of IKE and ESP messages.
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-4-4">
+Initiator                                                   Responder
+---------------------------------------------------------------------
+          &lt;new TCP connection is established by Initiator&gt;
+
+Stream Prefix|Length|non-ESP marker|IKE message --&gt;
+                                &lt;-- Length|non-ESP marker|IKE message
+Length|non-ESP marker|IKE message --&gt;
+                                &lt;-- Length|non-ESP marker|IKE message
+
+                                [...]
+Length|ESP packet -&gt;
+                                                 &lt;- Length|ESP packet</artwork>
+      <t indent="0" pn="section-4-5">If other framing protocols are used within TCP to further encapsulate
+        or encrypt the stream of IKE and ESP messages, the stream prefix must
+        be at the start of the TCP Originator's IKE and ESP message stream
+        within the added protocol layer (<xref target="tls" format="default" sectionFormat="of" derivedContent="Appendix A"/>).  Although some framing
+        protocols do support negotiating inner protocols, the stream prefix
+        should always be used in order for implementations to be as generic
+        as possible and not rely on other framing protocols on top of TCP.
+      </t>
+    </section>
+    <section anchor="applicability" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-applicability">Applicability</name>
+      <t indent="0" pn="section-5-1">TCP encapsulation is applicable only when it has been configured to
+        be used with specific IKE peers.  If a Responder is configured to accept and is allowed to use
+        TCP encapsulation, it <bcp14>MUST</bcp14> listen on the configured port(s) in case
+        any peers will initiate new IKE sessions.  Initiators <bcp14>MAY</bcp14> use TCP
+        encapsulation for any IKE session to a peer that is configured to
+        support TCP encapsulation, although it is recommended that Initiators
+        only use TCP encapsulation when traffic over UDP is blocked.
+      </t>
+      <t indent="0" pn="section-5-2">Since the support of TCP encapsulation is a configured property, not
+        a negotiated one, it is recommended that if there are multiple IKE
+        endpoints representing a single peer (such as multiple machines with
+        different IP addresses when connecting by Fully Qualified Domain
+        Name (FQDN), or endpoints used with IKE redirection), all of the endpoints
+        equally support TCP encapsulation.
+      </t>
+      <t indent="0" pn="section-5-3">If TCP encapsulation is being used for a specific IKE SA, all
+        IKE messages for that IKE SA and ESP packets for its Child SAs <bcp14>MUST</bcp14> be sent over a TCP
+        connection until the SA is deleted or IKEv2 Mobility and Multihoming
+        (MOBIKE) is used to change the SA endpoints and/or the encapsulation
+        protocol.  See <xref target="mobike" format="default" sectionFormat="of" derivedContent="Section 7.1"/> for more details on using MOBIKE to
+        transition between encapsulation modes.
+      </t>
+      <section anchor="fallback" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-recommended-fallback-from-u">Recommended Fallback from UDP</name>
+        <t indent="0" pn="section-5.1-1">Since UDP is the preferred method of transport for IKE messages,
+          implementations that use TCP encapsulation should have an algorithm
+          for deciding when to use TCP after determining that UDP is unusable.
+          If an Initiator implementation has no prior knowledge about the
+          network it is on and the status of UDP on that network, it <bcp14>SHOULD</bcp14>
+          always attempt to negotiate IKE over UDP first.  IKEv2 defines how to
+          use retransmission timers with IKE messages and, specifically,
+          IKE_SA_INIT messages <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/>.  Generally, this means that the
+          implementation will define a frequency of retransmission and the
+          maximum number of retransmissions allowed before marking the IKE SA
+          as failed.  An implementation can attempt negotiation over TCP once
+          it has hit the maximum retransmissions over UDP, or slightly before
+          to reduce connection setup delays.  It is recommended that the
+          initial message over UDP be retransmitted at least once before
+          falling back to TCP, unless the Initiator knows beforehand that the
+          network is likely to block UDP.
+        </t>
+        <t indent="0" pn="section-5.1-2">When switching from UDP to TCP, a new IKE_SA_INIT exchange <bcp14>MUST</bcp14> be
+          initiated with the Initiator's new SPI and with recalculated content of
+          NAT_DETECTION_*_IP notifications.
+        </t>
+      </section>
+    </section>
+    <section anchor="tcp-encap" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-using-tcp-encapsulation">Using TCP Encapsulation</name>
+      <section anchor="establish" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-connection-establishment-an">Connection Establishment and Teardown</name>
+        <t indent="0" pn="section-6.1-1">When the IKE Initiator uses TCP encapsulation, it will initiate a TCP
+          connection to the Responder using the Responder's preconfigured TCP port.  The first
+          bytes sent on the TCP stream <bcp14>MUST</bcp14> be the stream prefix value (<xref target="prefix" format="default" sectionFormat="of" derivedContent="Section 4"/>).
+          After this prefix, encapsulated IKE messages will negotiate the IKE
+          SA and initial Child SA <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/>.  After this point, both
+          encapsulated IKE (<xref target="f-format-ike" format="default" sectionFormat="of" derivedContent="Figure 1"/>) and ESP (<xref target="f-format-esp" format="default" sectionFormat="of" derivedContent="Figure 2"/>)
+          messages will be sent over the TCP connection.  The TCP Responder <bcp14>MUST</bcp14> wait for the entire
+          stream prefix to be received on the stream before trying to parse out
+          any IKE or ESP messages.  The stream prefix is sent only once, and
+          only by the TCP Originator.
+        </t>
+        <t indent="0" pn="section-6.1-2">In order to close an IKE session, either the Initiator or Responder
+          <bcp14>SHOULD</bcp14> gracefully tear down IKE SAs with DELETE payloads.  Once the
+          SA has been deleted, the TCP Originator <bcp14>SHOULD</bcp14> close the TCP
+          connection if it does not intend to use the connection for another
+          IKE session to the TCP Responder.  If the TCP connection is no longer 
+          associated with any active IKE SA, the TCP Responder <bcp14>MAY</bcp14> close the connection 
+          to clean up IKE resources if the TCP Originator didn't close it within some reasonable period of time (e.g., a few seconds).
+        </t>
+        <t indent="0" pn="section-6.1-3">An unexpected FIN or a TCP Reset on the TCP connection may indicate a
+          loss of connectivity, an attack, or some other error.  If a DELETE
+          payload has not been sent, both sides <bcp14>SHOULD</bcp14> maintain the state for
+          their SAs for the standard lifetime or timeout period.  The TCP
+          Originator is responsible for re-establishing the TCP connection if
+          it is torn down for any unexpected reason.  Since new TCP connections
+          may use different IP addresses and/or ports due to NAT mappings or local address or port allocations
+          changing, the TCP Responder <bcp14>MUST</bcp14> allow packets for existing SAs to be
+          received from new source IP addresses and ports. Note that the 
+	  IPv6 Flow-ID header <bcp14>MUST</bcp14> remain constant when a new TCP connection is created to avoid ECMP load balancing.
+
+        </t>
+        <t indent="0" pn="section-6.1-4">A peer <bcp14>MUST</bcp14> discard a partially received message due to a broken
+          connection.
+        </t>
+        <t indent="0" pn="section-6.1-5">Whenever the TCP Originator opens a new TCP connection to be used for
+          an existing IKE SA, it <bcp14>MUST</bcp14> send the stream prefix first, before any
+          IKE or ESP messages.  This follows the same behavior as the initial
+          TCP connection.
+        </t>
+        <t indent="0" pn="section-6.1-6">Multiple IKE SAs <bcp14>MUST NOT</bcp14> share a single TCP connection, unless one
+          is a rekey of an existing IKE SA, in which case there will
+          temporarily be two IKE SAs on the same TCP connection.
+        </t>
+        <t indent="0" pn="section-6.1-7">If a TCP connection is being used to continue an existing IKE/ESP
+  session, the TCP Responder can recognize the session using either the
+  IKE SPI from an encapsulated IKE message or the ESP SPI from an
+  encapsulated ESP packet.  If the session had been fully established
+  previously, it is suggested that the TCP Originator send an
+  UPDATE_SA_ADDRESSES message if MOBIKE is supported and an
+  empty informational message if it is not.
+        </t>
+        <t indent="0" pn="section-6.1-8">The TCP Responder <bcp14>MUST NOT</bcp14> accept any messages for the existing IKE
+          session on a new incoming connection, unless that connection begins
+          with the stream prefix.  If either the TCP Originator or TCP
+          Responder detects corruption on a connection that was started with a
+          valid stream prefix, it <bcp14>SHOULD</bcp14> close the TCP connection.  The
+          connection can be corrupted if there are too many
+          subsequent messages that cannot be parsed as valid IKE messages or
+          ESP messages with known SPIs, or if the authentication check for an
+          IKE message or ESP message with a known SPI fails.  Implementations <bcp14>SHOULD NOT</bcp14>
+          tear down a connection if only a few consecutive ESP packets have unknown
+          SPIs since the SPI databases may be momentarily out of sync.  If
+          there is instead a syntax issue within an IKE message, an
+          implementation <bcp14>MUST</bcp14> send the INVALID_SYNTAX notify payload and
+          tear down the IKE SA as usual, rather than tearing down the TCP
+          connection directly.
+        </t>
+        <t indent="0" pn="section-6.1-9">A TCP Originator <bcp14>SHOULD</bcp14> only open one TCP connection per IKE SA, over
+          which it sends all of the corresponding IKE and ESP messages.  This
+          helps ensure that any firewall or NAT mappings allocated for the TCP
+          connection apply to all of the traffic associated with the IKE SA
+          equally.
+        </t>
+        <t indent="0" pn="section-6.1-10">  As with TCP Originators, a TCP Responder <bcp14>SHOULD</bcp14> send packets for an
+  IKE SA and its Child SAs over only one TCP connection at any given
+  time.  It <bcp14>SHOULD</bcp14> choose the TCP connection on which it last received
+  a valid and decryptable IKE or ESP message.  In order to be
+  considered valid for choosing a TCP connection, an IKE message must
+  be successfully decrypted and authenticated, not be a retransmission
+  of a previously received message, and be within the expected window
+  for IKE message IDs.  Similarly, an ESP message must be successfully
+  decrypted and authenticated, and must not be a replay of a previous
+  message.
+        </t>
+        <t indent="0" pn="section-6.1-11">Since a connection may be broken and a new connection re-established
+          by the TCP Originator without the TCP Responder being aware, a TCP
+          Responder <bcp14>SHOULD</bcp14> accept receiving IKE and ESP messages on both old
+          and new connections until the old connection is closed by the TCP
+          Originator.  A TCP Responder <bcp14>MAY</bcp14> close a TCP connection that it
+          perceives as idle and extraneous (one previously used for IKE and ESP
+          messages that has been replaced by a new connection).
+        </t>
+      </section>
+      <section anchor="retr" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-retransmissions">Retransmissions</name>
+        <t indent="0" pn="section-6.2-1"><xref target="RFC7296" sectionFormat="of" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.1" derivedContent="RFC7296"/> describes how IKEv2 deals with the unreliability
+        of the UDP protocol.
+
+
+
+In brief, the exchange Initiator is responsible for retransmissions
+and must retransmit request messages until a response message is
+received.  If no reply is received after several
+          retransmissions, the SA is deleted.  The Responder never initiates retransmission,
+          but it must send a response message again in case it receives a retransmitted request.
+        </t>
+        <t indent="0" pn="section-6.2-2">When IKEv2 uses a reliable transport protocol, like TCP, the retransmission rules are as follows:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-3">
+          <li pn="section-6.2-3.1">The exchange Initiator <bcp14>SHOULD NOT</bcp14> retransmit request message (*); if
+            no response is received within some reasonable period of time, the
+            IKE SA is deleted.
+            </li>
+          <li pn="section-6.2-3.2">If a new TCP connection for the IKE SA is established while the exchange
+            Initiator is waiting for a response, the Initiator <bcp14>MUST</bcp14>
+            retransmit its request over this connection and continue to wait for a response.
+            </li>
+          <li pn="section-6.2-3.3">The exchange Responder does not change its behavior, but acts as
+			described in <xref target="RFC7296" sectionFormat="of" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.1" derivedContent="RFC7296"/>.
+            </li>
+        </ul>
+        <t indent="0" pn="section-6.2-4">
+          (*) This is an optimization; implementations may continue to use the retransmission logic from 
+          <xref target="RFC7296" sectionFormat="of" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.1" derivedContent="RFC7296"/> for simplicity.
+        </t>
+      </section>
+      <section anchor="cookie-puzzle" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-cookies-and-puzzles">Cookies and Puzzles</name>
+        <t indent="0" pn="section-6.3-1">IKEv2 provides a DoS attack protection mechanism through Cookies, which
+          is described in <xref target="RFC7296" sectionFormat="of" section="2.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.6" derivedContent="RFC7296"/>.  <xref target="RFC8019" format="default" sectionFormat="of" derivedContent="RFC8019"/> extends this
+          mechanism for protection against DDoS attacks by means of Client
+          Puzzles.  Both mechanisms allow the Responder to avoid keeping state until
+          the Initiator proves its IP address is legitimate (and after solving a puzzle if required).
+        </t>
+        <t indent="0" pn="section-6.3-2">The connection-oriented nature of TCP transport brings additional 
+          considerations for using these mechanisms.
+          In general, Cookies provide less value in the case of TCP encapsulation; by the time a Responder receives the IKE_SA_INIT request, the TCP
+          session has already been established and the Initiator's IP address
+          has been verified.  Moreover, a TCP/IP stack creates state once
+          a TCP SYN packet is received (unless SYN Cookies described in <xref target="RFC4987" format="default" sectionFormat="of" derivedContent="RFC4987"/>
+          are employed), which contradicts the statelessness of IKEv2 Cookies.
+          In particular, with TCP, an attacker is able to mount a SYN flooding DoS attack 
+          that an IKEv2 Responder cannot prevent using stateless IKEv2 Cookies.
+          Thus, when using TCP encapsulation, it makes little sense to send Cookie requests without 
+          Puzzles unless the Responder is concerned with a possibility of TCP
+          sequence number attacks (see <xref target="RFC6528" format="default" sectionFormat="of" derivedContent="RFC6528"/> and <xref target="RFC9293" format="default" sectionFormat="of" derivedContent="RFC9293"/> for details). Puzzles, on
+		  the other hand, still remain useful (and their use requires using Cookies).
+        </t>
+        <t indent="0" pn="section-6.3-3">The following considerations are applicable for using Cookie and
+          Puzzle mechanisms in the case of TCP encapsulation:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.3-4">
+          <li pn="section-6.3-4.1">The exchange Responder <bcp14>SHOULD NOT</bcp14> send an IKEv2 Cookie request without an accompanied Puzzle;
+		    implementations might choose to have exceptions to this for cases like mitigating TCP sequence number attacks.
+            </li>
+          <li pn="section-6.3-4.2">If the Responder chooses to send a Cookie request (possibly along
+            with Puzzle request), then the TCP connection that the IKE_SA_INIT
+            request message was received over <bcp14>SHOULD</bcp14> be closed after the Responder sends its reply
+            and no repeated requests are received within some short period of time 
+            to keep the Responder stateless (see <xref target="tradeoff" format="default" sectionFormat="of" derivedContent="Section 6.3.1"/>). Note that the Responder <bcp14>MUST NOT</bcp14> 
+            include the Initiator's TCP port into the Cookie
+			calculation (*) since the Cookie can be returned over a new
+			TCP connection with a different port.
+            </li>
+          <li pn="section-6.3-4.3">The exchange Initiator acts as described in <xref target="RFC7296" sectionFormat="of" section="2.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.6" derivedContent="RFC7296"/> and <xref target="RFC8019" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8019#section-7" derivedContent="RFC8019"/>, i.e., using TCP encapsulation doesn't change the Initiator's behavior.
+            </li>
+        </ul>
+        <t indent="0" pn="section-6.3-5">
+
+          (*) Examples of Cookie calculation methods are given in <xref target="RFC7296" sectionFormat="of" section="2.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.6" derivedContent="RFC7296"/> and in <xref target="RFC8019" sectionFormat="of" section="7.1.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8019#section-7.1.1.3" derivedContent="RFC8019"/>, and they don't
+          include transport protocol ports.  However, these examples are given
+          for illustrative purposes since the Cookie generation algorithm is a
+          local matter and some implementations might include port numbers
+          that won't work with TCP encapsulation. Note also that these
+          examples include the Initiator's IP address in Cookie calculation.
+          In general, this address may change between two initial requests
+          (with and without Cookies).  This may happen due to NATs, which
+          have more freedom to change source IP addresses for new TCP
+          connections than for UDP. In such cases, cookie verification might
+          fail.
+        </t>
+        <section anchor="tradeoff" numbered="true" toc="include" removeInRFC="false" pn="section-6.3.1">
+          <name slugifiedName="name-statelessness-versus-delay-">Statelessness versus Delay of SA Establishment</name>
+          <t indent="0" pn="section-6.3.1-1">
+            There is a trade-off in choosing the period of time after which
+            the TCP connection is closed. If it is too short, then the proper Initiator
+            that repeats its request would need to re-establish the TCP connection,
+            introducing additional delay. On the other hand, if it is too long, then 
+            the Responder's resources would be wasted in case the Initiator never comes back.   
+            This document doesn't mandate the duration of time because it doesn't affect interoperability, 
+            but it is believed that 5-10 seconds is a good compromise. Also, note that if the Responder requests that 
+            the Initiator solve a puzzle, then the Responder can estimate how long it would take the Initiator 
+            to find a solution and adjust the time interval accordingly.
+          </t>
+        </section>
+      </section>
+      <section anchor="errors" numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-error-handling-in-ike_sa_in">Error Handling in IKE_SA_INIT</name>
+        <t indent="0" pn="section-6.4-1"><xref target="RFC7296" sectionFormat="of" section="2.21.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.21.1" derivedContent="RFC7296"/>
+        describes how error notifications are handled in the IKE_SA_INIT
+        exchange.  In particular, it is advised that the Initiator should not
+        act immediately after receiving an error notification; instead, it should
+        wait some time for a valid response since the IKE_SA_INIT
+        messages are completely unauthenticated.  This advice does not apply
+        equally in the case of TCP encapsulation.  If the Initiator receives a
+        response message over TCP, then either this message is genuine and was
+        sent by the peer or the TCP session was hijacked and the message is
+        forged. In the latter case, no genuine messages from the Responder
+        will be received.
+        </t>
+        <t indent="0" pn="section-6.4-2">Thus, in the case of TCP encapsulation, an Initiator <bcp14>SHOULD NOT</bcp14> wait for
+          additional messages in case it receives an error notification from the
+          Responder in the IKE_SA_INIT exchange.
+        </t>
+        <t indent="0" pn="section-6.4-3">In the IKE_SA_INIT exchange, if the Responder returns an error notification that implies
+          a recovery action from the Initiator (such as INVALID_KE_PAYLOAD
+          or INVALID_MAJOR_VERSION, see <xref target="RFC7296" sectionFormat="of" section="2.21.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.21.1" derivedContent="RFC7296"/>),
+          then the Responder <bcp14>SHOULD NOT</bcp14> close the TCP connection immediately in anticipation of the fact
+          that the Initiator will repeat the request with corrected parameters.
+          See also <xref target="cookie-puzzle" format="default" sectionFormat="of" derivedContent="Section 6.3"/>.
+        </t>
+      </section>
+      <section anchor="nat-det" numbered="true" toc="include" removeInRFC="false" pn="section-6.5">
+        <name slugifiedName="name-nat-detection-payloads">NAT-Detection Payloads</name>
+        <t indent="0" pn="section-6.5-1">When negotiating over UDP, IKE_SA_INIT packets include
+          NAT_DETECTION_SOURCE_IP and NAT_DETECTION_DESTINATION_IP payloads to
+          determine if UDP encapsulation of IPsec packets should be used.
+          These payloads contain SHA-1 digests of the SPIs, IP addresses, and
+          ports as defined in <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/>.  IKE_SA_INIT packets sent on a TCP
+          connection <bcp14>SHOULD</bcp14> include these payloads with the same content as
+          when sending over UDP and <bcp14>SHOULD</bcp14> use the applicable TCP ports when
+          creating and checking the SHA-1 digests.
+        </t>
+        <t indent="0" pn="section-6.5-2">If a NAT is detected due to the SHA-1 digests not matching the
+          expected values, no change should be made for encapsulation of
+          subsequent IKE or ESP packets since TCP encapsulation inherently
+          supports NAT traversal. However, for the transport mode IPsec SAs, implementations 
+          need to handle TCP and UDP packet checksum fixup during decapsulation, 
+          as defined for UDP encapsulation in <xref target="RFC3948" format="default" sectionFormat="of" derivedContent="RFC3948"/>.
+        </t>
+        <t indent="0" pn="section-6.5-3">Implementations <bcp14>MAY</bcp14> use the information that
+          a NAT is present to influence keepalive timer values.
+        </t>
+      </section>
+      <section anchor="nat-ka" numbered="true" toc="include" removeInRFC="false" pn="section-6.6">
+        <name slugifiedName="name-nat-keepalive-packets">NAT-Keepalive Packets</name>
+        <t indent="0" pn="section-6.6-1">Encapsulating IKE and IPsec inside of a TCP connection can impact the
+         strategy that implementations use to 
+         maintain middlebox port mappings.
+        </t>
+        <t indent="0" pn="section-6.6-2">In general, TCP port mappings are maintained by NATs longer than UDP
+          port mappings, so IPsec ESP NAT-keepalive packets <xref target="RFC3948" format="default" sectionFormat="of" derivedContent="RFC3948"/> <bcp14>SHOULD NOT</bcp14> be
+          sent when using TCP encapsulation.  Any implementation using TCP
+          encapsulation <bcp14>MUST</bcp14> silently drop incoming NAT-keepalive packets
+          and not treat them as errors.  NAT-keepalive packets over a
+          TCP-encapsulated IPsec connection will be sent as a 1-octet-long payload
+          with the value 0xFF, preceded by the 2-octet Length specifying a length
+          of 3 (since it includes the length of the Length field).
+        </t>
+      </section>
+      <section anchor="dpd" numbered="true" toc="include" removeInRFC="false" pn="section-6.7">
+        <name slugifiedName="name-dead-peer-detection-and-tra">Dead Peer Detection and Transport Keepalives</name>
+        <t indent="0" pn="section-6.7-1">Peer liveness should be checked
+          using IKE informational packets <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/>.
+        </t>
+        <t indent="0" pn="section-6.7-2">Note that, depending on the configuration of TCP and TLS on the
+          connection, TCP keep-alives <xref target="RFC1122" format="default" sectionFormat="of" derivedContent="RFC1122"/> and TLS keep-alives <xref target="RFC6520" format="default" sectionFormat="of" derivedContent="RFC6520"/>
+          <bcp14>MAY</bcp14> be used.  These <bcp14>MUST NOT</bcp14> be used as indications of IKE peer
+          liveness, for which purpose the standard IKEv2 mechanism of exchanging (usually empty) INFORMATIONAL messages is used
+          (see <xref target="RFC7296" sectionFormat="of" section="1.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-1.4" derivedContent="RFC7296"/>).
+        </t>
+      </section>
+      <section anchor="ipsec" numbered="true" toc="include" removeInRFC="false" pn="section-6.8">
+        <name slugifiedName="name-implications-of-tcp-encapsu">Implications of TCP Encapsulation on IPsec SA Processing</name>
+        <t indent="0" pn="section-6.8-1">Using TCP encapsulation affects some aspects of IPsec SA processing.
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-6.8-2"><li pn="section-6.8-2.1" derivedCounter="1.">
+            <xref target="RFC4301" sectionFormat="of" section="8.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4301#section-8.1" derivedContent="RFC4301"/> requires all tunnel mode IPsec SAs to
+            be able to copy the Don't Fragment (DF) bit from inner IPv4 header to
+            the outer (tunnel) one.  With TCP encapsulation, this is generally
+            not possible because the TCP/IP stack manages the DF bit in the outer IPv4
+            header, and usually the stack ensures that the DF bit is set for TCP
+            packets to avoid IP fragmentation. Note, that this behavior is 
+            compliant with generic tunneling considerations since the outer TCP header acts
+            as a link-layer protocol and its fragmentation and reassembly have no correlation with
+            the inner payload. 
+            </li>
+          <li pn="section-6.8-2.2" derivedCounter="2.">The other feature that is less applicable with TCP encapsulation is an
+            ability to split traffic of different QoS classes into different
+            IPsec SAs, created by a single IKE SA.  In this case, the
+            Differentiated Services Code Point (DSCP) field is usually copied
+            from the inner IP header to the outer (tunnel) one, ensuring that
+            IPsec traffic of each SA receives the corresponding level of service.
+            With TCP encapsulation, all IPsec SAs created by a single IKE SA will
+            share a single TCP connection; thus, they will receive the same level of
+            service (see <xref target="perf.3" format="default" sectionFormat="of" derivedContent="Section 9.3"/>).  If this functionality is needed, 
+            implementations should create several IKE SAs each over separate TCP connections 
+            and assign a corresponding DSCP value to each of them.
+            </li>
+        </ol>
+        <t indent="0" pn="section-6.8-3">TCP encapsulation of IPsec packets may have implications
+          on performance of the encapsulated traffic. Performance considerations
+          are discussed in <xref target="perf" format="default" sectionFormat="of" derivedContent="Section 9"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="extensions" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-interaction-with-ikev2-exte">Interaction with IKEv2 Extensions</name>
+      <section anchor="mobike" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-mobike-protocol">MOBIKE Protocol</name>
+        <t indent="0" pn="section-7.1-1">The MOBIKE protocol, which allows SAs to migrate between IP
+          addresses, is defined in <xref target="RFC4555" format="default" sectionFormat="of" derivedContent="RFC4555"/>; <xref target="RFC4621" format="default" sectionFormat="of" derivedContent="RFC4621"/> further clarifies
+          the details of the protocol. When an IKE session that has negotiated MOBIKE is
+          transitioning between networks, the Initiator of the transition may
+          switch between using TCP encapsulation, UDP encapsulation, or no
+          encapsulation.  Implementations that implement both MOBIKE and TCP
+          encapsulation within the same connection configuration 
+          <bcp14>MUST</bcp14> support dynamically enabling and disabling TCP
+          encapsulation as interfaces change.
+        </t>
+        <t indent="0" pn="section-7.1-2">When a MOBIKE-enabled Initiator changes networks, the 
+          INFORMATIONAL exchange with the UPDATE_SA_ADDRESSES notification <bcp14>SHOULD</bcp14> be initiated 
+          first over UDP before attempting over TCP.  If there is a response to the
+          request sent over UDP, then the ESP packets should be sent directly over IP or over UDP port 4500 
+          (depending on if a NAT was detected), regardless of if a connection on a previous
+          network was using TCP encapsulation.  If no response is received within a certain period of time after
+          several retransmissions, the Initiator ought to change its transport for this exchange from
+          UDP to TCP and resend the request message. A new INFORMATIONAL exchange <bcp14>MUST NOT</bcp14> be started in this situation. If the Responder only responds to the request sent over TCP, then
+          the ESP packets should be sent over the TCP connection, regardless of
+          if a connection on a previous network did not use TCP encapsulation.
+        </t>
+        <t indent="0" pn="section-7.1-3">The value of the timeout and the specific number of retransmissions before switching to
+          TCP can vary depending on the Initiator's configuration. Implementations ought to provide
+          reasonable defaults to ensure that UDP attempts have a chance to succeed, but can shorten
+          the timeout based on historical data or metrics.
+        </t>
+        <t indent="0" pn="section-7.1-4">If the TCP transport was used for the previous network connection, the old TCP
+          connection <bcp14>SHOULD</bcp14> be closed by the Initiator once MOBIKE finishes migration 
+          to a new connection (either TCP or UDP).
+        </t>
+        <t indent="0" pn="section-7.1-5">Since switching from UDP to TCP can happen during a single
+		  INFORMATIONAL message exchange, the content of the NAT_DETECTION_*_IP
+		  notifications will in most cases be incorrect (since UDP and TCP ports
+		  will most likely be different), and the peer may incorrectly detect
+		  the presence of a NAT. <xref target="RFC4555" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4555#section-3.5" derivedContent="RFC4555"/> states that 
+          a new INFORMATIONAL exchange with the UPDATE_SA_ADDRESSES notify is initiated 
+          in case the address (or transport) is changed while waiting for a response.
+        </t>
+        <t indent="0" pn="section-7.1-6"><xref target="RFC4555" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4555#section-3.5" derivedContent="RFC4555"/> also states that 
+          once an IKE SA is switched to a new IP address, all outstanding requests in this SA 
+          are immediately retransmitted using this address. See also <xref target="retr" format="default" sectionFormat="of" derivedContent="Section 6.2"/>.
+        </t>
+        <t indent="0" pn="section-7.1-7">The MOBIKE protocol defines the NO_NATS_ALLOWED notification that can be
+          used to detect the presence of NAT between peer and to refuse to
+          communicate in this situation.  In the case of TCP, the NO_NATS_ALLOWED
+          notification <bcp14>SHOULD</bcp14> be ignored because TCP generally has no problems
+          with NAT boxes.
+        </t>
+        <t indent="0" pn="section-7.1-8"><xref target="RFC4555" sectionFormat="of" section="3.7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4555#section-3.7" derivedContent="RFC4555"/> describes an additional optional step in the
+          process of changing IP addresses called "Return Routability Check".  It
+          is performed by Responders in order to be sure that the new
+          Initiator's address is, in fact, routable.
+In the case of TCP encapsulation, this check has little value since a
+TCP handshake proves the routability of the TCP Originator's address;
+thus, the Return Routability Check <bcp14>SHOULD NOT</bcp14> be performed.
+
+        </t>
+      </section>
+      <section anchor="redirect" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-ike-redirect">IKE Redirect</name>
+        <t indent="0" pn="section-7.2-1">A redirect mechanism for IKEv2 is defined in <xref target="RFC5685" format="default" sectionFormat="of" derivedContent="RFC5685"/>.  This mechanism
+          allows security gateways to redirect clients to another gateway
+          either during IKE SA establishment or after session setup.  If a
+          client is connecting to a security gateway using TCP and
+          then is redirected to another security gateway, the client
+          needs to reset its transport selection.
+
+In other words, with the next security gateway, the client <bcp14>MUST</bcp14> first try UDP and then fall
+back to TCP while establishing a new IKE SA, regardless of the transport of
+the SA the redirect notification was received over (unless the client's
+configuration instructs it to instantly use TCP for the gateway it is
+redirected to).
+        </t>
+      </section>
+      <section anchor="resumption" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-ikev2-session-resumption">IKEv2 Session Resumption</name>
+        <t indent="0" pn="section-7.3-1">Session resumption for IKEv2 is defined in <xref target="RFC5723" format="default" sectionFormat="of" derivedContent="RFC5723"/>.  Once an IKE SA is
+          established, the server creates a resumption ticket where information
+          about this SA is stored and transfers this ticket to the client.
+          The ticket may be later used to resume the IKE SA after it is deleted.
+          In the event of resumption, the client presents the ticket in a new
+          exchange, called IKE_SESSION_RESUME.  Some parameters in the new SA
+          are retrieved from the ticket and others are renegotiated (more details
+          are given in <xref target="RFC5723" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5723#section-5" derivedContent="RFC5723"/>).  
+        </t>
+        <t indent="0" pn="section-7.3-2">Since network conditions may change while the client is inactive,
+          the fact that TCP encapsulation was used in an old SA <bcp14>SHOULD NOT</bcp14> affect which transport
+          is used during session resumption. In other words, the transport should be 
+          selected as if the IKE SA is being created from scratch.
+        </t>
+      </section>
+      <section anchor="ha" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-ikev2-protocol-support-for-">IKEv2 Protocol Support for High Availability</name>
+        <t indent="0" pn="section-7.4-1"><xref target="RFC6311" format="default" sectionFormat="of" derivedContent="RFC6311"/> defines a support for High Availability in IKEv2.
+          In case of cluster failover, a new active node
+          must immediately initiate a special INFORMATION exchange containing the
+          IKEV2_MESSAGE_ID_SYNC notification, which instructs the client to
+          skip some number of Message IDs that might not be synchronized yet
+          between nodes at the time of failover.
+        </t>
+        <t indent="0" pn="section-7.4-2">Synchronizing states when using TCP encapsulation is much harder than
+          when using UDP; doing so requires access to TCP/IP stack internals, which is
+          not always available from an IKE/IPsec implementation.  If a cluster
+          implementation doesn't synchronize TCP states between nodes, then
+          after failover event the new active node will not have any TCP
+          connection with the client, so the node cannot initiate the
+          INFORMATIONAL exchange as required by <xref target="RFC6311" format="default" sectionFormat="of" derivedContent="RFC6311"/>.  Since the cluster
+          usually acts as TCP Responder, the new active node cannot re- establish TCP connection because only the TCP Originator can do it.
+          For the client, the cluster failover event may remain
+          undetected for long time if it has no IKE or ESP traffic to send.  Once
+          the client sends an ESP or IKEv2 packet, the cluster node will reply
+          with TCP RST and the client (as TCP Originator) will reestablish the TCP
+          connection so that the node will be able to initiate the
+          INFORMATIONAL exchange informing the client about the cluster
+          failover.
+        </t>
+        <t indent="0" pn="section-7.4-3">This document makes the following recommendation: if support for High
+          Availability in IKEv2 is negotiated and TCP transport is used,
+		  a client that is a TCP Originator <bcp14>SHOULD</bcp14> periodically send
+          IKEv2 messages (e.g., by initiating liveness check exchange) whenever
+          there is no IKEv2 or ESP traffic.  This differs from the
+          recommendations given in <xref target="RFC7296" sectionFormat="of" section="2.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.4" derivedContent="RFC7296"/> in the following:
+          the liveness check should be periodically performed even if the
+          client has nothing to send over ESP.  The frequency of sending such
+          messages should be high enough to allow quick detection and restoration
+          of broken TCP connections.
+        </t>
+      </section>
+      <section anchor="frag" numbered="true" toc="include" removeInRFC="false" pn="section-7.5">
+        <name slugifiedName="name-ikev2-fragmentation">IKEv2 Fragmentation</name>
+        <t indent="0" pn="section-7.5-1">IKE message fragmentation <xref target="RFC7383" format="default" sectionFormat="of" derivedContent="RFC7383"/> is not required when using TCP
+          encapsulation since a TCP stream already handles the fragmentation
+          of its contents across packets.  Since fragmentation is redundant in
+          this case, implementations might choose to not negotiate IKE
+          fragmentation.  Even if fragmentation is negotiated, an
+          implementation <bcp14>SHOULD NOT</bcp14> send fragments when going over a TCP
+          connection, although it <bcp14>MUST</bcp14> support receiving fragments.
+        </t>
+        <t indent="0" pn="section-7.5-2">If an implementation supports both MOBIKE and IKE fragmentation, it
+          <bcp14>SHOULD</bcp14> negotiate IKE fragmentation over a TCP-encapsulated session in
+          case the session switches to UDP encapsulation on another network.
+        </t>
+      </section>
+    </section>
+    <section anchor="middle" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-middlebox-considerations">Middlebox Considerations</name>
+      <t indent="0" pn="section-8-1">Many security networking devices, such as firewalls or intrusion
+        prevention systems, network optimization/acceleration devices, and
+        NAT devices, keep the state of sessions that traverse through them.
+      </t>
+      <t indent="0" pn="section-8-2">These devices commonly track the transport-layer and/or application-
+        layer data to drop traffic that is anomalous or malicious in nature.
+        While many of these devices will be more likely to pass
+        TCP-encapsulated traffic as opposed to UDP-encapsulated traffic, some
+        may still block or interfere with TCP-encapsulated IKE and IPsec
+        traffic.
+      </t>
+      <t indent="0" pn="section-8-3">A network device that monitors the transport layer will track the
+        state of TCP sessions, such as TCP sequence numbers.  If the IKE implementation 
+        has its own minimal implementation of TCP,
+        it <bcp14>SHOULD</bcp14> still use common TCP behaviors to avoid being dropped by
+        middleboxes.
+      </t>
+      <t indent="0" pn="section-8-4">Operators that intentionally block IPsec because of security implications 
+        might want to also block TCP port 4500 or use other methods to reject TCP encapsulated IPsec traffic 
+	(e.g., filter out TCP connections that begin with the "IKETCP" stream prefix).
+      </t>
+    </section>
+    <section anchor="perf" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-performance-considerations">Performance Considerations</name>
+      <t indent="0" pn="section-9-1">Several aspects of TCP encapsulation for IKE and IPsec packets may
+        negatively impact the performance of connections within a tunnel-mode
+        IPsec SA.  Implementations should be aware of these performance
+        impacts and take these into consideration when determining when to
+        use TCP encapsulation.  Implementations <bcp14>MUST</bcp14> favor using direct ESP
+        or UDP encapsulation over TCP encapsulation whenever possible.
+      </t>
+      <section anchor="perf.1" numbered="true" toc="include" removeInRFC="false" pn="section-9.1">
+        <name slugifiedName="name-tcp-in-tcp">TCP-in-TCP</name>
+        <t indent="0" pn="section-9.1-1">If the outer connection between IKE peers is over TCP, inner TCP
+          connections may suffer negative effects from using TCP within TCP.
+          Running TCP within TCP is discouraged since the TCP algorithms
+          generally assume that they are running over an unreliable datagram
+          layer.
+        </t>
+        <t indent="0" pn="section-9.1-2">If the outer (tunnel) TCP connection experiences packet loss, this
+          loss will be hidden from any inner TCP connections since the outer
+          connection will retransmit to account for the losses.  Since the
+          outer TCP connection will deliver the inner messages in order, any
+          messages after a lost packet may have to wait until the loss is
+          recovered.  This means that loss on the outer connection will be
+          interpreted only as delay by inner connections.  The burstiness of
+          inner traffic can increase since a large number of inner packets may
+          be delivered across the tunnel at once.  The inner TCP connection may
+          interpret a long period of delay as a transmission problem,
+          triggering a retransmission timeout, which will cause spurious
+          retransmissions.  The sending rate of the inner connection may be
+          unnecessarily reduced if the retransmissions are not detected as
+          spurious in time.
+        </t>
+        <t indent="0" pn="section-9.1-3">The inner TCP connection's round-trip-time estimation will be
+          affected by the burstiness of the outer TCP connection if there are
+          long delays when packets are retransmitted by the outer TCP
+          connection.  This will make the congestion control loop of the inner
+          TCP traffic less reactive, potentially permanently leading to a lower
+          sending rate than the outer TCP would allow for.
+        </t>
+        <t indent="0" pn="section-9.1-4"> TCP-in-TCP can also lead to "TCP meltdown", where stacked instances
+          of TCP can result in significant impacts to performance
+          <xref target="TCP-MELTDOWN" format="default" sectionFormat="of" derivedContent="TCP-MELTDOWN"/>. This can occur when losses in the lower TCP (closer to the link)
+          increase delays seen by the higher TCP (closer to the application) that create
+          timeouts, which, in turn, cause retransmissions that can then cause losses in 
+          the lower TCP by overrunning its buffer. The very mechanism intended to avoid loss
+          (retransmission) interacts between the two layers to increase loss. To limit this effect,
+          the timeouts of the two TCP layers need to be carefully managed, e.g., such that
+          the higher layer has a much longer timeout than the lower layer.
+        </t>
+        <t indent="0" pn="section-9.1-5">Note that any negative effects will be shared among all flows going
+          through the outer TCP connection.  This is of particular concern for
+          any latency-sensitive or real-time applications using the tunnel.  If
+          such traffic is using a TCP-encapsulated IPsec connection, it is
+          recommended that the number of inner connections sharing the tunnel
+          be limited as much as possible.
+        </t>
+      </section>
+      <section anchor="perf.2" numbered="true" toc="include" removeInRFC="false" pn="section-9.2">
+        <name slugifiedName="name-added-reliability-for-unrel">Added Reliability for Unreliable Protocols</name>
+        <t indent="0" pn="section-9.2-1">Since ESP is an unreliable protocol, transmitting ESP packets over a
+          TCP connection will change the fundamental behavior of the packets.
+          Some application-level protocols that prefer packet loss to delay
+          (such as Voice over IP or other real-time protocols) may be
+          negatively impacted if their packets are retransmitted by the TCP
+          connection due to packet loss.
+        </t>
+      </section>
+      <section anchor="perf.3" numbered="true" toc="include" removeInRFC="false" pn="section-9.3">
+        <name slugifiedName="name-quality-of-service-markings">Quality-of-Service Markings</name>
+        <t indent="0" pn="section-9.3-1">Quality-of-Service (QoS) markings, such as the Differentiated
+          Services Code Point (DSCP) and Traffic Class, should be used with
+          care on TCP connections used for encapsulation.  Individual packets
+          <bcp14>SHOULD NOT</bcp14> use different markings than the rest of the connection
+          since packets with different priorities may be routed differently and
+          cause unnecessary delays in the connection.
+        </t>
+      </section>
+      <section anchor="perf.4" numbered="true" toc="include" removeInRFC="false" pn="section-9.4">
+        <name slugifiedName="name-maximum-segment-size">Maximum Segment Size</name>
+        <t indent="0" pn="section-9.4-1">A TCP connection used for IKE encapsulation <bcp14>SHOULD</bcp14> negotiate its MSS
+          in order to avoid unnecessary fragmentation of packets.
+        </t>
+      </section>
+      <section anchor="perf.5" numbered="true" toc="include" removeInRFC="false" pn="section-9.5">
+        <name slugifiedName="name-tunneling-ecn-in-tcp">Tunneling ECN in TCP</name>
+        <t indent="0" pn="section-9.5-1">Since there is not a one-to-one relationship between outer IP packets
+          and inner ESP/IP messages when using TCP encapsulation, the markings
+          for Explicit Congestion Notification (ECN) <xref target="RFC3168" format="default" sectionFormat="of" derivedContent="RFC3168"/> cannot easily be
+          mapped.  However, any ECN Congestion Experienced (CE) marking on
+          inner headers should be preserved through the tunnel.
+        </t>
+        <t indent="0" pn="section-9.5-2">Implementations <bcp14>SHOULD</bcp14> follow the ECN compatibility mode for tunnel
+          ingress as described in <xref target="RFC6040" format="default" sectionFormat="of" derivedContent="RFC6040"/>.  In compatibility mode, the outer
+          tunnel TCP connection marks its packet headers as not ECN-capable.
+        </t>
+        <t indent="0" pn="section-9.5-3">Upon egress, if the arriving outer header is marked with CE, the
+          implementation will drop the inner packet since there is not a
+          distinct inner packet header onto which to translate the ECN
+          markings.
+        </t>
+      </section>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1">IKE Responders that support TCP encapsulation may become vulnerable
+        to new Denial-of-Service (DoS) attacks that are specific to TCP, such
+        as SYN-flooding attacks. TCP Responders should be aware of this additional attack surface.
+      </t>
+      <t indent="0" pn="section-10-2">TCP connections are also susceptible to RST and other spoofing attacks <xref target="RFC4953" format="default" sectionFormat="of" derivedContent="RFC4953"/>.
+        This specification makes IPsec tolerant of sudden TCP connection drops, but if an attacker
+        is able to tear down TCP connections, IPsec connection's performance can suffer, 
+        effectively making this a DoS attack. 
+      </t>
+      <t indent="0" pn="section-10-3">TCP data injection attacks have no effect on application data since IPsec provides data integrity.
+        However, they can have some effect, mostly by creating DoS attacks:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-10-4">
+        <li pn="section-10-4.1">If an attacker alters the content of the Length field that separates packets,
+          then the Receiver will incorrectly identify the boundaries of the following packets and 
+          will drop all of them or even tear down the TCP connection if the content of the
+          Length field happens to be 0 or 1 (see <xref target="format" format="default" sectionFormat="of" derivedContent="Section 3"/>).
+          </li>
+        <li pn="section-10-4.2">If the content of an IKE message is altered, then it will be dropped by the receiver;
+          if the dropped message is the IKE request message, then the Initiator will tear 
+          down the IKE SA after some timeout since, in most cases, the request message will not be retransmitted
+          (as advised in <xref target="retr" format="default" sectionFormat="of" derivedContent="Section 6.2"/>); thus, the response will never be received.
+        </li>
+        <li pn="section-10-4.3">If an attacker alters the non-ESP marker, then IKE packets will be dispatched to ESP
+          (and sometimes visa versa) and those packets will be dropped.
+          </li>
+        <li pn="section-10-4.4">If an attacker modifies TCP-Encapsulated stream prefix or unencrypted IKE messages before IKE SA is established, 
+          then in most cases this will result in failure to establish IKE SA, often with false "authentication failed" diagnostics.
+          </li>
+      </ul>
+      <t indent="0" pn="section-10-5">
+        <xref target="RFC5961" format="default" sectionFormat="of" derivedContent="RFC5961"/> discusses how TCP injection attacks can be mitigated.
+      </t>
+      <t indent="0" pn="section-10-6">Note that data injection attacks are also possible on IP level (e.g., when IP fragmentation is used),
+        resulting in DoS attacks even if TCP encapsulation is not used. On the other hand, TCP injection attacks are easier to mount 
+        than the IP fragmentation injection attacks because TCP keeps a long receive window open that's a sitting target for such attacks. 
+      </t>
+      <t indent="0" pn="section-10-7">If an attacker successfully mounts an injection attack on a TCP connection used for encapsulating IPsec traffic 
+        and modifies a Length field, the receiver might not be able to correctly identify the boundaries of the following packets in the stream
+        since it will try to parse arbitrary data as an ESP or IKE header.
+        After such a parsing failure, all following packets will be dropped. Communication will eventually recover, but this might
+        take several minutes and can result in IKE SA deletion and re-creation.
+      </t>
+      <t indent="0" pn="section-10-8">To speed up the recovery from such attacks, implementations are advised to follow recommendations in <xref target="establish" format="default" sectionFormat="of" derivedContent="Section 6.1"/> and close 
+        the TCP connection if incoming packets contain SPIs that don't match any known SAs.
+        Once the TCP connection is closed, it will be re-created by the TCP Originator as described in <xref target="establish" format="default" sectionFormat="of" derivedContent="Section 6.1"/>.
+      </t>
+      <t indent="0" pn="section-10-9">To avoid performance degradation caused by closing and re-creating TCP connections, 
+	implementations <bcp14>MAY</bcp14> alternatively try to resync after they receive unknown SPIs by searching the TCP stream
+        for a 64-bit binary vector consisting of a known SPI in the first 32 bits and a valid Sequence Number for this SPI in the
+        second 32 bits. Then, they can validate the Integrity Check Value (ICV) of this packet candidate by taking the preceding 16 bits as the Length field.
+
+
+
+
+They can also search for 4 bytes of zero (non-ESP marker) followed by
+128 bits of IKE SPIs of the IKE SA(s) associated with this TCP connection and
+then validate the ICV of this IKE message candidate by taking the 16 bits
+preceding the non-ESP marker as the Length field.
+
+
+
+	
+       Implementations <bcp14>SHOULD</bcp14> limit the attempts to resync, because if the
+  injection attack is ongoing, then there is a high probability that
+  the resync process will not succeed or will quickly come under attack
+  again.
+
+      </t>
+      <t indent="0" pn="section-10-10">An attacker capable of blocking UDP traffic can force peers to use TCP encapsulation,
+        thus, degrading the performance and making the connection more vulnerable to DoS attacks.
+        Note that an attacker that is able to modify packets on the wire or to block them can
+        prevent peers from communicating regardless of the transport being used.
+      </t>
+      <t indent="0" pn="section-10-11">TCP Responders should be careful to ensure that the stream prefix
+        "IKETCP" uniquely identifies incoming streams as streams that use the
+        TCP encapsulation protocol.
+      </t>
+      <t indent="0" pn="section-10-12">Attackers may be able to disrupt the TCP connection by sending
+        spurious TCP Reset packets.  Therefore, implementations <bcp14>SHOULD</bcp14> make
+        sure that IKE session state persists even if the underlying TCP
+        connection is torn down.
+      </t>
+      <t indent="0" pn="section-10-13">If MOBIKE is being used, all of the security considerations outlined
+        for MOBIKE apply <xref target="RFC4555" format="default" sectionFormat="of" derivedContent="RFC4555"/>.
+      </t>
+      <t indent="0" pn="section-10-14">Similar to MOBIKE, TCP encapsulation requires a TCP Responder to
+        handle changes to source address and port due to network or
+        connection disruption.  The successful delivery of valid new IKE or ESP
+        messages over a new TCP connection is used by the TCP Responder to
+        determine where to send subsequent responses.  If an attacker is able
+        to send packets on a new TCP connection that pass the validation
+        checks of the TCP Responder, it can influence which path future
+        packets will take.  For this reason, the validation of messages on
+        the TCP Responder must include decryption, authentication, and replay
+        checks.
+      </t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-11-1">TCP port 4500 is already allocated to IPsec for NAT traversal in the "Service Name and Transport Protocol Port Number Registry".  This
+        port <bcp14>SHOULD</bcp14> be used for TCP-encapsulated IKE and ESP as described in
+        this document.
+      </t>
+      <t indent="0" pn="section-11-2">This document updates the reference for TCP port 4500 from RFC 8229 to itself:
+      </t>
+      <dl newline="false" spacing="compact" indent="3" pn="section-11-3">
+        <dt pn="section-11-3.1">Service Name:</dt>
+        <dd pn="section-11-3.2">ipsec-nat-t</dd>
+        <dt pn="section-11-3.3">Port Number / Transport Protocol:</dt>
+        <dd pn="section-11-3.4">4500/tcp</dd>
+        <dt pn="section-11-3.5">Description:</dt>
+        <dd pn="section-11-3.6">IPsec NAT-Traversal</dd>
+        <dt pn="section-11-3.7">Reference:</dt>
+        <dd pn="section-11-3.8">RFC 9329</dd>
+      </dl>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-ipsecme-ike-tcp" to="IPSECME-IKE-TCP"/>
+    <references pn="section-12">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-12.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+          <format target="https://www.rfc-editor.org/info/rfc2119" type="TXT"/>
+        </reference>
+        <reference anchor="RFC3948" target="https://www.rfc-editor.org/info/rfc3948" quoteTitle="true" derivedAnchor="RFC3948">
+          <front>
+            <title>UDP Encapsulation of IPsec ESP Packets</title>
+            <author fullname="A. Huttunen" initials="A." surname="Huttunen"/>
+            <author fullname="B. Swander" initials="B." surname="Swander"/>
+            <author fullname="V. Volpe" initials="V." surname="Volpe"/>
+            <author fullname="L. DiBurro" initials="L." surname="DiBurro"/>
+            <author fullname="M. Stenberg" initials="M." surname="Stenberg"/>
+            <date month="January" year="2005"/>
+            <abstract>
+              <t indent="0">This protocol specification defines methods to encapsulate and decapsulate IP Encapsulating Security Payload (ESP) packets inside UDP packets for traversing Network Address Translators.  ESP encapsulation, as defined in this document, can be used in both IPv4 and IPv6 scenarios.  Whenever negotiated, encapsulation is used with Internet Key Exchange (IKE). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3948"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3948"/>
+          <format target="https://www.rfc-editor.org/info/rfc3948" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4301" target="https://www.rfc-editor.org/info/rfc4301" quoteTitle="true" derivedAnchor="RFC4301">
+          <front>
+            <title>Security Architecture for the Internet Protocol</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <author fullname="K. Seo" initials="K." surname="Seo"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the "Security Architecture for IP", which is designed to provide security services for traffic at the IP layer.  This document obsoletes RFC 2401 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4301"/>
+          <format target="https://www.rfc-editor.org/info/rfc4301" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4303" target="https://www.rfc-editor.org/info/rfc4303" quoteTitle="true" derivedAnchor="RFC4303">
+          <front>
+            <title>IP Encapsulating Security Payload (ESP)</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the Encapsulating Security Payload (ESP) protocol, which is designed to provide a mix of security services in IPv4 and IPv6.  ESP is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service (a form of partial sequence integrity), and limited traffic flow confidentiality.  This document obsoletes RFC 2406 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4303"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4303"/>
+          <format target="https://www.rfc-editor.org/info/rfc4303" type="TXT"/>
+        </reference>
+        <reference anchor="RFC6040" target="https://www.rfc-editor.org/info/rfc6040" quoteTitle="true" derivedAnchor="RFC6040">
+          <front>
+            <title>Tunnelling of Explicit Congestion Notification</title>
+            <author fullname="B. Briscoe" initials="B." surname="Briscoe"/>
+            <date month="November" year="2010"/>
+            <abstract>
+              <t indent="0">This document redefines how the explicit congestion notification (ECN) field of the IP header should be constructed on entry to and exit from any IP-in-IP tunnel.  On encapsulation, it updates RFC 3168 to bring all IP-in-IP tunnels (v4 or v6) into line with RFC 4301 IPsec ECN processing.  On decapsulation, it updates both RFC 3168 and RFC 4301 to add new behaviours for previously unused combinations of inner and outer headers.  The new rules ensure the ECN field is correctly propagated across a tunnel whether it is used to signal one or two severity levels of congestion; whereas before, only one severity level was supported.  Tunnel endpoints can be updated in any order without affecting pre-existing uses of the ECN field, thus ensuring backward compatibility.  Nonetheless, operators wanting to support two severity levels (e.g., for pre-congestion notification -- PCN) can require compliance with this new specification.  A thorough analysis of the reasoning for these changes and the implications is included.  In the unlikely event that the new rules do not meet a specific need, RFC 4774 gives guidance on designing alternate ECN semantics, and this document extends that to include tunnelling issues. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6040"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6040"/>
+          <format target="https://www.rfc-editor.org/info/rfc6040" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7296" target="https://www.rfc-editor.org/info/rfc7296" quoteTitle="true" derivedAnchor="RFC7296">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+            <author fullname="C. Kaufman" initials="C." surname="Kaufman"/>
+            <author fullname="P. Hoffman" initials="P." surname="Hoffman"/>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <author fullname="P. Eronen" initials="P." surname="Eronen"/>
+            <author fullname="T. Kivinen" initials="T." surname="Kivinen"/>
+            <date month="October" year="2014"/>
+            <abstract>
+              <t indent="0">This document describes version 2 of the Internet Key Exchange (IKE) protocol.  IKE is a component of IPsec used for performing mutual authentication and establishing and maintaining Security Associations (SAs).  This document obsoletes RFC 5996, and includes all of the errata for it.  It advances IKEv2 to be an Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="79"/>
+          <seriesInfo name="RFC" value="7296"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7296"/>
+          <format target="https://www.rfc-editor.org/info/rfc7296" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8019" target="https://www.rfc-editor.org/info/rfc8019" quoteTitle="true" derivedAnchor="RFC8019">
+          <front>
+            <title>Protecting Internet Key Exchange Protocol Version 2 (IKEv2) Implementations from Distributed Denial-of-Service Attacks</title>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <author fullname="V. Smyslov" initials="V." surname="Smyslov"/>
+            <date month="November" year="2016"/>
+            <abstract>
+              <t indent="0">This document recommends implementation and configuration best practices for Internet Key Exchange Protocol version 2 (IKEv2) Responders, to allow them to resist Denial-of-Service and Distributed Denial-of-Service attacks.  Additionally, the document introduces a new mechanism called "Client Puzzles" that helps accomplish this task.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8019"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8019"/>
+          <format target="https://www.rfc-editor.org/info/rfc8019" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+          <format target="https://www.rfc-editor.org/info/rfc8174" type="TXT"/>
+        </reference>
+      </references>
+      <references pn="section-12.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.ietf-ipsecme-ike-tcp" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-ipsecme-ike-tcp-01" derivedAnchor="IPSECME-IKE-TCP">
+          <front>
+            <title>A TCP transport for the Internet Key Exchange</title>
+            <author initials="Y." surname="Nir" fullname="Yoav Nir">
+              <organization showOnFrontPage="true">Check Point</organization>
+            </author>
+            <date month="December" day="3" year="2012"/>
+            <abstract>
+              <t indent="0">   This document describes using TCP for IKE messages.  This facilitates
+   the transport of large messages over paths where fragments are either
+   dropped, or where packet loss makes the use of large UDP packets
+   unreliable.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-ipsecme-ike-tcp-01"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-ietf-ipsecme-ike-tcp-01.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC1122" target="https://www.rfc-editor.org/info/rfc1122" quoteTitle="true" derivedAnchor="RFC1122">
+          <front>
+            <title>Requirements for Internet Hosts - Communication Layers</title>
+            <author fullname="R. Braden" initials="R." role="editor" surname="Braden"/>
+            <date month="October" year="1989"/>
+            <abstract>
+              <t indent="0">This RFC is an official specification for the Internet community.  It incorporates by reference, amends, corrects, and supplements the primary protocol standards documents relating to hosts. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="3"/>
+          <seriesInfo name="RFC" value="1122"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1122"/>
+          <format target="https://www.rfc-editor.org/info/rfc1122" type="TXT"/>
+        </reference>
+        <reference anchor="RFC2817" target="https://www.rfc-editor.org/info/rfc2817" quoteTitle="true" derivedAnchor="RFC2817">
+          <front>
+            <title>Upgrading to TLS Within HTTP/1.1</title>
+            <author fullname="R. Khare" initials="R." surname="Khare"/>
+            <author fullname="S. Lawrence" initials="S." surname="Lawrence"/>
+            <date month="May" year="2000"/>
+            <abstract>
+              <t indent="0">This memo explains how to use the Upgrade mechanism in HTTP/1.1 to initiate Transport Layer Security (TLS) over an existing TCP connection. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2817"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2817"/>
+          <format target="https://www.rfc-editor.org/info/rfc2817" type="TXT"/>
+        </reference>
+        <reference anchor="RFC3168" target="https://www.rfc-editor.org/info/rfc3168" quoteTitle="true" derivedAnchor="RFC3168">
+          <front>
+            <title>The Addition of Explicit Congestion Notification (ECN) to IP</title>
+            <author fullname="K. Ramakrishnan" initials="K." surname="Ramakrishnan"/>
+            <author fullname="S. Floyd" initials="S." surname="Floyd"/>
+            <author fullname="D. Black" initials="D." surname="Black"/>
+            <date month="September" year="2001"/>
+            <abstract>
+              <t indent="0">This memo specifies the incorporation of ECN (Explicit Congestion Notification) to TCP and IP, including ECN's use of two bits in the IP header. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3168"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3168"/>
+          <format target="https://www.rfc-editor.org/info/rfc3168" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4555" target="https://www.rfc-editor.org/info/rfc4555" quoteTitle="true" derivedAnchor="RFC4555">
+          <front>
+            <title>IKEv2 Mobility and Multihoming Protocol (MOBIKE)</title>
+            <author fullname="P. Eronen" initials="P." surname="Eronen"/>
+            <date month="June" year="2006"/>
+            <abstract>
+              <t indent="0">This document describes the MOBIKE protocol, a mobility and multihoming extension to Internet Key Exchange (IKEv2).  MOBIKE allows the IP addresses associated with IKEv2 and tunnel mode IPsec Security Associations to change.  A mobile Virtual Private Network (VPN) client could use MOBIKE to keep the connection with the VPN gateway active while moving from one address to another.  Similarly, a multihomed host could use MOBIKE to move the traffic to a different interface if, for instance, the one currently being used stops working. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4555"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4555"/>
+          <format target="https://www.rfc-editor.org/info/rfc4555" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4621" target="https://www.rfc-editor.org/info/rfc4621" quoteTitle="true" derivedAnchor="RFC4621">
+          <front>
+            <title>Design of the IKEv2 Mobility and Multihoming (MOBIKE) Protocol</title>
+            <author fullname="T. Kivinen" initials="T." surname="Kivinen"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <date month="August" year="2006"/>
+            <abstract>
+              <t indent="0">The IKEv2 Mobility and Multihoming (MOBIKE) protocol is an extension of the Internet Key Exchange Protocol version 2 (IKEv2). These extensions should enable an efficient management of IKE and IPsec Security Associations when a host possesses multiple IP addresses and/or where IP addresses of an IPsec host change over time (for example, due to mobility).</t>
+              <t indent="0">This document discusses the involved network entities and the relationship between IKEv2 signaling and information provided by other protocols. Design decisions for the MOBIKE protocol, background information, and discussions within the working group are recorded. This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4621"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4621"/>
+          <format target="https://www.rfc-editor.org/info/rfc4621" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4953" target="https://www.rfc-editor.org/info/rfc4953" quoteTitle="true" derivedAnchor="RFC4953">
+          <front>
+            <title>Defending TCP Against Spoofing Attacks</title>
+            <author fullname="J. Touch" initials="J." surname="Touch"/>
+            <date month="July" year="2007"/>
+            <abstract>
+              <t indent="0">Recent analysis of potential attacks on core Internet infrastructure indicates an increased vulnerability of TCP connections to spurious resets (RSTs), sent with forged IP source addresses (spoofing).  TCP has always been susceptible to such RST spoofing attacks, which were indirectly protected by checking that the RST sequence number was inside the current receive window, as well as via the obfuscation of TCP endpoint and port numbers.  For pairs of well-known endpoints often over predictable port pairs, such as BGP or between web servers and well-known large-scale caches, increases in the path bandwidth-delay product of a connection have sufficiently increased the receive window space that off-path third parties can brute-force generate a viable RST sequence number.  The susceptibility to attack increases with the square of the bandwidth, and thus presents a significant vulnerability for recent high-speed networks.  This document addresses this vulnerability, discussing proposed solutions at the transport level and their inherent challenges, as well as existing network level solutions and the feasibility of their deployment.  This document focuses on vulnerabilities due to spoofed TCP segments, and includes a discussion of related ICMP spoofing attacks on TCP connections.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4953"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4953"/>
+          <format target="https://www.rfc-editor.org/info/rfc4953" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4987" target="https://www.rfc-editor.org/info/rfc4987" quoteTitle="true" derivedAnchor="RFC4987">
+          <front>
+            <title>TCP SYN Flooding Attacks and Common Mitigations</title>
+            <author fullname="W. Eddy" initials="W." surname="Eddy"/>
+            <date month="August" year="2007"/>
+            <abstract>
+              <t indent="0">This document describes TCP SYN flooding attacks, which have been well-known to the community for several years.  Various countermeasures against these attacks, and the trade-offs of each, are described.  This document archives explanations of the attack and common defense techniques for the benefit of TCP implementers and administrators of TCP servers or networks, but does not make any standards-level recommendations.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4987"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4987"/>
+          <format target="https://www.rfc-editor.org/info/rfc4987" type="TXT"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author fullname="T. Dierks" initials="T." surname="Dierks"/>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2008"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+          <format target="https://www.rfc-editor.org/info/rfc5246" type="TXT"/>
+        </reference>
+        <reference anchor="RFC5685" target="https://www.rfc-editor.org/info/rfc5685" quoteTitle="true" derivedAnchor="RFC5685">
+          <front>
+            <title>Redirect Mechanism for the Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+            <author fullname="V. Devarapalli" initials="V." surname="Devarapalli"/>
+            <author fullname="K. Weniger" initials="K." surname="Weniger"/>
+            <date month="November" year="2009"/>
+            <abstract>
+              <t indent="0">The Internet Key Exchange Protocol version 2 (IKEv2) is a protocol for setting up Virtual Private Network (VPN) tunnels from a remote location to a gateway so that the VPN client can access services in the network behind the gateway.  This document defines an IKEv2 extension that allows an overloaded VPN gateway or a VPN gateway that is being shut down for maintenance to redirect the VPN client to attach to another gateway.  The proposed mechanism can also be used in Mobile IPv6 to enable the home agent to redirect the mobile node to another home agent. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5685"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5685"/>
+          <format target="https://www.rfc-editor.org/info/rfc5685" type="TXT"/>
+        </reference>
+        <reference anchor="RFC5723" target="https://www.rfc-editor.org/info/rfc5723" quoteTitle="true" derivedAnchor="RFC5723">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2) Session Resumption</title>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <date month="January" year="2010"/>
+            <abstract>
+              <t indent="0">The Internet Key Exchange version 2 (IKEv2) protocol has a certain computational and communication overhead with respect to the number of round trips required and the cryptographic operations involved. In remote access situations, the Extensible Authentication Protocol (EAP) is used for authentication, which adds several more round trips and consequently latency.</t>
+              <t indent="0">To re-establish security associations (SAs) upon a failure recovery condition is time consuming especially when an IPsec peer (such as a VPN gateway) needs to re-establish a large number of SAs with various endpoints. A high number of concurrent sessions might cause additional problems for an IPsec peer during SA re-establishment.</t>
+              <t indent="0">In order to avoid the need to re-run the key exchange protocol from scratch, it would be useful to provide an efficient way to resume an IKE/IPsec session. This document proposes an extension to IKEv2 that allows a client to re-establish an IKE SA with a gateway in a highly efficient manner, utilizing a previously established IKE SA.</t>
+              <t indent="0">A client can reconnect to a gateway from which it was disconnected. The proposed approach encodes partial IKE state into an opaque ticket, which can be stored on the client or in a centralized store, and is later made available to the IKEv2 responder for re-authentication. We use the term ticket to refer to the opaque data that is created by the IKEv2 responder. This document does not specify the format of the ticket but examples are provided. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5723"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5723"/>
+          <format target="https://www.rfc-editor.org/info/rfc5723" type="TXT"/>
+        </reference>
+        <reference anchor="RFC5961" target="https://www.rfc-editor.org/info/rfc5961" quoteTitle="true" derivedAnchor="RFC5961">
+          <front>
+            <title>Improving TCP's Robustness to Blind In-Window Attacks</title>
+            <author fullname="A. Ramaiah" initials="A." surname="Ramaiah"/>
+            <author fullname="R. Stewart" initials="R." surname="Stewart"/>
+            <author fullname="M. Dalal" initials="M." surname="Dalal"/>
+            <date month="August" year="2010"/>
+            <abstract>
+              <t indent="0">TCP has historically been considered to be protected against spoofed off-path packet injection attacks by relying on the fact that it is difficult to guess the 4-tuple (the source and destination IP addresses and the source and destination ports) in combination with the 32-bit sequence number(s).  A combination of increasing window sizes and applications using longer-term connections (e.g., H-323 or Border Gateway Protocol (BGP) [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5961"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5961"/>
+          <format target="https://www.rfc-editor.org/info/rfc5961" type="TXT"/>
+        </reference>
+        <reference anchor="RFC6311" target="https://www.rfc-editor.org/info/rfc6311" quoteTitle="true" derivedAnchor="RFC6311">
+          <front>
+            <title>Protocol Support for High Availability of IKEv2/IPsec</title>
+            <author fullname="R. Singh" initials="R." role="editor" surname="Singh"/>
+            <author fullname="G. Kalyani" initials="G." surname="Kalyani"/>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="D. Zhang" initials="D." surname="Zhang"/>
+            <date month="July" year="2011"/>
+            <abstract>
+              <t indent="0">The IPsec protocol suite is widely used for business-critical network traffic. In order to make IPsec deployments highly available, more scalable, and failure-resistant, they are often implemented as IPsec High Availability (HA) clusters. However, there are many issues in IPsec HA clustering, and in particular in Internet Key Exchange Protocol version 2 (IKEv2) clustering. An earlier document, "IPsec Cluster Problem Statement", enumerates the issues encountered in the IKEv2/IPsec HA cluster environment. This document resolves these issues with the least possible change to the protocol.</t>
+              <t indent="0">This document defines an extension to the IKEv2 protocol to solve the main issues of "IPsec Cluster Problem Statement" in the commonly deployed hot standby cluster, and provides implementation advice for other issues. The main issues solved are the synchronization of IKEv2 Message ID counters, and of IPsec replay counters. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6311"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6311"/>
+          <format target="https://www.rfc-editor.org/info/rfc6311" type="TXT"/>
+        </reference>
+        <reference anchor="RFC6520" target="https://www.rfc-editor.org/info/rfc6520" quoteTitle="true" derivedAnchor="RFC6520">
+          <front>
+            <title>Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) Heartbeat Extension</title>
+            <author fullname="R. Seggelmann" initials="R." surname="Seggelmann"/>
+            <author fullname="M. Tuexen" initials="M." surname="Tuexen"/>
+            <author fullname="M. Williams" initials="M." surname="Williams"/>
+            <date month="February" year="2012"/>
+            <abstract>
+              <t indent="0">This document describes the Heartbeat Extension for the Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) protocols.</t>
+              <t indent="0">The Heartbeat Extension provides a new protocol for TLS/DTLS allowing the usage of keep-alive functionality without performing a renegotiation and a basis for path MTU (PMTU) discovery for DTLS. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6520"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6520"/>
+          <format target="https://www.rfc-editor.org/info/rfc6520" type="TXT"/>
+        </reference>
+        <reference anchor="RFC6528" target="https://www.rfc-editor.org/info/rfc6528" quoteTitle="true" derivedAnchor="RFC6528">
+          <front>
+            <title>Defending against Sequence Number Attacks</title>
+            <author fullname="F. Gont" initials="F." surname="Gont"/>
+            <author fullname="S. Bellovin" initials="S." surname="Bellovin"/>
+            <date month="February" year="2012"/>
+            <abstract>
+              <t indent="0">This document specifies an algorithm for the generation of TCP Initial Sequence Numbers (ISNs), such that the chances of an off-path attacker guessing the sequence numbers in use by a target connection are reduced.  This document revises (and formally obsoletes) RFC 1948, and takes the ISN generation algorithm originally proposed in that document to Standards Track, formally updating RFC 793. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6528"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6528"/>
+          <format target="https://www.rfc-editor.org/info/rfc6528" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7383" target="https://www.rfc-editor.org/info/rfc7383" quoteTitle="true" derivedAnchor="RFC7383">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2) Message Fragmentation</title>
+            <author fullname="V. Smyslov" initials="V." surname="Smyslov"/>
+            <date month="November" year="2014"/>
+            <abstract>
+              <t indent="0">This document describes a way to avoid IP fragmentation of large Internet Key Exchange Protocol version 2 (IKEv2) messages.  This allows IKEv2 messages to traverse network devices that do not allow IP fragments to pass through.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7383"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7383"/>
+          <format target="https://www.rfc-editor.org/info/rfc7383" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8229" target="https://www.rfc-editor.org/info/rfc8229" quoteTitle="true" derivedAnchor="RFC8229">
+          <front>
+            <title>TCP Encapsulation of IKE and IPsec Packets</title>
+            <author fullname="T. Pauly" initials="T." surname="Pauly"/>
+            <author fullname="S. Touati" initials="S." surname="Touati"/>
+            <author fullname="R. Mantha" initials="R." surname="Mantha"/>
+            <date month="August" year="2017"/>
+            <abstract>
+              <t indent="0">This document describes a method to transport Internet Key Exchange Protocol (IKE) and IPsec packets over a TCP connection for traversing network middleboxes that may block IKE negotiation over UDP.  This method, referred to as "TCP encapsulation", involves sending both IKE packets for Security Association establishment and Encapsulating Security Payload (ESP) packets over a TCP connection.  This method is intended to be used as a fallback option when IKE cannot be negotiated over UDP.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8229"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8229"/>
+          <format target="https://www.rfc-editor.org/info/rfc8229" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2018"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol. TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961. This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+          <format target="https://www.rfc-editor.org/info/rfc8446" type="TXT"/>
+        </reference>
+        <reference anchor="RFC9293" target="https://www.rfc-editor.org/info/rfc9293" quoteTitle="true" derivedAnchor="RFC9293">
+          <front>
+            <title>Transmission Control Protocol (TCP)</title>
+            <author fullname="W. Eddy" initials="W." role="editor" surname="Eddy"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies the Transmission Control Protocol (TCP).  TCP is an important transport-layer protocol in the Internet protocol stack, and it has continuously evolved over decades of use and growth of the Internet.  Over this time, a number of changes have been made to TCP as it was specified in RFC 793, though these have only been documented in a piecemeal fashion.  This document collects and brings those changes together with the protocol specification from RFC 793.  This document obsoletes RFC 793, as well as RFCs 879, 2873, 6093, 6429, 6528, and 6691 that updated parts of RFC 793.  It updates RFCs 1011 and 1122, and it should be considered as a replacement for the portions of those documents dealing with TCP requirements.  It also updates RFC 5961 by adding a small clarification in reset handling while in the SYN-RECEIVED state.  The TCP header control bits from RFC 793 have also been updated based on RFC 3168.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="7"/>
+          <seriesInfo name="RFC" value="9293"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9293"/>
+          <format target="https://www.rfc-editor.org/info/rfc9293" type="TXT"/>
+        </reference>
+        <reference anchor="RFC9325" target="https://www.rfc-editor.org/info/rfc9325" quoteTitle="true" derivedAnchor="RFC9325">
+          <front>
+            <title>Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="Y." surname="Sheffer" fullname="Yaron Sheffer">
+              <organization showOnFrontPage="true">Intuit</organization>
+            </author>
+            <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+              <organization showOnFrontPage="true">independent</organization>
+            </author>
+            <author initials="T." surname="Fossati" fullname="Thomas Fossati">
+              <organization showOnFrontPage="true">arm</organization>
+            </author>
+            <date month="November" year="2022"/>
+          </front>
+          <seriesInfo name="RFC" value="9325"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9325"/>
+        </reference>
+        <reference anchor="TCP-MELTDOWN" target="https://doi.org/10.1117/12.630496" quoteTitle="true" derivedAnchor="TCP-MELTDOWN">
+          <front>
+            <title>Understanding TCP over TCP: effects of TCP tunneling on end-to-end throughput and latency</title>
+            <author fullname="Osamu Honda"/>
+            <author fullname="Hiroyuki Ohsaki"/>
+            <author fullname="Makoto Imase"/>
+            <author fullname="Mika Ishizuka"/>
+            <author fullname="Junichi Murayama"/>
+            <date month="October" year="2005"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section anchor="tls" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-using-tcp-encapsulation-wit">Using TCP Encapsulation with TLS</name>
+      <t indent="0" pn="section-appendix.a-1">This section provides recommendations on how to use TLS in addition
+          to TCP encapsulation.
+      </t>
+      <t indent="0" pn="section-appendix.a-2">When using TCP encapsulation, implementations may choose to use TLS 1.2
+          <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> or TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> on the TCP connection 
+          to be able to traverse middleboxes, which may otherwise block the traffic.
+      </t>
+      <t indent="0" pn="section-appendix.a-3">If a web proxy is applied to the ports used for the TCP connection
+          and TLS is being used, the TCP Originator can send an HTTP CONNECT
+          message to establish an SA through the proxy <xref target="RFC2817" format="default" sectionFormat="of" derivedContent="RFC2817"/>.
+      </t>
+      <t indent="0" pn="section-appendix.a-4">The use of TLS should be configurable on the peers and may be used
+          as the default when using TCP encapsulation or may be used as a
+          fallback when basic TCP encapsulation fails.  The TCP Responder may
+          expect to read encapsulated IKE and ESP packets directly from the TCP
+          connection, or it may expect to read them from a stream of TLS data
+          packets.  The TCP Originator should be preconfigured regarding whether or not to use TLS
+          when communicating with a given port on the TCP Responder.
+      </t>
+      <t indent="0" pn="section-appendix.a-5">When new TCP connections are re-established due to a broken
+          connection, TLS must be renegotiated.  TLS session resumption is
+          recommended to improve efficiency in this case.
+      </t>
+      <t indent="0" pn="section-appendix.a-6">The security of the IKE session is entirely derived from the IKE
+          negotiation and key establishment and not from the TLS session (which,
+          in this context, is only used for encapsulation purposes); therefore,
+          when TLS is used on the TCP connection, both the TCP Originator and
+          the TCP Responder <bcp14>SHOULD</bcp14> allow the NULL cipher to be selected for
+          performance reasons. Note that TLS 1.3 only supports AEAD algorithms
+          and at the time of writing this document there was no recommended cipher suite 
+          for TLS 1.3 with the NULL cipher. It is <bcp14>RECOMMENDED</bcp14> to follow 
+          <xref target="RFC9325" format="default" sectionFormat="of" derivedContent="RFC9325"/> when selecting parameters for TLS.
+      </t>
+      <t indent="0" pn="section-appendix.a-7">Implementations should be aware that the use of TLS introduces
+          another layer of overhead requiring more bytes to transmit a given
+          IKE and IPsec packet.  For this reason, direct ESP, UDP
+          encapsulation, or TCP encapsulation without TLS should be preferred
+          in situations in which TLS is not required in order to traverse
+          middleboxes.
+      </t>
+    </section>
+    <section anchor="tls-example" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-example-exchanges-of-tcp-en">Example Exchanges of TCP Encapsulation with TLS 1.3</name>
+      <t indent="0" pn="section-appendix.b-1">This appendix contains examples of data flows in cases where TCP encapsulation of IKE and IPsec packets 
+	is used with TLS 1.3. The examples below are provided for illustrative purpose only; 
+	readers should refer to the main body of the document for details.</t>
+      <section anchor="tls-example-1" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b.1">
+        <name slugifiedName="name-establishing-an-ike-session">Establishing an IKE Session</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b.1-1">
+                Client                              Server
+              ----------                          ----------
+  1)  --------------------  TCP Connection  -------------------
+      (IP_I:Port_I  -&gt; IP_R:Port_R)
+      TcpSyn                   -------&gt;
+                               &lt;-------              TcpSyn,Ack
+      TcpAck                   -------&gt;
+  2)  ---------------------  TLS Session  ---------------------
+      ClientHello              -------&gt;
+                                                    ServerHello
+                                          {EncryptedExtensions}
+                                                 {Certificate*}
+                                           {CertificateVerify*}
+                               &lt;-------              {Finished}
+      {Finished}               -------&gt;
+  3)  ---------------------- Stream Prefix --------------------
+      "IKETCP"                 -------&gt;
+  4)  ----------------------- IKE Session ---------------------
+      Length + Non-ESP Marker  -------&gt;
+      IKE_SA_INIT
+      HDR, SAi1, KEi, Ni,
+      [N(NAT_DETECTION_SOURCE_IP)],
+      [N(NAT_DETECTION_DESTINATION_IP)]
+                               &lt;------- Length + Non-ESP Marker
+                                                    IKE_SA_INIT
+                                            HDR, SAr1, KEr, Nr,
+                                  [N(NAT_DETECTION_SOURCE_IP)],
+                              [N(NAT_DETECTION_DESTINATION_IP)]
+      Length + Non-ESP Marker  -------&gt;
+      first IKE_AUTH
+      HDR, SK {IDi, [CERTREQ]
+      CP(CFG_REQUEST), IDr,
+      SAi2, TSi, TSr, ...}
+                               &lt;------- Length + Non-ESP Marker
+                                                 first IKE_AUTH
+                                    HDR, SK {IDr, [CERT], AUTH,
+                                           EAP, SAr2, TSi, TSr}
+      Length + Non-ESP Marker  -------&gt;
+      IKE_AUTH (repeat 1..N times)
+      HDR, SK {EAP}
+                               &lt;------- Length + Non-ESP Marker
+                                   IKE_AUTH (repeat 1..N times)
+                                                   HDR SK {EAP}
+      Length + Non-ESP Marker  -------&gt;
+      final IKE_AUTH
+      HDR, SK {AUTH}
+                               &lt;------- Length + Non-ESP Marker
+                                                 final IKE_AUTH
+                                  HDR, SK {AUTH, CP(CFG_REPLY),
+                                             SA, TSi, TSr, ...}
+      -------------- IKE and IPsec SAs Established ------------
+      Length + ESP Frame       -------&gt;</artwork>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.b.1-2"><li pn="section-appendix.b.1-2.1" derivedCounter="1.">The client establishes a TCP connection with the server on
+               port 4500 or on an alternate preconfigured port that the server
+               is listening on.
+               </li>
+          <li pn="section-appendix.b.1-2.2" derivedCounter="2.">If configured to use TLS, the client initiates a TLS handshake.
+              During the TLS handshake, the server <bcp14>SHOULD NOT</bcp14> request the
+              client's certificate since authentication is handled as part of
+              IKE negotiation.</li>
+          <li pn="section-appendix.b.1-2.3" derivedCounter="3.">The client sends the stream prefix for TCP-encapsulated IKE
+              (<xref target="prefix" format="default" sectionFormat="of" derivedContent="Section 4"/>) traffic to signal the beginning of IKE negotiation.</li>
+          <li pn="section-appendix.b.1-2.4" derivedCounter="4.">The client and server establish an IKE connection.  This example
+              shows EAP-based authentication, although any authentication type
+              may be used.</li>
+        </ol>
+      </section>
+      <section anchor="tls-example-2" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b.2">
+        <name slugifiedName="name-deleting-an-ike-session">Deleting an IKE Session</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b.2-1">
+                Client                              Server
+              ----------                          ----------
+  1)  ----------------------- IKE Session ---------------------
+      Length + Non-ESP Marker  -------&gt;
+      INFORMATIONAL
+      HDR, SK {[N,] [D,]
+             [CP,] ...}
+                               &lt;------- Length + Non-ESP Marker
+                                                  INFORMATIONAL
+                                             HDR, SK {[N,] [D,]
+                                                     [CP], ...}
+  2)  ---------------------  TLS Session  ---------------------
+      close_notify             -------&gt;
+                               &lt;-------            close_notify
+  3)  --------------------  TCP Connection  -------------------
+      TcpFin                   -------&gt;
+                               &lt;-------                     Ack
+                               &lt;-------                  TcpFin
+      Ack                      -------&gt;
+      --------------------  IKE SA Deleted  -------------------</artwork>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.b.2-2"><li pn="section-appendix.b.2-2.1" derivedCounter="1.">The client and server exchange informational messages to notify
+              IKE SA deletion.</li>
+          <li pn="section-appendix.b.2-2.2" derivedCounter="2.">The client and server negotiate TLS session deletion using TLS
+              CLOSE_NOTIFY.</li>
+          <li pn="section-appendix.b.2-2.3" derivedCounter="3.">The TCP connection is torn down.</li>
+        </ol>
+        <t indent="0" pn="section-appendix.b.2-3">The deletion of the IKE SA should lead to the disposal of the
+            underlying TLS and TCP state.</t>
+      </section>
+      <section anchor="tls-example-3" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b.3">
+        <name slugifiedName="name-re-establishing-an-ike-sess">Re-establishing an IKE Session</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b.3-1">
+                Client                              Server
+              ----------                          ----------
+  1)  --------------------  TCP Connection  -------------------
+      (IP_I:Port_I  -&gt; IP_R:Port_R)
+      TcpSyn                   -------&gt;
+                               &lt;-------              TcpSyn,Ack
+      TcpAck                   -------&gt;
+  2)  ---------------------  TLS Session  ---------------------
+      ClientHello              -------&gt;
+                                                    ServerHello
+                                          {EncryptedExtensions}
+                               &lt;-------              {Finished}
+      {Finished}               -------&gt;
+  3)  ---------------------- Stream Prefix --------------------
+      "IKETCP"                 -------&gt;
+  4)  &lt;---------------------&gt; IKE/ESP Flow &lt;------------------&gt;</artwork>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.b.3-2"><li pn="section-appendix.b.3-2.1" derivedCounter="1.">If a previous TCP connection was broken (for example, due to a
+              TCP Reset), the client is responsible for re-initiating the TCP
+              connection.  The TCP Originator's address and port (IP_I and
+              Port_I) may be different from the previous connection's address
+              and port.
+              </li>
+          <li pn="section-appendix.b.3-2.2" derivedCounter="2.">The client <bcp14>SHOULD</bcp14> attempt TLS session resumption if it
+              has previously established a session with the server.
+              </li>
+          <li pn="section-appendix.b.3-2.3" derivedCounter="3.">After TCP and TLS are complete, the client sends the stream
+              prefix for TCP-encapsulated IKE traffic (<xref target="prefix" format="default" sectionFormat="of" derivedContent="Section 4"/>).
+              </li>
+          <li pn="section-appendix.b.3-2.4" derivedCounter="4.">The IKE and ESP packet flow can resume.  If MOBIKE is being used,
+              the Initiator <bcp14>SHOULD</bcp14> send an UPDATE_SA_ADDRESSES message.
+              </li>
+        </ol>
+      </section>
+      <section anchor="tls-example-4" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b.4">
+        <name slugifiedName="name-using-mobike-between-udp-an">Using MOBIKE between UDP and TCP Encapsulation</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b.4-1">
+                  Client                              Server
+                ----------                          ----------
+  1)  --------------------- IKE_session ----------------------
+      (IP_I1:UDP500 -&gt; IP_R:UDP500)
+      IKE_SA_INIT              -------&gt;
+      HDR, SAi1, KEi, Ni,
+      [N(NAT_DETECTION_SOURCE_IP)],
+      [N(NAT_DETECTION_DESTINATION_IP)]
+                               &lt;-------            IKE_SA_INIT
+                                            HDR, SAr1, KEr, Nr,
+                                  [N(NAT_DETECTION_SOURCE_IP)],
+                              [N(NAT_DETECTION_DESTINATION_IP)]
+      (IP_I1:UDP4500 -&gt; IP_R:UDP4500)
+      Non-ESP Marker           -------&gt;
+      IKE_AUTH
+      HDR, SK { IDi, CERT, AUTH,
+      SAi2, TSi, TSr,
+      N(MOBIKE_SUPPORTED) }
+                               &lt;-------          Non-ESP Marker
+                                                       IKE_AUTH
+                                     HDR, SK { IDr, CERT, AUTH,
+                                                SAr2, TSi, TSr,
+                                          N(MOBIKE_SUPPORTED) }
+      &lt;---------------------&gt; IKE/ESP Flow &lt;------------------&gt;
+  2)  ------------ MOBIKE Attempt on New Network --------------
+      (IP_I2:UDP4500 -&gt; IP_R:UDP4500)
+      Non-ESP Marker           -------&gt;
+      INFORMATIONAL
+      HDR, SK { N(UPDATE_SA_ADDRESSES),
+      N(NAT_DETECTION_SOURCE_IP),
+      N(NAT_DETECTION_DESTINATION_IP) }
+  3)  --------------------  TCP Connection  -------------------
+      (IP_I2:Port_I -&gt; IP_R:Port_R)
+      TcpSyn                   -------&gt;
+                               &lt;-------              TcpSyn,Ack
+      TcpAck                   -------&gt;
+  4)  ---------------------  TLS Session  ---------------------
+      ClientHello              -------&gt;
+                                                    ServerHello
+                                          {EncryptedExtensions}
+                                                 {Certificate*}
+                                           {CertificateVerify*}
+                               &lt;-------              {Finished}
+      {Finished}               -------&gt;
+  5)  ---------------------- Stream Prefix --------------------
+      "IKETCP"                 -------&gt;</artwork>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.b.4-2">	
+  6)  ------------ Retransmit Message from step 2 -------------
+      Length + Non-ESP Marker  -------&gt;
+      INFORMATIONAL
+      HDR, SK { N(UPDATE_SA_ADDRESSES),
+      N(NAT_DETECTION_SOURCE_IP),
+      N(NAT_DETECTION_DESTINATION_IP) }
+                               &lt;------- Length + Non-ESP Marker
+                                                  INFORMATIONAL
+                          HDR, SK { N(NAT_DETECTION_SOURCE_IP),
+                              N(NAT_DETECTION_DESTINATION_IP) }
+  7)  -- New Exchange with recalculated  NAT_DETECTION_*_IP ---
+      Length + Non-ESP Marker  -------&gt;
+      INFORMATIONAL
+      HDR, SK { N(UPDATE_SA_ADDRESSES),
+      N(NAT_DETECTION_SOURCE_IP),
+      N(NAT_DETECTION_DESTINATION_IP) }
+                               &lt;------- Length + Non-ESP Marker
+                                                  INFORMATIONAL
+                          HDR, SK { N(NAT_DETECTION_SOURCE_IP),
+                              N(NAT_DETECTION_DESTINATION_IP) }
+  8)  &lt;---------------------&gt; IKE/ESP Flow &lt;------------------&gt;</artwork>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.b.4-3"><li pn="section-appendix.b.4-3.1" derivedCounter="1.">During the IKE_AUTH exchange, the client and server exchange
+              MOBIKE_SUPPORTED notify payloads to indicate support for MOBIKE.
+              </li>
+          <li pn="section-appendix.b.4-3.2" derivedCounter="2.">The client changes its point of attachment to the network and
+              receives a new IP address.  The client attempts to re-establish
+              the IKE session using the UPDATE_SA_ADDRESSES notify payload, but
+              the server does not respond because the network blocks UDP
+              traffic.
+              </li>
+          <li pn="section-appendix.b.4-3.3" derivedCounter="3.">The client brings up a TCP connection to the server in order to
+              use TCP encapsulation.
+              </li>
+          <li pn="section-appendix.b.4-3.4" derivedCounter="4.">The client initiates a TLS handshake with the server.</li>
+          <li pn="section-appendix.b.4-3.5" derivedCounter="5.">The client sends the stream prefix for TCP-encapsulated IKE
+              traffic (<xref target="prefix" format="default" sectionFormat="of" derivedContent="Section 4"/>).
+              </li>
+          <li pn="section-appendix.b.4-3.6" derivedCounter="6.">The client sends the UPDATE_SA_ADDRESSES notify payload in the 
+              INFORMATIONAL exchange on the
+              TCP-encapsulated connection.  Note that this IKE message is the
+              same as the one sent over UDP in step 2; it should have the same
+              message ID and contents.
+              </li>
+          <li pn="section-appendix.b.4-3.7" derivedCounter="7.">Once the client receives a response on the
+              TCP-encapsulated connection, it immediately starts a new INFORMATIONAL
+              exchange with an UPDATE_SA_ADDRESSES notify payload and recalculated 
+              NAT_DETECTION_*_IP notify payloads in order to get correct information about the presence 
+              of NATs.
+              </li>
+          <li pn="section-appendix.b.4-3.8" derivedCounter="8.">The IKE and ESP packet flow can resume.</li>
+        </ol>
+      </section>
+    </section>
+    <section numbered="false" anchor="acknowledgments" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.c-1">Thanks to the authors of RFC 8229 (<contact fullname="Tommy       Pauly"/>, <contact fullname="Samy Touati"/>, and <contact fullname="Ravi       Mantha"/>).  Since this document clarifies and obsoletes RFC 8229, most of
+      its text was borrowed from the original document.
+      </t>
+      <t indent="0" pn="section-appendix.c-2">The following people provided valuable feedback and advice while
+      preparing RFC 8229: <contact fullname="Stuart Cheshire"/>, <contact fullname="Delziel Fernandes"/>, <contact fullname="Yoav Nir"/>, <contact fullname="Christoph Paasch"/>, <contact fullname="Yaron Sheffer"/>,
+      <contact fullname="David Schinazi"/>, <contact fullname="Graham       Bartlett"/>, <contact fullname="Byju Pularikkal"/>, <contact fullname="March Wu"/>, <contact fullname="Kingwel Xie"/>, <contact fullname="Valery Smyslov"/>, <contact fullname="Jun Hu"/>, and <contact fullname="Tero Kivinen"/>. Special thanks to <contact fullname="Eric       Kinnear"/> for his implementation work.
+      </t>
+      <t indent="0" pn="section-appendix.c-3">The authors would like to thank <contact fullname="Tero Kivinen"/>,
+      <contact fullname="Paul Wouters"/>, <contact fullname="Joseph Touch"/>,
+      and <contact fullname="Christian Huitema"/> for their valuable comments
+      while preparing this document.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Tommy Pauly" initials="T." surname="Pauly">
+        <organization showOnFrontPage="true">Apple Inc.</organization>
+        <address>
+          <postal>
+            <street>1 Infinite Loop</street>
+            <city>Cupertino</city>
+            <region>California</region>
+            <code>95014</code>
+            <country>United States of America</country>
+          </postal>
+          <email>tpauly@apple.com</email>
+        </address>
+      </author>
+      <author initials="V." surname="Smyslov" fullname="Valery Smyslov">
+        <organization showOnFrontPage="true">ELVIS-PLUS</organization>
+        <address>
+          <postal>
+            <street>PO Box 81</street>
+            <city>Moscow (Zelenograd)</city>
+            <code>124460</code>
+            <country>Russian Federation</country>
+          </postal>
+          <phone>+7 495 276 0211</phone>
+          <email>svan@elvis.ru</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

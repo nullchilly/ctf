@@ -1,0 +1,1424 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="exp" docName="draft-sheffer-tls-pinning-ticket-12" indexInclude="true" ipr="trust200902" number="8672" prepTime="2019-10-31T13:56:41" scripts="Common,Latin" sortRefs="true" submissionType="independent" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-sheffer-tls-pinning-ticket-12" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8672" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Pinning with Tickets">TLS Server Identity Pinning with Tickets</title>
+    <seriesInfo name="RFC" value="8672" stream="independent"/>
+    <author initials="Y." surname="Sheffer" fullname="Yaron Sheffer">
+      <organization showOnFrontPage="true">Intuit</organization>
+      <address>
+        <email>yaronf.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author initials="D." surname="Migault" fullname="Daniel Migault">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <email>daniel.migault@ericsson.com</email>
+      </address>
+    </author>
+    <date month="10" year="2019"/>
+    <area>General</area>
+    <keyword>public-key certificates, trust-on-first-use, TOFU</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">Misissued public-key certificates can prevent TLS clients from appropriately
+authenticating the TLS server. Several alternatives
+have been proposed to detect this situation and prevent a client from establishing
+a TLS session with a TLS end point authenticated with an illegitimate
+public-key certificate. These mechanisms are either not
+widely deployed or limited to public web browsing.</t>
+      <t pn="section-abstract-2">This document proposes experimental extensions to TLS with opaque
+pinning tickets as a way to pin the server's identity.
+During an initial TLS session,
+the server provides an original encrypted pinning ticket.
+In subsequent TLS session establishment, upon receipt of the pinning ticket,
+the server proves its ability to decrypt the pinning ticket
+and thus the ownership of the pinning protection key.
+The client can now safely conclude that the TLS session is established
+with the same TLS server as the original TLS session.
+One of the important properties of this proposal is that
+no manual management actions are required.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This is a contribution to the RFC Series,
+            independently of any other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for publication
+            by the RFC Editor are not candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8672" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2019 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (https://trustee.ietf.org/license-info) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.3">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1">
+          <li pn="section-boilerplate.3-1.1">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="Introduction" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.1.2">
+              <li pn="section-boilerplate.3-1.1.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="Conventions Used in This Document" format="title" sectionFormat="of" target="name-conventions-used-in-this-do">Conventions Used in This Document</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.1.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="Scope of Experimentation" format="title" sectionFormat="of" target="name-scope-of-experimentation">Scope of Experimentation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.2">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="Protocol Overview" format="title" sectionFormat="of" target="name-protocol-overview">Protocol Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.2.2">
+              <li pn="section-boilerplate.3-1.2.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="Initial Connection" format="title" sectionFormat="of" target="name-initial-connection">Initial Connection</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.2.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="Subsequent Connections" format="title" sectionFormat="of" target="name-subsequent-connections">Subsequent Connections</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.2.2.3">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="Indexing the Pins" format="title" sectionFormat="of" target="name-indexing-the-pins">Indexing the Pins</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.3">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="Message Definitions" format="title" sectionFormat="of" target="name-message-definitions">Message Definitions</xref></t>
+          </li>
+          <li pn="section-boilerplate.3-1.4">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="Cryptographic Operations" format="title" sectionFormat="of" target="name-cryptographic-operations">Cryptographic Operations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.4.2">
+              <li pn="section-boilerplate.3-1.4.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="Pinning Secret" format="title" sectionFormat="of" target="name-pinning-secret">Pinning Secret</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.4.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="Pinning Ticket" format="title" sectionFormat="of" target="name-pinning-ticket">Pinning Ticket</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.4.2.3">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="Pinning Protection Key" format="title" sectionFormat="of" target="name-pinning-protection-key">Pinning Protection Key</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.4.2.4">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="Pinning Proof" format="title" sectionFormat="of" target="name-pinning-proof">Pinning Proof</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.5">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="Operational Considerations" format="title" sectionFormat="of" target="name-operational-considerations">Operational Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.5.2">
+              <li pn="section-boilerplate.3-1.5.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="Protection Key Synchronization" format="title" sectionFormat="of" target="name-protection-key-synchronizat">Protection Key Synchronization</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="Ticket Lifetime" format="title" sectionFormat="of" target="name-ticket-lifetime">Ticket Lifetime</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.3">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="Certificate Renewal" format="title" sectionFormat="of" target="name-certificate-renewal">Certificate Renewal</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.4">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="Certificate Revocation" format="title" sectionFormat="of" target="name-certificate-revocation">Certificate Revocation</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.5">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.5.1"><xref derivedContent="5.5" format="counter" sectionFormat="of" target="section-5.5"/>.  <xref derivedContent="Disabling Pinning" format="title" sectionFormat="of" target="name-disabling-pinning">Disabling Pinning</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.6">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.6.1"><xref derivedContent="5.6" format="counter" sectionFormat="of" target="section-5.6"/>.  <xref derivedContent="Server Compromise" format="title" sectionFormat="of" target="name-server-compromise">Server Compromise</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.5.2.7">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.5.2.7.1"><xref derivedContent="5.7" format="counter" sectionFormat="of" target="section-5.7"/>.  <xref derivedContent="Disaster Recovery" format="title" sectionFormat="of" target="name-disaster-recovery">Disaster Recovery</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.6">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="Security Considerations" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.6.2">
+              <li pn="section-boilerplate.3-1.6.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="Trust-on-First-Use (TOFU) and MITM Attacks" format="title" sectionFormat="of" target="name-trust-on-first-use-tofu-and">Trust-on-First-Use (TOFU) and MITM Attacks</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="Pervasive Monitoring" format="title" sectionFormat="of" target="name-pervasive-monitoring">Pervasive Monitoring</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.3">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="Server-Side Error Detection" format="title" sectionFormat="of" target="name-server-side-error-detection">Server-Side Error Detection</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.4">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="Client Policy and SSL Proxies" format="title" sectionFormat="of" target="name-client-policy-and-ssl-proxi">Client Policy and SSL Proxies</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.5">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.5.1"><xref derivedContent="6.5" format="counter" sectionFormat="of" target="section-6.5"/>.  <xref derivedContent="Client-Side Error Behavior" format="title" sectionFormat="of" target="name-client-side-error-behavior">Client-Side Error Behavior</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.6">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.6.1"><xref derivedContent="6.6" format="counter" sectionFormat="of" target="section-6.6"/>.  <xref derivedContent="Stolen and Forged Tickets" format="title" sectionFormat="of" target="name-stolen-and-forged-tickets">Stolen and Forged Tickets</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.7">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.7.1"><xref derivedContent="6.7" format="counter" sectionFormat="of" target="section-6.7"/>.  <xref derivedContent="Client Privacy" format="title" sectionFormat="of" target="name-client-privacy">Client Privacy</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.6.2.8">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.6.2.8.1"><xref derivedContent="6.8" format="counter" sectionFormat="of" target="section-6.8"/>.  <xref derivedContent="Ticket Protection Key Management" format="title" sectionFormat="of" target="name-ticket-protection-key-manag">Ticket Protection Key Management</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.7">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="IANA Considerations" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-boilerplate.3-1.8">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="References" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.8.2">
+              <li pn="section-boilerplate.3-1.8.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="Normative References" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.8.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="Informative References" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.9">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.9.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="Previous Work" format="title" sectionFormat="of" target="name-previous-work">Previous Work</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-boilerplate.3-1.9.2">
+              <li pn="section-boilerplate.3-1.9.2.1">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.9.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-a.1"/>.  <xref derivedContent="Comparison: HPKP" format="title" sectionFormat="of" target="name-comparison-hpkp">Comparison: HPKP</xref></t>
+              </li>
+              <li pn="section-boilerplate.3-1.9.2.2">
+                <t keepWithNext="true" pn="section-boilerplate.3-1.9.2.2.1"><xref derivedContent="A.2" format="counter" sectionFormat="of" target="section-a.2"/>.  <xref derivedContent="Comparison: TACK" format="title" sectionFormat="of" target="name-comparison-tack">Comparison: TACK</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-boilerplate.3-1.10">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="Acknowledgments" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-boilerplate.3-1.11">
+            <t keepWithNext="true" pn="section-boilerplate.3-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="Authors' Addresses" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">Misissued public-key certificates can prevent TLS <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> clients from
+appropriately authenticating the TLS server. This is a significant
+risk in the context of the global public key infrastructure (PKI),
+and similarly for large-scale
+deployments of certificates within enterprises.</t>
+      <t pn="section-1-2">This document proposes experimental extensions to TLS with opaque
+pinning tickets as a way to pin the server's identity. The approach
+is intended to be easy to implement and deploy, and reuses some of
+the ideas behind TLS session resumption <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>.</t>
+      <t pn="section-1-3">Ticket pinning is a second-factor server authentication method and is
+not proposed as a substitute for the authentication method provided in
+the TLS key exchange. More specifically, the client only uses the
+pinning identity method after the TLS key exchange is successfully
+completed.  In other words, the pinning identity method is only
+performed over an authenticated TLS session.  Note that ticket pinning
+does not pin certificate information and therefore is truly an
+independent second-factor authentication.</t>
+      <t pn="section-1-4">Ticket pinning is a trust-on-first-use (TOFU) mechanism, in that the
+first server authentication is only based on PKI certificate validation,
+but for any follow-on sessions, the client is further ensuring the
+server's identity based on the server's ability to decrypt the ticket,
+in addition to normal PKI certificate authentication.</t>
+      <t pn="section-1-5">During initial TLS session establishment, the client requests a pinning
+ticket from the server.  Upon receiving the request the server generates
+a pinning secret that is expected to be unpredictable for peers other
+than the client or the server.  In our case, the pinning secret is
+generated from parameters exchanged during the TLS key exchange, so
+client and server can generate it locally and independently. The server
+constructs the pinning ticket with the necessary information to retrieve
+the pinning secret.  The server then encrypts the ticket and returns the
+pinning ticket to the client with an associated pinning lifetime.</t>
+      <t pn="section-1-6">The pinning lifetime value indicates for how long the server promises to
+retain the server-side ticket-encryption key, which allows it to
+complete the protocol exchange correctly and prove its identity. The
+server commitment (and ticket lifetime) is typically on the order of
+weeks.</t>
+      <t pn="section-1-7">Once the key exchange is completed, and the server is deemed
+authenticated, the client generates locally the pinning secret and
+caches the server's identifiers to index the pinning secret as well as
+the pinning ticket and its associated lifetime.</t>
+      <t pn="section-1-8">When the client reestablishes a new TLS session with the server, it
+sends the pinning ticket to the server. Upon receiving it, the server
+returns a proof of knowledge of the pinning secret.  Once the key
+exchange is completed, and the server has been authenticated, the client
+checks the pinning proof returned by the server using the client's
+stored pinning secret. If the proof matches, the client can conclude
+that the server to which it is currently connecting is, in fact, the correct
+server.</t>
+      <t pn="section-1-9">This document only applies to TLS 1.3.
+We believe that the
+idea can also be retrofitted into earlier versions of the protocol, but
+this would require significant changes.
+One example is that TLS 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> and
+earlier versions do not provide a generic facility of encrypted
+handshake extensions, such as is used here to transport the ticket.</t>
+      <t pn="section-1-10">The main advantages of this protocol over earlier pinning solutions 
+are the following:</t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-1-11">
+        <li pn="section-1-11.1">The protocol is at the TLS level, and as a result is not restricted to
+HTTP at the application level.</li>
+        <li pn="section-1-11.2">The protocol is robust to changes in server IP address, 
+certification authority (CA), and public key.  The
+server is characterized by the ownership of the pinning protection key,
+which is never provided to the client. Server configuration parameters
+such as the CA and the public key may change without affecting the
+pinning ticket protocol.</li>
+        <li pn="section-1-11.3">Once a single parameter is configured (the ticket's lifetime), operation
+is fully automated. The server administrator need not bother with the
+management of backup certificates or explicit pins.</li>
+        <li pn="section-1-11.4">For server clusters, we reuse the existing infrastructure <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>
+where it exists.</li>
+        <li pn="section-1-11.5">Pinning errors, presumably resulting from man-in-the-middle (MITM) attacks,
+can be detected
+both by the client and the server. This allows for server-side detection
+of MITM attacks using large-scale analytics, and with no need to rely on
+clients to explicitly report the error.</li>
+      </ul>
+      <t pn="section-1-12">A note on terminology: unlike other solutions in this space, we do not
+do "certificate pinning" (or "public key pinning"), since the protocol
+is oblivious to the server's certificate. We prefer the term "server
+identity pinning" for this new solution.  In our solution, the server
+proves its identity by generating a proof that it can read and decrypt
+an encrypted ticket. As a result, the identity proof relies on proof of
+ownership of the pinning protection key. However, this key is never
+exchanged with the client or known by it, and so cannot itself be
+pinned.</t>
+      <section anchor="conventions-used-in-this-document" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-conventions-used-in-this-do">Conventions Used in This Document</name>
+        <t pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section anchor="scope-of-experimentation" numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-scope-of-experimentation">Scope of Experimentation</name>
+        <t pn="section-1.2-1">This document describes an experimental extension to the TLS protocol.
+This section defines constraints on this experiment and how it can yield useful information, potentially resulting in a standard.</t>
+        <t pn="section-1.2-2">The protocol is designed so that if the server does not support it, the client and server fall back to a normal TLS exchange,
+with the exception of a single PinningTicket extension being initially sent by the client.
+In addition, the protocol is designed only to strengthen the validation of the server's identity ("second factor").
+As a result, implementation or even protocol errors should not result in
+weakened security compared to the normal TLS exchange.
+Given these two points, experimentation can be run on the open Internet between consenting client and server implementations.</t>
+        <t pn="section-1.2-3">The goal of the experiment is to prove that:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-1.2-4">
+          <li pn="section-1.2-4.1">Non-supporting clients and servers are unaffected.</li>
+          <li pn="section-1.2-4.2">Connectivity between supporting clients and servers is retained under normal circumstances,
+whether the client connects to the server frequently (relative to the ticket's lifetime) or very rarely.</li>
+          <li pn="section-1.2-4.3">Enterprise middleboxes do not interrupt such connectivity.</li>
+          <li pn="section-1.2-4.4">Misissued certificates and rogue TLS-aware middleboxes do result in broken connectivity,
+and these cases are detected on the client and/or server side. Clients and servers can be recovered
+even after such events and the normal connectivity restored.</li>
+        </ul>
+        <t pn="section-1.2-5">Following two years of successful deployment, the authors will publish a document that summarizes
+the experiment's findings and will resubmit the protocol for
+consideration as a Proposed Standard.</t>
+      </section>
+    </section>
+    <section anchor="protocol-overview" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-protocol-overview">Protocol Overview</name>
+      <t pn="section-2-1">The protocol consists of two phases: the first time a particular client
+connects to a server, and subsequent connections.</t>
+      <t pn="section-2-2">This protocol supports full TLS handshakes, as well as 0-RTT handshakes.
+Below we present it in the context of a full handshake, but behavior in
+0-RTT handshakes should be identical.</t>
+      <t pn="section-2-3">The document presents some similarities with the ticket resumption
+mechanism described in <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>. However the scope of this document
+differs from session resumption mechanisms implemented with <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>
+or with other mechanisms. Specifically, the pinning ticket does not
+carry any state associated with a TLS session and thus cannot be used
+for session resumption or client authentication. Instead, the
+pinning ticket only contains the encrypted pinning secret.
+The pinning ticket is used by the server to prove
+its ability to decrypt it, which implies ownership of the pinning
+protection key.</t>
+      <t pn="section-2-4"><xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/> has been obsoleted 
+by <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>, and ticket resumption is
+now defined by <xref target="RFC8446" sectionFormat="of" section="2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-2.2" derivedContent="RFC8446"/>. This document references
+<xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/> as an informational document since it contains a more
+thorough discussion of stateless ticket resumption, and because
+ticket resumption benefits
+from significant operational experience with TLS 1.2 that is still
+widely deployed at the time of writing.  This experience,
+as well as deployment experience, can easily be re-used for identity pinning.</t>
+      <t pn="section-2-5">With TLS 1.3, session resumption is based on a Pre-Shared Key (PSK).
+This is orthogonal to this protocol. With TLS 1.3, a TLS session can be
+established using PKI and a pinning ticket, and later resumed with PSK.</t>
+      <t pn="section-2-6">However, the protocol described in this document addresses the problem
+of misissued certificates. Thus, it is not expected to be used outside a
+certificate-based TLS key exchange, such as in PSK. As a result, PSK
+handshakes <bcp14>MUST NOT</bcp14> include the extension defined here.</t>
+      <section anchor="initial-connection" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-initial-connection">Initial Connection</name>
+        <t pn="section-2.1-1">When a client first connects to a server, it requests a pinning ticket
+by sending an empty PinningTicket extension, and receives it as part of
+the server's first response, in the returned PinningTicket extension.</t>
+        <artwork name="" type="ascii-art" align="left" alt="" pn="section-2.1-2">
+ Client                                               Server
+
+ ClientHello
+   + key_share
+   + signature_algorithms
+   + PinningTicket         --------&gt;
+                                                 ServerHello
+                                                 + key_share
+                                       {EncryptedExtensions
+                                            + PinningTicket}
+                                       {CertificateRequest*}
+                                              {Certificate*}
+                                        {CertificateVerify*}
+                           &lt;--------              {Finished}
+ {Certificate*}
+ {CertificateVerify*}
+ {Finished}                --------&gt;
+ [Application Data]        &lt;-------&gt;      [Application Data]
+
+        *  Indicates optional or situation-dependent
+           messages that are not always sent.
+
+        {} Indicates messages protected using keys
+           derived from the ephemeral secret.
+
+        [] Indicates messages protected using keys
+           derived from the master secret.
+</artwork>
+        <t pn="section-2.1-3">If a client supports the PinningTicket extension and does not have any
+pinning ticket associated with the server, the exchange is considered as
+an initial connection. Other reasons the client may not have a pinning
+ticket include the client having flushed its pinning ticket store, or
+the committed lifetime of the pinning ticket having expired.</t>
+        <t pn="section-2.1-4">Upon receipt of the PinningTicket extension, the server computes a
+pinning secret (<xref target="pinning-secret" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) and sends the pinning ticket
+(<xref target="pinning-ticket" format="default" sectionFormat="of" derivedContent="Section 4.2"/>) encrypted with the pinning protection key
+(<xref target="pinning-ticket-key" format="default" sectionFormat="of" derivedContent="Section 4.3"/>).  The pinning ticket is associated with a
+lifetime value by which the server assumes the responsibility of
+retaining the pinning protection key and being able to decrypt incoming
+pinning tickets during the period indicated by the committed lifetime.</t>
+        <t pn="section-2.1-5">Once the pinning ticket has been generated, the server returns the
+pinning ticket and the committed lifetime in a PinningTicket extension
+embedded in the EncryptedExtensions message.  We note that a
+PinningTicket extension <bcp14>MUST NOT</bcp14> be sent as part of a HelloRetryRequest.</t>
+        <t pn="section-2.1-6">Upon receiving the pinning ticket, the client <bcp14>MUST NOT</bcp14> accept it until
+the key exchange is completed and the server authenticated. If the key
+exchange is not completed successfully, the client <bcp14>MUST</bcp14> ignore the
+received pinning ticket. Otherwise, the client computes the pinning
+secret and <bcp14>SHOULD</bcp14> cache the pinning secret and the pinning ticket for
+the duration indicated by the pinning ticket lifetime. The client <bcp14>SHOULD</bcp14>
+clean up the cached values at the end of the indicated lifetime.</t>
+      </section>
+      <section anchor="subsequent-connections" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-subsequent-connections">Subsequent Connections</name>
+        <t pn="section-2.2-1">When the client initiates a connection to a server it has previously
+seen (see <xref target="indexing" format="default" sectionFormat="of" derivedContent="Section 2.3"/> on identifying servers), it <bcp14>SHOULD</bcp14> send the
+pinning ticket for that server.  The pinning ticket, pinning secret, and
+pinning ticket lifetime computed during the establishment of the
+previous TLS session are designated in this document as the "original"
+ones, to distinguish them from a new ticket that may be generated during
+the current session.</t>
+        <t pn="section-2.2-2">The server <bcp14>MUST</bcp14> extract the original pinning_secret value from the
+ticket and <bcp14>MUST</bcp14> respond with a PinningTicket extension, which includes:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-2.2-3">
+          <li pn="section-2.2-3.1">A proof that the server can understand the ticket that was sent by the
+client; this proof also binds the pinning ticket to the server's
+(current) public key, as well as the ongoing TLS session. The proof is
+mandatory and <bcp14>MUST</bcp14> be included if a pinning ticket was sent by the client.</li>
+          <li pn="section-2.2-3.2">A fresh pinning ticket. The main reason for refreshing the ticket on
+each connection is privacy: to avoid the ticket serving as a fixed
+client identifier. While a fresh pinning ticket might be of zero length,
+it is <bcp14>RECOMMENDED</bcp14> to include a fresh ticket with a nonzero length with each
+response.</li>
+        </ul>
+        <t pn="section-2.2-4">If the server cannot validate the received ticket, that might indicate
+an earlier MITM attack on this client. The server <bcp14>MUST</bcp14> then abort the
+connection with a handshake_failure alert and <bcp14>SHOULD</bcp14> log this failure.</t>
+        <t pn="section-2.2-5">The client <bcp14>MUST</bcp14> verify the proof, and if it fails to do so, 
+the client <bcp14>MUST</bcp14> issue a
+handshake_failure alert and abort the connection (see also
+<xref target="client_error" format="default" sectionFormat="of" derivedContent="Section 6.5"/>).  It is important that the client does not attempt to
+"fall back" by omitting the PinningTicket extension.</t>
+        <t pn="section-2.2-6">When the connection is successfully set up, i.e., after the Finished
+message is verified, the client <bcp14>SHOULD</bcp14> store the new ticket along with
+the corresponding pinning_secret, replacing the original ticket.</t>
+        <t pn="section-2.2-7">Although this is an extension, if the client already has a ticket for a
+server, the client <bcp14>MUST</bcp14> interpret a missing PinningTicket extension in
+the server's response as an attack, because of the server's prior
+commitment to respect the ticket. The client <bcp14>MUST</bcp14> abort the connection
+in this case.  See also <xref target="ramp_down" format="default" sectionFormat="of" derivedContent="Section 5.5"/> on ramping down support for this
+extension.</t>
+      </section>
+      <section anchor="indexing" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-indexing-the-pins">Indexing the Pins</name>
+        <t pn="section-2.3-1">Each pin is associated with a set of identifiers that include, among
+others, hostname, protocol (TLS or DTLS), and port
+number.  In other words, the pin for port TCP/443 may be different from
+that for DTLS, or from the pin for port TCP/8443. These identifiers are
+expected to be relevant to characterize the identity of the server as
+well as the establishing TLS session. When a hostname is used, it <bcp14>MUST</bcp14> be
+the value sent inside the Server Name Indication (SNI) extension.  This
+definition is similar to the concept of a Web Origin <xref target="RFC6454" format="default" sectionFormat="of" derivedContent="RFC6454"/>, but does not assume
+the existence of a URL.</t>
+        <t pn="section-2.3-2">The purpose of ticket pinning is to pin the server identity. As a
+result, any information orthogonal to the server's identity <bcp14>MUST NOT</bcp14> be
+considered in indexing.  More particularly, IP addresses are ephemeral
+and forbidden in SNI, and therefore pins <bcp14>MUST NOT</bcp14> be associated with IP
+addresses. Similarly, CA names or public keys associated with server
+<bcp14>MUST NOT</bcp14> be used for indexing as they may change over time.</t>
+      </section>
+    </section>
+    <section anchor="message-definitions" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-message-definitions">Message Definitions</name>
+      <t pn="section-3-1">This section defines the format of the PinningTicket extension.
+We follow the message notation of <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.</t>
+      <sourcecode name="" type="c" markers="false" pn="section-3-2">
+ opaque pinning_ticket&lt;0..2^16-1&gt;;
+
+ opaque pinning_proof&lt;0..2^8-1&gt;;
+
+ struct {
+   select (Role) {
+     case client:
+       pinning_ticket ticket&lt;0..2^16-1&gt;; //omitted on 1st connection
+
+     case server:
+       pinning_proof proof&lt;0..2^8-1&gt;; //no proof on 1st connection
+       pinning_ticket ticket&lt;0..2^16-1&gt;; //omitted on ramp down
+       uint32 lifetime;
+   }
+} PinningTicketExtension;
+</sourcecode>
+      <dl newline="false" spacing="normal" indent="10" pn="section-3-3">
+        <dt pn="section-3-3.1">ticket</dt>
+        <dd pn="section-3-3.2">
+  a pinning ticket sent by the client or returned by the server. The
+ticket is opaque to the client. The extension <bcp14>MUST</bcp14> contain exactly 0 or
+1 tickets.</dd>
+        <dt pn="section-3-3.3">proof</dt>
+        <dd pn="section-3-3.4">
+  a demonstration by the server that it understands the received ticket
+and therefore that it is in possession of the secret that was used to
+generate it originally.  The extension <bcp14>MUST</bcp14> contain exactly 0 or 1
+proofs.</dd>
+        <dt pn="section-3-3.5">lifetime</dt>
+        <dd pn="section-3-3.6">
+  the duration (in seconds) that the server commits to accept offered
+tickets in the future.</dd>
+      </dl>
+    </section>
+    <section anchor="crypto" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-cryptographic-operations">Cryptographic Operations</name>
+      <t pn="section-4-1">This section provides details on the cryptographic operations performed
+by the protocol peers.</t>
+      <section anchor="pinning-secret" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-pinning-secret">Pinning Secret</name>
+        <t pn="section-4.1-1">The pinning secret is generated locally by the client and the server,
+which means they must use the same inputs to generate it. This value
+must be generated before the ServerHello message is sent, as the server
+includes the corresponding pinning ticket in the same flight as the
+ServerHello message. In addition, the pinning secret must be
+unpredictable to any party other than the client and the server.</t>
+        <t pn="section-4.1-2">The pinning secret is derived using the Derive-Secret function provided
+by TLS 1.3, described in <xref target="RFC8446" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-7.1" derivedContent="RFC8446"/>.</t>
+        <sourcecode name="" type="c" markers="false" pn="section-4.1-3">
+pinning secret = Derive-Secret(Handshake Secret, "pinning secret",
+         ClientHello...ServerHello)
+</sourcecode>
+      </section>
+      <section anchor="pinning-ticket" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-pinning-ticket">Pinning Ticket</name>
+        <t pn="section-4.2-1">The pinning ticket contains the pinning secret. The pinning ticket is
+provided by the client to the server, which decrypts it in order to
+extract the pinning secret and responds with a pinning proof.  As a
+result, the characteristics of the pinning ticket are:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-4.2-2">
+          <li pn="section-4.2-2.1">Pinning tickets <bcp14>MUST</bcp14> be encrypted and integrity-protected using strong
+cryptographic algorithms.</li>
+          <li pn="section-4.2-2.2">Pinning tickets <bcp14>MUST</bcp14> be protected with a long-term pinning protection
+key.</li>
+          <li pn="section-4.2-2.3">Pinning tickets <bcp14>MUST</bcp14> include a pinning protection key ID or serial
+number as to enable the pinning protection key to be refreshed.</li>
+          <li pn="section-4.2-2.4">The pinning ticket <bcp14>MAY</bcp14> include other information, in addition to the
+pinning secret. When additional information is included, a careful
+review needs to be performed to evaluate its impact on privacy.</li>
+        </ul>
+        <t pn="section-4.2-3">The pinning ticket's format is not specified by this document, but
+a format similar to the one proposed by <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>
+is <bcp14>RECOMMENDED</bcp14>.</t>
+      </section>
+      <section anchor="pinning-ticket-key" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-pinning-protection-key">Pinning Protection Key</name>
+        <t pn="section-4.3-1">The pinning protection key is used only by the server and so remains
+server implementation specific. <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/> recommends the use of two
+keys, but when using Authenticated Encryption with Associated Data (AEAD) algorithms,
+ only a single key is required.</t>
+        <t pn="section-4.3-2">When a single server terminates TLS for multiple virtual servers using
+the SNI mechanism, it is strongly <bcp14>RECOMMENDED</bcp14> that the server use
+a separate protection key for each one of them, in order to allow
+migrating virtual servers between different servers while keeping
+pinning active.</t>
+        <t pn="section-4.3-3">As noted in <xref target="cluster" format="default" sectionFormat="of" derivedContent="Section 5.1"/>, if the server is actually a cluster of
+machines, the protection key <bcp14>MUST</bcp14> be synchronized between all the nodes
+that accept TLS connections to the same server name.  When <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>
+is deployed, an easy way to do it is to derive the protection key from
+the session-ticket protection key, which is already synchronized. For
+example:</t>
+        <sourcecode name="" type="c" markers="false" pn="section-4.3-4">
+pinning_protection_key = HKDF-Expand(resumption_protection_key,
+                              "pinning protection", L)
+</sourcecode>
+        <t pn="section-4.3-5">Where resumption_protection_key is the ticket protection key defined in
+<xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/>. Both resumption_protection_key and pinning_protection_key
+are only used by the server.</t>
+        <t pn="section-4.3-6">The above solution attempts to minimize code changes related to management of the resumption_protection_key.
+The drawback is that this key would be used both to directly encrypt session tickets and to derive
+the pinning_protection_key, and such mixed usage of a single key is not in line with cryptographic best practices.
+Where possible, it is <bcp14>RECOMMENDED</bcp14> that the resumption_protection_key 
+be unrelated to the pinning_protection_key and that they are separately 
+shared among the relevant servers.</t>
+      </section>
+      <section anchor="pinning-proof" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-pinning-proof">Pinning Proof</name>
+        <t pn="section-4.4-1">The pinning proof is sent by the server to demonstrate that it has been
+able to decrypt the pinning ticket and to retrieve the pinning secret. The
+proof must be unpredictable and must not be replayed. Similarly to the
+pinning ticket, the pinning proof is sent by the server in the
+ServerHello message.  In addition, it must not be possible for a MITM
+server with a fake certificate to obtain a pinning proof from the
+original server.</t>
+        <t pn="section-4.4-2">In order to address these requirements, the pinning proof is bound to
+the TLS session as well as the public key of the server:</t>
+        <sourcecode name="" type="c" markers="false" pn="section-4.4-3">
+pinning_proof_secret=Derive-Secret(Handshake Secret, 
+             "pinning proof 1", ClientHello...ServerHello)
+
+proof = HMAC(original_pinning_secret, "pinning proof 2" +
+             pinning_proof_secret + Hash(server_public_key))
+</sourcecode>
+        <t pn="section-4.4-4">where HMAC <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="RFC2104"/> uses the Hash algorithm that was negotiated in
+the handshake, and the same hash is also used over the server's public
+key. The original_pinning_secret value refers to the secret value
+extracted from the ticket sent by the client, to distinguish it from a
+new pinning secret value that is possibly computed in the current
+exchange.  The server_public_key value is the DER representation of
+the public key, specifically the SubjectPublicKeyInfo structure as-is.</t>
+      </section>
+    </section>
+    <section anchor="operational-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-operational-considerations">Operational Considerations</name>
+      <t pn="section-5-1">The main motivation behind the current protocol is to enable identity
+pinning without the need for manual operations. Manual operations are
+susceptible to human error, and in the case of public key pinning, can
+easily result in "server bricking": the server becoming inaccessible to
+some or all of its users. To achieve this goal, operations described in
+identity pinning are only performed within the current TLS session, and
+there is no dependence on any TLS configuration parameters such as CA
+identity or public keys.  As a result, configuration changes are
+unlikely to lead to desynchronized state between the client and the
+server.</t>
+      <section anchor="cluster" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-protection-key-synchronizat">Protection Key Synchronization</name>
+        <t pn="section-5.1-1">The only operational requirement when deploying this protocol is that, if
+the server is part of a cluster, protection keys (the keys used to
+encrypt tickets) <bcp14>MUST</bcp14> be synchronized between all cluster members. The
+protocol is designed so that if resumption ticket protection keys
+<xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/> are already synchronized between cluster members, nothing
+more needs to be done.</t>
+        <t pn="section-5.1-2">Moreover, synchronization does not need to be instantaneous, e.g.,
+protection keys can be distributed a few minutes or hours in advance of
+their rollover. In such scenarios, each cluster member <bcp14>MUST</bcp14> be able to
+accept tickets protected with a new version of the protection key, even
+while it is still using an old version to generate keys. This ensures
+that, when a client receives a "new" ticket, it does not next hit a cluster
+member that still rejects this ticket.</t>
+        <t pn="section-5.1-3">Misconfiguration can lead to the server's clock being off by a large
+amount of time. Consider a case where a server's clock is misconfigured,
+for example, to be 1 year in
+the future, and the system is allowed to delete expired keys automatically.
+The server will then delete many outstanding keys because they are now
+long expired and will end up rejecting valid tickets that are stored
+by clients. Such a scenario could make the server
+inaccessible to a large number of clients.</t>
+        <t pn="section-5.1-4">The decision to delete a key should at least consider
+the largest value of the ticket lifetime as well as the expected time
+desynchronization between the servers of the cluster and the time
+difference for distributing the new key among the different servers in
+the cluster.</t>
+      </section>
+      <section anchor="ticket-lifetime" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-ticket-lifetime">Ticket Lifetime</name>
+        <t pn="section-5.2-1">The lifetime of the ticket is a commitment by the server to retain the
+ticket's corresponding protection key for this duration, so that the
+server can prove to the client that it knows the secret embedded in the
+ticket. For production systems, the lifetime <bcp14>SHOULD</bcp14> be between 7 and 31
+days.</t>
+      </section>
+      <section anchor="certificate-renewal" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-certificate-renewal">Certificate Renewal</name>
+        <t pn="section-5.3-1">The protocol ensures that the client will continue speaking to the
+correct server even when the server's certificate is renewed. In this
+sense, pinning is not associated with certificates, which is the reason we
+designate the protocol described in this document as "server identity
+pinning".</t>
+        <t pn="section-5.3-2">Note that this property is not impacted by the use of the server's
+public key in the pinning proof because the scope of the public key
+used is only the current TLS session.</t>
+      </section>
+      <section anchor="certificate-revocation" numbered="true" toc="include" removeInRFC="false" pn="section-5.4">
+        <name slugifiedName="name-certificate-revocation">Certificate Revocation</name>
+        <t pn="section-5.4-1">The protocol is orthogonal to certificate validation in the sense that,
+if the server's certificate has been revoked or is invalid for some
+other reason, the client <bcp14>MUST</bcp14> refuse to connect to it regardless of any
+ticket-related behavior.</t>
+      </section>
+      <section anchor="ramp_down" numbered="true" toc="include" removeInRFC="false" pn="section-5.5">
+        <name slugifiedName="name-disabling-pinning">Disabling Pinning</name>
+        <t pn="section-5.5-1">A server implementing this protocol <bcp14>MUST</bcp14> have a "ramp down" mode of
+operation where:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-5.5-2">
+          <li pn="section-5.5-2.1">The server continues to accept valid pinning tickets and responds
+  correctly with a proof.</li>
+          <li pn="section-5.5-2.2">The server does not send back a new pinning ticket.</li>
+        </ul>
+        <t pn="section-5.5-3">After a while, no clients will hold valid tickets, and the
+feature may be disabled. Note that clients that do not receive a new
+pinning ticket do not necessarily need to remove the original ticket.
+Instead, the client may keep using the ticket until its lifetime
+expires. However, as detailed in <xref target="privacy" format="default" sectionFormat="of" derivedContent="Section 6.7"/>, re-use of a
+ticket by the client may result in privacy concerns as the ticket value
+may be used to correlate TLS sessions.</t>
+        <t pn="section-5.5-4">Issuing a new pinning ticket with a shorter lifetime would only delay
+the ramp down process, as the shorter lifetime can only affect clients
+that actually initiated a new connection. Other clients would still see
+the original lifetime for their pinning tickets.</t>
+      </section>
+      <section anchor="server-compromise" numbered="true" toc="include" removeInRFC="false" pn="section-5.6">
+        <name slugifiedName="name-server-compromise">Server Compromise</name>
+        <t pn="section-5.6-1">If a server compromise is detected, the pinning protection key <bcp14>MUST</bcp14> be
+rotated immediately, but the server <bcp14>MUST</bcp14> still accept valid tickets that
+use the old, compromised key.  Clients that still hold old pinning
+tickets will remain vulnerable to MITM attacks, but those that connect
+to the correct server will immediately receive new tickets protected
+with the newly generated pinning protection key.</t>
+        <t pn="section-5.6-2">The same procedure applies if the pinning protection key is compromised
+directly, e.g., if a backup copy is inadvertently made public.</t>
+      </section>
+      <section anchor="disaster-recovery" numbered="true" toc="include" removeInRFC="false" pn="section-5.7">
+        <name slugifiedName="name-disaster-recovery">Disaster Recovery</name>
+        <t pn="section-5.7-1">All web servers in production need to be backed up, so that they can be
+recovered if a disaster (including a malicious activity) ever wipes them
+out. Backup often includes the certificate and its private key, which
+must be backed up securely. The pinning secret, including earlier
+versions that are still being accepted, must be backed up regularly.
+However since it is only used as an authentication second factor, it
+does not require the same level of confidentiality as the server's
+private key.</t>
+        <t pn="section-5.7-2">Readers should note that <xref target="RFC5077" format="default" sectionFormat="of" derivedContent="RFC5077"/> session resumption keys are more
+security sensitive and should normally not be backed up, but rather
+treated as ephemeral keys. Even when servers derive pinning secrets from
+resumption keys (<xref target="pinning-secret" format="default" sectionFormat="of" derivedContent="Section 4.1"/>), they <bcp14>MUST NOT</bcp14> back up resumption
+keys.</t>
+      </section>
+    </section>
+    <section anchor="security-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-6-1">This section reviews several security aspects related to the proposed
+extension.</t>
+      <section anchor="trust-on-first-use-tofu-and-mitm-attacks" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-trust-on-first-use-tofu-and">Trust-on-First-Use (TOFU) and MITM Attacks</name>
+        <t pn="section-6.1-1">This protocol is a trust-on-first-use protocol. If a client initially
+connects to the "right" server, it will be protected against MITM
+attackers for the lifetime of each received ticket. If it connects
+regularly (depending, of course, on the server-selected lifetime), it will
+stay constantly protected against fake certificates.</t>
+        <t pn="section-6.1-2">However if it initially connects to an attacker, subsequent connections
+to the "right" server will fail. Server operators might want to advise
+clients on how to remove corrupted pins, once such large-scale attacks
+are detected and remediated.</t>
+        <t pn="section-6.1-3">The protocol is designed so that it is not vulnerable to an active MITM
+attacker who has real-time access to the original server. The pinning
+proof includes a hash of the server's public key to ensure the client
+that the proof was in fact generated by the server with which it is
+initiating the connection.</t>
+      </section>
+      <section anchor="pervasive-monitoring" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-pervasive-monitoring">Pervasive Monitoring</name>
+        <t pn="section-6.2-1">Some organizations, and even some countries, perform pervasive monitoring
+on their constituents <xref target="RFC7258" format="default" sectionFormat="of" derivedContent="RFC7258"/>. This often takes the form of
+always-active SSL proxies. Because of the TOFU property, this protocol
+does not provide any security in such cases.</t>
+        <t pn="section-6.2-2">Pervasive monitoring may also result in privacy concerns detailed in
+<xref target="privacy" format="default" sectionFormat="of" derivedContent="Section 6.7"/>.</t>
+      </section>
+      <section anchor="server_error" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-server-side-error-detection">Server-Side Error Detection</name>
+        <t pn="section-6.3-1">Uniquely, this protocol allows the server to detect clients that present
+incorrect tickets and therefore can be assumed to be victims of a MITM
+attack. Server operators can use such cases as indications of ongoing
+attacks, similarly to fake certificate attacks that took place in a few
+countries in the past.</t>
+      </section>
+      <section anchor="client_policy" numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-client-policy-and-ssl-proxi">Client Policy and SSL Proxies</name>
+        <t pn="section-6.4-1">Like it or not, some clients are normally deployed behind an SSL proxy.
+Similar to <xref target="RFC7469" format="default" sectionFormat="of" derivedContent="RFC7469"/>, it is acceptable to allow pinning to be
+disabled for some hosts according to local policy. For example,
+a User Agent (UA) <bcp14>MAY</bcp14>
+disable pinning for hosts whose validated certificate chain terminates
+at a user-defined trust anchor, rather than a trust anchor built into
+the UA (or underlying platform). Moreover, a client <bcp14>MAY</bcp14> accept an empty
+PinningTicket extension from such hosts as a valid response.</t>
+      </section>
+      <section anchor="client_error" numbered="true" toc="include" removeInRFC="false" pn="section-6.5">
+        <name slugifiedName="name-client-side-error-behavior">Client-Side Error Behavior</name>
+        <t pn="section-6.5-1">When a client receives a malformed or empty PinningTicket extension from
+a pinned server, it <bcp14>MUST</bcp14> abort the handshake. If the client
+retries the request, it <bcp14>MUST NOT</bcp14> omit the
+PinningTicket in the retry message. Doing otherwise would expose the client to
+trivial fallback attacks, similar to those described in <xref target="RFC7507" format="default" sectionFormat="of" derivedContent="RFC7507"/>.</t>
+        <t pn="section-6.5-2">However, this rule can negatively impact clients that move from
+behind SSL proxies into the open Internet, and vice versa, if the advice
+in <xref target="client_policy" format="default" sectionFormat="of" derivedContent="Section 6.4"/> is not followed.  Therefore, 
+it is <bcp14>RECOMMENDED</bcp14>  that
+browser and library vendors provide a documented way to remove stored
+pins.</t>
+      </section>
+      <section anchor="stolen-and-forged-tickets" numbered="true" toc="include" removeInRFC="false" pn="section-6.6">
+        <name slugifiedName="name-stolen-and-forged-tickets">Stolen and Forged Tickets</name>
+        <t pn="section-6.6-1">An attacker gains no benefit from stealing pinning tickets, even in conjunction with other pinning
+parameters such as the associated pinning secret, since pinning tickets are used to secure the client
+rather than the server.  Similarly, it is useless to forge a ticket for
+a particular server.</t>
+      </section>
+      <section anchor="privacy" numbered="true" toc="include" removeInRFC="false" pn="section-6.7">
+        <name slugifiedName="name-client-privacy">Client Privacy</name>
+        <t pn="section-6.7-1">This protocol is designed so that an external attacker cannot link 
+different requests to a single client, provided the client
+requests and receives a fresh ticket upon each connection. This may be
+of concern particularly during ramp down, if the server does not provide
+a new ticket, and the client reuses the same ticket. To reduce or avoid such
+privacy concerns, it is <bcp14>RECOMMENDED</bcp14> for the server to issue a fresh ticket with a
+reduced lifetime. This would at least reduce the time period in which
+the TLS sessions of the client can be linked. The server <bcp14>MAY</bcp14> also
+issue tickets with a zero-second lifetime until it is confident all
+tickets are expired.</t>
+        <t pn="section-6.7-2">On the other hand, the server to which the client is connecting can
+easily track the client.  This may be an issue when the client expects
+to connect to the server (e.g., a mail server) with multiple identities.
+Implementations <bcp14>SHOULD</bcp14> allow the user to opt out of pinning, either in
+general or for particular servers.</t>
+        <t pn="section-6.7-3">This document does not define the exact content of tickets.
+Including client-specific information in tickets would raise privacy concerns
+and is <bcp14>NOT RECOMMENDED</bcp14>.</t>
+      </section>
+      <section anchor="ticket-protection-key-management" numbered="true" toc="include" removeInRFC="false" pn="section-6.8">
+        <name slugifiedName="name-ticket-protection-key-manag">Ticket Protection Key Management</name>
+        <t pn="section-6.8-1">While the ticket format is not mandated by this document, protecting 
+the ticket using authenticated encryption is <bcp14>RECOMMENDED</bcp14>. Some of the algorithms
+commonly used for authenticated encryption, e.g., Galois/Counter Mode (GCM), are highly
+vulnerable to nonce reuse, and this problem is magnified in a cluster
+setting.  Therefore, implementations that choose AES-GCM or any AEAD
+equivalent <bcp14>MUST</bcp14> adopt
+one of these three alternatives:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-6.8-2">
+          <li pn="section-6.8-2.1">Partition the nonce namespace between cluster members and use monotonic
+counters on each member, e.g., by setting the nonce to the concatenation
+of the cluster member ID and an incremental counter.</li>
+          <li pn="section-6.8-2.2">Generate random nonces but avoid the so-called birthday bound, i.e.,
+never generate more than the maximum allowed number of encrypted
+tickets (2**64 for AES-128-GCM) for the same ticket
+pinning protection key.</li>
+          <li pn="section-6.8-2.3">An alternative design that has been attributed to Karthik Bhargavan is
+as follows.  Start with a 128-bit master key K_master and then for
+each encryption, generate a 256-bit random nonce and compute: K =
+HKDF(K_master, Nonce || "key"), then N = HKDF(K_master, Nonce ||
+"nonce"). Use these values to encrypt the ticket, AES-GCM(K, N,
+data). This nonce should then be stored and transmitted with the
+ticket.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="iana-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-7-1">The IANA has allocated a TicketPinning extension value in the "TLS
+ExtensionType Values" registry.</t>
+      <t pn="section-7-2"><xref target="RFC8447" format="default" sectionFormat="of" derivedContent="RFC8447"/> defines the procedure, requirements, and the necessary
+information for the IANA to update the "TLS ExtensionType Values"
+registry <xref target="TLS-EXT" format="default" sectionFormat="of" derivedContent="TLS-EXT"/>. The registration procedure
+      is "Specification Required" <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.</t>
+      <t pn="section-7-3">The TicketPinning extension is registered as follows. (The extension is not
+      limited to Private Use, and as such has its first byte in the range
+      0-254.)</t>
+      <dl newline="false" spacing="normal" pn="section-7-4">
+        <dt pn="section-7-4.1">Value:</dt>
+        <dd pn="section-7-4.2">32</dd>
+        <dt pn="section-7-4.3">Name:</dt>
+        <dd pn="section-7-4.4">ticket_pinning</dd>
+        <dt pn="section-7-4.5">Recommended:</dt>
+        <dd pn="section-7-4.6">No</dd>
+        <dt pn="section-7-4.7">TLS 1.3:</dt>
+        <dd pn="section-7-4.8">CH, EE (to indicate that the extension is present
+	in ClientHello and EncryptedExtensions messages)</dd>
+      </dl>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.perrin-tls-tack" to="TLS-TACK"/>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t>Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t>To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t>This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t>This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t>This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC8447" target="https://www.rfc-editor.org/info/rfc8447" quoteTitle="true" derivedAnchor="RFC8447">
+          <front>
+            <title>IANA Registry Updates for TLS and DTLS</title>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Turner" fullname="S. Turner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t>This document describes a number of changes to TLS and DTLS IANA registries that range from adding notes to the registry all the way to changing the registration policy.  These changes were mostly motivated by WG review of the TLS- and DTLS-related registries undertaken as part of the TLS 1.3 development process.</t>
+              <t>This document updates the following RFCs: 3749, 5077, 4680, 5246, 5705, 5878, 6520, and 7301.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8447"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8447"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="Netcraft" target="https://news.netcraft.com/archives/2016/03/30/http-public-key-pinning-youre-doing-it-wrong.html" quoteTitle="true" derivedAnchor="Netcraft">
+          <front>
+            <title>HTTP Public Key Pinning: You're doing it wrong!</title>
+            <author initials="P." surname="Mutton" fullname="Paul Mutton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+          </front>
+        </reference>
+        <reference anchor="Oreo" quoteTitle="true" derivedAnchor="Oreo">
+          <front>
+            <title>Firm Grip Handshakes: A Tool for Bidirectional Vouching</title>
+            <author initials="O." surname="Berkman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Pinkas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Yung">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012"/>
+          </front>
+          <seriesInfo name="Cryptology and Network Security" value="pp. 142-157"/>
+        </reference>
+        <reference anchor="RFC2104" target="https://www.rfc-editor.org/info/rfc2104" quoteTitle="true" derivedAnchor="RFC2104">
+          <front>
+            <title>HMAC: Keyed-Hashing for Message Authentication</title>
+            <author initials="H." surname="Krawczyk" fullname="H. Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Bellare" fullname="M. Bellare">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Canetti" fullname="R. Canetti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="February"/>
+            <abstract>
+              <t>This document describes HMAC, a mechanism for message authentication using cryptographic hash functions. HMAC can be used with any iterative cryptographic hash function, e.g., MD5, SHA-1, in combination with a secret shared key.  The cryptographic strength of HMAC depends on the properties of the underlying hash function.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2104"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2104"/>
+        </reference>
+        <reference anchor="RFC5077" target="https://www.rfc-editor.org/info/rfc5077" quoteTitle="true" derivedAnchor="RFC5077">
+          <front>
+            <title>Transport Layer Security (TLS) Session Resumption without Server-Side State</title>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Zhou" fullname="H. Zhou">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Eronen" fullname="P. Eronen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t>This document describes a mechanism that enables the Transport Layer Security (TLS) server to resume sessions and avoid keeping per-client session state.  The TLS server encapsulates the session state into a ticket and forwards it to the client.  The client can subsequently resume a session using the obtained ticket.  This document obsoletes RFC 4507.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5077"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5077"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC6454" target="https://www.rfc-editor.org/info/rfc6454" quoteTitle="true" derivedAnchor="RFC6454">
+          <front>
+            <title>The Web Origin Concept</title>
+            <author initials="A." surname="Barth" fullname="A. Barth">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="December"/>
+            <abstract>
+              <t>This document defines the concept of an "origin", which is often used as the scope of authority or privilege by user agents.  Typically, user agents isolate content retrieved from different origins to prevent malicious web site operators from interfering with the operation of benign web sites.  In addition to outlining the principles that underlie the concept of origin, this document details how to determine the origin of a URI and how to serialize an origin into a string.  It also defines an HTTP header field, named "Origin", that indicates which origins are associated with an HTTP request.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6454"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6454"/>
+        </reference>
+        <reference anchor="RFC6962" target="https://www.rfc-editor.org/info/rfc6962" quoteTitle="true" derivedAnchor="RFC6962">
+          <front>
+            <title>Certificate Transparency</title>
+            <author initials="B." surname="Laurie" fullname="B. Laurie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Langley" fullname="A. Langley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Kasper" fullname="E. Kasper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="June"/>
+            <abstract>
+              <t>This document describes an experimental protocol for publicly logging the existence of Transport Layer Security (TLS) certificates as they are issued or observed, in a manner that allows anyone to audit certificate authority (CA) activity and notice the issuance of suspect certificates as well as to audit the certificate logs themselves.  The intent is that eventually clients would refuse to honor certificates that do not appear in a log, effectively forcing CAs to add all issued certificates to the logs.</t>
+              <t>Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6962"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6962"/>
+        </reference>
+        <reference anchor="RFC7258" target="https://www.rfc-editor.org/info/rfc7258" quoteTitle="true" derivedAnchor="RFC7258">
+          <front>
+            <title>Pervasive Monitoring Is an Attack</title>
+            <author initials="S." surname="Farrell" fullname="S. Farrell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="May"/>
+            <abstract>
+              <t>Pervasive monitoring is a technical attack that should be mitigated in the design of IETF protocols, where possible.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="188"/>
+          <seriesInfo name="RFC" value="7258"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7258"/>
+        </reference>
+        <reference anchor="RFC7469" target="https://www.rfc-editor.org/info/rfc7469" quoteTitle="true" derivedAnchor="RFC7469">
+          <front>
+            <title>Public Key Pinning Extension for HTTP</title>
+            <author initials="C." surname="Evans" fullname="C. Evans">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Palmer" fullname="C. Palmer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Sleevi" fullname="R. Sleevi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="April"/>
+            <abstract>
+              <t>This document defines a new HTTP header that allows web host operators to instruct user agents to remember ("pin") the hosts' cryptographic identities over a period of time.  During that time, user agents (UAs) will require that the host presents a certificate chain including at least one Subject Public Key Info structure whose fingerprint matches one of the pinned fingerprints for that host.  By effectively reducing the number of trusted authorities who can authenticate the domain during the lifetime of the pin, pinning may reduce the incidence of man-in-the-middle attacks due to compromised Certification Authorities.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7469"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7469"/>
+        </reference>
+        <reference anchor="RFC7507" target="https://www.rfc-editor.org/info/rfc7507" quoteTitle="true" derivedAnchor="RFC7507">
+          <front>
+            <title>TLS Fallback Signaling Cipher Suite Value (SCSV) for Preventing Protocol Downgrade Attacks</title>
+            <author initials="B." surname="Moeller" fullname="B. Moeller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Langley" fullname="A. Langley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="April"/>
+            <abstract>
+              <t>This document defines a Signaling Cipher Suite Value (SCSV) that prevents protocol downgrade attacks on the Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) protocols.  It updates RFCs 2246, 4346, 4347, 5246, and 6347.  Server update considerations are included.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7507"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7507"/>
+        </reference>
+        <reference anchor="RFC8555" target="https://www.rfc-editor.org/info/rfc8555" quoteTitle="true" derivedAnchor="RFC8555">
+          <front>
+            <title>Automatic Certificate Management Environment (ACME)</title>
+            <author initials="R." surname="Barnes" fullname="R. Barnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hoffman-Andrews" fullname="J. Hoffman-Andrews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McCarney" fullname="D. McCarney">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Kasten" fullname="J. Kasten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="March"/>
+            <abstract>
+              <t>Public Key Infrastructure using X.509 (PKIX) certificates are used for a number of purposes, the most significant of which is the authentication of domain names.  Thus, certification authorities (CAs) in the Web PKI are trusted to verify that an applicant for a certificate legitimately represents the domain name(s) in the certificate.  As of this writing, this verification is done through a collection of ad hoc mechanisms.  This document describes a protocol that a CA and an applicant can use to automate the process of verification and certificate issuance.  The protocol also provides facilities for other certificate management functions, such as certificate revocation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8555"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8555"/>
+        </reference>
+        <reference anchor="TLS-EXT" target="https://www.iana.org/assignments/tls-extensiontype-values/" quoteTitle="true" derivedAnchor="TLS-EXT">
+          <front>
+            <title>TLS Extension Type Value</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="I-D.perrin-tls-tack" quoteTitle="true" target="https://tools.ietf.org/html/draft-perrin-tls-tack-02" derivedAnchor="TLS-TACK">
+          <front>
+            <title>Trust Assertions for Certificate Keys</title>
+            <author initials="M" surname="Marlinspike" fullname="Moxie Marlinspike">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" day="7" year="2013"/>
+            <abstract>
+              <t>This document defines a TLS Extension that enables a TLS server to support "pinning" to a self-chosen signing key.  A client contacting a pinned host will require the server to present a signature from the signing key over the TLS server's public key.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-perrin-tls-tack-02"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-perrin-tls-tack-02.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="previous-work" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-previous-work">Previous Work</name>
+      <t pn="section-appendix.a-1">The global PKI system relies on the trust of a CA issuing certificates.
+As a result, a corrupted trusted CA may issue a certificate for any
+organization without the organization's approval (a misissued or "fake"
+certificate), and use the certificate to impersonate the organization.
+There are many attempts to resolve these weaknesses, including the
+Certificate Transparency (CT) protocol <xref target="RFC6962" format="default" sectionFormat="of" derivedContent="RFC6962"/>, 
+HTTP Public Key Pinning (HPKP) <xref target="RFC7469" format="default" sectionFormat="of" derivedContent="RFC7469"/>, 
+and Trust Assertions for Certificate Keys (TACK) <xref target="I-D.perrin-tls-tack" format="default" sectionFormat="of" derivedContent="TLS-TACK"/>.</t>
+      <t pn="section-appendix.a-2">CT requires
+cooperation of a large portion of the hundreds of extant certificate
+authorities (CAs) before it can be used "for real", in enforcing mode.
+It is noted that the relevant industry forum (CA/Browser Forum) is
+indeed pushing for such extensive adoption. However the public nature of CT
+often makes it inappropriate for enterprise use because many organizations
+are not willing to expose their internal infrastructure publicly.</t>
+      <t pn="section-appendix.a-3">TACK has some similarities
+to the current proposal, but work on it seems to have stalled.  <xref target="tack" format="default" sectionFormat="of" derivedContent="Appendix A.2"/>
+compares our proposal to TACK.</t>
+      <t pn="section-appendix.a-4">HPKP is an IETF standard, but so far has proven hard to deploy. HPKP
+pins (fixes) a public key, one of the public keys listed in the
+certificate chain.  As a result, HPKP needs to be coordinated with the
+certificate management process.  Certificate management impacts HPKP and
+thus increases the probability of HPKP failures.  This risk is made even
+higher given the fact that, even though work has been done in the 
+Automated Certificate Management Environment (ACME)
+working group to automate certificate management, in many or even most cases,
+certificates are still managed manually.  As a result, HPKP cannot be
+completely automated, resulting in error-prone manual configuration. Such
+errors could prevent the web server from being accessed by some clients.
+In addition, HPKP uses an HTTP header, which makes this solution HTTPS
+specific and not generic to TLS. On the other hand, the current document
+provides a solution that is independent of the server's certificate
+management, and that can be entirely and easily automated. <xref target="hpkp" format="default" sectionFormat="of" derivedContent="Appendix A.1"/>
+compares HPKP to the current document in more detail.</t>
+      <t pn="section-appendix.a-5">The ticket pinning proposal augments these mechanisms with a much easier
+to implement and deploy solution for server identity pinning, by reusing
+some of the ideas behind TLS session resumption.</t>
+      <t pn="section-appendix.a-6">This section compares ticket pinning to two earlier proposals, HPKP and TACK.</t>
+      <section anchor="hpkp" numbered="true" toc="include" removeInRFC="false" pn="section-a.1">
+        <name slugifiedName="name-comparison-hpkp">Comparison: HPKP</name>
+        <t pn="section-a.1-1">The current IETF standard for pinning the identity of web servers is 
+HPKP <xref target="RFC7469" format="default" sectionFormat="of" derivedContent="RFC7469"/>.</t>
+        <t pn="section-a.1-2">The main differences between HPKP and the current document are the
+following:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-a.1-3">
+          <li pn="section-a.1-3.1">HPKP limits its scope to HTTPS, while the current document considers all
+application above TLS.</li>
+          <li pn="section-a.1-3.2">HPKP pins the public key of the server (or another public key along the
+certificate chain), and as such, is highly dependent on the management of
+certificates.  Such dependency increases the potential error surface,
+especially as certificate management is not yet largely automated.  The
+current proposal, on the other hand, is independent of certificate
+management.</li>
+          <li pn="section-a.1-3.3">HPKP pins public keys that are public and used for the standard TLS
+authentication.  Identity pinning relies on the ownership of the pinning
+key, which is not disclosed to the public and not involved in the
+standard TLS authentication.  As a result, identity pinning is a
+completely independent, second-factor authentication mechanism.</li>
+          <li pn="section-a.1-3.4">HPKP relies on a backup key to recover the misissuance of a key.  We
+believe such backup mechanisms add excessive complexity and cost.
+Reliability of the current mechanism is primarily based on its being
+highly automated.</li>
+          <li pn="section-a.1-3.5">HPKP relies on the client to report errors to the report-uri.  The
+current document does not need any out-of-band mechanism, and the server is
+informed automatically. This provides an easier and more reliable health
+monitoring.</li>
+        </ul>
+        <t pn="section-a.1-4">On the other hand, HPKP shares the following aspects with identity pinning:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-a.1-5">
+          <li pn="section-a.1-5.1">Both mechanisms provide hard failure.  With HPKP, only the client is
+aware of the failure, while with the current proposal both client and
+server are informed of the failure.  This provides room for further
+mechanisms to automatically recover from such failures.</li>
+          <li pn="section-a.1-5.2">Both mechanisms are subject to a server compromise in which users are
+provided with an invalid ticket (e.g., a random one) or HTTP header with
+a very long lifetime. For identity pinning, this lifetime <bcp14>SHOULD NOT</bcp14> be
+longer than 31 days.  In both cases, clients will not be able to
+reconnect the server during this lifetime.  With the current proposal,
+an attacker needs to compromise the TLS layer, while with HPKP, the
+attacker needs to compromise the HTTP server.  Arguably, the TLS-level
+compromise is typically more difficult for the attacker.</li>
+        </ul>
+        <t pn="section-a.1-6">Unfortunately HPKP has not seen wide deployment yet.  As of March 2016,
+the number of servers using HPKP was less than 3000 <xref target="Netcraft" format="default" sectionFormat="of" derivedContent="Netcraft"/>.  This
+may simply be due to inertia, but we believe the main reason is the
+interactions between HPKP and manual certificate management that is
+needed to implement HPKP for enterprise servers. The penalty for making
+mistakes (e.g., being too early or too late to deploy new pins) is that
+the server becomes unusable for some of the clients.</t>
+        <t pn="section-a.1-7">To demonstrate this point, we present a list of the steps involved in
+deploying HPKP on a security-sensitive web server.</t>
+        <ol spacing="normal" type="1" start="1" pn="section-a.1-8">
+          <li pn="section-a.1-8.1" derivedCounter="1.">
+            <t pn="section-a.1-8.1.1">Generate two public/private key pairs on a computer that is not the
+live server. The second one is the "backup1" key pair.  </t>
+            <sourcecode type="bash" markers="false" pn="section-a.1-8.1.2">
+openssl genrsa -out "example.com.key" 2048;
+
+openssl genrsa -out "example.com.backup1.key" 2048;
+</sourcecode>
+          </li>
+          <li pn="section-a.1-8.2" derivedCounter="2.">
+            <t pn="section-a.1-8.2.1">Generate hashes for both of the public keys. These will be used in
+the HPKP header:  </t>
+            <sourcecode type="bash" markers="false" pn="section-a.1-8.2.2">
+openssl rsa -in "example.com.key" -outform der -pubout | \
+openssl dgst -sha256 -binary | openssl enc -base64  
+
+openssl rsa -in "example.com.backup1.key" -outform der \
+-pubout | openssl dgst -sha256 -binary | openssl enc -base64
+</sourcecode>
+          </li>
+          <li pn="section-a.1-8.3" derivedCounter="3.">
+            <t pn="section-a.1-8.3.1">Generate a single CSR (Certificate Signing Request) for the first
+key pair, where you include the domain name in the CN (Common Name)
+field:  </t>
+            <sourcecode type="bash" markers="false" pn="section-a.1-8.3.2">
+openssl req -new -subj "/C=GB/ST=Area/L=Town/O=Org/ \
+CN=example.com" -key "example.com.key" -out "example.com.csr"; 
+</sourcecode>
+          </li>
+          <li pn="section-a.1-8.4" derivedCounter="4.">Send this CSR to the CA and go though the
+dance to prove you own the domain.  The CA will give you a single
+certificate that will typically expire within a year or two.</li>
+          <li pn="section-a.1-8.5" derivedCounter="5.">
+            <t pn="section-a.1-8.5.1">On the live server, upload and set up the first key pair and its
+certificate.  At this point, you can add the "Public-Key-Pins" header,
+using the two hashes you created in step 2.  </t>
+            <t pn="section-a.1-8.5.2">
+Note that only the first key pair has been uploaded to the server so far.</t>
+          </li>
+          <li pn="section-a.1-8.6" derivedCounter="6.">Store the second (backup1) key pair somewhere safe, probably
+somewhere encrypted like a password manager.  It won't expire, as it's
+just a key pair; it just needs to be ready for when you need to get your
+next certificate.</li>
+          <li pn="section-a.1-8.7" derivedCounter="7.">Time passes -- probably just under a year (if waiting for a
+certificate to expire), or maybe sooner if you find that your server has
+been compromised, and you need to replace the key pair and certificate.</li>
+          <li pn="section-a.1-8.8" derivedCounter="8.">Create a new CSR using the "backup1"
+key pair, and get a new certificate from your CA.</li>
+          <li pn="section-a.1-8.9" derivedCounter="9.">Generate a new backup key pair (backup2), get its hash, and store it
+in a safe place (again, not on the live server).</li>
+          <li pn="section-a.1-8.10" derivedCounter="10.">Replace your old certificate and old key pair, update the
+"Public-Key-Pins" header to remove the old hash, and add the new
+"backup2" key pair.</li>
+        </ol>
+        <t pn="section-a.1-9">Note that in the above steps, both the certificate issuance as well as
+the storage of the backup key pair involve manual steps. Even with an
+automated CA that runs the ACME protocol <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/>, key backup would be a
+challenge to automate.</t>
+      </section>
+      <section anchor="tack" numbered="true" toc="include" removeInRFC="false" pn="section-a.2">
+        <name slugifiedName="name-comparison-tack">Comparison: TACK</name>
+        <t pn="section-a.2-1">Compared with HPKP, TACK <xref target="I-D.perrin-tls-tack" format="default" sectionFormat="of" derivedContent="TLS-TACK"/> is more similar
+to the current document.  It can even be argued that this document is a
+symmetric-cryptography variant of TACK.  That said, there are still a
+few significant differences:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-a.2-2">
+          <li pn="section-a.2-2.1">Probably the most important difference is that with TACK, validation of
+the server certificate is no longer required, and in fact TACK specifies
+it as a "<bcp14>MAY</bcp14>" requirement (<xref target="I-D.perrin-tls-tack" sectionFormat="comma" section="5.3" format="default" derivedLink="https://tools.ietf.org/html/draft-perrin-tls-tack-02#section-5.3" derivedContent="TLS-TACK"/>).  With ticket pinning, certificate
+validation by the client remains a <bcp14>MUST</bcp14> requirement, and the ticket acts
+only as a second factor. If the pinning secret is compromised, the
+server's security is not immediately at risk.</li>
+          <li pn="section-a.2-2.2">Both TACK and the current document are mostly orthogonal to the server
+certificate as far as their life cycle, and so both can be deployed with
+no manual steps.</li>
+          <li pn="section-a.2-2.3">TACK uses Elliptic Curve Digital Signature Algorithm 
+(ECDSA) to sign the server's public key. This allows
+cooperating clients to share server assertions between themselves. This
+is an optional TACK feature, and one that cannot be done with pinning
+tickets.</li>
+          <li pn="section-a.2-2.4">TACK allows multiple servers to share its public keys. Such sharing is
+disallowed by the current document.</li>
+          <li pn="section-a.2-2.5">TACK does not allow the server to track a particular client, and so
+has better privacy properties than the current document.</li>
+          <li pn="section-a.2-2.6">TACK has an interesting way to determine the pin's lifetime, setting
+it to the time period since the pin was first observed, with a hard
+upper bound of 30 days.  The current document makes the lifetime explicit,
+which may be more flexible to deploy.  For example, web sites that are
+only visited rarely by users may opt for a longer period than other
+sites that expect users to visit on a daily basis.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.b-1">The original idea behind this proposal was published in <xref target="Oreo" format="default" sectionFormat="of" derivedContent="Oreo"/> by
+Moti Yung, Benny Pinkas, and Omer Berkman.  The current protocol is
+but a distant relative of the original Oreo protocol, and any errors
+are the responsibility of the authors of this document alone.</t>
+      <t pn="section-appendix.b-2">We would like to thank Adrian Farrel, Dave Garrett,
+Daniel Kahn Gillmor,
+Alexey Melnikov,
+Yoav Nir,
+Eric Rescorla, Benjamin Kaduk, and Rich Salz for their comments on this document.
+Special thanks to Craig Francis for contributing the HPKP deployment
+script, and to Ralph Holz for several fruitful discussions.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="Y." surname="Sheffer" fullname="Yaron Sheffer">
+        <organization showOnFrontPage="true">Intuit</organization>
+        <address>
+          <email>yaronf.ietf@gmail.com</email>
+        </address>
+      </author>
+      <author initials="D." surname="Migault" fullname="Daniel Migault">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <email>daniel.migault@ericsson.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

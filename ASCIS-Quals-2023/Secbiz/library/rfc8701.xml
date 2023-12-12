@@ -1,0 +1,981 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-tls-grease-04" indexInclude="true" ipr="trust200902" number="8701" prepTime="2020-01-29T11:49:55" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-grease-04" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8701" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Applying Generate Random Extensions And Sustain Extensibility (GREASE) to TLS Extensibility</title>
+    <seriesInfo name="RFC" value="8701" stream="IETF"/>
+    <author fullname="David Benjamin" initials="D." surname="Benjamin">
+      <organization showOnFrontPage="true">Google LLC</organization>
+      <address>
+        <email>davidben@google.com</email>
+      </address>
+    </author>
+    <date month="01" year="2020"/>
+    <area>General</area>
+    <keyword>TLS</keyword>
+    <keyword>GREASE</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">This document describes GREASE (Generate Random Extensions And Sustain
+     Extensibility), a mechanism to prevent extensibility failures in the TLS
+     ecosystem. It reserves a set of TLS protocol values that may be advertised
+     to ensure peers correctly handle unknown values.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8701" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-grease-values">GREASE Values</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-initiated-extension-">Client-Initiated Extension Points</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-behavior">Client Behavior</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-behavior">Server Behavior</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-initiated-extension-">Server-Initiated Extension Points</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-behavior-2">Server Behavior</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-behavior-2">Client Behavior</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sending-grease-values">Sending GREASE Values</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">The TLS protocol <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> includes several points of
+extensibility, including the list of cipher suites and several lists of extensions.
+The values transmitted in these lists identify implementation capabilities. TLS follows
+a model where one side, usually the client, advertises capabilities, and the
+peer, usually the server, selects them. The responding side must ignore unknown
+values so that new capabilities may be introduced to the ecosystem while
+maintaining interoperability.</t>
+      <t pn="section-1-2">However, bugs may cause an implementation to reject unknown
+      values. It will interoperate with existing peers, so the mistake may
+      spread through the ecosystem unnoticed. Later, when new values are
+      defined, updated peers will discover that the metaphorical joint in the
+      protocol has rusted shut and the new values cannot be deployed without
+      interoperability failures.</t>
+      <t pn="section-1-3">To avoid this problem, this document reserves some currently unused values for
+TLS implementations to advertise at random. Correctly implemented peers will ignore
+these values and interoperate. Peers that do not tolerate unknown values will
+fail to interoperate, revealing the mistake before it is
+widespread.</t>
+      <t pn="section-1-4">In keeping with the rusted joint metaphor, this technique is called "GREASE"
+(Generate Random Extensions And Sustain Extensibility).</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-grease-values">GREASE Values</name>
+      <t pn="section-2-1">This document reserves a number of TLS protocol values, referred to as
+     GREASE values. These values were allocated sparsely to discourage server
+     implementations from conditioning on them. For convenience, they were also
+     chosen so all types share a number scheme with a consistent pattern while
+     avoiding collisions with any existing applicable registries in TLS.</t>
+      <t pn="section-2-2">The following values are reserved as GREASE values for cipher suites
+     and Application-Layer Protocol Negotiation (ALPN) <xref target="RFC7301" format="default" sectionFormat="of" derivedContent="RFC7301"/> identifiers:</t>
+      <ul empty="true" bare="false" spacing="normal" pn="section-2-3">
+        <li pn="section-2-3.1">{0x0A,0x0A}
+</li>
+        <li pn="section-2-3.2">{0x1A,0x1A}
+</li>
+        <li pn="section-2-3.3">{0x2A,0x2A}
+</li>
+        <li pn="section-2-3.4">{0x3A,0x3A}
+</li>
+        <li pn="section-2-3.5">{0x4A,0x4A}
+</li>
+        <li pn="section-2-3.6">{0x5A,0x5A}
+</li>
+        <li pn="section-2-3.7">{0x6A,0x6A}
+</li>
+        <li pn="section-2-3.8">{0x7A,0x7A}
+</li>
+        <li pn="section-2-3.9">{0x8A,0x8A}
+</li>
+        <li pn="section-2-3.10">{0x9A,0x9A}
+</li>
+        <li pn="section-2-3.11">{0xAA,0xAA}
+</li>
+        <li pn="section-2-3.12">{0xBA,0xBA}
+</li>
+        <li pn="section-2-3.13">{0xCA,0xCA}
+</li>
+        <li pn="section-2-3.14">{0xDA,0xDA}
+</li>
+        <li pn="section-2-3.15">{0xEA,0xEA}
+</li>
+        <li pn="section-2-3.16">{0xFA,0xFA}
+</li>
+      </ul>
+      <t pn="section-2-4">The following values are reserved as GREASE values for extensions,
+        named groups, signature algorithms, and versions:</t>
+      <ul empty="true" bare="false" spacing="normal" pn="section-2-5">
+        <li pn="section-2-5.1">0x0A0A
+</li>
+        <li pn="section-2-5.2">0x1A1A
+</li>
+        <li pn="section-2-5.3">0x2A2A
+</li>
+        <li pn="section-2-5.4">0x3A3A
+</li>
+        <li pn="section-2-5.5">0x4A4A
+</li>
+        <li pn="section-2-5.6">0x5A5A
+</li>
+        <li pn="section-2-5.7">0x6A6A
+</li>
+        <li pn="section-2-5.8">0x7A7A
+</li>
+        <li pn="section-2-5.9">0x8A8A
+</li>
+        <li pn="section-2-5.10">0x9A9A
+</li>
+        <li pn="section-2-5.11">0xAAAA 
+</li>
+        <li pn="section-2-5.12">0xBABA
+</li>
+        <li pn="section-2-5.13">0xCACA
+</li>
+        <li pn="section-2-5.14">0xDADA
+</li>
+        <li pn="section-2-5.15">0xEAEA
+</li>
+        <li pn="section-2-5.16">0xFAFA
+</li>
+      </ul>
+      <t pn="section-2-6">The values allocated above are thus no longer available for use as TLS or
+        DTLS <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/> version numbers.</t>
+      <t pn="section-2-7">The following values are reserved as GREASE values for PskKeyExchangeModes:</t>
+      <ul empty="true" bare="false" spacing="normal" pn="section-2-8">
+        <li pn="section-2-8.1">0x0B
+</li>
+        <li pn="section-2-8.2">0x2A
+</li>
+        <li pn="section-2-8.3">0x49
+</li>
+        <li pn="section-2-8.4">0x68
+</li>
+        <li pn="section-2-8.5">0x87
+</li>
+        <li pn="section-2-8.6">0xA6
+</li>
+        <li pn="section-2-8.7">0xC5
+</li>
+        <li pn="section-2-8.8">0xE4
+</li>
+      </ul>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-client-initiated-extension-">Client-Initiated Extension Points</name>
+      <t pn="section-3-1">Most extension points in TLS are offered by the client and selected by
+the server. This section details client and server behavior around
+GREASE values for these.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-client-behavior">Client Behavior</name>
+        <t pn="section-3.1-1">When sending a ClientHello, a client <bcp14>MAY</bcp14> behave as follows:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-3.1-2">
+          <li pn="section-3.1-2.1">A client <bcp14>MAY</bcp14> select one or more GREASE cipher suite values and advertise them in the "cipher_suites" field.</li>
+          <li pn="section-3.1-2.2">A client <bcp14>MAY</bcp14> select one or more GREASE extension values and advertise them as extensions with varying length and contents.</li>
+          <li pn="section-3.1-2.3">A client <bcp14>MAY</bcp14> select one or more GREASE named group values and advertise them in the "supported_groups" extension, if sent. It <bcp14>MAY</bcp14> also send KeyShareEntry values for a subset of those selected in the "key_share" extension. For each of these, the "key_exchange" field <bcp14>MAY</bcp14> be any value.</li>
+          <li pn="section-3.1-2.4">A client <bcp14>MAY</bcp14> select one or more GREASE signature algorithm values and advertise them in the "signature_algorithms" or "signature_algorithms_cert" extensions, if sent.</li>
+          <li pn="section-3.1-2.5">A client <bcp14>MAY</bcp14> select one or more GREASE version values and advertise them in the "supported_versions" extension, if sent.</li>
+          <li pn="section-3.1-2.6">A client <bcp14>MAY</bcp14> select one or more GREASE PskKeyExchangeMode values and advertise them in the "psk_key_exchange_modes" extension, if sent.</li>
+          <li pn="section-3.1-2.7">A client <bcp14>MAY</bcp14> select one or more GREASE ALPN identifiers and advertise them in the "application_layer_protocol_negotiation" extension, if sent.</li>
+        </ul>
+        <t pn="section-3.1-3">Clients <bcp14>MUST</bcp14> reject GREASE values when negotiated by
+        the server.  In particular, the client <bcp14>MUST</bcp14> fail the
+        connection if a GREASE value appears in any of the following:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-3.1-4">
+          <li pn="section-3.1-4.1">The "version" value in a ServerHello or HelloRetryRequest</li>
+          <li pn="section-3.1-4.2">The "cipher_suite" value in a ServerHello</li>
+          <li pn="section-3.1-4.3">Any ServerHello extension</li>
+          <li pn="section-3.1-4.4">Any HelloRetryRequest, EncryptedExtensions, or Certificate extension in TLS 1.3</li>
+          <li pn="section-3.1-4.5">The "namedcurve" value in a ServerKeyExchange for an Ephemeral
+	  Elliptic Curve Diffie-Hellman (ECDHE) cipher in TLS 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> or earlier</li>
+          <li pn="section-3.1-4.6">The signature algorithm in a ServerKeyExchange signature in TLS 1.2 or earlier</li>
+          <li pn="section-3.1-4.7">The signature algorithm in a server CertificateVerify signature in TLS 1.3</li>
+        </ul>
+        <t pn="section-3.1-5">Note that this can be implemented without special processing on the client. The client
+     is already required to reject unknown server-selected values, so it
+     may leave GREASE values as unknown and reuse the existing logic.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-server-behavior">Server Behavior</name>
+        <t pn="section-3.2-1">
+When processing a ClientHello, servers <bcp14>MUST NOT</bcp14> treat GREASE values differently from any unknown value.
+Servers <bcp14>MUST NOT</bcp14> negotiate any GREASE value when offered in a ClientHello.
+Servers <bcp14>MUST</bcp14> correctly ignore unknown values in a ClientHello and attempt to negotiate with one of the remaining parameters.
+(There may not be any known parameters remaining, in which case parameter negotiation will fail.)
+        </t>
+        <t pn="section-3.2-2">Note that these requirements are restatements or corollaries of
+     existing server requirements in TLS.</t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-server-initiated-extension-">Server-Initiated Extension Points</name>
+      <t pn="section-4-1">Some extension points are offered by the server and selected by the
+client. This section details client and server behavior around GREASE
+values for these.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-server-behavior-2">Server Behavior</name>
+        <t pn="section-4.1-1">When sending a CertificateRequest in TLS 1.3, a server <bcp14>MAY</bcp14> behave as follows:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-4.1-2">
+          <li pn="section-4.1-2.1">A server <bcp14>MAY</bcp14> select one or more GREASE extension values and advertise them as extensions with varying length and contents.</li>
+          <li pn="section-4.1-2.2">A server <bcp14>MAY</bcp14> select one or more GREASE signature algorithm values and advertise them in the "signature_algorithms" or "signature_algorithms_cert" extensions, if present.</li>
+        </ul>
+        <t pn="section-4.1-3">When sending a NewSessionTicket message in TLS 1.3, a server <bcp14>MAY</bcp14> select one or more GREASE extension values and advertise them as extensions with varying length and contents.</t>
+        <t pn="section-4.1-4">Servers <bcp14>MUST</bcp14> reject GREASE values when negotiated by the client.
+In particular, the server <bcp14>MUST</bcp14> fail the connection if a GREASE
+value appears in any of the following:</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-4.1-5">
+          <li pn="section-4.1-5.1">Any Certificate extension in TLS 1.3</li>
+          <li pn="section-4.1-5.2">The signature algorithm in a client CertificateVerify signature</li>
+        </ul>
+        <t pn="section-4.1-6">Note that this can be implemented without special processing on the server. The server
+     is already required to reject unknown client-selected values, so it
+     may leave GREASE values as unknown and reuse the existing logic.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-client-behavior-2">Client Behavior</name>
+        <t pn="section-4.2-1">
+When processing a CertificateRequest or NewSessionTicket, clients <bcp14>MUST NOT</bcp14> treat GREASE values differently from any unknown value.
+Clients <bcp14>MUST NOT</bcp14> negotiate any GREASE value when offered by the server.
+Clients <bcp14>MUST</bcp14> correctly ignore unknown values offered by the server and attempt to negotiate with one of the remaining parameters.
+(There may not be any known parameters remaining, in which case parameter negotiation will fail.)
+        </t>
+        <t pn="section-4.2-2">Note that these requirements are restatements or corollaries of
+     existing client requirements in TLS.</t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-sending-grease-values">Sending GREASE Values</name>
+      <t pn="section-5-1">Implementations advertising GREASE values <bcp14>SHOULD</bcp14> select them at random.
+This is intended to encourage implementations to ignore all unknown values
+rather than any individual value. Implementations <bcp14>MUST</bcp14> honor protocol
+specifications when sending GREASE values. For instance, <xref target="RFC8446" sectionFormat="of" section="4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2" derivedContent="RFC8446"/> forbids duplicate extension types within a single
+extension block. Implementations sending multiple GREASE extensions in a single
+block must therefore ensure the same value is not selected twice.</t>
+      <t pn="section-5-2">Implementations <bcp14>SHOULD</bcp14> balance diversity in GREASE advertisements with determinism.
+  For example, a client that randomly varies GREASE value positions for each
+  connection may only fail against a broken server with some probability. This
+  risks the failure being masked by automatic retries. A client that positions
+  GREASE values deterministically over a period of time (such as a single
+  software release) stresses fewer cases but is more likely to detect bugs from
+  those cases.</t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-6-1">This document updates the "TLS Cipher Suites" registry, available at
+     <eref target="https://www.iana.org/assignments/tls-parameters" brackets="angle"/>:</t>
+      <table align="center" pn="table-1">
+        <name slugifiedName="name-additions-to-the-tls-cipher">Additions to the TLS Cipher Suites Registry</name>
+        <thead>
+          <tr>
+            <th align="center" colspan="1" rowspan="1">Value</th>
+            <th align="center" colspan="1" rowspan="1">Description</th>
+            <th align="center" colspan="1" rowspan="1">DTLS-OK</th>
+            <th align="center" colspan="1" rowspan="1">Recommended</th>
+            <th align="center" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x0A,0x0A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x1A,0x1A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x2A,0x2A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x3A,0x3A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x4A,0x4A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x5A,0x5A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x6A,0x6A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x7A,0x7A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x8A,0x8A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0x9A,0x9A}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xAA,0xAA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xBA,0xBA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xCA,0xCA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xDA,0xDA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xEA,0xEA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">{0xFA,0xFA}</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+        </tbody>
+      </table>
+      <t pn="section-6-3">This document updates the "TLS Supported Groups" registry, available at
+<eref target="https://www.iana.org/assignments/tls-parameters" brackets="angle"/>:</t>
+      <table align="center" pn="table-2">
+        <name slugifiedName="name-additions-to-the-tls-suppor">Additions to the TLS Supported Groups Registry</name>
+        <thead>
+          <tr>
+            <th align="center" colspan="1" rowspan="1">Value</th>
+            <th align="center" colspan="1" rowspan="1">Description</th>
+            <th align="center" colspan="1" rowspan="1">DTLS-OK</th>
+            <th align="center" colspan="1" rowspan="1">Recommended</th>
+            <th align="center" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">2570</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">6682</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">10794</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">14906</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">19018</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">23130</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">27242</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">31354</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">35466</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">39578</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">43690</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">47802</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">51914</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">56026</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">60138</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">64250</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">Y</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+        </tbody>
+      </table>
+      <t pn="section-6-5">This document updates the "TLS ExtensionType Values" registry, available at
+<eref target="https://www.iana.org/assignments/tls-extensiontype-values" brackets="angle"/>:</t>
+      <table align="center" pn="table-3">
+        <name slugifiedName="name-additions-to-the-tls-extens">Additions to the TLS ExtensionType Values Registry</name>
+        <thead>
+          <tr>
+            <th align="center" colspan="1" rowspan="1">Value</th>
+            <th align="center" colspan="1" rowspan="1">Extension Name</th>
+            <th align="center" colspan="1" rowspan="1">TLS 1.3</th>
+            <th align="center" colspan="1" rowspan="1">Recommended</th>
+            <th align="center" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">2570</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">6682</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">10794</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">14906</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">19018</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">23130</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">27242</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">31354</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">35466</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">39578</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">43690</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">47802</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">51914</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">56026</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">60138</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">64250</td>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">CH, CR, NST</td>
+            <td align="center" colspan="1" rowspan="1">N</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+        </tbody>
+      </table>
+      <t pn="section-6-7">This document updates the "TLS Application-Layer Protocol Negotiation
+       (ALPN) Protocol IDs" registry, available at
+       <eref target="https://www.iana.org/assignments/tls-extensiontype-values" brackets="angle"/>:</t>
+      <table align="center" pn="table-4">
+        <name slugifiedName="name-additions-to-the-tls-applic">Additions to the TLS Application-Layer Protocol Negotiation
+	(ALPN) Protocol IDs Registry</name>
+        <thead>
+          <tr>
+            <th align="center" colspan="1" rowspan="1">Protocol</th>
+            <th align="center" colspan="1" rowspan="1">Identification Sequence</th>
+            <th align="center" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x0A 0x0A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x1A 0x1A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x2A 0x2A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x3A 0x3A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x4A 0x4A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x5A 0x5A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x6A 0x6A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x7A 0x7A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x8A 0x8A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0x9A 0x9A</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xAA 0xAA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xBA 0xBA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xCA 0xCA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xDA 0xDA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xEA 0xEA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">Reserved</td>
+            <td align="center" colspan="1" rowspan="1">0xFA 0xFA</td>
+            <td align="center" colspan="1" rowspan="1">[RFC8701]</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-7-1">GREASE values cannot be negotiated, so they do not directly impact the
+     security of TLS connections.</t>
+      <t pn="section-7-2">Historically, when interoperability problems arise in deploying new TLS
+     features, implementations have used a fallback retry on error with the
+     feature disabled. This allows an active attacker to silently disable the
+     new feature. By preventing a class of such interoperability problems,
+     GREASE reduces the need for this kind of fallback. Implementations <bcp14>SHOULD NOT</bcp14> retry with GREASE disabled on connection failure. While allowing an
+     attacker to disable GREASE is unlikely to have immediate security
+     consequences, such a fallback would prevent GREASE from defending against
+     extensibility failures.</t>
+      <t pn="section-7-3">If an implementation does not select GREASE values at random, it is 
+     possible it will allow for fingerprinting of the implementation or 
+     perhaps even of individual users. This can result in a negative impact to
+     a user's privacy.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-normative-references">Normative References</name>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1997" month="March"/>
+          <abstract>
+            <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+        <front>
+          <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+          <author initials="T." surname="Dierks" fullname="T. Dierks">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2008" month="August"/>
+          <abstract>
+            <t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="5246"/>
+        <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+      </reference>
+      <reference anchor="RFC6347" target="https://www.rfc-editor.org/info/rfc6347" quoteTitle="true" derivedAnchor="RFC6347">
+        <front>
+          <title>Datagram Transport Layer Security Version 1.2</title>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2012" month="January"/>
+          <abstract>
+            <t>This document specifies version 1.2 of the Datagram Transport Layer Security (DTLS) protocol.  The DTLS protocol provides communications privacy for datagram protocols.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  The DTLS protocol is based on the Transport Layer Security (TLS) protocol and provides equivalent security guarantees.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.  This document updates DTLS 1.0 to work with TLS version 1.2.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="6347"/>
+        <seriesInfo name="DOI" value="10.17487/RFC6347"/>
+      </reference>
+      <reference anchor="RFC7301" target="https://www.rfc-editor.org/info/rfc7301" quoteTitle="true" derivedAnchor="RFC7301">
+        <front>
+          <title>Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension</title>
+          <author initials="S." surname="Friedl" fullname="S. Friedl">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Popov" fullname="A. Popov">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Langley" fullname="A. Langley">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E." surname="Stephan" fullname="E. Stephan">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="July"/>
+          <abstract>
+            <t>This document describes a Transport Layer Security (TLS) extension for application-layer protocol negotiation within the TLS handshake. For instances in which multiple application protocols are supported on the same TCP or UDP port, this extension allows the application layer to negotiate which protocol will be used within the TLS connection.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7301"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7301"/>
+      </reference>
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author initials="B." surname="Leiba" fullname="B. Leiba">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2017" month="May"/>
+          <abstract>
+            <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+      <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+        <front>
+          <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="August"/>
+          <abstract>
+            <t>This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+            <t>This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8446"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+      </reference>
+    </references>
+    <section anchor="Acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.a-1">
+The author would like to thank <contact fullname="Adam Langley"/>, <contact fullname="Nick Harper"/>, and <contact fullname="Steven Valdez"/> for their
+feedback and suggestions. In addition, the rusted joint metaphor is originally
+due to <contact fullname="Adam Langley"/>.
+</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author fullname="David Benjamin" initials="D." surname="Benjamin">
+        <organization showOnFrontPage="true">Google LLC</organization>
+        <address>
+          <email>davidben@google.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

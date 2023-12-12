@@ -1,0 +1,707 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ipsecme-implicit-iv-11" indexInclude="true" ipr="trust200902" number="8750" prepTime="2020-03-11T15:42:18" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ipsecme-implicit-iv-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8750" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Implicit IV in ESP">Implicit Initialization Vector (IV) for Counter-Based Ciphers in Encapsulating Security Payload (ESP)</title>
+    <seriesInfo name="RFC" value="8750" stream="IETF"/>
+    <author fullname="Daniel Migault" initials="D." surname="Migault">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street>8275 Trans Canada Route</street>
+          <city>Saint Laurent</city>
+          <region>QC</region>
+          <code>H4S 0B6</code>
+          <country>Canada</country>
+        </postal>
+        <email>daniel.migault@ericsson.com</email>
+      </address>
+    </author>
+    <author fullname="Tobias Guggemos" initials="T." surname="Guggemos">
+      <organization showOnFrontPage="true">LMU Munich</organization>
+      <address>
+        <postal>
+          <street>Oettingenstr. 67</street>
+          <city>Munich</city>
+          <code>80538</code>
+          <country>Germany</country>
+        </postal>
+        <phone/>
+        <email>guggemos@nm.ifi.lmu.de</email>
+        <uri>http://mnm-team.org/~guggemos</uri>
+      </address>
+    </author>
+    <author initials="Y." surname="Nir" fullname="Yoav Nir">
+      <organization showOnFrontPage="true">Dell Technologies</organization>
+      <address>
+        <postal>
+          <street>9 Andrei Sakharov St</street>
+          <city>Haifa</city>
+          <code>3190500</code>
+          <country>Israel</country>
+        </postal>
+        <email>ynir.ietf@gmail.com</email>
+      </address>
+    </author>
+    <date month="03" year="2020"/>
+    <area>INTERNET</area>
+    <workgroup>IPSECME</workgroup>
+    <keyword>IKE</keyword>
+    <keyword>IPsec</keyword>
+    <keyword>GCM</keyword>
+    <keyword>CCM</keyword>
+    <keyword>ChaCha20</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">Encapsulating Security Payload (ESP) sends an initialization vector
+      (IV) in each packet. The size of the IV depends on the applied transform
+      and is usually 8 or 16 octets for the transforms defined at the time
+      this document was written. When used with IPsec, some algorithms, such
+      as AES-GCM, AES-CCM, and ChaCha20-Poly1305, take the IV to generate a
+      nonce that is used as an input parameter for encrypting and
+      decrypting. This IV must be unique but can be predictable.  As a result,
+      the value provided in the ESP Sequence Number (SN) can be used instead
+      to generate the nonce. This avoids sending the IV itself and saves 8
+      octets per packet in the case of AES-GCM, AES-CCM, and
+      ChaCha20-Poly1305. This document describes how to do this.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8750" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-notation">Requirements Notation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implicit-iv">Implicit IV</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-initiator-behavior">IKEv2 Initiator Behavior</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-responder-behavior">IKEv2 Responder Behavior</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">Counter-based AES modes of operation such as AES-CCM <xref target="RFC4309" format="default" sectionFormat="of" derivedContent="RFC4309"/> and AES-GCM <xref target="RFC4106" format="default" sectionFormat="of" derivedContent="RFC4106"/> require the specification of a nonce for each ESP
+      packet. The same applies for ChaCha20-Poly1305 <xref target="RFC7634" format="default" sectionFormat="of" derivedContent="RFC7634"/>. Currently, this nonce is generated thanks to the
+      initialization vector (IV) provided in each ESP packet <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>. This practice is designated in
+      this document as "explicit IV".</t>
+      <t pn="section-1-2">In some contexts, such as the Internet of Things (IoT), it may be
+      preferable to avoid carrying the extra bytes associated to the IV and
+      instead generate it locally on each peer. The local generation of the IV
+      is designated in this document as "implicit IV".</t>
+      <t pn="section-1-3">The size of this IV depends on the specific algorithm, but all of the
+      algorithms mentioned above take an 8-octet IV.</t>
+      <t pn="section-1-4">This document defines how to compute the IV locally when it is
+      implicit. It also specifies how peers agree with the Internet Key
+      Exchange version 2 (IKEv2) <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> on
+      using an implicit IV versus an explicit IV.</t>
+      <t pn="section-1-5">This document limits its scope to the algorithms mentioned above.
+      Other algorithms with similar properties may later be defined to use
+      similar mechanisms.</t>
+      <t pn="section-1-6"> This document does not consider AES-CBC <xref target="RFC3602" format="default" sectionFormat="of" derivedContent="RFC3602"/>, as AES-CBC requires the IV to be
+      unpredictable. Deriving it directly from the packet counter as described
+      below is insecure, as mentioned in <xref target="RFC3602" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3602#section-6" derivedContent="RFC3602"/>, and has led to real-world chosen
+      plaintext attacks such as BEAST <xref target="BEAST" format="default" sectionFormat="of" derivedContent="BEAST"/>.</t>
+      <t pn="section-1-7">This document does not consider AES-CTR <xref target="RFC3686" format="default" sectionFormat="of" derivedContent="RFC3686"/>, as
+it focuses on the recommended Authenticated Encryption with Associated Data (AEAD) suites provided in <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/>.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-notation">Requirements Notation</name>
+      <t pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="sec_terminology" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <dl newline="false" indent="9" spacing="normal" pn="section-3-1">
+        <dt pn="section-3-1.1">IoT:</dt>
+        <dd pn="section-3-1.2">Internet of Things</dd>
+        <dt pn="section-3-1.3">IV:</dt>
+        <dd pn="section-3-1.4">Initialization Vector</dd>
+        <dt pn="section-3-1.5">IIV:</dt>
+        <dd pn="section-3-1.6">Implicit Initialization Vector</dd>
+        <dt pn="section-3-1.7">Nonce:</dt>
+        <dd pn="section-3-1.8">A fixed-size octet string used only once. In this
+        document, the IV is used to generate the nonce input for the
+        encryption/decryption. </dd>
+      </dl>
+    </section>
+    <section anchor="sec-aes-ctr-ccm-cgm" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-implicit-iv">Implicit IV</name>
+      <t pn="section-4-1">With the algorithms listed in <xref target="intro" format="default" sectionFormat="of" derivedContent="Section 1"/>, the 8-byte IV <bcp14>MUST NOT</bcp14> repeat for a
+      given key. The binding between an ESP packet and its IV is provided
+      using the Sequence Number or the Extended Sequence Number.  
+
+Figures <xref target="fig-aes-ctr-ccm-gcm-iv-sn" format="counter" sectionFormat="of" derivedContent="1"/> and <xref target="fig-aes-ctr-ccm-gcm-iv-esn" format="counter" sectionFormat="of" derivedContent="2"/> represent the IV with a
+regular 4-byte Sequence Number and an 8-byte Extended Sequence Number,
+respectively.</t>
+      <figure anchor="fig-aes-ctr-ccm-gcm-iv-sn" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-implicit-iv-with-a-4-byte-s">Implicit IV with a 4-Byte Sequence Number</name>
+        <artwork name="" type="" align="left" alt="" pn="section-4-2.1">
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                              Zero                             | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                      Sequence Number                          | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    </artwork>
+      </figure>
+      <dl newline="true" spacing="normal" pn="section-4-3">
+        <dt pn="section-4-3.1">Sequence Number:</dt>
+        <dd pn="section-4-3.2">The 4-byte Sequence Number carried in the ESP packet.</dd>
+        <dt pn="section-4-3.3">Zero:</dt>
+        <dd pn="section-4-3.4">A 4-byte array with all bits set to zero.</dd>
+      </dl>
+      <figure anchor="fig-aes-ctr-ccm-gcm-iv-esn" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-implicit-iv-with-an-8-byte-">Implicit IV with an 8-Byte Extended Sequence Number</name>
+        <artwork name="" type="" align="left" alt="" pn="section-4-4.1">
+0                   1                   2                   3
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
+|                         Extended                              |
+|                      Sequence Number                          | 
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    </artwork>
+      </figure>
+      <dl newline="true" spacing="normal" pn="section-4-5">
+        <dt pn="section-4-5.1">Extended Sequence Number:</dt>
+        <dd pn="section-4-5.2">The 8-byte Extended Sequence
+        Number of the Security Association. The four low-order bytes are
+        carried in the ESP packet.</dd>
+      </dl>
+      <t pn="section-4-6"> This document solely defines the IV generation of the algorithms
+      defined in <xref target="RFC4106" format="default" sectionFormat="of" derivedContent="RFC4106"/> for AES-GCM, <xref target="RFC4309" format="default" sectionFormat="of" derivedContent="RFC4309"/> for AES-CCM, and <xref target="RFC7634" format="default" sectionFormat="of" derivedContent="RFC7634"/> for
+      ChaCha20-Poly1305. All other aspects and parameters of those algorithms
+      are unchanged and are used as defined in their respective
+      specifications.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-ikev2-initiator-behavior">IKEv2 Initiator Behavior</name>
+      <t pn="section-5-1">An initiator supporting this feature <bcp14>SHOULD</bcp14> propose implicit IV (IIV)
+algorithms in the Transform Type 1 (Encryption Algorithm) Substructure
+of the Proposal Substructure inside the Security Association (SA)
+payload in the IKEv2 Exchange. To facilitate backward compatibility
+with non-supporting peers, the initiator <bcp14>SHOULD</bcp14> also include those same
+algorithms with explicit IV as separate transforms.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-ikev2-responder-behavior">IKEv2 Responder Behavior</name>
+      <t pn="section-6-1">The rules of SA payload processing require that the responder pick its
+algorithms from the proposal sent by the initiator, thus
+ensuring that the responder will never send an SA payload containing the
+IIV transform to an initiator that did not propose it.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-7-1">Nonce generation for these algorithms has not been explicitly
+      defined. It has been left to the implementation as long as certain
+      security requirements are met. Typically, for AES-GCM, AES-CCM, and
+      ChaCha20-Poly1305, the IV is not allowed to be repeated for one
+      particular key. This document provides an explicit and normative way to
+      generate IVs. The mechanism described in this document meets the IV
+      security requirements of all relevant algorithms.</t>
+      <t pn="section-7-2"> As the IV must not repeat for one SA when Counter-Mode ciphers are
+      used, implicit IV as described in this document <bcp14>MUST NOT</bcp14>
+      be used in setups with the chance that the Sequence Number overlaps for
+      one SA.  
+
+The sender's counter and the receiver's counter <bcp14>MUST</bcp14> be reset
+(by establishing a new SA and thus a new key) prior to the transmission of the
+2^32nd packet for an SA that does not use an Extended Sequence Number and
+prior to the transmission of the 2^64th packet for an SA that does use an
+Extended Sequence Number. This prevents Sequence Number overlaps for the
+mundane point-to-point case. Multicast as described in <xref target="RFC5374" format="default" sectionFormat="of" derivedContent="RFC5374"/>, <xref target="RFC6407" format="default" sectionFormat="of" derivedContent="RFC6407"/>, and <xref target="I-D.ietf-ipsecme-g-ikev2" format="default" sectionFormat="of" derivedContent="G-IKEv2"/> is a prominent example in which
+many senders share one secret and thus one SA.  As such, implicit IV may only
+be used with Multicast if some mechanisms are employed that prevent the
+Sequence Number from overlapping for one SA; otherwise, implicit IV
+<bcp14>MUST NOT</bcp14> be used with Multicast.  </t>
+      <t pn="section-7-3">This document defines three new encryption transforms that use
+      implicit IV. Unlike most encryption transforms defined to date, which
+      can be used for both ESP and IKEv2, these transforms are defined for ESP
+      only and cannot be used in IKEv2. The reason for this is that IKEv2 messages
+      don't contain a unique per-message value that can be used for IV
+      generation. The Message-ID field in the IKEv2 header is similar to the SN
+      field in the ESP header, but recent IKEv2 extensions <xref target="RFC6311" format="default" sectionFormat="of" derivedContent="RFC6311"/> <xref target="RFC7383" format="default" sectionFormat="of" derivedContent="RFC7383"/> do allow
+      it to repeat, so there is not an easy way to derive unique IV from IKEv2
+      header fields.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-8-1">IANA has updated the "Internet Key Exchange Version 2 (IKEv2)
+      Parameters" registry <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> by adding
+      the following new code points to the "Transform Type 1 - Encryption
+      Algorithm Transform IDs" subregistry under the "Transform Type Values"
+      registry <xref target="IANA" format="default" sectionFormat="of" derivedContent="IANA"/>:
+
+</t>
+      <table anchor="iana-registry" align="left" pn="table-1">
+        <name slugifiedName="name-additions-to-transform-type">Additions to "Transform Type 1 - Encryption Algorithm Transform IDs" Registry</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Number</th>
+            <th align="left" colspan="1" rowspan="1">Name</th>
+            <th align="left" colspan="1" rowspan="1">ESP Reference</th>
+            <th align="left" colspan="1" rowspan="1">IKEv2 Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">29</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_AES_CCM_8_IIV</td>
+            <td align="left" colspan="1" rowspan="1">RFC 8750</td>
+            <td align="left" colspan="1" rowspan="1">Not allowed</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">30</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_AES_GCM_16_IIV</td>
+            <td align="left" colspan="1" rowspan="1">RFC 8750</td>
+            <td align="left" colspan="1" rowspan="1">Not allowed</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">31</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_CHACHA20_POLY1305_IIV</td>
+            <td align="left" colspan="1" rowspan="1">RFC 8750</td>
+            <td align="left" colspan="1" rowspan="1">Not allowed</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-ipsecme-g-ikev2" to="G-IKEv2"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3602" target="https://www.rfc-editor.org/info/rfc3602" quoteTitle="true" derivedAnchor="RFC3602">
+          <front>
+            <title>The AES-CBC Cipher Algorithm and Its Use with IPsec</title>
+            <author initials="S." surname="Frankel" fullname="S. Frankel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Glenn" fullname="R. Glenn">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kelly" fullname="S. Kelly">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="September"/>
+            <abstract>
+              <t>This document describes the use of the Advanced Encryption Standard (AES) Cipher Algorithm in Cipher Block Chaining (CBC) Mode, with an explicit Initialization Vector (IV), as a confidentiality mechanism within the context of the IPsec Encapsulating Security Payload (ESP).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3602"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3602"/>
+        </reference>
+        <reference anchor="RFC3686" target="https://www.rfc-editor.org/info/rfc3686" quoteTitle="true" derivedAnchor="RFC3686">
+          <front>
+            <title>Using Advanced Encryption Standard (AES) Counter Mode With IPsec Encapsulating Security Payload (ESP)</title>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="January"/>
+            <abstract>
+              <t>This document describes the use of Advanced Encryption Standard (AES) Counter Mode, with an explicit initialization vector, as an IPsec Encapsulating Security Payload (ESP) confidentiality mechanism.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3686"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3686"/>
+        </reference>
+        <reference anchor="RFC4106" target="https://www.rfc-editor.org/info/rfc4106" quoteTitle="true" derivedAnchor="RFC4106">
+          <front>
+            <title>The Use of Galois/Counter Mode (GCM) in IPsec Encapsulating Security Payload (ESP)</title>
+            <author initials="J." surname="Viega" fullname="J. Viega">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="June"/>
+            <abstract>
+              <t>This memo describes the use of the Advanced Encryption Standard (AES) in Galois/Counter Mode (GCM) as an IPsec Encapsulating Security Payload (ESP) mechanism to provide confidentiality and data origin authentication.  This method can be efficiently implemented in hardware for speeds of 10 gigabits per second and above, and is also well-suited to software implementations.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4106"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4106"/>
+        </reference>
+        <reference anchor="RFC4303" target="https://www.rfc-editor.org/info/rfc4303" quoteTitle="true" derivedAnchor="RFC4303">
+          <front>
+            <title>IP Encapsulating Security Payload (ESP)</title>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="December"/>
+            <abstract>
+              <t>This document describes an updated version of the Encapsulating Security Payload (ESP) protocol, which is designed to provide a mix of security services in IPv4 and IPv6.  ESP is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service (a form of partial sequence integrity), and limited traffic flow confidentiality.  This document obsoletes RFC 2406 (November 1998).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4303"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4303"/>
+        </reference>
+        <reference anchor="RFC4309" target="https://www.rfc-editor.org/info/rfc4309" quoteTitle="true" derivedAnchor="RFC4309">
+          <front>
+            <title>Using Advanced Encryption Standard (AES) CCM Mode with IPsec Encapsulating Security Payload (ESP)</title>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="December"/>
+            <abstract>
+              <t>This document describes the use of Advanced Encryption Standard (AES) in Counter with CBC-MAC (CCM) Mode, with an explicit initialization vector (IV), as an IPsec Encapsulating Security Payload (ESP) mechanism to provide confidentiality, data origin authentication, and connectionless integrity.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4309"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4309"/>
+        </reference>
+        <reference anchor="RFC5374" target="https://www.rfc-editor.org/info/rfc5374" quoteTitle="true" derivedAnchor="RFC5374">
+          <front>
+            <title>Multicast Extensions to the Security Architecture for the Internet Protocol</title>
+            <author initials="B." surname="Weis" fullname="B. Weis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Gross" fullname="G. Gross">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ignjatic" fullname="D. Ignjatic">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="November"/>
+            <abstract>
+              <t>The Security Architecture for the Internet Protocol describes security services for traffic at the IP layer.  That architecture primarily defines services for Internet Protocol (IP) unicast packets.  This document describes how the IPsec security services are applied to IP multicast packets.  These extensions are relevant only for an IPsec implementation that supports multicast.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5374"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5374"/>
+        </reference>
+        <reference anchor="RFC6311" target="https://www.rfc-editor.org/info/rfc6311" quoteTitle="true" derivedAnchor="RFC6311">
+          <front>
+            <title>Protocol Support for High Availability of IKEv2/IPsec</title>
+            <author initials="R." surname="Singh" fullname="R. Singh" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Kalyani" fullname="G. Kalyani">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Sheffer" fullname="Y. Sheffer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Zhang" fullname="D. Zhang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="July"/>
+            <abstract>
+              <t>The IPsec protocol suite is widely used for business-critical network traffic.  In order to make IPsec deployments highly available, more scalable, and failure-resistant, they are often implemented as IPsec High Availability (HA) clusters.  However, there are many issues in IPsec HA clustering, and in particular in Internet Key Exchange Protocol version 2 (IKEv2) clustering.  An earlier document, "IPsec Cluster Problem Statement", enumerates the issues encountered in the IKEv2/IPsec HA cluster environment.  This document resolves these issues with the least possible change to the protocol.</t>
+              <t>This document defines an extension to the IKEv2 protocol to solve the main issues of "IPsec Cluster Problem Statement" in the commonly deployed hot standby cluster, and provides implementation advice for other issues.  The main issues solved are the synchronization of IKEv2 Message ID counters, and of IPsec replay counters.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6311"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6311"/>
+        </reference>
+        <reference anchor="RFC6407" target="https://www.rfc-editor.org/info/rfc6407" quoteTitle="true" derivedAnchor="RFC6407">
+          <front>
+            <title>The Group Domain of Interpretation</title>
+            <author initials="B." surname="Weis" fullname="B. Weis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Rowles" fullname="S. Rowles">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Hardjono" fullname="T. Hardjono">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="October"/>
+            <abstract>
+              <t>This document describes the Group Domain of Interpretation (GDOI) protocol specified in RFC 3547.  The GDOI provides group key management to support secure group communications according to the architecture specified in RFC 4046.  The GDOI manages group security associations, which are used by IPsec and potentially other data security protocols.  This document replaces RFC 3547.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6407"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6407"/>
+        </reference>
+        <reference anchor="RFC7296" target="https://www.rfc-editor.org/info/rfc7296" quoteTitle="true" derivedAnchor="RFC7296">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+            <author initials="C." surname="Kaufman" fullname="C. Kaufman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Eronen" fullname="P. Eronen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Kivinen" fullname="T. Kivinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="October"/>
+            <abstract>
+              <t>This document describes version 2 of the Internet Key Exchange (IKE) protocol.  IKE is a component of IPsec used for performing mutual authentication and establishing and maintaining Security Associations (SAs).  This document obsoletes RFC 5996, and includes all of the errata for it.  It advances IKEv2 to be an Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="79"/>
+          <seriesInfo name="RFC" value="7296"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7296"/>
+        </reference>
+        <reference anchor="RFC7383" target="https://www.rfc-editor.org/info/rfc7383" quoteTitle="true" derivedAnchor="RFC7383">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2) Message Fragmentation</title>
+            <author initials="V." surname="Smyslov" fullname="V. Smyslov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="November"/>
+            <abstract>
+              <t>This document describes a way to avoid IP fragmentation of large Internet Key Exchange Protocol version 2 (IKEv2) messages.  This allows IKEv2 messages to traverse network devices that do not allow IP fragments to pass through.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7383"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7383"/>
+        </reference>
+        <reference anchor="RFC7634" target="https://www.rfc-editor.org/info/rfc7634" quoteTitle="true" derivedAnchor="RFC7634">
+          <front>
+            <title>ChaCha20, Poly1305, and Their Use in the Internet Key Exchange Protocol (IKE) and IPsec</title>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="August"/>
+            <abstract>
+              <t>This document describes the use of the ChaCha20 stream cipher along with the Poly1305 authenticator, combined into an AEAD algorithm for the Internet Key Exchange Protocol version 2 (IKEv2) and for IPsec.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7634"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7634"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8221" target="https://www.rfc-editor.org/info/rfc8221" quoteTitle="true" derivedAnchor="RFC8221">
+          <front>
+            <title>Cryptographic Algorithm Implementation Requirements and Usage Guidance for Encapsulating Security Payload (ESP) and Authentication Header (AH)</title>
+            <author initials="P." surname="Wouters" fullname="P. Wouters">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Migault" fullname="D. Migault">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mattsson" fullname="J. Mattsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Kivinen" fullname="T. Kivinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="October"/>
+            <abstract>
+              <t>This document replaces RFC 7321, "Cryptographic Algorithm Implementation         Requirements and Usage Guidance for Encapsulating Security Payload               (ESP) and Authentication Header (AH)".  The goal of this document is to enable ESP and AH to benefit from cryptography that is up to date while making IPsec interoperable.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8221"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8221"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="BEAST" target="https://www.researchgate.net/publication/266529975_Here_Come_The_Ninjas" quoteTitle="true" derivedAnchor="BEAST">
+          <front>
+            <title>Here Come The xor Ninjas</title>
+            <author initials="T." surname="Duong" fullname="Thai Duong">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Rizzo" fullname="Juliano Rizzo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="May" year="2011"/>
+          </front>
+        </reference>
+        <reference anchor="I-D.ietf-ipsecme-g-ikev2" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-ipsecme-g-ikev2-00" derivedAnchor="G-IKEv2">
+          <front>
+            <title>Group Key Management using IKEv2</title>
+            <author initials="B" surname="Weis" fullname="Brian Weis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V" surname="Smyslov" fullname="Valery Smyslov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" day="8" year="2020"/>
+            <abstract>
+              <t>This document presents a set of IKEv2 exchanges that comprise a group key management protocol.  The protocol is in conformance with the Multicast Security (MSEC) key management architecture, which contains two components: member registration and group rekeying.  Both components require a Group Controller/Key Server to download IPsec group security associations to authorized members of a group.  The group members then exchange IP multicast or other group traffic as IPsec packets.  This document obsoletes RFC 6407.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-ipsecme-g-ikev2-00"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-ipsecme-g-ikev2-00.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="IANA" target="https://www.iana.org/assignments/ikev2-parameters" quoteTitle="true" derivedAnchor="IANA">
+          <front>
+            <title>Internet Key Exchange Version 2 (IKEv2) Parameters</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.a-1">We would like to thank <contact fullname="Valery Smyslov"/>, <contact fullname="Éric Vyncke"/>, <contact fullname="Alexey Melnikov"/>,
+      <contact fullname="Adam Roach"/>, and <contact fullname="Magnus       Nyström"/> (security directorate) as well as our three Security ADs --
+      <contact fullname="Eric Rescorla"/>, <contact fullname="Benjamin       Kaduk"/>, and <contact fullname="Roman Danyliw"/> -- for their valuable
+      comments. We also would like to thank <contact fullname="David       Schinazi"/> for his implementation as well as
+      <contact fullname="Tero Kivinen"/> and <contact fullname="David       Waltermire"/> (the IPSECME Chairs) for moving this work forward.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Daniel Migault" initials="D." surname="Migault">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street>8275 Trans Canada Route</street>
+            <city>Saint Laurent</city>
+            <region>QC</region>
+            <code>H4S 0B6</code>
+            <country>Canada</country>
+          </postal>
+          <email>daniel.migault@ericsson.com</email>
+        </address>
+      </author>
+      <author fullname="Tobias Guggemos" initials="T." surname="Guggemos">
+        <organization showOnFrontPage="true">LMU Munich</organization>
+        <address>
+          <postal>
+            <street>Oettingenstr. 67</street>
+            <city>Munich</city>
+            <code>80538</code>
+            <country>Germany</country>
+          </postal>
+          <phone/>
+          <email>guggemos@nm.ifi.lmu.de</email>
+          <uri>http://mnm-team.org/~guggemos</uri>
+        </address>
+      </author>
+      <author initials="Y." surname="Nir" fullname="Yoav Nir">
+        <organization showOnFrontPage="true">Dell Technologies</organization>
+        <address>
+          <postal>
+            <street>9 Andrei Sakharov St</street>
+            <city>Haifa</city>
+            <code>3190500</code>
+            <country>Israel</country>
+          </postal>
+          <email>ynir.ietf@gmail.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

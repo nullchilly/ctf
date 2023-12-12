@@ -1,0 +1,503 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-lamps-caa-issuemail-07" number="9495" submissionType="IETF" category="std" consensus="true" tocInclude="true" sortRefs="true" symRefs="true" updates="" obsoletes="" xml:lang="en" prepTime="2023-10-13T15:51:06" indexInclude="true" scripts="Common,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-lamps-caa-issuemail-07" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9495" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="CAA for Email Addresses">Certification Authority Authorization (CAA) Processing for Email Addresses</title>
+    <seriesInfo name="RFC" value="9495" stream="IETF"/>
+    <author fullname="Corey Bonnell">
+      <organization showOnFrontPage="true">DigiCert, Inc.</organization>
+      <address>
+        <email>corey.bonnell@digicert.com</email>
+      </address>
+    </author>
+    <date month="10" year="2023"/>
+    <area>sec</area>
+    <workgroup>lamps</workgroup>
+    <keyword>caa</keyword>
+    <keyword>certification authority authorization</keyword>
+    <keyword>email address</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The Certification Authority Authorization (CAA) DNS resource record (RR)
+provides a mechanism for domains to express the allowed set of
+Certification Authorities that are authorized to issue
+certificates for the domain. RFC 8659 contains the core CAA
+specification, where Property Tags that restrict the issuance of
+certificates that certify domain names are defined. This specification
+defines a Property Tag that grants authorization to Certification Authorities to issue
+certificates that contain the <tt>id-kp-emailProtection</tt> key purpose in
+the <tt>extendedKeyUsage</tt> extension and at least one <tt>rfc822Name</tt> value or
+<tt>otherName</tt> value of type <tt>id-on-SmtpUTF8Mailbox</tt> that includes the domain name
+in the <tt>subjectAltName</tt> extension.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9495" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-definitions">Conventions and Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-syntax-of-the-issuemail-pro">Syntax of the "issuemail" Property Tag</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-processing-of-the-issuemail">Processing of the "issuemail" Property Tag</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples-of-the-issuemail-p">Examples of the "issuemail" Property Tag</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-no-issuemail-property">No "issuemail" Property</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-single-issuemail-property">Single "issuemail" Property</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-single-issuemail-property-w">Single "issuemail" Property with Parameters</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.4">
+                <t indent="0" pn="section-toc.1-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-multiple-issuemail-properti">Multiple "issuemail" Properties</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.5">
+                <t indent="0" pn="section-toc.1-1.5.2.5.1"><xref derivedContent="5.5" format="counter" sectionFormat="of" target="section-5.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-malformed-issuemail-propert">Malformed "issuemail" Property</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Certification Authority Authorization (CAA) DNS resource record (RR)
+provides a mechanism for domains to express the allowed set of
+Certification Authorities that are authorized to issue
+certificates for the domain. <xref target="RFC8659" format="default" sectionFormat="of" derivedContent="RFC8659"/> contains the core CAA
+specification, where Property Tags that restrict the issuance of
+certificates that certify domain names are defined. <xref target="RFC8659" format="default" sectionFormat="of" derivedContent="RFC8659"/> does not
+define a mechanism to restrict the issuance of certificates that
+certify email addresses. For the purposes of this document, a
+certificate "certifies" an email address if the certificate contains the
+<tt>id-kp-emailProtection</tt> key purpose in
+the <tt>extendedKeyUsage</tt> extension and at least one <tt>rfc822Name</tt> value or
+<tt>otherName</tt> value of type <tt>id-on-SmtpUTF8Mailbox</tt> that includes the domain name
+in the <tt>subjectAltName</tt> extension.</t>
+      <t indent="0" pn="section-1-2">This document defines a CAA Property Tag that restricts the allowed set
+of issuers of certificates that certify email addresses. Its
+syntax and processing are similar to the "issue" Property Tag as defined
+in <xref target="RFC8659" sectionFormat="of" section="4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8659#section-4.2" derivedContent="RFC8659"/>.</t>
+    </section>
+    <section anchor="conventions-and-definitions" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-and-definitions">Conventions and Definitions</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+    </section>
+    <section anchor="syntax" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-syntax-of-the-issuemail-pro">Syntax of the "issuemail" Property Tag</name>
+      <t indent="0" pn="section-3-1">This document defines the "issuemail" Property Tag.  The presence of
+one or more "issuemail" Properties in the Relevant Resource Record
+Set (RRSet) <xref target="RFC8659" format="default" sectionFormat="of" derivedContent="RFC8659"/> indicates that the domain is requesting that
+Certification Authorities restrict the issuance of certificates that
+certify email addresses.</t>
+      <t indent="0" pn="section-3-2">The CAA "issuemail" Property Value has the following sub-syntax
+(specified in ABNF as per <xref target="RFC5234" format="default" sectionFormat="of" derivedContent="RFC5234"/>):</t>
+      <sourcecode name="" type="abnf" markers="false" pn="section-3-3">
+  issuemail-value = *WSP [issuer-domain-name *WSP]
+    [";" *WSP [parameters *WSP]]
+
+  issuer-domain-name = label *("." label)
+  label = (ALPHA / DIGIT) *( *("-") (ALPHA / DIGIT))
+
+  parameters = (parameter *WSP ";" *WSP parameters) / parameter
+  parameter = tag *WSP "=" *WSP value
+  tag = (ALPHA / DIGIT) *( *("-") (ALPHA / DIGIT))
+  value = *(%x21-3A / %x3C-7E)
+</sourcecode>
+      <t indent="0" pn="section-3-4">The production rules for "WSP", "ALPHA", and "DIGIT" are defined in
+<xref target="RFC5234" sectionFormat="of" section="B.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5234#appendix-B.1" derivedContent="RFC5234"/>. Readers who are familiar with the sub-syntax
+of the "issue" and "issuewild" Property Tags will recognize that this
+sub-syntax is identical.</t>
+      <t indent="0" pn="section-3-5">The meanings of each production rule within "issuemail-value" are as
+follows:</t>
+      <dl spacing="normal" newline="true" indent="3" pn="section-3-6">
+        <dt pn="section-3-6.1">"issuer-domain-name":</dt>
+        <dd pn="section-3-6.2">A domain name of the Certification Authority comprised of one or
+more labels</dd>
+        <dt pn="section-3-6.3">"label":</dt>
+        <dd pn="section-3-6.4">A single domain label that consists solely of ASCII letters,
+digits, and the hyphen (known as an "LDH label")</dd>
+        <dt pn="section-3-6.5">"parameters":</dt>
+        <dd pn="section-3-6.6">A semicolon-separated list of parameters</dd>
+        <dt pn="section-3-6.7">"parameter":</dt>
+        <dd pn="section-3-6.8">A tag and a value, separated by an equals sign ("=")</dd>
+        <dt pn="section-3-6.9">"tag":</dt>
+        <dd pn="section-3-6.10">A keyword that identifies the type of parameter</dd>
+        <dt pn="section-3-6.11">"value":</dt>
+        <dd pn="section-3-6.12">The string value for a parameter</dd>
+      </dl>
+    </section>
+    <section anchor="processing-of-the-issuemail-property-tag" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-processing-of-the-issuemail">Processing of the "issuemail" Property Tag</name>
+      <t indent="0" pn="section-4-1">Prior to issuing a certificate that certifies an email address, the
+Certification Authority <bcp14>MUST</bcp14> check for publication of a Relevant
+RRSet. The discovery of such a Relevant RRSet <bcp14>MUST</bcp14>
+be performed using the algorithm specified in <xref target="RFC8659" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8659#section-3" derivedContent="RFC8659"/>.
+The input domain to the discovery algorithm <bcp14>SHALL</bcp14> be the domain "part"
+<xref target="RFC5322" format="default" sectionFormat="of" derivedContent="RFC5322"/> of the email address that is being certified. If the domain
+"part" of the email address being certified is an Internationalized
+Domain Name <xref target="RFC5890" format="default" sectionFormat="of" derivedContent="RFC5890"/> that contains one or more U-Labels, then all
+U-Labels <bcp14>MUST</bcp14> be converted to their A-Label representation <xref target="RFC5891" format="default" sectionFormat="of" derivedContent="RFC5891"/>
+for the purpose of discovering the Relevant RRSet for that email
+address.</t>
+      <t indent="0" pn="section-4-2">If the Relevant RRSet is empty or if it does not contain
+any "issuemail" Properties, then the domain has not requested any
+restrictions on the issuance of certificates for email addresses. The
+presence of other Property Tags, such as "issue" or "issuewild", does
+not restrict the issuance of certificates that certify email addresses.</t>
+      <t indent="0" pn="section-4-3">For each "issuemail" Property in the Relevant RRSet, the
+Certification Authority <bcp14>SHALL</bcp14> compare its issuer-domain-name with the
+issuer-domain-name as expressed in the Property Value. If there is not
+any "issuemail" record whose issuer-domain-name (as expressed in the
+Property Value) matches the Certification Authority's
+issuer-domain-name, then the Certification Authority <bcp14>MUST NOT</bcp14> issue
+the certificate. If the Relevant RRSet contains any "issuemail"
+Property whose issuemail-value does not conform to the ABNF syntax as
+defined in <xref target="syntax" format="default" sectionFormat="of" derivedContent="Section 3"/> of this document, then those records <bcp14>SHALL</bcp14> be
+treated as if the issuer-domain-name in the issuemail-value is the empty
+string.</t>
+      <t indent="0" pn="section-4-4">If the certificate certifies more than one email address, then the
+Certification Authority <bcp14>MUST</bcp14> perform the above procedure for each
+email address being certified.</t>
+      <t indent="0" pn="section-4-5">The assignment of issuer-domain-names to Certification Authorities is
+beyond the scope of this document.</t>
+      <t indent="0" pn="section-4-6">Parameters may be defined by a Certification Authority as a means
+for domains to further restrict the issuance of certificates. For
+example, a Certification Authority may define a parameter that contains
+an account identifier.  If the domain elects to add this parameter in an
+"issuemail" Property, the Certification Authority will verify that the
+account that is requesting the certificate matches the account specified
+in the Property and will refuse to issue the certificate if they do not
+match.</t>
+      <t indent="0" pn="section-4-7">The processing of parameters in the issuemail-value is specific to each
+Certification Authority and is beyond the scope of this document. In
+particular, this document does not define any parameters and does not
+specify any processing rules for when parameters must be acknowledged by
+a Certification Authority. However, parameters that do not conform to
+the ABNF syntax as defined in <xref target="syntax" format="default" sectionFormat="of" derivedContent="Section 3"/> will result in the
+issuemail-value being not conformant with the ABNF syntax. As stated
+above, a Property whose issuemail-value is malformed <bcp14>SHALL</bcp14> be treated as
+if the issuer-domain-name in the issuemail-value is the empty string.</t>
+    </section>
+    <section anchor="examples-of-the-issuemail-property-tag" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-examples-of-the-issuemail-p">Examples of the "issuemail" Property Tag</name>
+      <t indent="0" pn="section-5-1">Several illustrative examples of Relevant RRSets and their expected
+processing semantics follow. All examples assume that the
+issuer-domain-name for the Certification Authority is
+"authority.example".</t>
+      <section anchor="no-issuemail-property" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-no-issuemail-property">No "issuemail" Property</name>
+        <t indent="0" pn="section-5.1-1">The following RRSet does not contain any "issuemail" Properties,
+so there are no restrictions on the issuance of certificates that
+certify email addresses for that domain:</t>
+        <artwork align="left" pn="section-5.1-2">
+mail.client.example         CAA 0 issue "authority.example"
+mail.client.example         CAA 0 issue "other-authority.example"
+</artwork>
+      </section>
+      <section anchor="single-issuemail-property" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-single-issuemail-property">Single "issuemail" Property</name>
+        <t indent="0" pn="section-5.2-1">The following RRSet contains a single "issuemail" Property where the
+issuer-domain-name is the empty string, so the issuance of certificates
+certifying email addresses for the domain is prohibited:</t>
+        <artwork align="left" pn="section-5.2-2">
+mail.client.example         CAA 0 issuemail ";"
+</artwork>
+      </section>
+      <section anchor="single-issuemail-property-with-parameters" numbered="true" removeInRFC="false" toc="include" pn="section-5.3">
+        <name slugifiedName="name-single-issuemail-property-w">Single "issuemail" Property with Parameters</name>
+        <t indent="0" pn="section-5.3-1">The following RRSet contains a single "issuemail" Property where the
+issuer-domain-name is "authority.example" and contains a single
+"account" parameter of "123456". In this case, the Certification
+Authority <bcp14>MAY</bcp14> issue the certificate, or it <bcp14>MAY</bcp14> refuse to issue the
+certificate, depending on its practices for processing the "account"
+parameter:</t>
+        <artwork align="left" pn="section-5.3-2">
+mail.client.example
+        CAA 0 issuemail "authority.example; account=123456"
+</artwork>
+      </section>
+      <section anchor="multiple-issuemail-properties" numbered="true" removeInRFC="false" toc="include" pn="section-5.4">
+        <name slugifiedName="name-multiple-issuemail-properti">Multiple "issuemail" Properties</name>
+        <t indent="0" pn="section-5.4-1">The following RRSet contains multiple "issuemail" Properties,
+where one Property matches the issuer-domain-name of the example Certification
+Authority ("authority.example") and one Property does not match.
+Although this example is contrived, it demonstrates that since
+there is at least one record whose issuer-domain-name matches the
+Certification Authority's issuer-domain-name, issuance is permitted.</t>
+        <artwork align="left" pn="section-5.4-2">
+mail.client.example         CAA 0 issuemail ";"
+mail.client.example         CAA 0 issuemail "authority.example"
+</artwork>
+      </section>
+      <section anchor="malformed-issuemail-property" numbered="true" removeInRFC="false" toc="include" pn="section-5.5">
+        <name slugifiedName="name-malformed-issuemail-propert">Malformed "issuemail" Property</name>
+        <t indent="0" pn="section-5.5-1">The following RRSet contains a single "issuemail" Property whose
+sub-syntax does not conform to the ABNF as specified in <xref target="syntax" format="default" sectionFormat="of" derivedContent="Section 3"/>.
+Given that "issuemail" Properties with malformed syntax are treated the
+same as "issuemail" Properties whose issuer-domain-name is the empty
+string, issuance is prohibited.</t>
+        <artwork align="left" pn="section-5.5-2">
+malformed.client.example     CAA 0 issuemail "%%%%%"
+</artwork>
+      </section>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">The security considerations that are expressed in <xref target="RFC8659" format="default" sectionFormat="of" derivedContent="RFC8659"/> are relevant
+to this specification.</t>
+      <t indent="0" pn="section-6-2">The processing of "issuemail" Properties as specified in this document
+is a supplement to the Certification Authority's validation process.
+The Certification Authority <bcp14>MUST NOT</bcp14> treat solely the presence of an
+"issuemail" Property with its issuer-domain-name specified within the
+Relevant CAA RRSet as sufficient validation of the email address. The
+Certification Authority <bcp14>MUST</bcp14> validate the email address according to the
+relevant policy documents and practice statements.</t>
+      <t indent="0" pn="section-6-3">CAA Properties may have the "critical" flag asserted, which specifies
+that a given Property is critical and must be processed by conforming
+Certification Authorities. If a Certification Authority does not
+understand the Property, then it <bcp14>MUST NOT</bcp14> issue the certificate in
+question.</t>
+      <t indent="0" pn="section-6-4">If a single CAA RRSet is processed by multiple Certification Authorities
+for the issuance of multiple certificate types, then a Certification
+Authority's lack of support for a critical CAA Property in the RRSet
+will prevent the Certification Authority from issuing any certificates
+for that domain.</t>
+      <t indent="0" pn="section-6-5">For example, assume that an RRSet contains the following Properties:</t>
+      <artwork align="left" pn="section-6-6">
+client.example         CAA 128 issue "other-authority.example"
+client.example         CAA 0 issuemail "authority.example"
+</artwork>
+      <t indent="0" pn="section-6-7">In this case, if the Certification Authority whose issuer-domain-name
+matches "authority.example" does not recognize the "issue" Property Tag,
+then that Certification Authority will not be able to issue S⁠/MIME
+certificates that certify email addresses for "client.example".</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">IANA has registered the following entry in the "Certification Authority Restriction Properties" subregistry of the "Public Key
+Infrastructure using X.509 (PKIX) Parameters" registry group:</t>
+      <table align="center" pn="table-1">
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Tag</th>
+            <th align="left" colspan="1" rowspan="1">Meaning</th>
+            <th align="left" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">issuemail</td>
+            <td align="left" colspan="1" rowspan="1">Authorization Entry by Email Address</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9495</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5234" target="https://www.rfc-editor.org/info/rfc5234" quoteTitle="true" derivedAnchor="RFC5234">
+          <front>
+            <title>Augmented BNF for Syntax Specifications: ABNF</title>
+            <author fullname="D. Crocker" initials="D." role="editor" surname="Crocker"/>
+            <author fullname="P. Overell" initials="P." surname="Overell"/>
+            <date month="January" year="2008"/>
+            <abstract>
+              <t indent="0">Internet technical specifications often need to define a formal syntax. Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications. The current specification documents ABNF. It balances compactness and simplicity with reasonable representational power. The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges. This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="68"/>
+          <seriesInfo name="RFC" value="5234"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5234"/>
+        </reference>
+        <reference anchor="RFC5322" target="https://www.rfc-editor.org/info/rfc5322" quoteTitle="true" derivedAnchor="RFC5322">
+          <front>
+            <title>Internet Message Format</title>
+            <author fullname="P. Resnick" initials="P." role="editor" surname="Resnick"/>
+            <date month="October" year="2008"/>
+            <abstract>
+              <t indent="0">This document specifies the Internet Message Format (IMF), a syntax for text messages that are sent between computer users, within the framework of "electronic mail" messages. This specification is a revision of Request For Comments (RFC) 2822, which itself superseded Request For Comments (RFC) 822, "Standard for the Format of ARPA Internet Text Messages", updating it to reflect current practice and incorporating incremental changes that were specified in other RFCs. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5322"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5322"/>
+        </reference>
+        <reference anchor="RFC5891" target="https://www.rfc-editor.org/info/rfc5891" quoteTitle="true" derivedAnchor="RFC5891">
+          <front>
+            <title>Internationalized Domain Names in Applications (IDNA): Protocol</title>
+            <author fullname="J. Klensin" initials="J." surname="Klensin"/>
+            <date month="August" year="2010"/>
+            <abstract>
+              <t indent="0">This document is the revised protocol definition for Internationalized Domain Names (IDNs). The rationale for changes, the relationship to the older specification, and important terminology are provided in other documents. This document specifies the protocol mechanism, called Internationalized Domain Names in Applications (IDNA), for registering and looking up IDNs in a way that does not require changes to the DNS itself. IDNA is only meant for processing domain names, not free text. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5891"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5891"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8659" target="https://www.rfc-editor.org/info/rfc8659" quoteTitle="true" derivedAnchor="RFC8659">
+          <front>
+            <title>DNS Certification Authority Authorization (CAA) Resource Record</title>
+            <author fullname="P. Hallam-Baker" initials="P." surname="Hallam-Baker"/>
+            <author fullname="R. Stradling" initials="R." surname="Stradling"/>
+            <author fullname="J. Hoffman-Andrews" initials="J." surname="Hoffman-Andrews"/>
+            <date month="November" year="2019"/>
+            <abstract>
+              <t indent="0">The Certification Authority Authorization (CAA) DNS Resource Record allows a DNS domain name holder to specify one or more Certification Authorities (CAs) authorized to issue certificates for that domain name. CAA Resource Records allow a public CA to implement additional controls to reduce the risk of unintended certificate mis-issue. This document defines the syntax of the CAA record and rules for processing CAA records by CAs.</t>
+              <t indent="0">This document obsoletes RFC 6844.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8659"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8659"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC5890" target="https://www.rfc-editor.org/info/rfc5890" quoteTitle="true" derivedAnchor="RFC5890">
+          <front>
+            <title>Internationalized Domain Names for Applications (IDNA): Definitions and Document Framework</title>
+            <author fullname="J. Klensin" initials="J." surname="Klensin"/>
+            <date month="August" year="2010"/>
+            <abstract>
+              <t indent="0">This document is one of a collection that, together, describe the protocol and usage context for a revision of Internationalized Domain Names for Applications (IDNA), superseding the earlier version. It describes the document collection and provides definitions and other material that are common to the set. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5890"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5890"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The author would like to thank the participants on the LAMPS Working
+Group mailing list for their insightful feedback and comments. In
+particular, the author extends sincere appreciation to <contact fullname="Alexey Melnikov"/>,
+<contact fullname="Christer Holmberg"/>, <contact fullname="Éric Vyncke"/>, <contact fullname="John Levine"/>, <contact fullname="Lars Eggert"/>,
+<contact fullname="Michael Richardson"/>, <contact fullname="Murray Kucherawy"/>, <contact fullname="Paul Wouters"/>,
+<contact fullname="Phillip Hallam-Baker"/>, <contact fullname="Roman Danyliw"/>, <contact fullname="Russ Housley"/>, <contact fullname="Sean Turner"/>,
+<contact fullname="Seo Suchan"/>, <contact fullname="Tim Chown"/>, and <contact fullname="Tim Wicinski"/> for their official reviews and
+suggestions, which greatly improved the quality of this document.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author fullname="Corey Bonnell">
+        <organization showOnFrontPage="true">DigiCert, Inc.</organization>
+        <address>
+          <email>corey.bonnell@digicert.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

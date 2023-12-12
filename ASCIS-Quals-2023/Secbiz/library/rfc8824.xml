@@ -1,0 +1,1767 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-lpwan-coap-static-context-hc-19" indexInclude="true" ipr="trust200902" number="8824" prepTime="2021-06-29T22:44:00" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-lpwan-coap-static-context-hc-19" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8824" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="SCHC for CoAP">Static Context Header Compression (SCHC) for the Constrained Application Protocol (CoAP)</title>
+    <seriesInfo name="RFC" value="8824" stream="IETF"/>
+    <author initials="A." surname="Minaburo" fullname="Ana Minaburo">
+      <organization showOnFrontPage="true">Acklio</organization>
+      <address>
+        <postal>
+          <street>1137A avenue des Champs Blancs</street>
+          <city>Cesson-Sevigne Cedex</city>
+          <code>35510</code>
+          <country>France</country>
+        </postal>
+        <email>ana@ackl.io</email>
+      </address>
+    </author>
+    <author initials="L." surname="Toutain" fullname="Laurent Toutain">
+      <organization abbrev="IMT Atlantique" showOnFrontPage="true">Institut MINES TELECOM; IMT Atlantique</organization>
+      <address>
+        <postal>
+          <street>2 rue de la Chataigneraie</street>
+          <extaddr>CS 17607</extaddr>
+          <city>Cesson-Sevigne Cedex</city>
+          <code>35576</code>
+          <country>France</country>
+        </postal>
+        <email>Laurent.Toutain@imt-atlantique.fr</email>
+      </address>
+    </author>
+    <author initials="R." surname="Andreasen" fullname="Ricardo Andreasen">
+      <organization showOnFrontPage="true">Universidad de Buenos Aires</organization>
+      <address>
+        <postal>
+          <street>Av. Paseo Colon 850</street>
+          <city>Ciudad Autonoma de Buenos Aires</city>
+          <code>C1063ACV</code>
+          <country>Argentina</country>
+        </postal>
+        <email>randreasen@fi.uba.ar</email>
+      </address>
+    </author>
+    <date month="06" year="2021"/>
+    <keyword>header compression</keyword>
+    <keyword>fragmentation</keyword>
+    <keyword>IoT</keyword>
+    <keyword>constrained networks</keyword>
+    <keyword>LPWAN</keyword>
+    <keyword>sensor network</keyword>
+    <keyword>constrained node</keyword>
+    <keyword>wireless sensor network</keyword>
+    <keyword>core</keyword>
+    <keyword>OSCORE</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document defines how to compress Constrained Application Protocol (CoAP) headers using the Static Context Header Compression and fragmentation (SCHC) framework. 
+   SCHC defines a header compression mechanism adapted for Constrained Devices. 
+   SCHC uses a static description of the header to reduce the header's redundancy and size.
+   While RFC 8724 describes the SCHC compression and fragmentation framework,
+   and its application for IPv6/UDP headers, this document applies SCHC to CoAP headers. The CoAP header structure differs from 
+   IPv6 and UDP, since CoAP uses a flexible header with a variable number of options, themselves of variable length. The CoAP message format is asymmetric: the request messages have a header format different from the format in the response messages.
+ This
+   specification gives guidance on applying SCHC to flexible headers and how to leverage the asymmetry for more efficient compression Rules.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8824" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-schc-applicability-to-coap">SCHC Applicability to CoAP</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-headers-compressed-wit">CoAP Headers Compressed with SCHC</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-differences-between-coap-an">Differences between CoAP and UDP/IP Compression</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compression-of-coap-header-">Compression of CoAP Header Fields</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-version-field">CoAP Version Field</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-type-field">CoAP Type Field</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-code-field">CoAP Code Field</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-message-id-field">CoAP Message ID Field</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.5">
+                <t indent="0" pn="section-toc.1-1.4.2.5.1"><xref derivedContent="4.5" format="counter" sectionFormat="of" target="section-4.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-token-fields">CoAP Token Fields</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-options">CoAP Options</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-content-and-accept-opt">CoAP Content and Accept Options</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-option-max-age-uri-hos">CoAP Option Max-Age, Uri-Host, and Uri-Port Fields</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-option-uri-path-and-ur">CoAP Option Uri-Path and Uri-Query Fields</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.3.2">
+                  <li pn="section-toc.1-1.5.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.3.2.1.1"><xref derivedContent="5.3.1" format="counter" sectionFormat="of" target="section-5.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-variable-number-of-path-or-">Variable Number of Path or Query Elements</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.5.2.4">
+                <t indent="0" pn="section-toc.1-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-option-size1-size2-pro">CoAP Option Size1, Size2, Proxy-URI, and Proxy-Scheme Fields</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.5">
+                <t indent="0" pn="section-toc.1-1.5.2.5.1"><xref derivedContent="5.5" format="counter" sectionFormat="of" target="section-5.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coap-option-etag-if-match-i">CoAP Option ETag, If-Match, If-None-Match, Location-Path, and Location-Query Fields</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-schc-compression-of-coap-ex">SCHC Compression of CoAP Extensions</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-block">Block</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-observe">Observe</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-no-response">No-Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t indent="0" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oscore">OSCORE</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples-of-coap-header-com">Examples of CoAP Header Compression</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mandatory-header-with-con-m">Mandatory Header with CON Message</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oscore-compression">OSCORE Compression</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-oscore-compression">Example OSCORE Compression</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="Introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Constrained Application Protocol (CoAP) <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/> is a command/response protocol designed for microcontrollers with small RAM and ROM and optimized for services based on REST (Representational State Transfer). Although the Constrained Devices are a leading factor in the design of CoAP, a CoAP header's size is still too large for LPWANs (Low-Power Wide-Area Networks). Static Context Header Compression and fragmentation (SCHC) over CoAP headers is required to increase performance or to use CoAP over LPWAN technologies.
+</t>
+      <t indent="0" pn="section-1-2"><xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> defines the SCHC framework, which includes a header compression mechanism for LPWANs that is based on a static context. 
+<xref target="RFC8724" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-5" derivedContent="RFC8724"/> explains where compression and decompression occur in the architecture. The SCHC compression scheme assumes as a prerequisite that both endpoints know the static context before transmission. The way the context is configured, provisioned, or exchanged is out of this document's scope.</t>
+      <t indent="0" pn="section-1-3">CoAP is an application protocol, so CoAP compression requires installing common Rules between the two SCHC instances. SCHC compression may apply at two different levels: at IP and UDP in the LPWAN and another at the application level for CoAP. These two compression techniques may be independent. Both follow the same principle as that described in <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/>. As different entities manage the CoAP compression process at different levels, the SCHC Rules driving the compression/decompression are also different. <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> describes how to use SCHC for IP and UDP headers.       This document specifies how to apply SCHC compression to CoAP headers.</t>
+      <t indent="0" pn="section-1-4">SCHC compresses and decompresses headers based on common contexts between Devices. The SCHC context includes multiple Rules. Each Rule can match the header fields to specific values or ranges of values. If a Rule matches, the matched header fields are replaced by the RuleID and the Compression Residue that contains the residual bits of the compression. Thus, different Rules may correspond to different protocol headers in the packet that a Device expects to send or receive.</t>
+      <t indent="0" pn="section-1-5">A Rule describes the packets' entire header with an ordered list of Field Descriptors; see <xref target="RFC8724" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7" derivedContent="RFC8724"/>. Thereby, each description contains the Field ID (FID), Field Length (FL), and Field Position (FP), as well as a Direction Indicator (DI) (upstream, downstream, and bidirectional) and some associated Target Values (TVs). The DI is used for compression to give the best TV to the FID when these values differ in their transmission direction. So, a field may be described several times.</t>
+      <t indent="0" pn="section-1-6">A Matching Operator (MO) is associated with each header Field Descriptor. The Rule is selected if all the MOs fit the TVs for all fields of the incoming header.
+A Rule cannot be selected if the message contains a field that is unknown to the SCHC compressor.</t>
+      <t indent="0" pn="section-1-7">In that case, a Compression/Decompression Action (CDA) associated with each field gives the method to compress and decompress each field. 
+Compression mainly results in one of four actions:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-8">
+        <li pn="section-1-8.1">send the field value (value-sent),</li>
+        <li pn="section-1-8.2">send nothing (not-sent),</li>
+        <li pn="section-1-8.3">send some Least Significant Bits (LSBs) of the field, or</li>
+        <li pn="section-1-8.4">send an index (mapping-sent).</li>
+      </ul>
+      <t indent="0" pn="section-1-9">After applying the compression, there may be some bits to be sent.
+These values are called "Compression Residue".</t>
+      <t indent="0" pn="section-1-10">SCHC is a general mechanism applied to different protocols, with the exact Rules to be used depending on the protocol and the application. <xref target="RFC8724" sectionFormat="of" section="10" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-10" derivedContent="RFC8724"/> describes the compression scheme for IPv6 and UDP headers. This document targets CoAP header compression using SCHC.</t>
+      <section anchor="terminology" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-1.1-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+      </section>
+    </section>
+    <section anchor="schc-applicability-to-coap" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-schc-applicability-to-coap">SCHC Applicability to CoAP</name>
+      <t indent="0" pn="section-2-1">SCHC compression for CoAP headers <bcp14>MAY</bcp14> be done in conjunction with the lower layers (IPv6/UDP) or independently. The SCHC adaptation layers, described in <xref target="RFC8724" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-5" derivedContent="RFC8724"/>, may be used as shown in Figures <xref target="Fig-SCHCCOAP1" format="counter" sectionFormat="of" derivedContent="1"/>, <xref target="Fig-SCHCCOAP2" format="counter" sectionFormat="of" derivedContent="2"/>, and <xref target="Fig-SCHCCOAP3" format="counter" sectionFormat="of" derivedContent="3"/>.</t>
+      <t indent="0" pn="section-2-2">In the first example, <xref target="Fig-SCHCCOAP1" format="default" sectionFormat="of" derivedContent="Figure 1"/>, a Rule compresses the complete header stack from IPv6 to CoAP.  In this case, the Device and the Network Gateway (NGW) perform SCHC C/D (SCHC Compression/Decompression; see <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/>). The application communicating with the Device does not implement SCHC C/D.</t>
+      <figure anchor="Fig-SCHCCOAP1" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-compression-decompression-a">Compression/Decompression at the LPWAN Boundary</name>
+        <artwork name="" type="" align="left" alt="" pn="section-2-3.1">
+      (Device)            (NGW)                              (App)
+
+      +--------+                                           +--------+
+      |  CoAP  |                                           |  CoAP  |
+      +--------+                                           +--------+
+      |  UDP   |                                           |  UDP   |
+      +--------+     +----------------+                    +--------+
+      |  IPv6  |     |      IPv6      |                    |  IPv6  |
+      +--------+     +--------+-------+                    +--------+
+      |  SCHC  |     |  SCHC  |       |                    |        |
+      +--------+     +--------+       +                    +        +
+      |  LPWAN |     | LPWAN  |       |                    |        |
+      +--------+     +--------+-------+                    +--------+
+          ((((LPWAN))))             ------   Internet  ------
+</artwork>
+      </figure>
+      <t indent="0" pn="section-2-4"><xref target="Fig-SCHCCOAP1" format="default" sectionFormat="of" derivedContent="Figure 1"/> shows the use of SCHC header compression above Layer 2 in the Device and the NGW. The SCHC layer receives non-encrypted packets and can apply compression Rules to all the headers in the stack. On the other end, the NGW receives the SCHC packet and reconstructs the headers using the Rule and the Compression Residue. After the decompression, the NGW forwards the IPv6 packet toward the destination. The same process applies in the other direction when a non-encrypted packet arrives at the NGW. Thanks to the IP forwarding based on the IPv6 prefix, the NGW identifies the Device and compresses headers using the Device's Rules.</t>
+      <t indent="0" pn="section-2-5">In the second example, <xref target="Fig-SCHCCOAP2" format="default" sectionFormat="of" derivedContent="Figure 2"/>, SCHC compression is applied in the CoAP layer, compressing the CoAP header independently of the other layers. The RuleID, Compression Residue, and CoAP payload are encrypted using a mechanism such as DTLS. Only the other end (App) can decipher the information. If needed, layers below use SCHC to compress the header as defined in <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> (represented by dotted lines in the figure).</t>
+      <t indent="0" pn="section-2-6">This use case needs an end-to-end context initialization between the Device and the application. The context initialization is out of scope for this document.</t>
+      <figure anchor="Fig-SCHCCOAP2" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-standalone-coap-end-to-end-">Standalone CoAP End-to-End Compression/Decompression</name>
+        <artwork name="" type="" align="left" alt="" pn="section-2-7.1">
+      (Device)            (NGW)                               (App)
+
+      +--------+                                           +--------+
+      |  CoAP  |                                           |  CoAP  |
+      +--------+                                           +--------+
+      |  SCHC  |                                           |  SCHC  |
+      +--------+                                           +--------+
+      |  DTLS  |                                           |  DTLS  |
+      +--------+                                           +--------+
+      .  udp   .                                           .  udp   .
+      ..........     ..................                    ..........
+      .  ipv6  .     .      ipv6      .                    .  ipv6  .
+      ..........     ..................                    ..........
+      .  schc  .     .  schc  .       .                    .        .
+      ..........     ..........       .                    .        .
+      .  lpwan .     . lpwan  .       .                    .        .
+      ..........     ..................                    ..........
+          ((((LPWAN))))             ------   Internet  ------
+</artwork>
+      </figure>
+      <t indent="0" pn="section-2-8">The third example, <xref target="Fig-SCHCCOAP3" format="default" sectionFormat="of" derivedContent="Figure 3"/>, shows the use of Object Security for Constrained RESTful Environments (OSCORE) <xref target="RFC8613" format="default" sectionFormat="of" derivedContent="RFC8613"/>. In this case, SCHC needs two Rules to compress the CoAP header. A first Rule focuses on the Inner header. The result of this first compression is encrypted using the OSCORE mechanism. Then, a second Rule compresses the Outer header, including the OSCORE options.</t>
+      <figure anchor="Fig-SCHCCOAP3" align="left" suppress-title="false" pn="figure-3">
+        <name slugifiedName="name-oscore-compression-decompre">OSCORE Compression/Decompression</name>
+        <artwork name="" type="" align="left" alt="" pn="section-2-9.1">
+      (Device)            (NGW)                              (App)
+
+      +--------+                                           +--------+
+      |  CoAP  |                                           |  CoAP  |
+      |  Inner |                                           |  Inner |
+      +--------+                                           +--------+
+      |  SCHC  |                                           |  SCHC  |
+      |  Inner |                                           |  Inner |
+      +--------+                                           +--------+
+      |  CoAP  |                                           |  CoAP  |
+      |  Outer |                                           |  Outer |
+      +--------+                                           +--------+
+      |  SCHC  |                                           |  SCHC  |
+      |  Outer |                                           |  Outer |
+      +--------+                                           +--------+
+      .  udp   .                                           .  udp   .
+      ..........     ..................                    ..........
+      .  ipv6  .     .      ipv6      .                    .  ipv6  .
+      ..........     ..................                    ..........
+      .  schc  .     .  schc  .       .                    .        .
+      ..........     ..........       .                    .        .
+      .  lpwan .     . lpwan  .       .                    .        .
+      ..........     ..................                    ..........  
+          ((((LPWAN))))             ------   Internet  ------
+</artwork>
+      </figure>
+      <t indent="0" pn="section-2-10">In the case of several SCHC instances, as shown in Figures <xref target="Fig-SCHCCOAP2" format="counter" sectionFormat="of" derivedContent="2"/> and <xref target="Fig-SCHCCOAP3" format="counter" sectionFormat="of" derivedContent="3"/>, the Rules may come from different provisioning domains.</t>
+      <t indent="0" pn="section-2-11">This document focuses on CoAP compression, as represented by the dashed boxes in the previous figures.</t>
+    </section>
+    <section anchor="coap-headers-compressed-with-schc" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-coap-headers-compressed-wit">CoAP Headers Compressed with SCHC</name>
+      <t indent="0" pn="section-3-1">The use of SCHC over the CoAP header applies the same description and compression/decompression techniques as the technique used for IP and UDP, as explained in <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/>. For CoAP, the SCHC Rules description uses the direction information to optimize the compression by reducing the number of Rules needed to compress headers. The Field Descriptor <bcp14>MAY</bcp14> define both request/response headers and TVs in the same Rule, using the DI to indicate the header type.
+</t>
+      <t indent="0" pn="section-3-2">As for other header compression protocols, when the compressor does not find a correct Rule to compress the header, the packet <bcp14>MUST</bcp14> be sent uncompressed using the RuleID dedicated to this purpose, and where the Compression Residue is the complete header of the packet. See <xref target="RFC8724" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-6" derivedContent="RFC8724"/>.
+</t>
+      <section anchor="differences-between-coap-and-udpip-compression" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-differences-between-coap-an">Differences between CoAP and UDP/IP Compression</name>
+        <t indent="0" pn="section-3.1-1">CoAP compression differs from IPv6 and UDP compression in the following aspects:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1-2">
+          <li pn="section-3.1-2.1">
+            <t indent="0" pn="section-3.1-2.1.1">The CoAP message format is asymmetric; the headers are different for a request or a response. 
+For example, the Uri-Path option is mandatory in the request, and it might not be present in the response. 
+A request might contain an Accept option, and the response might include a Content-Format option. 
+In comparison, the IPv6 and UDP returning path swaps the value of some fields in the header. However, all the directions have the same fields (e.g., source and destination address fields).  </t>
+            <t indent="0" pn="section-3.1-2.1.2">
+<xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> defines the use of a DI in the
+Field Descriptor, which allows a single Rule to process a message
+header differently, depending on the direction.</t>
+          </li>
+          <li pn="section-3.1-2.2">Even when a field is "symmetric" (i.e., found in both directions), the values carried in each direction are different.
+The compression may use a "match-mapping" MO to limit the range of expected values 
+in a particular direction and reduce the Compression Residue's size.
+Through the DI, a Field Descriptor in the Rules splits the possible field value into two parts,
+one for each direction. For instance, if a client sends only Confirmable (CON) requests <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>, the Type can be elided by compression,
+and the answer may use one single bit to carry either the ACK or Reset (RST) type.
+The field Code has the same behavior: the 0.0X code format value in the request and the Y.ZZ code format in the response.
+</li>
+          <li pn="section-3.1-2.3">
+            <t indent="0" pn="section-3.1-2.3.1">In SCHC, the Rule defines the different header fields' length, so SCHC does not need to send it.
+In IPv6 and UDP headers, the fields have a fixed size, known by definition.
+On the other hand, some CoAP header fields have variable lengths, and the Rule description specifies it.
+For example, in a Uri-Path or Uri-Query, the Token size may vary from 0 to 8 bytes,
+and the CoAP options use the Type-Length-Value encoding format.  </t>
+            <t indent="0" pn="section-3.1-2.3.2">
+When doing SCHC compression of a variable-length field,
+<xref target="RFC8724" sectionFormat="of" section="7.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4.2" derivedContent="RFC8724"/> offers the option of defining a function for the Field Length in the Field Descriptor to know the length before compression. If the Field Length is unknown, the Rule will set it as a variable, and SCHC will send the compressed field's length in the Compression Residue.</t>
+          </li>
+          <li pn="section-3.1-2.4">A field can appear several times in the CoAP headers.
+It is found typically for elements of a URI (path or queries).
+The SCHC specification <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> allows a FID to appear several times in the Rule
+and uses the Field Position (FP) to identify the correct instance, thereby removing the MO's ambiguity.</li>
+          <li pn="section-3.1-2.5">Field Lengths defined in CoAP can be too large when it comes to LPWAN traffic constraints.
+For instance, this is particularly true for the Message ID field and the Token field.
+SCHC uses different MOs to perform the compression. See
+<xref target="RFC8724" sectionFormat="of" section="7.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4" derivedContent="RFC8724"/>.
+In this case, SCHC can apply the Most Significant Bits (MSBs) MO to reduce the information carried on LPWANs.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="CoAPcomp" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-compression-of-coap-header-">Compression of CoAP Header Fields</name>
+      <t indent="0" pn="section-4-1">This section discusses the compression of the different CoAP header fields.  CoAP compression with SCHC follows the information provided in <xref target="RFC8724" sectionFormat="of" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.1" derivedContent="RFC8724"/>.</t>
+      <section anchor="coap-version-field" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-coap-version-field">CoAP Version Field</name>
+        <t indent="0" pn="section-4.1-1">The CoAP version is bidirectional and <bcp14>MUST</bcp14> be elided during  SCHC compression, since it always contains the same value.
+In the future, or if a new version of CoAP is defined, new Rules will be needed to avoid ambiguities between versions.</t>
+      </section>
+      <section anchor="coap-type-field" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-coap-type-field">CoAP Type Field</name>
+        <t indent="0" pn="section-4.2-1">CoAP <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/> has four types of messages: two requests (CON, NON), one response (ACK), and one empty message (RST).</t>
+        <t indent="0" pn="section-4.2-2">The SCHC compression scheme <bcp14>SHOULD</bcp14> elide this field if, for instance, a client is sending only Non-confirmable (NON) messages or only CON messages. 
+For the RST message, SCHC may use a dedicated Rule. For other usages, SCHC can use a "match-mapping" MO.</t>
+      </section>
+      <section anchor="coap-code-field" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-coap-code-field">CoAP Code Field</name>
+        <t indent="0" pn="section-4.3-1">The Code field, defined in an IANA registry <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>, indicates the Request Method used in CoAP.
+ The compression of the CoAP Code field follows the same principle as that of the CoAP Type field. If the Device plays a specific role, SCHC may split the code values into two Field Descriptors: (1) the request codes with the 0 class and (2) the response values. SCHC will use the DI to identify the correct value in the packet.</t>
+        <t indent="0" pn="section-4.3-2">If the Device only implements a CoAP client, SCHC compression may reduce the request code to the set of requests the client can process.</t>
+        <t indent="0" pn="section-4.3-3">For known values, SCHC can use a "match-mapping" MO. If SCHC cannot compress the Code field, it will send the values in the Compression Residue.</t>
+      </section>
+      <section anchor="coap-message-id-field" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-coap-message-id-field">CoAP Message ID Field</name>
+        <t indent="0" pn="section-4.4-1">SCHC can compress the Message ID field with the "MSB" MO and the "LSB" CDA. 
+See <xref target="RFC8724" sectionFormat="of" section="7.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4" derivedContent="RFC8724"/>.</t>
+      </section>
+      <section anchor="coap-token-fields" numbered="true" toc="include" removeInRFC="false" pn="section-4.5">
+        <name slugifiedName="name-coap-token-fields">CoAP Token Fields</name>
+        <t indent="0" pn="section-4.5-1">CoAP defines the Token using two CoAP fields: Token Length in the
+ mandatory header and Token Value directly following the mandatory
+ CoAP header.
+</t>
+        <t indent="0" pn="section-4.5-2">SCHC processes the Token Length as it would any header field. If the value does not change, the size can be stored in the TV and elided during the transmission. Otherwise, SCHC will send the Token Length in the Compression Residue.</t>
+        <t indent="0" pn="section-4.5-3">For the Token Value, SCHC <bcp14>MUST NOT</bcp14> send it as 
+variable-length data in the Compression Residue, to avoid ambiguity with the Token Length. Therefore, SCHC <bcp14>MUST</bcp14> use the Token Length value to define the size of the Compression Residue. SCHC designates a specific function, "tkl", that the Rule <bcp14>MUST</bcp14> use to complete the Field Descriptor. During the decompression, this function returns the value contained in the Token Length field.</t>
+      </section>
+    </section>
+    <section anchor="coap-options" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-coap-options">CoAP Options</name>
+      <t indent="0" pn="section-5-1">CoAP defines options placed after the basic header, ordered by option number; see <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>. Each Option instance in a message uses
+the format Delta-Type (D-T), Length (L), Value (V). The SCHC Rule builds the description of the option by using the following:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5-2">
+        <li pn="section-5-2.1">in the FID: the option number built from the D-T;</li>
+        <li pn="section-5-2.2">in the TV: the option value; and</li>
+        <li pn="section-5-2.3">for the Option Length: the information provided in Sections <xref target="RFC8724" section="7.4.1" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4.1" derivedContent="RFC8724"/> and <xref target="RFC8724" section="7.4.2" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4.2" derivedContent="RFC8724"/> of <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/>.</li>
+      </ul>
+      <t indent="0" pn="section-5-3">When the Option Length has a well-known size, the Rule may keep the length value. Therefore, SCHC compression does not send it. Otherwise, SCHC compression carries the length of the Compression Residue, in addition to the Compression Residue value.</t>
+      <t indent="0" pn="section-5-4">CoAP requests and responses do not include the same options. So, compression Rules may reflect this asymmetry by tagging the DI.</t>
+      <t indent="0" pn="section-5-5">Note that length coding differs between CoAP options and SCHC variable size Compression Residue.</t>
+      <t indent="0" pn="section-5-6">The following sections present how SCHC compresses some specific CoAP options.</t>
+      <t indent="0" pn="section-5-7">If CoAP introduces a new option, the SCHC Rules <bcp14>MAY</bcp14> be updated, and the new FID description <bcp14>MUST</bcp14> be assigned to allow its compression.
+Otherwise, if no Rule describes this new option, SCHC compression is not achieved, and SCHC sends the CoAP header without compression.</t>
+      <section anchor="coap-content-and-accept-options" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-coap-content-and-accept-opt">CoAP Content and Accept Options</name>
+        <t indent="0" pn="section-5.1-1">If the client expects a single value, it can be stored in the TV and elided during the transmission. 
+Otherwise, if the client expects several possible values, a "match-mapping" MO  <bcp14>SHOULD</bcp14> be used to limit the Compression Residue's size. If not, SCHC has to send the option value in the Compression Residue (fixed or variable length).</t>
+      </section>
+      <section anchor="coap-option-max-age-uri-host-and-uri-port-fields" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-coap-option-max-age-uri-hos">CoAP Option Max-Age, Uri-Host, and Uri-Port Fields</name>
+        <t indent="0" pn="section-5.2-1">SCHC compresses these three fields in the same way. When the values of these options are known, SCHC can elide these fields.
+If the option uses well-known values, SCHC can use a "match-mapping" MO. Otherwise, SCHC will use the "value-sent" MO, and the Compression Residue will send these options' values.</t>
+      </section>
+      <section anchor="coap-option-uri-path-and-uri-query-fields" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-coap-option-uri-path-and-ur">CoAP Option Uri-Path and Uri-Query Fields</name>
+        <t indent="0" pn="section-5.3-1">The Uri-Path and Uri-Query fields are repeatable options; this means that in the CoAP header, they may appear several times with different values. The SCHC Rule description uses the FP to distinguish the different instances in the path.</t>
+        <t indent="0" pn="section-5.3-2">To compress repeatable field values, SCHC may use a "match-mapping" MO to reduce the size of variable paths or queries. In these cases, to optimize the compression, several elements can be regrouped into a single entry. The numbering of elements does not change, and the first matching element sets the MO comparison.</t>
+        <t indent="0" pn="section-5.3-3">In <xref target="Table-complex-path" format="default" sectionFormat="of" derivedContent="Table 1"/>, SCHC can use a single bit in the Compression Residue to code one of the two paths. 
+If regrouping were not allowed, 2 bits in the Compression Residue would be needed. SCHC sends the third path element as a variable size in the Compression Residue.</t>
+        <table anchor="Table-complex-path" align="center" pn="table-1">
+          <name slugifiedName="name-complex-path-example">Complex Path Example</name>
+          <thead>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">["/a/b", "/c/d"]</td>
+              <td align="left" colspan="1" rowspan="1">match- mapping</td>
+              <td align="left" colspan="1" rowspan="1">mapping-sent</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">3</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">ignore</td>
+              <td align="left" colspan="1" rowspan="1">value-sent</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-5.3-5">The length of Uri-Path and Uri-Query may be known when the Rule is defined. In any case, SCHC <bcp14>MUST</bcp14> set the Field Length to a variable value. The Compression Residue size is expressed in bytes.</t>
+        <t indent="0" pn="section-5.3-6">SCHC compression can use the MSB MO to a Uri-Path or Uri-Query element. However, attention to the length is important because the MSB value is in bits, and the size <bcp14>MUST</bcp14> always be a multiple of 8 bits.</t>
+        <t indent="0" pn="section-5.3-7">The length sent at the beginning of a variable-length Compression Residue indicates the LSB's size in bytes.</t>
+        <t indent="0" pn="section-5.3-8">For instance, for a CORECONF path /c/X6?k=eth0, the Rule description can be as follows (<xref target="Table-CoMicompress" format="default" sectionFormat="of" derivedContent="Table 2"/>):</t>
+        <table anchor="Table-CoMicompress" align="center" pn="table-2">
+          <name slugifiedName="name-coreconf-uri-compression">CORECONF URI Compression</name>
+          <thead>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">"c"</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">ignore</td>
+              <td align="left" colspan="1" rowspan="1">value-sent</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Uri-Query</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">"k="</td>
+              <td align="left" colspan="1" rowspan="1">MSB(16)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-5.3-10"><xref target="Table-CoMicompress" format="default" sectionFormat="of" derivedContent="Table 2"/> shows the Rule description for a Uri-Path and a Uri-Query. SCHC compresses the first part of the Uri-Path with a "not-sent" CDA.
+SCHC will send the second element of the Uri-Path with the length (i.e., 0x2 "X6") followed by the query option (i.e., 0x4 "eth0").
+</t>
+        <section anchor="variable-number-of-path-or-query-elements" numbered="true" toc="include" removeInRFC="false" pn="section-5.3.1">
+          <name slugifiedName="name-variable-number-of-path-or-">Variable Number of Path or Query Elements</name>
+          <t indent="0" pn="section-5.3.1-1">SCHC fixed the number of Uri-Path or Uri-Query elements in a Rule at
+the Rule creation time. If the number varies, SCHC <bcp14>SHOULD</bcp14> either</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.3.1-2">
+            <li pn="section-5.3.1-2.1">create several Rules to cover all possibilities or</li>
+            <li pn="section-5.3.1-2.2">create a Rule that defines several entries for Uri-Path to cover the longest path and send a Compression Residue with a length of 0 to indicate that a Uri-Path entry is empty.</li>
+          </ul>
+          <t indent="0" pn="section-5.3.1-3">However, this adds 4 bits to the variable Compression Residue size. See 
+<xref target="RFC8724" sectionFormat="of" section="7.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8724#section-7.4.2" derivedContent="RFC8724"/>.</t>
+        </section>
+      </section>
+      <section anchor="coap-option-size1-size2-proxy-uri-and-proxy-scheme-fields" numbered="true" toc="include" removeInRFC="false" pn="section-5.4">
+        <name slugifiedName="name-coap-option-size1-size2-pro">CoAP Option Size1, Size2, Proxy-URI, and Proxy-Scheme Fields</name>
+        <t indent="0" pn="section-5.4-1">The SCHC Rule description <bcp14>MAY</bcp14> define sending some field values by setting the TV to "not-sent", the MO to "ignore", and the CDA to "value-sent". A Rule <bcp14>MAY</bcp14> also use a "match-mapping" MO when there are different options for the same FID. Otherwise, the Rule sets the TV to the value, the MO to "equal", and the CDA to "not-sent".</t>
+      </section>
+      <section anchor="coap-option-etag-if-match-if-none-match-location-path-and-location-query-fields" numbered="true" toc="include" removeInRFC="false" pn="section-5.5">
+        <name slugifiedName="name-coap-option-etag-if-match-i">CoAP Option ETag, If-Match, If-None-Match, Location-Path, and Location-Query Fields</name>
+        <t indent="0" pn="section-5.5-1">A Rule entry cannot store these fields' values. The Rule description <bcp14>MUST</bcp14> always send these values in the Compression Residue.</t>
+      </section>
+    </section>
+    <section anchor="schc-compression-of-coap-extension-rfcs" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-schc-compression-of-coap-ex">SCHC Compression of CoAP Extensions</name>
+      <section anchor="block" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-block">Block</name>
+        <t indent="0" pn="section-6.1-1">When a packet uses a Block option <xref target="RFC7959" format="default" sectionFormat="of" derivedContent="RFC7959"/>, SCHC compression <bcp14>MUST</bcp14> send its content in the Compression Residue. 
+The SCHC Rule describes an empty TV with the MO set to "ignore" and the CDA set to "value-sent".
+The Block option allows fragmentation at the CoAP level that is compatible with SCHC fragmentation.
+Both fragmentation mechanisms are complementary, and the node may use them for the same packet as needed.</t>
+      </section>
+      <section anchor="observe" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-observe">Observe</name>
+        <t indent="0" pn="section-6.2-1"><xref target="RFC7641" format="default" sectionFormat="of" derivedContent="RFC7641"/> defines the Observe Option. The SCHC Rule description will not define the TV but will set the MO to "ignore" and the CDA to "value-sent". SCHC does not limit the maximum size for this option (3 bytes). To reduce the transmission size, either the Device implementation <bcp14>MAY</bcp14> limit the delta between two consecutive values or a proxy can modify the increment.</t>
+        <t indent="0" pn="section-6.2-2">Since the Observe Option <bcp14>MAY</bcp14> use a RST message to inform a server that the client does not require the Observe response, a specific SCHC Rule <bcp14>SHOULD</bcp14> exist to allow the message's compression with the RST type.</t>
+      </section>
+      <section anchor="no-response" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-no-response">No-Response</name>
+        <t indent="0" pn="section-6.3-1"><xref target="RFC7967" format="default" sectionFormat="of" derivedContent="RFC7967"/> defines a No-Response option limiting the responses made by a server to a request. Different behaviors exist while using this option to limit the responses made by a server to a request. If both ends know the value, then the SCHC Rule will describe a TV to this value, with the MO set to "equal" and the CDA set to "not-sent".</t>
+        <t indent="0" pn="section-6.3-2">Otherwise, if the value is changing over time, the SCHC Rule will set the MO to "ignore" and the CDA to "value-sent". The Rule may also use a "match-mapping" MO to compress this option.</t>
+      </section>
+      <section anchor="Sec-OSCORE" numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-oscore">OSCORE</name>
+        <t indent="0" pn="section-6.4-1">OSCORE <xref target="RFC8613" format="default" sectionFormat="of" derivedContent="RFC8613"/> defines end-to-end protection for CoAP messages.
+This section describes how SCHC Rules can be applied to compress OSCORE-protected messages.</t>
+        <t indent="0" pn="section-6.4-2"><xref target="Fig-OSCORE-Option" format="default" sectionFormat="of" derivedContent="Figure 4"/> shows the OSCORE option value encoding defined in 
+<xref target="RFC8613" sectionFormat="of" section="6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8613#section-6.1" derivedContent="RFC8613"/>, where the first byte specifies the content of the OSCORE options using flags. The three most significant bits of this byte are reserved and always set to 0. Bit h, when set, indicates the presence of the kid context field in the option. Bit k, when set, indicates the presence of a kid field. The three least significant bits, n, indicate the length of the piv (Partial Initialization Vector) field in bytes. When n = 0, no piv is present.</t>
+        <figure anchor="Fig-OSCORE-Option" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-oscore-option">OSCORE Option</name>
+          <artwork name="" type="" align="left" alt="" pn="section-6.4-3.1">
+      0 1 2 3 4 5 6 7 &lt;--------- n bytes -------------&gt;
+     +-+-+-+-+-+-+-+-+---------------------------------
+     |0 0 0|h|k|  n  |      Partial IV (if any) ...    
+     +-+-+-+-+-+-+-+-+---------------------------------
+     |               |                                |
+     |&lt;--  CoAP   --&gt;|&lt;------ CoAP OSCORE_piv ------&gt; |
+        OSCORE_flags 
+
+      &lt;- 1 byte -&gt; &lt;------ s bytes -----&gt;
+     +------------+----------------------+-----------------------+
+     | s (if any) | kid context (if any) | kid (if any)      ... |
+     +------------+----------------------+-----------------------+
+     |                                   |                       |
+     | &lt;------ CoAP OSCORE_kidctx ------&gt;|&lt;-- CoAP OSCORE_kid --&gt;|
+</artwork>
+        </figure>
+        <t indent="0" pn="section-6.4-4">The flag byte is followed by the piv field, the kid context field, and the kid field, in that order, and, if present, 
+the kid context field's length (in bytes) is encoded in the first byte, denoted by "s".
+</t>
+        <t indent="0" pn="section-6.4-5">To better perform OSCORE SCHC compression, the Rule description needs to identify the OSCORE option and the fields it contains. Conceptually, it discerns up to four distinct pieces of information within the OSCORE option: the flag bits, the piv, the kid context, and the kid. The SCHC Rule splits the OSCORE option into four Field Descriptors in order to compress them:
+</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.4-6">
+          <li pn="section-6.4-6.1">CoAP OSCORE_flags</li>
+          <li pn="section-6.4-6.2">CoAP OSCORE_piv</li>
+          <li pn="section-6.4-6.3">CoAP OSCORE_kidctx</li>
+          <li pn="section-6.4-6.4">CoAP OSCORE_kid</li>
+        </ul>
+        <t indent="0" pn="section-6.4-7"><xref target="Fig-OSCORE-Option" format="default" sectionFormat="of" derivedContent="Figure 4"/> shows the OSCORE option format with those four fields superimposed on it.
+Note that the CoAP OSCORE_kidctx field directly includes the size octet, s.
+</t>
+      </section>
+    </section>
+    <section anchor="examples-of-coap-header-compression" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-examples-of-coap-header-com">Examples of CoAP Header Compression</name>
+      <section anchor="mandatory-header-with-con-message" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-mandatory-header-with-con-m">Mandatory Header with CON Message</name>
+        <t indent="0" pn="section-7.1-1">In this first scenario, the SCHC compressor on the NGW side 
+receives a POST message from an Internet client, which is immediately acknowledged by the Device. 
+<xref target="Table-CoAP-header-1" format="default" sectionFormat="of" derivedContent="Table 3"/> describes the SCHC Rule descriptions for this scenario.</t>
+        <table anchor="Table-CoAP-header-1" align="center" pn="table-3">
+          <name slugifiedName="name-coap-context-to-compress-he">CoAP Context to Compress Header without Token</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="8" rowspan="1">RuleID 1</th>
+            </tr>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+              <th align="center" colspan="1" rowspan="1">Sent [bits]</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP version</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">01</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">CON</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">[ACK, RST]</td>
+              <td align="left" colspan="1" rowspan="1">match-mapping</td>
+              <td align="left" colspan="1" rowspan="1">matching-sent</td>
+              <th align="left" colspan="1" rowspan="1">T</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP TKL</td>
+              <td align="left" colspan="1" rowspan="1">4</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">[0.00, ... 5.05]</td>
+              <td align="left" colspan="1" rowspan="1">match-mapping</td>
+              <td align="left" colspan="1" rowspan="1">matching-sent</td>
+              <th align="left" colspan="1" rowspan="1">CC CCC</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP MID</td>
+              <td align="left" colspan="1" rowspan="1">16</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0000</td>
+              <td align="left" colspan="1" rowspan="1">MSB(7)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">MID</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">path</td>
+              <td align="left" colspan="1" rowspan="1">equal 1</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-7.1-3">In this example, SCHC compression elides the version and Token Length fields. The 25 Method and Response Codes defined in <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/> have been shrunk to 5 bits using a "match-mapping" MO. The Uri-Path contains a single element indicated in the TV and elided with the CDA "not-sent".</t>
+        <t indent="0" pn="section-7.1-4">SCHC compression reduces the header, sending only the Type, a mapped code, and the least significant bits of the Message ID (9 bits in the example above).</t>
+        <t indent="0" pn="section-7.1-5">Note that a client located in an Application Server sending a request to a server located in the Device may not be compressed through this Rule, since the MID might not start with 7 bits equal to 0. A CoAP proxy placed before SCHC C/D can rewrite the Message ID to fit the value and match the Rule.</t>
+      </section>
+      <section anchor="Sec-OSCORE-Examples" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-oscore-compression">OSCORE Compression</name>
+        <t indent="0" pn="section-7.2-1">OSCORE aims to solve the problem of end-to-end encryption for CoAP messages. Therefore, the goal is to hide the message as much as possible 
+while still enabling proxy operation.</t>
+        <t indent="0" pn="section-7.2-2">Conceptually, this is achieved by splitting the CoAP message into an Inner Plaintext and Outer OSCORE message. The Inner Plaintext contains sensitive information that is not necessary for proxy operation. However, it is part of the message that can be encrypted until it
+reaches its end destination. The Outer Message acts as a shell matching the regular CoAP message format and includes all options and information 
+needed for proxy operation and caching. <xref target="Fig-inner-outer" format="default" sectionFormat="of" derivedContent="Figure 5"/> below illustrates this analysis.</t>
+        <t indent="0" pn="section-7.2-3">CoAP arranges the options into one of three classes, each granted a specific type of protection by the protocol:</t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-7.2-4">
+          <dt pn="section-7.2-4.1">Class E:</dt>
+          <dd pn="section-7.2-4.2">Encrypted options moved to the Inner Plaintext.</dd>
+          <dt pn="section-7.2-4.3">Class I:</dt>
+          <dd pn="section-7.2-4.4">Integrity-protected options included in the Additional Authenticated Data (AAD) for the encryption of the Plaintext but otherwise left untouched in the Outer Message.
+</dd>
+          <dt pn="section-7.2-4.5">Class U:</dt>
+          <dd pn="section-7.2-4.6">Unprotected options left untouched in the Outer Message.</dd>
+        </dl>
+        <t indent="0" pn="section-7.2-5">These classes point out that the Outer option contains the OSCORE option and that the message is OSCORE protected; this option carries the information necessary to retrieve the Security Context. The endpoint will use this Security Context to decrypt the message correctly.</t>
+        <figure anchor="Fig-inner-outer" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-coap-packet-split-into-osco">CoAP Packet Split into OSCORE Outer Header and Plaintext</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.2-6.1">
+                      Original CoAP Packet
+                   +-+-+---+-------+---------------+
+                   |v|t|TKL| code  | Message ID    |
+                   +-+-+---+-------+---------------+....+
+                   | Token                              |
+                   +-------------------------------.....+
+                   | Options (IEU)            |
+                   .                          .
+                   .                          .
+                   +------+-------------------+ 
+                   | 0xFF |
+                   +------+------------------------+
+                   |                               |
+                   |     Payload                   |
+                   |                               |
+                   +-------------------------------+      
+                          /                \ 
+                         /                  \
+                        /                    \
+                       /                      \
+     Outer Header     v                        v  Plaintext
+  +-+-+---+--------+---------------+          +-------+
+  |v|t|TKL|new code| Message ID    |          | code  |
+  +-+-+---+--------+---------------+....+     +-------+-----......+
+  | Token                               |     | Options (E)       |
+  +--------------------------------.....+     +-------+------.....+
+  | Options (IU)             |                | 0xFF  |
+  .                          .                +-------+-----------+
+  . OSCORE Option            .                |                   |
+  +------+-------------------+                | Payload           |
+  | 0xFF |                                    |                   |
+  +------+                                    +-------------------+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.2-7"><xref target="Fig-inner-outer" format="default" sectionFormat="of" derivedContent="Figure 5"/> shows the packet format for the OSCORE Outer header and Plaintext.</t>
+        <t indent="0" pn="section-7.2-8">In the Outer header, the original header code is hidden and replaced by a default dummy value. As seen in 
+Sections <xref target="RFC8613" section="4.1.3.5" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8613#section-4.1.3.5" derivedContent="RFC8613"/> and <xref target="RFC8613" section="4.2" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8613#section-4.2" derivedContent="RFC8613"/> of <xref target="RFC8613" format="default" sectionFormat="of" derivedContent="RFC8613"/>, the message code is replaced by POST for requests and Changed for responses when CoAP is not using the Observe Option. If CoAP uses Observe, the OSCORE message code is replaced by FETCH for requests and Content for responses.</t>
+        <t indent="0" pn="section-7.2-9">The first byte of the Plaintext contains the original packet code, followed by the message code, the class E options, and, if present, the original message payload preceded by its payload marker.</t>
+        <t indent="0" pn="section-7.2-10">An Authenticated Encryption with Associated Data (AEAD) algorithm now encrypts the Plaintext. This integrity-protects the Security Context parameters and, eventually, any class I options from the Outer header. The resulting ciphertext becomes the new payload of the OSCORE message, as illustrated in <xref target="Fig-full-oscore" format="default" sectionFormat="of" derivedContent="Figure 6"/>.</t>
+        <t indent="0" pn="section-7.2-11">As defined in <xref target="RFC5116" format="default" sectionFormat="of" derivedContent="RFC5116"/>, this ciphertext is the encrypted Plaintext's concatenation of the Authentication Tag. Note that Inner Compression only affects the Plaintext before encryption. 
+The Authentication Tag, fixed in length and uncompressed, is considered part of the cost of protection.
+</t>
+        <figure anchor="Fig-full-oscore" align="left" suppress-title="false" pn="figure-6">
+          <name slugifiedName="name-oscore-message">OSCORE Message</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.2-12.1">
+     Outer Header                           
+  +-+-+---+--------+---------------+          
+  |v|t|TKL|new code| Message ID    |          
+  +-+-+---+--------+---------------+....+     
+  | Token                               |     
+  +--------------------------------.....+     
+  | Options (IU)             |               
+  .                          .               
+  . OSCORE Option            .               
+  +------+-------------------+               
+  | 0xFF |                                  
+  +------+---------------------------+
+  |                                  |
+  | Ciphertext: Encrypted Inner      |
+  |             Header and Payload   |
+  |             + Authentication Tag |
+  |                                  |
+  +----------------------------------+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.2-13">The SCHC compression scheme consists of compressing both the Plaintext before encryption and the resulting OSCORE message after encryption; see <xref target="Fig-OSCORE-Compression" format="default" sectionFormat="of" derivedContent="Figure 7"/>.</t>
+        <t indent="0" pn="section-7.2-14">The OSCORE message translates into a segmented process where SCHC compression is applied independently in two stages, each with its corresponding set of Rules, with the Inner SCHC Rules and the Outer SCHC Rules. This way, compression is applied to all fields of the original CoAP message.</t>
+        <figure anchor="Fig-OSCORE-Compression" align="left" suppress-title="false" pn="figure-7">
+          <name slugifiedName="name-oscore-compression-diagram">OSCORE Compression Diagram</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.2-15.1">
+     Outer Message                             OSCORE Plaintext
+  +-+-+---+--------+---------------+          +-------+
+  |v|t|TKL|new code| Message ID    |          | code  |
+  +-+-+---+--------+---------------+....+     +-------+-----......+
+  | Token                               |     | Options (E)       |
+  +--------------------------------.....+     +-------+------.....+
+  | Options (IU)             |                | 0xFF  |
+  .                          .                +-------+-----------+
+  . OSCORE Option            .                |                   |
+  +------+-------------------+                | Payload           |
+  | 0xFF |                                    |                   |
+  +------+------------+                       +-------------------+
+  |  Ciphertext       |&lt;---------\                      |
+  |                   |          |                      v
+  +-------------------+          |             +-----------------+
+          |                      |             |   Inner SCHC    |
+          v                      |             |   Compression   |
+    +-----------------+          |             +-----------------+
+    |   Outer SCHC    |          |                     |
+    |   Compression   |          |                     v
+    +-----------------+          |             +-------+
+          |                      |             |RuleID |
+          v                      |             +-------+-----------+
+    +--------+             +------------+      |Compression Residue|
+    |RuleID' |             | Encryption | &lt;--  +----------+--------+
+    +--------+-----------+ +------------+      |                   |
+    |Compression Residue'|                     | Payload           |
+    +-----------+--------+                     |                   |
+    |  Ciphertext        |                     +-------------------+
+    |                    |     
+    +--------------------+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.2-16">Note that since the corresponding endpoint can only decrypt the Inner part of the message, this endpoint will also have to implement Inner SCHC Compression/Decompression.</t>
+      </section>
+      <section anchor="example-oscore-compression" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-example-oscore-compression">Example OSCORE Compression</name>
+        <t indent="0" pn="section-7.3-1">This section gives an example with a GET request and its consequent Content
+response from a Device-based CoAP client to a cloud-based CoAP server.
+The example also describes a possible set of Rules for Inner SCHC Compression and Outer SCHC
+Compression. A dump of the results and a contrast between SCHC + OSCORE
+performance with SCHC + CoAP performance are also listed. This example gives an approximation of the
+cost of security with SCHC-OSCORE.</t>
+        <t indent="0" pn="section-7.3-2">Our first CoAP message is the GET request in <xref target="Fig-GET-temp" format="default" sectionFormat="of" derivedContent="Figure 8"/>.</t>
+        <figure anchor="Fig-GET-temp" align="left" suppress-title="false" pn="figure-8">
+          <name slugifiedName="name-coap-get-request">CoAP GET Request</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-3.1">
+Original message:
+=================
+0x4101000182bb74656d7065726174757265
+
+Header:
+0x4101
+01   Ver
+  00   CON
+    0001   TKL
+        00000001   Request Code 1 "GET"
+
+0x0001 = mid
+0x82 = token
+
+Options:
+0xbb74656d7065726174757265
+Option 11: URI_PATH
+Value = temperature
+
+Original message length:   17 bytes
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-4">Its corresponding response is the Content response in <xref target="Fig-CONTENT-temp" format="default" sectionFormat="of" derivedContent="Figure 9"/>.</t>
+        <figure anchor="Fig-CONTENT-temp" align="left" suppress-title="false" pn="figure-9">
+          <name slugifiedName="name-coap-content-response">CoAP Content Response</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-5.1">
+Original message:
+=================
+0x6145000182ff32332043
+
+Header:
+0x6145
+01   Ver
+  10   ACK
+    0001   TKL
+        01000101 Successful Response Code 69 "2.05 Content"
+
+0x0001 = mid
+0x82 = token
+
+0xFF  Payload marker
+Payload:
+0x32332043
+
+Original message length:   10 bytes
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-6">The SCHC Rules for the Inner Compression include all fields already present in a regular CoAP message. The methods described in <xref target="CoAPcomp" format="default" sectionFormat="of" derivedContent="Section 4"/> apply to these fields. <xref target="Table-Inner-Rules" format="default" sectionFormat="of" derivedContent="Table 4"/> provides an example.</t>
+        <table anchor="Table-Inner-Rules" align="center" pn="table-4">
+          <name slugifiedName="name-inner-schc-rule">Inner SCHC Rule</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="8" rowspan="1">RuleID 0</th>
+            </tr>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+              <th align="center" colspan="1" rowspan="1">Sent [bits]</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">[69,132]</td>
+              <td align="left" colspan="1" rowspan="1">match-mapping</td>
+              <td align="left" colspan="1" rowspan="1">mapping-sent</td>
+              <th align="left" colspan="1" rowspan="1">c</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">temperature</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-7.3-8"><xref target="Fig-Inner-Compression-GET" format="default" sectionFormat="of" derivedContent="Figure 10"/> shows the Plaintext obtained for the example GET request. The packet follows the process of Inner Compression and encryption until the payload. The Outer OSCORE message adds the result of the Inner process.</t>
+        <figure anchor="Fig-Inner-Compression-GET" align="left" suppress-title="false" pn="figure-10">
+          <name slugifiedName="name-plaintext-compression-and-e">Plaintext Compression and Encryption for GET Request</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-9.1">
+   ________________________________________________________
+  |                                                        |
+  | OSCORE Plaintext                                       |
+  |                                                        |
+  | 0x01bb74656d7065726174757265  (13 bytes)               |
+  |                                                        |
+  | 0x01 Request Code GET                                  |
+  |                                                        |
+  |      bb74656d7065726174757265 Option 11: URI_PATH      |
+  |                               Value = temperature      |
+  |________________________________________________________|
+
+                              |
+                              |
+                              | Inner SCHC Compression
+                              |
+                              v
+                _________________________________
+               |                                 |
+               | Compressed Plaintext            |
+               |                                 |
+               | 0x00                            |
+               |                                 |
+               | RuleID = 0x00 (1 byte)          |
+               | (No Compression Residue)        |
+               |_________________________________|
+
+                              |
+                              | AEAD Encryption
+                              |  (piv = 0x04)
+                              v
+         _________________________________________________
+        |                                                 |
+        |  encrypted_plaintext = 0xa2 (1 byte)            |
+        |  tag = 0xc54fe1b434297b62 (8 bytes)             |
+        |                                                 |
+        |  ciphertext = 0xa2c54fe1b434297b62 (9 bytes)    |
+        |_________________________________________________|
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-10">In this case, the original message has no payload, and its resulting Plaintext is compressed up to only 1 byte (the size of the RuleID). The AEAD algorithm preserves this length in its first output and yields a fixed-size tag. SCHC cannot compress the tag, and the OSCORE message must include it without compression.
+The use of integrity protection translates into an overhead in total message length, limiting the amount of compression that can be achieved and playing into the cost of adding security to the exchange.</t>
+        <t indent="0" pn="section-7.3-11"><xref target="Fig-Inner-Compression-CONTENT" format="default" sectionFormat="of" derivedContent="Figure 11"/> shows the process for the example Content response. The Compression Residue is 1 bit long.
+Note that since SCHC adds padding after the payload, this misalignment causes the hexadecimal code from the payload to differ from the original, even if SCHC cannot compress the tag. The overhead for the tag bytes limits SCHC's performance but brings security to the transmission.</t>
+        <figure anchor="Fig-Inner-Compression-CONTENT" align="left" suppress-title="false" pn="figure-11">
+          <name slugifiedName="name-plaintext-compression-and-en">Plaintext Compression and Encryption for Content Response</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-12.1">
+   ________________________________________________________
+  |                                                        |
+  | OSCORE Plaintext                                       |
+  |                                                        |
+  | 0x45ff32332043  (6 bytes)                              |
+  |                                                        |
+  | 0x45 Successful Response Code 69 "2.05 Content"        |
+  |                                                        |
+  |     ff Payload marker                                  |
+  |                                                        |
+  |       32332043 Payload                                 |
+  |________________________________________________________|
+
+                              |
+                              |
+                              | Inner SCHC Compression
+                              |
+                              v
+      _________________________________________________
+     |                                                 |
+     | Compressed Plaintext                            |
+     |                                                 |
+     | 0x001919902180 (6 bytes)                        |
+     |                                                 |
+     |   00 RuleID                                     |
+     |                                                 |
+     |  0b0 (1 bit match-mapping Compression Residue)  |
+     |       0x32332043 &gt;&gt; 1 (shifted payload)         |
+     |                        0b0000000 Padding        |
+     |_________________________________________________|
+
+                              |
+                              | AEAD Encryption
+                              |  (piv = 0x04)
+                              v
+     _________________________________________________________
+    |                                                         |
+    |  encrypted_plaintext = 0x10c6d7c26cc1 (6 bytes)         |
+    |  tag = 0xe9aef3f2461e0c29 (8 bytes)                     |
+    |                                                         |
+    |  ciphertext = 0x10c6d7c26cc1e9aef3f2461e0c29 (14 bytes) |
+    |_________________________________________________________|
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-13">The Outer SCHC Rule (<xref target="Table-Outer-Rule" format="default" sectionFormat="of" derivedContent="Table 5"/>) must process the OSCORE options fields. Figures <xref target="Fig-Protected-Compressed-GET" format="counter" sectionFormat="of" derivedContent="12"/> and <xref target="Fig-Protected-Compressed-CONTENT" format="counter" sectionFormat="of" derivedContent="13"/> show a dump of the OSCORE messages generated from the example messages. They include the Inner Compressed ciphertext in the payload. These are the messages that have to be compressed via the Outer SCHC Compression scheme.</t>
+        <t indent="0" pn="section-7.3-14"><xref target="Table-Outer-Rule" format="default" sectionFormat="of" derivedContent="Table 5"/> shows a possible set of Outer Rule items to compress the Outer header.</t>
+        <table anchor="Table-Outer-Rule" align="center" pn="table-5">
+          <name slugifiedName="name-outer-schc-rule">Outer SCHC Rule</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="8" rowspan="1">RuleID 0</th>
+            </tr>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+              <th align="center" colspan="1" rowspan="1">Sent [bits]</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP version</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">01</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">0</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP TKL</td>
+              <td align="left" colspan="1" rowspan="1">4</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">68</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP MID</td>
+              <td align="left" colspan="1" rowspan="1">16</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0000</td>
+              <td align="left" colspan="1" rowspan="1">MSB(12)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">MMMM</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Token</td>
+              <td align="left" colspan="1" rowspan="1">tkl</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0x80</td>
+              <td align="left" colspan="1" rowspan="1">MSB(5)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">TTT</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_flags</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">0x09</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_piv</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">0x00</td>
+              <td align="left" colspan="1" rowspan="1">MSB(4)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">PPPP</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_kid</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">0x636c69656e70</td>
+              <td align="left" colspan="1" rowspan="1">MSB(52)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">KKKK</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_kidctx</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">b''</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_flags</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">b''</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_piv</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">b''</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP OSCORE_kid</td>
+              <td align="left" colspan="1" rowspan="1">var</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">b''</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+          </tbody>
+        </table>
+        <figure anchor="Fig-Protected-Compressed-GET" align="left" suppress-title="false" pn="figure-12">
+          <name slugifiedName="name-protected-and-inner-schc-co">Protected and Inner SCHC Compressed GET Request</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-16.1">
+Protected message:
+==================
+0x4102000182d8080904636c69656e74ffa2c54fe1b434297b62
+(25 bytes)
+
+Header:
+0x4102
+01   Ver
+  00   CON
+    0001   TKL
+        00000010   Request Code 2 "POST"
+
+0x0001 = mid
+0x82 = token
+
+Options:
+0xd8080904636c69656e74 (10 bytes)
+Option 21: OBJECT_SECURITY
+Value = 0x0904636c69656e74
+          09 = 000 0 1 001 flag byte
+                   h k  n
+            04 piv
+              636c69656e74 kid
+
+0xFF  Payload marker
+Payload:
+0xa2c54fe1b434297b62 (9 bytes)
+</artwork>
+        </figure>
+        <figure anchor="Fig-Protected-Compressed-CONTENT" align="left" suppress-title="false" pn="figure-13">
+          <name slugifiedName="name-protected-and-inner-schc-com">Protected and Inner SCHC Compressed Content Response</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-17.1">
+Protected message:
+==================
+0x6144000182d008ff10c6d7c26cc1e9aef3f2461e0c29
+(22 bytes)
+
+Header:
+0x6144
+01   Ver
+  10   ACK
+    0001   TKL
+        01000100   Successful Response Code 68 "2.04 Changed"
+
+0x0001 = mid
+0x82 = token
+
+Options:
+0xd008 (2 bytes)
+Option 21: OBJECT_SECURITY
+Value = b''
+
+0xFF  Payload marker
+Payload:
+0x10c6d7c26cc1e9aef3f2461e0c29 (14 bytes)
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-18">For the flag bits, some SCHC compression methods are useful, depending on the application. The most straightforward alternative is to
+provide a fixed value for the flags, combining a MO of "equal" and a CDA of "not-sent". 
+This SCHC definition saves most bits but could prevent flexibility. Otherwise, SCHC could use a "match-mapping" MO to choose from several configurations for the exchange. If not, the SCHC description may use an "MSB" MO to mask off the three hard-coded most significant bits.</t>
+        <t indent="0" pn="section-7.3-19">Note that fixing a flag bit will limit the choices of CoAP options that can be used in the exchange, since the values of these choices are dependent on specific options.
+</t>
+        <t indent="0" pn="section-7.3-20">The piv field lends itself to having some bits masked off with an "MSB" MO and an "LSB" CDA. This SCHC description could be useful in applications where the message frequency is low, such as LPWAN technologies. 
+Note that compressing the sequence numbers may reduce the maximum number of sequence numbers that can be used in an exchange. 
+Once the sequence number exceeds the maximum value, the OSCORE keys need to be re-established.</t>
+        <t indent="0" pn="section-7.3-21">The size, s, that is included in the kid context field <bcp14>MAY</bcp14> be masked off with an "LSB" CDA. The rest of the field could have additional bits masked off or have the whole field fixed with a MO of "equal" and a CDA of "not-sent". The same holds for the kid field.</t>
+        <t indent="0" pn="section-7.3-22">The Outer Rule of <xref target="Table-Outer-Rule" format="default" sectionFormat="of" derivedContent="Table 5"/> is applied to the example GET request and Content response. 
+Figures <xref target="Fig-Compressed-GET" format="counter" sectionFormat="of" derivedContent="14"/> and <xref target="Fig-Compressed-CONTENT" format="counter" sectionFormat="of" derivedContent="15"/> show the resulting messages.</t>
+        <figure anchor="Fig-Compressed-GET" align="left" suppress-title="false" pn="figure-14">
+          <name slugifiedName="name-schc-oscore-compressed-get-">SCHC-OSCORE Compressed GET Request</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-23.1">
+Compressed message:
+==================
+0x001489458a9fc3686852f6c4 (12 bytes)
+0x00 RuleID
+    1489 Compression Residue
+        458a9fc3686852f6c4 Padded payload
+
+Compression Residue:
+0b 0001 010 0100 0100 (15 bits -&gt; 2 bytes with padding)
+    mid tkn piv  kid
+
+Payload
+0xa2c54fe1b434297b62 (9 bytes)
+
+Compressed message length: 12 bytes
+</artwork>
+        </figure>
+        <figure anchor="Fig-Compressed-CONTENT" align="left" suppress-title="false" pn="figure-15">
+          <name slugifiedName="name-schc-oscore-compressed-cont">SCHC-OSCORE Compressed Content Response</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-24.1">
+Compressed message:
+==================
+0x0014218daf84d983d35de7e48c3c1852 (16 bytes)
+0x00 RuleID
+    14 Compression Residue
+      218daf84d983d35de7e48c3c1852 Padded payload
+Compression Residue:
+0b0001 010 (7 bits -&gt; 1 byte with padding)
+  mid  tkn
+
+Payload
+0x10c6d7c26cc1e9aef3f2461e0c29 (14 bytes)
+
+Compressed message length: 16 bytes
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-25">In contrast, comparing these results with what would be obtained by SCHC
+compressing the original CoAP messages without protecting them with OSCORE is done
+by compressing the CoAP messages according to the SCHC Rule in <xref target="Table-NoOsc-Rule" format="default" sectionFormat="of" derivedContent="Table 6"/>.</t>
+        <table anchor="Table-NoOsc-Rule" align="center" pn="table-6">
+          <name slugifiedName="name-schc-coap-rule-no-oscore">SCHC-CoAP Rule (No OSCORE)</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="8" rowspan="1">RuleID 1</th>
+            </tr>
+            <tr>
+              <th align="center" colspan="1" rowspan="1">Field</th>
+              <th align="center" colspan="1" rowspan="1">FL</th>
+              <th align="center" colspan="1" rowspan="1">FP</th>
+              <th align="center" colspan="1" rowspan="1">DI</th>
+              <th align="center" colspan="1" rowspan="1">TV</th>
+              <th align="center" colspan="1" rowspan="1">MO</th>
+              <th align="center" colspan="1" rowspan="1">CDA</th>
+              <th align="center" colspan="1" rowspan="1">Sent [bits]</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP version</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">01</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">0</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Type</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP TKL</td>
+              <td align="left" colspan="1" rowspan="1">4</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">2</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Code</td>
+              <td align="left" colspan="1" rowspan="1">8</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Dw</td>
+              <td align="left" colspan="1" rowspan="1">[69,132]</td>
+              <td align="left" colspan="1" rowspan="1">match-mapping</td>
+              <td align="left" colspan="1" rowspan="1">mapping-sent</td>
+              <th align="left" colspan="1" rowspan="1">C</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP MID</td>
+              <td align="left" colspan="1" rowspan="1">16</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0000</td>
+              <td align="left" colspan="1" rowspan="1">MSB(12)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">MMMM</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Token</td>
+              <td align="left" colspan="1" rowspan="1">tkl</td>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Bi</td>
+              <td align="left" colspan="1" rowspan="1">0x80</td>
+              <td align="left" colspan="1" rowspan="1">MSB(5)</td>
+              <td align="left" colspan="1" rowspan="1">LSB</td>
+              <th align="left" colspan="1" rowspan="1">TTT</th>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">CoAP Uri-Path</td>
+              <td align="left" colspan="1" rowspan="1"/>
+              <td align="left" colspan="1" rowspan="1">1</td>
+              <td align="left" colspan="1" rowspan="1">Up</td>
+              <td align="left" colspan="1" rowspan="1">temperature</td>
+              <td align="left" colspan="1" rowspan="1">equal</td>
+              <td align="left" colspan="1" rowspan="1">not-sent</td>
+              <th align="left" colspan="1" rowspan="1"/>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-7.3-27">The Rule in <xref target="Table-NoOsc-Rule" format="default" sectionFormat="of" derivedContent="Table 6"/> yields the SCHC compression results as shown in <xref target="Fig-GET-temp-no-oscore" format="default" sectionFormat="of" derivedContent="Figure 16"/> for the request and
+<xref target="Fig-CONTENT-temp-no-oscore" format="default" sectionFormat="of" derivedContent="Figure 17"/> for the response.
+</t>
+        <figure anchor="Fig-GET-temp-no-oscore" align="left" suppress-title="false" pn="figure-16">
+          <name slugifiedName="name-coap-get-compressed-without">CoAP GET Compressed without OSCORE</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-28.1">
+Compressed message:
+==================
+0x0114
+0x01 = RuleID
+
+Compression Residue:
+0b00010100 (1 byte)
+
+Compressed message length: 2 bytes
+</artwork>
+        </figure>
+        <figure anchor="Fig-CONTENT-temp-no-oscore" align="left" suppress-title="false" pn="figure-17">
+          <name slugifiedName="name-coap-content-compressed-wit">CoAP Content Compressed without OSCORE</name>
+          <artwork name="" type="" align="left" alt="" pn="section-7.3-29.1">
+Compressed message:
+==================
+0x010a32332043
+0x01 = RuleID
+
+Compression Residue:
+0b00001010 (1 byte)
+
+Payload
+0x32332043
+
+Compressed message length: 6 bytes
+</artwork>
+        </figure>
+        <t indent="0" pn="section-7.3-30">As can be seen, the difference between applying SCHC + OSCORE as compared to 
+regular SCHC + CoAP is about 10 bytes.</t>
+      </section>
+    </section>
+    <section anchor="iana-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-8-1">This document has no IANA actions.</t>
+    </section>
+    <section anchor="SecConsiderations" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-9-1">The use of SCHC header compression for CoAP header fields only affects
+the representation of the header information.  SCHC header compression
+itself does not increase or decrease the overall level of security of
+the communication.  When the connection does not use a security protocol
+(OSCORE, DTLS, etc.), it is necessary to use a Layer 2
+security mechanism to protect the SCHC messages.</t>
+      <t indent="0" pn="section-9-2">If an LPWAN is the Layer 2 technology being used, the SCHC security considerations
+discussed in <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/> continue to apply.  When using another Layer 2 protocol, the
+use of a cryptographic integrity-protection mechanism to protect the
+SCHC headers is <bcp14>REQUIRED</bcp14>. Such cryptographic integrity protection is
+necessary in order to continue to provide the properties that <xref target="RFC8724" format="default" sectionFormat="of" derivedContent="RFC8724"/>
+relies upon.</t>
+      <t indent="0" pn="section-9-3">When SCHC is used with OSCORE, the security considerations discussed in <xref target="RFC8613" format="default" sectionFormat="of" derivedContent="RFC8613"/>
+continue to apply.</t>
+      <t indent="0" pn="section-9-4">When SCHC is used with the OSCORE Outer headers, the Initialization
+Vector (IV) size in the Compression Residue must be carefully selected.
+There is a trade-off between compression efficiency (with a longer "MSB"
+MO prefix) and the frequency at which the Device must renew its key
+material (in order to prevent the IV from expanding to an uncompressible
+value).  The key-renewal operation itself requires several message
+exchanges and requires energy-intensive computation, but the optimal
+trade-off will depend on the specifics of the Device and expected usage
+patterns.</t>
+      <t indent="0" pn="section-9-5">If an attacker can introduce a corrupted SCHC-compressed packet onto a
+link, DoS attacks can be mounted by causing excessive resource consumption
+at the decompressor.  However, an attacker able to inject packets at the
+link layer is also capable of other, potentially more damaging, attacks.</t>
+      <t indent="0" pn="section-9-6">SCHC compression emits variable-length Compression Residues for some
+CoAP fields.  In the representation of the compressed header, the length field
+that is sent is not the length of the original header field but rather
+the length of the Compression Residue that is being transmitted.  If a
+corrupted packet arrives at the decompressor with a longer or shorter
+length than the original compressed representation possessed, the SCHC
+decompression procedures will detect an error and drop the packet.</t>
+      <t indent="0" pn="section-9-7">SCHC header compression Rules <bcp14>MUST</bcp14> remain tightly coupled between the
+compressor and the decompressor.  If the compression Rules get out of sync,
+a Compression Residue might be decompressed differently at the receiver
+than the initial message submitted to compression procedures.
+Accordingly, any time the context Rules are updated on an OSCORE
+endpoint, that endpoint <bcp14>MUST</bcp14> trigger OSCORE key re-establishment.
+Similar procedures may be appropriate to signal Rule updates when other
+message-protection mechanisms are in use.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-10">
+      <name slugifiedName="name-normative-references">Normative References</name>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1997" month="March"/>
+          <abstract>
+            <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      <reference anchor="RFC5116" target="https://www.rfc-editor.org/info/rfc5116" quoteTitle="true" derivedAnchor="RFC5116">
+        <front>
+          <title>An Interface and Algorithms for Authenticated Encryption</title>
+          <author initials="D." surname="McGrew" fullname="D. McGrew">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2008" month="January"/>
+          <abstract>
+            <t indent="0">This document defines algorithms for Authenticated Encryption with Associated Data (AEAD), and defines a uniform interface and a registry for such algorithms.  The interface and registry can be used as an application-independent set of cryptoalgorithm suites.  This approach provides advantages in efficiency and security, and promotes the reuse of crypto implementations.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="5116"/>
+        <seriesInfo name="DOI" value="10.17487/RFC5116"/>
+      </reference>
+      <reference anchor="RFC7252" target="https://www.rfc-editor.org/info/rfc7252" quoteTitle="true" derivedAnchor="RFC7252">
+        <front>
+          <title>The Constrained Application Protocol (CoAP)</title>
+          <author initials="Z." surname="Shelby" fullname="Z. Shelby">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="K." surname="Hartke" fullname="K. Hartke">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Bormann" fullname="C. Bormann">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="June"/>
+          <abstract>
+            <t indent="0">The Constrained Application Protocol (CoAP) is a specialized web transfer protocol for use with constrained nodes and constrained (e.g., low-power, lossy) networks.  The nodes often have 8-bit microcontrollers with small amounts of ROM and RAM, while constrained networks such as IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs) often have high packet error rates and a typical throughput of 10s of kbit/s.  The protocol is designed for machine- to-machine (M2M) applications such as smart energy and building automation.</t>
+            <t indent="0">CoAP provides a request/response interaction model between application endpoints, supports built-in discovery of services and resources, and includes key concepts of the Web such as URIs and Internet media types.  CoAP is designed to easily interface with HTTP for integration with the Web while meeting specialized requirements such as multicast support, very low overhead, and simplicity for constrained environments.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7252"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7252"/>
+      </reference>
+      <reference anchor="RFC7641" target="https://www.rfc-editor.org/info/rfc7641" quoteTitle="true" derivedAnchor="RFC7641">
+        <front>
+          <title>Observing Resources in the Constrained Application Protocol (CoAP)</title>
+          <author initials="K." surname="Hartke" fullname="K. Hartke">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2015" month="September"/>
+          <abstract>
+            <t indent="0">The Constrained Application Protocol (CoAP) is a RESTful application protocol for constrained nodes and networks.  The state of a resource on a CoAP server can change over time.  This document specifies a simple protocol extension for CoAP that enables CoAP clients to "observe" resources, i.e., to retrieve a representation of a resource and keep this representation updated by the server over a period of time.  The protocol follows a best-effort approach for sending new representations to clients and provides eventual consistency between the state observed by each client and the actual resource state at the server.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7641"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7641"/>
+      </reference>
+      <reference anchor="RFC7959" target="https://www.rfc-editor.org/info/rfc7959" quoteTitle="true" derivedAnchor="RFC7959">
+        <front>
+          <title>Block-Wise Transfers in the Constrained Application Protocol (CoAP)</title>
+          <author initials="C." surname="Bormann" fullname="C. Bormann">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="Z." surname="Shelby" fullname="Z. Shelby" role="editor">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2016" month="August"/>
+          <abstract>
+            <t indent="0">The Constrained Application Protocol (CoAP) is a RESTful transfer protocol for constrained nodes and networks.  Basic CoAP messages work well for small payloads from sensors and actuators; however, applications will need to transfer larger payloads occasionally -- for instance, for firmware updates.  In contrast to HTTP, where TCP does the grunt work of segmenting and resequencing, CoAP is based on datagram transports such as UDP or Datagram Transport Layer Security (DTLS).  These transports only offer fragmentation, which is even more problematic in constrained nodes and networks, limiting the maximum size of resource representations that can practically be transferred.</t>
+            <t indent="0">Instead of relying on IP fragmentation, this specification extends basic CoAP with a pair of "Block" options for transferring multiple blocks of information from a resource representation in multiple request-response pairs.  In many important cases, the Block options enable a server to be truly stateless: the server can handle each block transfer separately, with no need for a connection setup or other server-side memory of previous block transfers.  Essentially, the Block options provide a minimal way to transfer larger representations in a block-wise fashion.</t>
+            <t indent="0">A CoAP implementation that does not support these options generally is limited in the size of the representations that can be exchanged, so there is an expectation that the Block options will be widely used in CoAP implementations.  Therefore, this specification updates RFC 7252.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7959"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7959"/>
+      </reference>
+      <reference anchor="RFC7967" target="https://www.rfc-editor.org/info/rfc7967" quoteTitle="true" derivedAnchor="RFC7967">
+        <front>
+          <title>Constrained Application Protocol (CoAP) Option for No Server Response</title>
+          <author initials="A." surname="Bhattacharyya" fullname="A. Bhattacharyya">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Bandyopadhyay" fullname="S. Bandyopadhyay">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Pal" fullname="A. Pal">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="T." surname="Bose" fullname="T. Bose">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2016" month="August"/>
+          <abstract>
+            <t indent="0">There can be machine-to-machine (M2M) scenarios where server responses to client requests are redundant.  This kind of open-loop exchange (with no response path from the server to the client) may be desired to minimize resource consumption in constrained systems while updating many resources simultaneously or performing high-frequency updates. CoAP already provides Non-confirmable (NON) messages that are not acknowledged by the recipient.  However, the request/response semantics still require the server to respond with a status code indicating "the result of the attempt to       understand and satisfy the request", per RFC 7252.</t>
+            <t indent="0">This specification introduces a CoAP option called 'No-Response'. Using this option, the client can explicitly express to the server its disinterest in all responses against the particular request. This option also provides granular control to enable expression of disinterest to a particular response class or a combination of response classes.  The server MAY decide to suppress the response by not transmitting it back to the client according to the value of the No-Response option in the request.  This option may be effective for both unicast and multicast requests.  This document also discusses a few examples of applications that benefit from this option.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7967"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7967"/>
+      </reference>
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author initials="B." surname="Leiba" fullname="B. Leiba">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2017" month="May"/>
+          <abstract>
+            <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+      <reference anchor="RFC8613" target="https://www.rfc-editor.org/info/rfc8613" quoteTitle="true" derivedAnchor="RFC8613">
+        <front>
+          <title>Object Security for Constrained RESTful Environments (OSCORE)</title>
+          <author initials="G." surname="Selander" fullname="G. Selander">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J." surname="Mattsson" fullname="J. Mattsson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="F." surname="Palombini" fullname="F. Palombini">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="L." surname="Seitz" fullname="L. Seitz">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2019" month="July"/>
+          <abstract>
+            <t indent="0">This document defines Object Security for Constrained RESTful Environments (OSCORE), a method for application-layer protection of the Constrained Application Protocol (CoAP), using CBOR Object Signing and Encryption (COSE).  OSCORE provides end-to-end protection between endpoints communicating using CoAP or CoAP-mappable HTTP. OSCORE is designed for constrained nodes and networks supporting a range of proxy operations, including translation between different transport protocols.</t>
+            <t indent="0">Although an optional functionality of CoAP, OSCORE alters CoAP options processing and IANA registration.  Therefore, this document updates RFC 7252.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8613"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8613"/>
+      </reference>
+      <reference anchor="RFC8724" target="https://www.rfc-editor.org/info/rfc8724" quoteTitle="true" derivedAnchor="RFC8724">
+        <front>
+          <title>SCHC: Generic Framework for Static Context Header Compression and Fragmentation</title>
+          <author initials="A." surname="Minaburo" fullname="A. Minaburo">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="L." surname="Toutain" fullname="L. Toutain">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Gomez" fullname="C. Gomez">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="D." surname="Barthel" fullname="D. Barthel">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="JC." surname="Zúñiga" fullname="JC. Zúñiga">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2020" month="April"/>
+          <abstract>
+            <t indent="0">This document defines the Static Context Header Compression and fragmentation (SCHC) framework, which provides both a header compression mechanism and an optional fragmentation mechanism. SCHC has been designed with Low-Power Wide Area Networks (LPWANs) in mind.</t>
+            <t indent="0">SCHC compression is based on a common static context stored both in the LPWAN device and in the network infrastructure side. This document defines a generic header compression mechanism and its application to compress IPv6/UDP headers.</t>
+            <t indent="0">This document also specifies an optional fragmentation and reassembly mechanism. It can be used to support the IPv6 MTU requirement over the LPWAN technologies. Fragmentation is needed for IPv6 datagrams that, after SCHC compression or when such compression was not possible, still exceed the Layer 2 maximum payload size.</t>
+            <t indent="0">The SCHC header compression and fragmentation mechanisms are independent of the specific LPWAN technology over which they are used. This document defines generic functionalities and offers flexibility with regard to parameter settings and mechanism choices. This document standardizes the exchange over the LPWAN between two SCHC entities. Settings and choices specific to a technology or a product are expected to be grouped into profiles, which are specified in other documents. Data models for the context and profiles are out of scope.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8724"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8724"/>
+      </reference>
+    </references>
+    <section anchor="acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">The authors would like to thank (in alphabetic order): 
+<contact fullname="Christian Amsuss"/>, <contact fullname="Dominique Barthel"/>,  <contact fullname="Carsten Bormann"/>, <contact fullname="Theresa Enghardt"/>, 
+<contact fullname="Thomas Fossati"/>, <contact fullname="Klaus Hartke"/>, <contact fullname="Benjamin Kaduk"/>, <contact fullname="Francesca Palombini"/>, <contact fullname="Alexander Pelov"/>, <contact fullname="Göran Selander"/>, and 
+<contact fullname="Éric Vyncke"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="A." surname="Minaburo" fullname="Ana Minaburo">
+        <organization showOnFrontPage="true">Acklio</organization>
+        <address>
+          <postal>
+            <street>1137A avenue des Champs Blancs</street>
+            <city>Cesson-Sevigne Cedex</city>
+            <code>35510</code>
+            <country>France</country>
+          </postal>
+          <email>ana@ackl.io</email>
+        </address>
+      </author>
+      <author initials="L." surname="Toutain" fullname="Laurent Toutain">
+        <organization abbrev="IMT Atlantique" showOnFrontPage="true">Institut MINES TELECOM; IMT Atlantique</organization>
+        <address>
+          <postal>
+            <street>2 rue de la Chataigneraie</street>
+            <extaddr>CS 17607</extaddr>
+            <city>Cesson-Sevigne Cedex</city>
+            <code>35576</code>
+            <country>France</country>
+          </postal>
+          <email>Laurent.Toutain@imt-atlantique.fr</email>
+        </address>
+      </author>
+      <author initials="R." surname="Andreasen" fullname="Ricardo Andreasen">
+        <organization showOnFrontPage="true">Universidad de Buenos Aires</organization>
+        <address>
+          <postal>
+            <street>Av. Paseo Colon 850</street>
+            <city>Ciudad Autonoma de Buenos Aires</city>
+            <code>C1063ACV</code>
+            <country>Argentina</country>
+          </postal>
+          <email>randreasen@fi.uba.ar</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

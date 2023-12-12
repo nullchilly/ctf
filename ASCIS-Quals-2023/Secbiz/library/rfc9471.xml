@@ -1,0 +1,695 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-dnsop-glue-is-not-optional-09" number="9471" submissionType="IETF" category="std" consensus="true" xml:lang="en" tocInclude="true" symRefs="true" sortRefs="true" updates="1034" obsoletes="" prepTime="2023-09-30T08:39:05" indexInclude="true" scripts="Common,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-dnsop-glue-is-not-optional-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9471" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="DNS Glue Requirements">DNS Glue Requirements in Referral Responses</title>
+    <seriesInfo name="RFC" value="9471" stream="IETF"/>
+    <author initials="M." surname="Andrews" fullname="M. Andrews">
+      <organization showOnFrontPage="true">ISC</organization>
+      <address>
+        <postal>
+          <street/>
+        </postal>
+        <email>marka@isc.org</email>
+      </address>
+    </author>
+    <author initials="S." surname="Huque" fullname="Shumon Huque">
+      <organization showOnFrontPage="true">Salesforce</organization>
+      <address>
+        <postal>
+          <street/>
+        </postal>
+        <email>shuque@gmail.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Wouters" fullname="Paul Wouters">
+      <organization showOnFrontPage="true">Aiven</organization>
+      <address>
+        <postal>
+          <street/>
+        </postal>
+        <email>paul.wouters@aiven.io</email>
+      </address>
+    </author>
+    <author initials="D." surname="Wessels" fullname="Duane Wessels">
+      <organization showOnFrontPage="true">Verisign</organization>
+      <address>
+        <postal>
+          <street/>
+        </postal>
+        <email>dwessels@verisign.com</email>
+      </address>
+    </author>
+    <date month="09" year="2023"/>
+    <area>ops</area>
+    <workgroup>dnsop</workgroup>
+    <keyword>Glue Record</keyword>
+    <keyword>In-Domain Name Server</keyword>
+    <keyword>Sibling Domain Name Server</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The DNS uses glue records to allow iterative clients to find the
+   addresses of name servers that are contained within a delegated zone.
+   Authoritative servers are expected to return all available glue records for in-domain name servers
+   in a referral response. If message size constraints prevent the inclusion of all
+   glue records for in-domain name servers, the server must set the TC (Truncated) flag to
+   inform the client that the response is incomplete and that the client
+   should use another transport to retrieve the full response.
+   This document updates RFC 1034 to clarify correct server behavior.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9471" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-types-of-glue-in-referral-r">Types of Glue in Referral Responses</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-glue-for-in-domain-name-ser">Glue for In-Domain Name Servers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-glue-for-sibling-domain-nam">Glue for Sibling Domain Name Servers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-glue-for-cyclic-sibling-dom">Glue for Cyclic Sibling Domain Name Servers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t indent="0" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-missing-glue">Missing Glue</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements">Requirements</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-glue-for-in-domain-name-serv">Glue for In-Domain Name Servers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-glue-for-sibling-domain-name">Glue for Sibling Domain Name Servers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-to-rfc-1034">Update to RFC 1034</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-considerations">Operational Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Domain Name System (DNS) <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/> <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/> uses glue records
+   to allow iterative clients to find the addresses of name servers that are
+   contained within a delegated zone. Glue records are added to the parent
+   zone as part of the delegation process and returned in referral responses;
+   otherwise, a resolver following the referral has no way of finding these
+   addresses. Authoritative servers are expected to return all available
+   glue records for in-domain name servers in a referral response. If message size constraints prevent the
+   inclusion of all glue records for in-domain name servers over the chosen transport, the server <bcp14>MUST</bcp14> set the
+   TC (Truncated) flag to inform the client that the response is incomplete
+   and that the client <bcp14>SHOULD</bcp14> use another transport to retrieve the full response. This
+   document clarifies that expectation.</t>
+      <t indent="0" pn="section-1-2">DNS responses sometimes contain optional data in the additional
+   section. In-domain glue records, however, are not optional. Several other
+   protocol extensions, when used, are also not optional. This
+   includes TSIG <xref target="RFC8945" format="default" sectionFormat="of" derivedContent="RFC8945"/>, OPT <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>, and SIG(0) <xref target="RFC2931" format="default" sectionFormat="of" derivedContent="RFC2931"/>.</t>
+      <t indent="0" pn="section-1-3">At the time of this writing, addresses (A or AAAA records) for
+   a delegation's authoritative name servers are the only type of
+   glue defined for the DNS.</t>
+      <t indent="0" pn="section-1-4">Note that this document only clarifies requirements for name server
+   software implementations.  It does not introduce or change any requirements regarding data placed in DNS zones or registries.
+   In other words, this document only makes requirements regarding "available
+   glue records" (i.e., those given in a zone) but does not make
+   requirements regarding their presence in a zone.
+   If some glue records are absent from a given zone, an authoritative
+   name server may be unable to return a useful referral response for
+   the corresponding domain.  The IETF may want to consider a separate
+   update to the requirements for including glue in zone data, beyond
+   those given in <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/> and <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/>.</t>
+      <t indent="0" pn="section-1-5">This document assumes a reasonable level of familiarity with DNS
+   operations and protocol terms.  Much of the terminology is explained
+   in further detail in "<xref target="RFC8499" format="title" sectionFormat="of" derivedContent="DNS Terminology"/>" <xref target="RFC8499" format="default" sectionFormat="of" derivedContent="RFC8499"/>.</t>
+      <section anchor="requirements-language" numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-1.1-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+  "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+  "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+  "<bcp14>SHOULD NOT</bcp14>",
+  "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+  "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+  are to be interpreted as described in BCP 14
+  <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+  when, they appear in all capitals, as shown here.</t>
+      </section>
+    </section>
+    <section anchor="types-of-glue-in-referral-responses" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-types-of-glue-in-referral-r">Types of Glue in Referral Responses</name>
+      <t indent="0" pn="section-2-1">This section describes different types of glue that may be found in
+   DNS referral responses.  Note that the type of glue depends on
+   the QNAME.  A particular name server (and its corresponding glue record) can be in-domain for one response
+   and in a sibling domain for another.</t>
+      <section anchor="indomainglue" numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-glue-for-in-domain-name-ser">Glue for In-Domain Name Servers</name>
+        <t indent="0" pn="section-2.1-1">The following is a simple example of glue records present in the
+   delegating zone "test" for the child zone "foo.test". The name servers
+   for foo.test (ns1.foo.test and ns2.foo.test) are both below the
+   delegation point. They are configured as glue records in the "test" zone:</t>
+        <artwork align="left" pn="section-2.1-2">   foo.test.                  86400   IN NS      ns1.foo.test.
+   foo.test.                  86400   IN NS      ns2.foo.test.
+   ns1.foo.test.              86400   IN A       192.0.2.1
+   ns2.foo.test.              86400   IN AAAA    2001:db8::2:2
+</artwork>
+        <t indent="0" pn="section-2.1-3">A referral response from "test" for "foo.test" with glue for in-domain
+   name servers looks like this:</t>
+        <artwork align="left" pn="section-2.1-4">   ;; QUESTION SECTION:
+   ;www.foo.test.  	IN	A
+
+   ;; AUTHORITY SECTION:
+   foo.test.               86400	IN	NS	ns1.foo.test.
+   foo.test.               86400	IN	NS	ns2.foo.test.
+
+   ;; ADDITIONAL SECTION:
+   ns1.foo.test.           86400	IN	A	192.0.2.1
+   ns2.foo.test.           86400	IN	AAAA	2001:db8::2:2
+</artwork>
+      </section>
+      <section anchor="siblingglue" numbered="true" removeInRFC="false" toc="include" pn="section-2.2">
+        <name slugifiedName="name-glue-for-sibling-domain-nam">Glue for Sibling Domain Name Servers</name>
+        <t indent="0" pn="section-2.2-1">Sibling domain name servers are NS records that are not contained in the delegated
+   zone itself but rather are contained in another zone delegated from the same parent. In many
+   cases, glue for sibling domain name servers is not strictly required for resolution, since the resolver
+   can make follow-on queries to the sibling zone to resolve the name server
+   addresses (after following the referral to the sibling zone). However,
+   most name server implementations today provide them as an optimization
+   to obviate the need for extra traffic from iterative resolvers.</t>
+        <t indent="0" pn="section-2.2-2">Here, the delegating zone "test" contains two delegations for the
+   child zones "bar.test" and "foo.test":</t>
+        <artwork align="left" pn="section-2.2-3">   bar.test.                  86400   IN NS      ns1.bar.test.
+   bar.test.                  86400   IN NS      ns2.bar.test.
+   ns1.bar.test.              86400   IN A       192.0.2.1
+   ns2.bar.test.              86400   IN AAAA    2001:db8::2:2
+
+   foo.test.                  86400   IN NS      ns1.bar.test.
+   foo.test.                  86400   IN NS      ns2.bar.test.
+</artwork>
+        <t indent="0" pn="section-2.2-4">A referral response from "test" for "foo.test" with glue for sibling domain name servers
+  looks like this:</t>
+        <artwork align="left" pn="section-2.2-5">   ;; QUESTION SECTION:
+   ;www.foo.test.  	IN	A
+
+   ;; AUTHORITY SECTION:
+   foo.test.               86400	IN	NS	ns1.bar.test.
+   foo.test.               86400	IN	NS	ns2.bar.test.
+
+   ;; ADDITIONAL SECTION:
+   ns1.bar.test.           86400	IN	A	192.0.2.1
+   ns2.bar.test.           86400	IN	AAAA	2001:db8::2:2
+</artwork>
+      </section>
+      <section anchor="siblingcyclicglue" numbered="true" removeInRFC="false" toc="include" pn="section-2.3">
+        <name slugifiedName="name-glue-for-cyclic-sibling-dom">Glue for Cyclic Sibling Domain Name Servers</name>
+        <t indent="0" pn="section-2.3-1">The use of sibling domain name servers can introduce cyclic dependencies.  This
+   happens when one domain specifies name servers from a sibling domain,
+   and vice versa.  This type of cyclic dependency can only be
+   broken when the delegating name server includes glue for the sibling
+   domain in a referral response.</t>
+        <t indent="0" pn="section-2.3-2">Here, the delegating zone "test" contains two delegations for the
+   child zones "bar.test" and "foo.test", and each uses name servers under
+   the other:</t>
+        <artwork align="left" pn="section-2.3-3">   bar.test.                  86400   IN NS      ns1.foo.test.
+   bar.test.                  86400   IN NS      ns2.foo.test.
+   ns1.bar.test.              86400   IN A       192.0.2.1
+   ns2.bar.test.              86400   IN AAAA    2001:db8::2:2
+
+   foo.test.                  86400   IN NS      ns1.bar.test.
+   foo.test.                  86400   IN NS      ns2.bar.test.
+   ns1.foo.test.              86400   IN A       192.0.2.3
+   ns2.foo.test.              86400   IN AAAA    2001:db8::2:4
+</artwork>
+        <t indent="0" pn="section-2.3-4">A referral response from "test" for "bar.test" with glue for sibling domain name servers
+  looks like this:</t>
+        <artwork align="left" pn="section-2.3-5">   ;; QUESTION SECTION:
+   ;www.bar.test.  	IN	A
+
+   ;; AUTHORITY SECTION:
+   bar.test.               86400	IN	NS	ns1.foo.test.
+   bar.test.               86400	IN	NS	ns2.foo.test.
+
+   ;; ADDITIONAL SECTION:
+   ns1.foo.test.           86400	IN	A	192.0.2.3
+   ns2.foo.test.           86400	IN	AAAA	2001:db8::2:4
+</artwork>
+        <t indent="0" pn="section-2.3-6">In late 2021, the authors analyzed zone file data available from ICANN's
+   Centralized Zone Data Service <xref target="CZDS" format="default" sectionFormat="of" derivedContent="CZDS"/> and found 222 out of approximately
+   209,000,000 total delegations that had only sibling domain NS Resource Records (RRs) in a cyclic
+   dependency as above.</t>
+      </section>
+      <section anchor="missing-glue" numbered="true" removeInRFC="false" toc="include" pn="section-2.4">
+        <name slugifiedName="name-missing-glue">Missing Glue</name>
+        <t indent="0" pn="section-2.4-1">An example of missing glue is included here, even though it cannot be considered
+   as a type of glue.  While not common, real examples of responses
+   that lack required glue, and with TC=0, have been shown to occur and
+   cause resolution failures.</t>
+        <t indent="0" pn="section-2.4-2">The example below, from the dig command <xref target="DIG" format="default" sectionFormat="of" derivedContent="DIG"/>, is based on a response observed in June 2020.  The names have
+   been altered to fall under documentation domains.  It shows a case where none of
+   the glue records present in the zone fit into the available space of the UDP response, and
+   the TC flag was not set.  While this example shows a referral with DNSSEC records
+   <xref target="RFC4033" format="default" sectionFormat="of" derivedContent="RFC4033"/> <xref target="RFC4034" format="default" sectionFormat="of" derivedContent="RFC4034"/> <xref target="RFC4035" format="default" sectionFormat="of" derivedContent="RFC4035"/>, this behavior has
+   been seen with plain DNS responses as well.  Some records have
+   been truncated for display purposes. Note that at the time of this
+   writing, the servers originally responsible for this example have been updated and now correctly
+   set the TC flag.</t>
+        <artwork align="left" pn="section-2.4-3">   % dig +norec +dnssec +bufsize=512 +ignore @ns.example.net \
+          rh202ns2.355.foo.example
+
+   ; &lt;&lt;&gt;&gt; DiG 9.15.4 &lt;&lt;&gt;&gt; +norec +dnssec +bufsize +ignore \
+          @ns.example.net rh202ns2.355.foo.example
+   ; (2 servers found)
+   ;; global options: +cmd
+   ;; Got answer:
+   ;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 8798
+   ;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 9, ADDITIONAL: 1
+
+   ;; OPT PSEUDOSECTION:
+   ; EDNS: version: 0, flags: do; udp: 4096
+   ;; QUESTION SECTION:
+   ;rh202ns2.355.foo.example.         IN A
+
+   ;; AUTHORITY SECTION:
+   foo.example.          86400   IN NS      rh120ns2.368.foo.example.
+   foo.example.          86400   IN NS      rh202ns2.355.foo.example.
+   foo.example.          86400   IN NS      rh120ns1.368.foo.example.
+   foo.example.          86400   IN NS      rh202ns1.355.foo.example.
+   foo.example.          3600    IN DS      51937 8 1 ...
+   foo.example.          3600    IN DS      635 8 2 ...
+   foo.example.          3600    IN DS      51937 8 2 ...
+   foo.example.          3600    IN DS      635 8 1 ...
+   foo.example.          3600    IN RRSIG   DS 8 2 3600 ...
+</artwork>
+      </section>
+    </section>
+    <section anchor="requirements" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-requirements">Requirements</name>
+      <t indent="0" pn="section-3-1">This section describes updated requirements for including glue in DNS referral responses.</t>
+      <section anchor="glue-for-in-domain-name-servers" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-glue-for-in-domain-name-serv">Glue for In-Domain Name Servers</name>
+        <t indent="0" pn="section-3.1-1">This document clarifies that when a name server generates a referral
+   response, it <bcp14>MUST</bcp14> include all available glue records for in-domain name servers in the
+   additional section or <bcp14>MUST</bcp14> set TC=1 if constrained by message size.</t>
+        <t indent="0" pn="section-3.1-2">At the time of this writing, most iterative clients send initial queries
+   over UDP and retry over TCP upon receiving a response with the TC
+   flag set.  UDP responses are generally limited to between 1232 and 4096
+   bytes, due to values commonly used for the EDNS0 UDP Message Size field
+   <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/> <xref target="FLAGDAY2020" format="default" sectionFormat="of" derivedContent="FLAGDAY2020"/>.  TCP responses are limited to 65,535 bytes.</t>
+      </section>
+      <section anchor="glue-for-sibling-domain-name-servers" numbered="true" removeInRFC="false" toc="include" pn="section-3.2">
+        <name slugifiedName="name-glue-for-sibling-domain-name">Glue for Sibling Domain Name Servers</name>
+        <t indent="0" pn="section-3.2-1">This document clarifies that when a name server generates a referral
+   response, it <bcp14>SHOULD</bcp14> include all available glue records in the
+   additional section.  If, after adding glue for all in-domain name servers, the glue for all sibling domain name servers does not fit due to message size constraints,
+   the name server <bcp14>MAY</bcp14> set TC=1 but is not obligated to do so.</t>
+        <t indent="0" pn="section-3.2-2">Note that users may experience resolution failures for domains with cyclically dependent sibling name servers
+   when the delegating name server chooses to omit the corresponding glue in a referral response.  As described in
+   <xref target="siblingcyclicglue" format="default" sectionFormat="of" derivedContent="Section 2.3"/>, such domains are rare.</t>
+      </section>
+      <section anchor="update-to-rfc-1034" numbered="true" removeInRFC="false" toc="include" pn="section-3.3">
+        <name slugifiedName="name-update-to-rfc-1034">Update to RFC 1034</name>
+        <t indent="0" pn="section-3.3-1">OLD:</t>
+        <blockquote pn="section-3.3-2">
+          <t indent="0" pn="section-3.3-2.1">Copy the NS RRs for the subzone into the authority section of the
+   reply.  Put whatever addresses are available into the additional
+   section, using glue RRs if the addresses are not available from
+   authoritative data or the cache.  Go to step 4.</t>
+        </blockquote>
+        <t indent="0" pn="section-3.3-3">NEW:</t>
+        <blockquote pn="section-3.3-4">
+          <t indent="0" pn="section-3.3-4.1">Copy the NS RRs for the subzone into the authority section of the
+   reply.  Put whatever NS addresses are available into the additional
+   section, using glue RRs if the addresses are not available from
+   authoritative data or the cache.  If all glue RRs for in-domain name servers do not fit, set TC=1 in
+   the header.  Go to step 4.</t>
+        </blockquote>
+      </section>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-4-1">This document clarifies correct DNS server behavior and does not introduce
+   any changes or new security considerations.</t>
+    </section>
+    <section anchor="operational-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-operational-considerations">Operational Considerations</name>
+      <t indent="0" pn="section-5-1">At the time of this writing, the behavior of most DNS server
+   implementations is to set the TC flag only if none of the available
+   glue records fit in a response over UDP transport.  The updated
+   requirements in this document might lead to an increase in the fraction
+   of UDP responses with the TC flag set and, consequently, an increase
+   in the number of queries received over TCP transport.</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-6-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+          <front>
+            <title>Domain names - concepts and facilities</title>
+            <author fullname="P. Mockapetris" initials="P." surname="Mockapetris"/>
+            <date month="November" year="1987"/>
+            <abstract>
+              <t indent="0">This RFC is the revised basic definition of The Domain Name System. It obsoletes RFC-882. This memo describes the domain style names and their used for host address look up and electronic mail forwarding. It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+        </reference>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author fullname="P. Mockapetris" initials="P." surname="Mockapetris"/>
+            <date month="November" year="1987"/>
+            <abstract>
+              <t indent="0">This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System. It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="CZDS" target="https://czds.icann.org/" quoteTitle="true" derivedAnchor="CZDS">
+          <front>
+            <title>Centralized Zone Data Service</title>
+            <author>
+              <organization showOnFrontPage="true">ICANN</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="DIG" target="https://en.wikipedia.org/wiki/Dig_(command)" quoteTitle="true" derivedAnchor="DIG">
+          <front>
+            <title>dig (command)</title>
+            <author>
+              <organization showOnFrontPage="true">Wikipedia</organization>
+            </author>
+            <date year="2023" month="September"/>
+          </front>
+        </reference>
+        <reference anchor="FLAGDAY2020" target="https://dnsflagday.net/2020/" quoteTitle="true" derivedAnchor="FLAGDAY2020">
+          <front>
+            <title>DNS Flag Day 2020</title>
+            <author>
+              <organization showOnFrontPage="true">Various DNS software and service providers</organization>
+            </author>
+            <date year="2020" month="October"/>
+          </front>
+        </reference>
+        <reference anchor="RFC2931" target="https://www.rfc-editor.org/info/rfc2931" quoteTitle="true" derivedAnchor="RFC2931">
+          <front>
+            <title>DNS Request and Transaction Signatures ( SIG(0)s )</title>
+            <author fullname="D. Eastlake 3rd" initials="D." surname="Eastlake 3rd"/>
+            <date month="September" year="2000"/>
+            <abstract>
+              <t indent="0">This document describes the minor but non-interoperable changes in Request and Transaction signature resource records ( SIG(0)s ) that implementation experience has deemed necessary. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2931"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2931"/>
+        </reference>
+        <reference anchor="RFC4033" target="https://www.rfc-editor.org/info/rfc4033" quoteTitle="true" derivedAnchor="RFC4033">
+          <front>
+            <title>DNS Security Introduction and Requirements</title>
+            <author fullname="R. Arends" initials="R." surname="Arends"/>
+            <author fullname="R. Austein" initials="R." surname="Austein"/>
+            <author fullname="M. Larson" initials="M." surname="Larson"/>
+            <author fullname="D. Massey" initials="D." surname="Massey"/>
+            <author fullname="S. Rose" initials="S." surname="Rose"/>
+            <date month="March" year="2005"/>
+            <abstract>
+              <t indent="0">The Domain Name System Security Extensions (DNSSEC) add data origin authentication and data integrity to the Domain Name System. This document introduces these extensions and describes their capabilities and limitations. This document also discusses the services that the DNS security extensions do and do not provide. Last, this document describes the interrelationships between the documents that collectively describe DNSSEC. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4033"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4033"/>
+        </reference>
+        <reference anchor="RFC4034" target="https://www.rfc-editor.org/info/rfc4034" quoteTitle="true" derivedAnchor="RFC4034">
+          <front>
+            <title>Resource Records for the DNS Security Extensions</title>
+            <author fullname="R. Arends" initials="R." surname="Arends"/>
+            <author fullname="R. Austein" initials="R." surname="Austein"/>
+            <author fullname="M. Larson" initials="M." surname="Larson"/>
+            <author fullname="D. Massey" initials="D." surname="Massey"/>
+            <author fullname="S. Rose" initials="S." surname="Rose"/>
+            <date month="March" year="2005"/>
+            <abstract>
+              <t indent="0">This document is part of a family of documents that describe the DNS Security Extensions (DNSSEC). The DNS Security Extensions are a collection of resource records and protocol modifications that provide source authentication for the DNS. This document defines the public key (DNSKEY), delegation signer (DS), resource record digital signature (RRSIG), and authenticated denial of existence (NSEC) resource records. The purpose and format of each resource record is described in detail, and an example of each resource record is given.</t>
+              <t indent="0">This document obsoletes RFC 2535 and incorporates changes from all updates to RFC 2535. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4034"/>
+        </reference>
+        <reference anchor="RFC4035" target="https://www.rfc-editor.org/info/rfc4035" quoteTitle="true" derivedAnchor="RFC4035">
+          <front>
+            <title>Protocol Modifications for the DNS Security Extensions</title>
+            <author fullname="R. Arends" initials="R." surname="Arends"/>
+            <author fullname="R. Austein" initials="R." surname="Austein"/>
+            <author fullname="M. Larson" initials="M." surname="Larson"/>
+            <author fullname="D. Massey" initials="D." surname="Massey"/>
+            <author fullname="S. Rose" initials="S." surname="Rose"/>
+            <date month="March" year="2005"/>
+            <abstract>
+              <t indent="0">This document is part of a family of documents that describe the DNS Security Extensions (DNSSEC). The DNS Security Extensions are a collection of new resource records and protocol modifications that add data origin authentication and data integrity to the DNS. This document describes the DNSSEC protocol modifications. This document defines the concept of a signed zone, along with the requirements for serving and resolving by using DNSSEC. These techniques allow a security-aware resolver to authenticate both DNS resource records and authoritative DNS error indications.</t>
+              <t indent="0">This document obsoletes RFC 2535 and incorporates changes from all updates to RFC 2535. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4035"/>
+        </reference>
+        <reference anchor="RFC6891" target="https://www.rfc-editor.org/info/rfc6891" quoteTitle="true" derivedAnchor="RFC6891">
+          <front>
+            <title>Extension Mechanisms for DNS (EDNS(0))</title>
+            <author fullname="J. Damas" initials="J." surname="Damas"/>
+            <author fullname="M. Graff" initials="M." surname="Graff"/>
+            <author fullname="P. Vixie" initials="P." surname="Vixie"/>
+            <date month="April" year="2013"/>
+            <abstract>
+              <t indent="0">The Domain Name System's wire protocol includes a number of fixed fields whose range has been or soon will be exhausted and does not allow requestors to advertise their capabilities to responders. This document describes backward-compatible mechanisms for allowing the protocol to grow.</t>
+              <t indent="0">This document updates the Extension Mechanisms for DNS (EDNS(0)) specification (and obsoletes RFC 2671) based on feedback from deployment experience in several implementations. It also obsoletes RFC 2673 ("Binary Labels in the Domain Name System") and adds considerations on the use of extended labels in the DNS.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="75"/>
+          <seriesInfo name="RFC" value="6891"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6891"/>
+        </reference>
+        <reference anchor="RFC8499" target="https://www.rfc-editor.org/info/rfc8499" quoteTitle="true" derivedAnchor="RFC8499">
+          <front>
+            <title>DNS Terminology</title>
+            <author fullname="P. Hoffman" initials="P." surname="Hoffman"/>
+            <author fullname="A. Sullivan" initials="A." surname="Sullivan"/>
+            <author fullname="K. Fujiwara" initials="K." surname="Fujiwara"/>
+            <date month="January" year="2019"/>
+            <abstract>
+              <t indent="0">The Domain Name System (DNS) is defined in literally dozens of different RFCs. The terminology used by implementers and developers of DNS protocols, and by operators of DNS systems, has sometimes changed in the decades since the DNS was first defined. This document gives current definitions for many of the terms used in the DNS in a single document.</t>
+              <t indent="0">This document obsoletes RFC 7719 and updates RFC 2308.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="219"/>
+          <seriesInfo name="RFC" value="8499"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8499"/>
+        </reference>
+        <reference anchor="RFC8945" target="https://www.rfc-editor.org/info/rfc8945" quoteTitle="true" derivedAnchor="RFC8945">
+          <front>
+            <title>Secret Key Transaction Authentication for DNS (TSIG)</title>
+            <author fullname="F. Dupont" initials="F." surname="Dupont"/>
+            <author fullname="S. Morris" initials="S." surname="Morris"/>
+            <author fullname="P. Vixie" initials="P." surname="Vixie"/>
+            <author fullname="D. Eastlake 3rd" initials="D." surname="Eastlake 3rd"/>
+            <author fullname="O. Gudmundsson" initials="O." surname="Gudmundsson"/>
+            <author fullname="B. Wellington" initials="B." surname="Wellington"/>
+            <date month="November" year="2020"/>
+            <abstract>
+              <t indent="0">This document describes a protocol for transaction-level authentication using shared secrets and one-way hashing. It can be used to authenticate dynamic updates to a DNS zone as coming from an approved client or to authenticate responses as coming from an approved name server.</t>
+              <t indent="0">No recommendation is made here for distributing the shared secrets; it is expected that a network administrator will statically configure name servers and clients using some out-of-band mechanism.</t>
+              <t indent="0">This document obsoletes RFCs 2845 and 4635.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="93"/>
+          <seriesInfo name="RFC" value="8945"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8945"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">The authors wish to thank
+   <contact fullname="Joe Abley"/>,
+   <contact fullname="David Blacka"/>,
+   <contact fullname="Brian Dickson"/>,
+   <contact fullname="Kazunori Fujiwara"/>,
+   <contact fullname="Paul Hoffman"/>,
+   <contact fullname="Geoff Huston"/>,
+   <contact fullname="John R. Levine"/>,
+   <contact fullname="Jared Mauch"/>,
+   <contact fullname="George Michaelson"/>,
+   <contact fullname="Yasuhiro Orange Morishita"/>,
+   <contact fullname="Benno Overeinder"/>,
+   <contact fullname="Hugo Salgado"/>,
+   <contact fullname="Shinta Sato"/>,
+   <contact fullname="Puneet Sood"/>,
+   <contact fullname="Petr Spacek"/>,
+   <contact fullname="Ralf Weber"/>,
+   <contact fullname="Tim Wicinski"/>,
+   <contact fullname="Suzanne Woolf"/>,
+   and other members of the DNSOP Working Group
+   for their input.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="M." surname="Andrews" fullname="M. Andrews">
+        <organization showOnFrontPage="true">ISC</organization>
+        <address>
+          <postal>
+            <street/>
+          </postal>
+          <email>marka@isc.org</email>
+        </address>
+      </author>
+      <author initials="S." surname="Huque" fullname="Shumon Huque">
+        <organization showOnFrontPage="true">Salesforce</organization>
+        <address>
+          <postal>
+            <street/>
+          </postal>
+          <email>shuque@gmail.com</email>
+        </address>
+      </author>
+      <author initials="P." surname="Wouters" fullname="Paul Wouters">
+        <organization showOnFrontPage="true">Aiven</organization>
+        <address>
+          <postal>
+            <street/>
+          </postal>
+          <email>paul.wouters@aiven.io</email>
+        </address>
+      </author>
+      <author initials="D." surname="Wessels" fullname="Duane Wessels">
+        <organization showOnFrontPage="true">Verisign</organization>
+        <address>
+          <postal>
+            <street/>
+          </postal>
+          <email>dwessels@verisign.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

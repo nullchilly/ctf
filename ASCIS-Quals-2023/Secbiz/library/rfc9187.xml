@@ -1,0 +1,654 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" docName="draft-touch-sne-02" indexInclude="true" ipr="trust200902" number="9187" prepTime="2022-01-31T23:09:30" scripts="Common,Latin" sortRefs="true" submissionType="independent" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-touch-sne-02" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9187" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Sequence Number Extension">Sequence Number Extension for Windowed Protocols</title>
+    <seriesInfo name="RFC" value="9187" stream="independent"/>
+    <author initials="J." surname="Touch" fullname="Joe Touch">
+      <organization abbrev="Independent Consultant" showOnFrontPage="true"/>
+      <address>
+        <postal>
+          <street/>
+          <city>Manhattan Beach</city>
+          <region>CA</region>
+          <code>90266</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1 (310) 560-0334</phone>
+        <email>touch@strayalpha.com</email>
+      </address>
+    </author>
+    <date month="01" year="2022"/>
+    <workgroup>ISE Stream</workgroup>
+    <keyword>TCP-AO</keyword>
+    <keyword>TCP</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+   Sliding window protocols use finite sequence numbers to determine
+   segment placement and order. These sequence number spaces wrap
+   around and are reused during the operation of such protocols. This
+   document describes a way to extend the size of these sequence
+   numbers at the endpoints to avoid the impact of that wrap and reuse
+   without transmitting additional information in the packet header.
+   The resulting extended sequence numbers can be used at the endpoints
+   in encryption and authentication algorithms to ensure input bit
+   patterns do not repeat over the lifetime of a connection.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This is a contribution to the RFC Series, independently of any
+            other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for
+            publication by the RFC Editor are not candidates for any level of
+            Internet Standard; see Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9187" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-background">Background</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-related-discussion">Related Discussion</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-sne-in-protocol-desig">Using SNE in Protocol Design</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-code">Example Code</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-validation-suite">Validation Suite</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sect-1" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+   Protocols use sequence numbers to maintain ordering and, in sliding
+   window systems, to control the amount of outstanding unacknowledged
+   information. These sequence numbers are finite and thus commonly
+   wrap around during long connections, reusing past values.</t>
+      <t indent="0" pn="section-1-2">
+   It can be useful for protocols to keep track of this wrap around in
+   a separate counter, such that the sequence number and counter
+   together form an equivalent number space that need not wrap. This
+   technique was introduced as "Sequence Number Extension" in the TCP Authentication Option (TCP-AO)
+   <xref target="RFC5925" format="default" sectionFormat="of" derivedContent="RFC5925"/>. The example provided there was intended to introduce the
+   concept, but the pseudocode provided is not complete.</t>
+      <t indent="0" pn="section-1-3">
+   This document presents the formal requirements for Sequence Number
+   Extension (SNE), a code example, and a check sequence that can be
+   used to validate this and alternate implementations. Sequence
+   numbers are used in a variety of protocols to support loss
+   detection, reordering, flow control, and congestion control.
+   Limitations in the size of a sequence number protocol field can
+   limit the ways in which these capabilities can be supported.</t>
+      <t indent="0" pn="section-1-4">
+   Under certain conditions, it is possible for both endpoints of a
+   protocol to keep track of sequence number rollover and effectively
+   extend the sequence number space without requiring modification of
+   the sequence number field used within protocol messages. These
+   conditions assume that the received sequence numbers never vary by
+   more than half the size of the space of the field used in messages,
+   i.e., they never hop forward or backward by more than half that
+   space. This constraint is typical in sliding window protocols, such
+   as TCP. However, although both ends can track rollover
+   unambiguously, doing so can be surprisingly complex. This document
+   provides examples and test cases to simplify that process.</t>
+      <t indent="0" pn="section-1-5">
+   This document is intended for protocol designers who seek to use
+   larger sequence numbers at the endpoints without needing to extend
+   the sequence number field used in messages, such as for
+   authentication protocols, e.g., TCP-AO <xref target="RFC5925" format="default" sectionFormat="of" derivedContent="RFC5925"/>. Use of extended
+   sequence numbers should be part of a protocol specification so that
+   both endpoints can ensure they comply with the requirements needed
+   to enable their use in both locations.</t>
+      <t indent="0" pn="section-1-6">
+	The remainder of this document describes how SNE can be supported and provides the
+	pseudocode to
+   demonstrate how received messages can unambiguously determine the
+   appropriate extension value, as long as the reordering is
+   constrained. <xref target="sect-2" format="default" sectionFormat="of" derivedContent="Section 2"/>  provides background on the concept. <xref target="sect-3" format="default" sectionFormat="of" derivedContent="Section 3"/> discusses currently known uses of SNE. <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/> discusses how SNE
+   is used in protocol design and how it differs from in-band use of
+   sequence numbers. <xref target="sect-5" format="default" sectionFormat="of" derivedContent="Section 5"/> provides a framework for testing SNE
+   implementations, including example code for the SNE function, and 
+   <xref target="sect-6" format="default" sectionFormat="of" derivedContent="Section 6"/> provides a sequence that can be used by that code for
+   validation. <xref target="sect-7" format="default" sectionFormat="of" derivedContent="Section 7"/> concludes with a discussion of security
+   issues.</t>
+    </section>
+    <section anchor="sect-2" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-background">Background</name>
+      <t indent="0" pn="section-2-1">
+   Protocols use sequence numbers to maintain message order. The
+   transmitter typically increments them either once per message or by
+   the length of the message. The receiver uses them to reorder
+   messages and detect gaps due to inferred loss.</t>
+      <t indent="0" pn="section-2-2">
+   Sequence numbers are represented within those messages (e.g., in the
+   headers) as values of a finite, unsigned number space. This space is
+   typically represented in a fixed-length bit string, whose values
+   range from 0..(2<sup>N</sup>)-1, inclusive.</t>
+      <t indent="0" pn="section-2-3">
+   The use of finite representations has repercussions on the use of
+   these values at both the transmitter and receiver. Without
+   additional constraints, when the number space "wraps around", it
+   would be impossible for the receiver to distinguish between the uses
+   of the same value.</t>
+      <t indent="0" pn="section-2-4">
+   As a consequence, additional constraints are required. Transmitters
+   are typically required to limit reuse until they can assume that
+   receivers would successfully differentiate the two uses of the same
+   value. The receiver always interprets values it sees based on the
+   assumption that successive values never differ by just under half
+   the number space. A receiver cannot detect an error in that
+   sequence, but it will incorrectly interpret numbers if reordering
+   violates this constraint.</t>
+      <t indent="0" pn="section-2-5">
+   The constraint requires that "forward" values advance the values by
+   less than half the sequence number space, ensuring that receivers
+   never experience a series of values that violate that rule.</t>
+      <t indent="0" pn="section-2-6">
+   We define a sequence space as follows:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-7">
+        <li pn="section-2-7.1">An unsigned integer within the range of 0..(2<sup>N</sup>)-1, i.e., for N bits.</li>
+        <li pn="section-2-7.2">An operation that increments values in that space by K, where K &lt; 2<sup>(N-1)</sup>, i.e., less than half the range. This operation is used exclusively by the transmitter.</li>
+        <li pn="section-2-7.3">An operation that compares two values in that space to determine
+     their order, e.g., where X &lt; Y implies that X comes before Y.</li>
+      </ul>
+      <t indent="0" pn="section-2-8">
+   We assume that both sides begin with the same initial value, which can be
+   anywhere in the space. That value is either assumed (e.g., 0) before the
+   protocol begins or coordinated before other messages are exchanged (as
+   with TCP Initial Sequence Numbers (ISNs) <xref target="RFC0793" format="default" sectionFormat="of" derivedContent="RFC0793"/>). It is assumed that the receiver always receives values that
+   are always within (2<sup>N</sup>)-1, but the successive received values never jump
+   forward or backward by more than 2<sup>(N-1)</sup>-1, i.e., just under half the
+   range.</t>
+      <t indent="0" pn="section-2-9">
+   No other operations are supported. The transmitter is not permitted
+   to "backup", such that values are always used in "increment" order.
+   The receiver cannot experience loss or gaps larger than 2<sup>(N-1)</sup>-1,
+   which is typically enforced either by assumption or by explicit
+   endpoint coordination.</t>
+      <t indent="0" pn="section-2-10">
+   An SNE is a separate number space that
+   can be combined with the sequence number to create a larger number
+   space that need not wrap around during a connection.</t>
+      <t indent="0" pn="section-2-11">
+   On the transmit side, SNE is trivially accomplished by incrementing a local
+   counter once each time the sequence number increment "wraps" around or by
+   keeping a larger local sequence number whose least-significant part is the
+   message sequence number and most-significant part can be considered the
+   SNE. The transmitter typically does not need to maintain an SNE except when
+   used in local computations, such as for Message Authentication Codes (MACs) in TCP-AO <xref target="RFC5925" format="default" sectionFormat="of" derivedContent="RFC5925"/>.</t>
+      <t indent="0" pn="section-2-12">
+   The goal of this document is to demonstrate that SNE can be
+   accomplished on the receiver side without transmitting additional
+   information in messages. It defines the stateful function
+   compute_sne() as follows:</t>
+      <t indent="6" pn="section-2-13">SNE = compute_sne(seqno)</t>
+      <t indent="0" pn="section-2-14">The compute_sne() function accepts the sequence number seen in a
+   received message
+   and computes the corresponding SNE. The function includes persistent
+   local state that tracks the largest currently received SNE and seqno
+   combination. The concatenation of SNE and seqno emulates the
+   equivalent larger sequence number space that can avoid wrap around.</t>
+      <t indent="0" pn="section-2-15">
+   Note that the function defined here is capable of receiving any
+   series of seqno values and computing their correct corresponding
+   SNE, as long as the series never "jumps" more than half the number
+   space "backward" from the largest value seen "forward".</t>
+    </section>
+    <section anchor="sect-3" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-related-discussion">Related Discussion</name>
+      <t indent="0" pn="section-3-1">
+   The DNS uses sequence numbers to determine when a Start of Authority
+   (SOA) serial number is more recent than a previous one, even
+   considering sequence space wrap <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/><xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/>. The use of
+   wrapped sequence numbers for sliding windows in network protocols
+   was first described as a sequence number space <xref target="IEN74" format="default" sectionFormat="of" derivedContent="IEN74"/>.</t>
+      <t indent="0" pn="section-3-2">
+   A more recent discussion describes this as "serial number arithmetic" and defines a comparison operator it claimed was missing
+   in IEN-74 <xref target="RFC1982" format="default" sectionFormat="of" derivedContent="RFC1982"/>. That document defines two operations: addition
+   (presumably shifting the window forward) and comparison (defining
+   the order of two values). Addition is defined in that document as
+   limited to values within the range of 0..windowsize/2-1. Comparison is
+   defined in that
+   document by a set of equations therein, but that document does not
+   provide a way for a receiver to compute the correct equivalent SNE,
+   especially including the potential for sequence number reordering,
+   as is demonstrated in this document.</t>
+    </section>
+    <section anchor="sect-4" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-using-sne-in-protocol-desig">Using SNE in Protocol Design</name>
+      <t indent="0" pn="section-4-1">
+   As noted in the introduction, message sequence numbers enable
+   reordering, loss detection, flow control, and congestion control.
+   They are also used to differentiate otherwise potentially identical
+   messages that might repeat as part of a sequence or stream.</t>
+      <t indent="0" pn="section-4-2">
+   The size of the sequence number field used within transferred messages
+   defines the ability of a protocol to tolerate reordering and gaps,
+   notably limited to half the space of that field. For example, a field of 8
+   bits can reorder and detect losses of smaller than 2<sup>7</sup>, i.e., 127
+   messages. When used for these purposes -- reordering, loss detection,
+   flow control, and congestion control -- the size of the field defines
+   the limits of those capabilities.</t>
+      <t indent="0" pn="section-4-3">
+   Sequence numbers are also used to differentiate messages; when used
+   this way, they can be problematic if they repeat for otherwise
+   identical messages. Protocols using sequence numbers tolerate that
+   repetition because they are aware of the rollover of these sequence
+   number spaces at both endpoints. In some cases, it can be useful to
+   track this rollover and use the rollover count as an extension to
+   the sequence number, e.g., to differentiate authentication MACs.
+   This SNE is never transmitted in
+   messages; the existing rules of sequence numbers ensure both ends can
+   keep track unambiguously -- both for new messages and reordered
+   messages.</t>
+      <t indent="0" pn="section-4-4">
+   The constraints required to use SNE have already been presented as
+   background in <xref target="sect-2" format="default" sectionFormat="of" derivedContent="Section 2"/>. The transmitter must never send messages
+   out of sequence beyond half the range of the sequence number field
+   used in messages. A receiver uses this assumption to interpret
+   whether received numbers are part of pre-wrap sequences or post-wrap
+   sequences. Note that a receiver cannot enforce or detect if the
+   transmitter has violated these assumptions on its own; it relies on
+   explicit coordination to ensure this property is maintained, such as
+   the exchange of acknowledgements.</t>
+      <t indent="0" pn="section-4-5">
+   SNEs are intended for use when it is helpful for both ends to
+   unambiguously determine whether the sequence number in a message has
+   wrapped and whether a received message is pre-wrap or post-wrap for
+   each such wrap. This can be used by both endpoints to ensure all
+   messages of arbitrarily long sequences can be differentiated, e.g.,
+   ensuring unique MACs.</t>
+      <t indent="0" pn="section-4-6">
+   SNE does not extend the actual sequence space of a protocol or
+   (thus) its tolerance to reordering or gaps. It also cannot improve
+   its dynamic range for flow control or congestion control, although
+   there are other somewhat related methods that can, such as window
+   scaling <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/> (which increases range at the expense of
+   granularity).</t>
+      <t indent="0" pn="section-4-7">
+   SNE is not needed if messages are already unique over the entirety
+   of a transfer sequence, e.g., either because the sequence number
+   field used in its messages never wrap around or because other fields
+   provide that disambiguation, such as timestamps.</t>
+    </section>
+    <section anchor="sect-5" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-example-code">Example Code</name>
+      <t indent="0" pn="section-5-1">
+   The following C code is provided as a verified example of SNE
+   from 16 to 32 bits. The code includes both the
+   framework used for validation and the compute_sne() function, the
+   latter of which can be used operationally.</t>
+      <t indent="0" pn="section-5-2">
+   A correct test will indicate "OK" for each test. An incorrect test
+      will indicate "ERROR" where applicable.</t>
+      <sourcecode name="compute_sne.c" type="c" markers="true" pn="section-5-3">
+#include &lt;stdio.h&gt;
+#include &lt;sys/param.h&gt;
+
+#define distance(x,y)   (((x)&lt;(y))?((y)-(x)):((x)-(y)))
+
+#define SNEDEBUG 1
+
+// This is the core code, stand-alone, to compute SNE from seqno
+// &gt;&gt; replace this function with your own code to test alternates
+unsigned long compute_sne(unsigned long seqno) {
+    // INPUT: 32-bit unsigned sequence number (low bits)
+    // OUTPUT: 32-bit unsigned SNE (high bits)
+
+    // variables used in this code example to compute SNE:
+
+    static unsigned long
+      RCV_SNE = 0;        // high-watermark SNE
+    static int
+      RCV_SNE_FLAG = 1;   // set during first half rollover
+                          // (prevents re-rollover)
+    static unsigned long
+      RCV_PREV_SEQ = 0;   // high-watermark SEQ
+    unsigned long
+      holdSNE;            // temp copy of output
+
+    holdSNE = RCV_SNE;                // use current SNE to start
+    if (distance(seqno,RCV_PREV_SEQ) &lt; 0x80000000) {
+        // both in same SNE range?
+        if ((seqno &gt;= 0x80000000) &amp;&amp; (RCV_PREV_SEQ &lt; 0x80000000)) {
+            // jumps fwd over N/2?
+            RCV_SNE_FLAG = 0;         // reset wrap increment flag
+        }
+        RCV_PREV_SEQ = MAX(seqno,RCV_PREV_SEQ);
+                                      // move prev forward if needed
+    } else {
+            // both in diff SNE ranges
+            if (seqno &lt; 0x80000000) {
+                // jumps forward over zero?
+                RCV_PREV_SEQ = seqno; // update prev
+                if (RCV_SNE_FLAG == 0) {
+                    // first jump over zero? (wrap)
+                    RCV_SNE_FLAG = 1;
+                              // set flag so we increment once
+                    RCV_SNE = RCV_SNE + 1;
+                              // increment window
+                    holdSNE = RCV_SNE;
+                              // use updated SNE value
+                }
+            } else {
+                // jump backward over zero
+                holdSNE = RCV_SNE - 1;
+                              // use pre-rollover SNE value
+            }
+    }
+    #ifdef SNEDEBUG
+    fprintf(stderr,"state RCV_SNE_FLAG =        %1d\n",
+      RCV_SNE_FLAG);
+    fprintf(stderr,"state      RCV_SNE = %08lx\n", RCV_SNE);
+    fprintf(stderr,"state RCV_PREV_SEQ = %08lx\n", RCV_PREV_SEQ);
+    #endif
+    return holdSNE;
+}
+
+int main() {
+    // variables used as input and output:
+    unsigned long SEG_SEQ;        // input - received SEQ
+    unsigned long SNE;            // output - SNE corresponding
+                                  // to received SEQ
+
+    // variables used to validate the computed SNE:
+    unsigned long SEG_HIGH;       // input - xmitter side SNE
+                                  // -&gt; SNE should match this value
+    unsigned long long BIG_PREV;  // prev 64-bit total seqno
+    unsigned long long BIG_THIS = 0;  // current 64-bit total seqno
+                                  // -&gt; THIS, PREV should never jump
+                                  //    more than half the SEQ space
+
+   char *prompt = "Input hex numbers only (0x is optional)\n\n")
+                  "\tHex input\n"
+                  "\t(2 hex numbers separated by whitespace,"
+                  "each with 8 or fewer digits)";
+
+    fprintf(stderr,"%s\n",prompt);
+
+    while (scanf("%lx %lx",&amp;SEG_HIGH,&amp;SEG_SEQ) == 2) {
+        BIG_PREV = BIG_THIS;
+        BIG_THIS = (((unsigned long long)SEG_HIGH) &lt;&lt; 32)
+                  | ((unsigned long long)SEG_SEQ);
+
+        // given SEG_SEQ, compute SNE
+        SNE = compute_sne(SEG_SEQ);
+
+        fprintf(stderr,"           SEG_SEQ = %08lx\n", SEG_SEQ);
+        fprintf(stderr,"               SNE = %08lx\n", SNE);
+        fprintf(stderr,"          SEG_HIGH = %08lx %s\n",SEG_HIGH,
+                (SEG_HIGH == SNE)? " - OK" : " - ERROR !!!!!!!");
+        fprintf(stderr,"\t\tthe jump was %16llx %s %s\n",
+                distance(BIG_PREV,BIG_THIS),
+                ((BIG_PREV &lt; BIG_THIS)?"+":"-"),
+                (((distance(BIG_PREV,BIG_THIS)) &gt; 0x7FFFFFFF)
+                 ? "ILLEGAL JUMP" : "."));
+        fprintf(stderr,"\n");
+        fprintf(stderr,"\n");
+
+        fprintf(stderr,"%s\n",prompt);
+
+    }
+}
+</sourcecode>
+    </section>
+    <section anchor="sect-6" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-validation-suite">Validation Suite</name>
+      <t indent="0" pn="section-6-1">
+   The following numbers are used to validate SNE
+   variants and are shown in the order they legitimately could be
+   received. Each line represents a single 64-bit number, represented
+   as two hexadecimal 32-bit numbers with a space between. The numbers
+   are formatted for use in the example code provided in <xref target="sect-5" format="default" sectionFormat="of" derivedContent="Section 5"/>.</t>
+      <t indent="0" pn="section-6-2">
+   A correctly operating extended sequence number system can receive
+   the least-significant half (the right side) and compute the correct
+   most-significant half (the left side) correctly. It specifically
+   tests both forward and backward jumps in received values that
+   represent legitimate reordering.</t>
+      <sourcecode name="sne_testvectors.txt" type="test-vector" markers="false" pn="section-6-3">
+00000000 00000000
+00000000 30000000
+00000000 90000000
+00000000 70000000
+00000000 a0000000
+00000001 00000001
+00000000 e0000000
+00000001 00000000
+00000001 7fffffff
+00000001 00000000
+00000001 50000000
+00000001 80000000
+00000001 00000001
+00000001 40000000
+00000001 90000000
+00000001 b0000000
+00000002 0fffffff
+00000002 20000000
+00000002 90000000
+00000002 70000000
+00000002 A0000000
+00000003 00004000
+00000002 D0000000
+00000003 20000000
+00000003 90000000
+00000003 70000000
+00000003 A0000000
+00000004 00004000
+00000003 D0000000
+</sourcecode>
+    </section>
+    <section anchor="sect-7" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">
+   Sequence numbers and their extensions can be useful in a variety of
+   security contexts. Because the extension part (most-significant
+   half) is determined by the previously exchanged sequence values
+   (least-significant half), the extension should not be considered as
+   adding entropy for the purposes of message authentication or
+   encryption.</t>
+    </section>
+    <section anchor="sect-8" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-8-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-9">
+      <name slugifiedName="name-informative-references">Informative References</name>
+      <reference anchor="IEN74" quoteTitle="true" derivedAnchor="IEN74">
+        <front>
+          <title>Sequence Number Arithmetic</title>
+          <author initials="W." surname="Plummmer" fullname="William W. Plummmer">
+	</author>
+          <date month="September" year="1978"/>
+        </front>
+        <refcontent>IEN-74</refcontent>
+      </reference>
+      <reference anchor="RFC0793" target="https://www.rfc-editor.org/info/rfc793" quoteTitle="true" derivedAnchor="RFC0793">
+        <front>
+          <title>Transmission Control Protocol</title>
+          <author initials="J." surname="Postel" fullname="J. Postel">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1981" month="September"/>
+        </front>
+        <seriesInfo name="STD" value="7"/>
+        <seriesInfo name="RFC" value="793"/>
+        <seriesInfo name="DOI" value="10.17487/RFC0793"/>
+      </reference>
+      <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+        <front>
+          <title>Domain names - concepts and facilities</title>
+          <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1987" month="November"/>
+          <abstract>
+            <t indent="0">This RFC is the revised basic definition of The Domain Name System.  It obsoletes RFC-882.  This memo describes the domain style names and their used for host address look up and electronic mail forwarding.  It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="STD" value="13"/>
+        <seriesInfo name="RFC" value="1034"/>
+        <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+      </reference>
+      <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+        <front>
+          <title>Domain names - implementation and specification</title>
+          <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1987" month="November"/>
+          <abstract>
+            <t indent="0">This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="STD" value="13"/>
+        <seriesInfo name="RFC" value="1035"/>
+        <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+      </reference>
+      <reference anchor="RFC1982" target="https://www.rfc-editor.org/info/rfc1982" quoteTitle="true" derivedAnchor="RFC1982">
+        <front>
+          <title>Serial Number Arithmetic</title>
+          <author initials="R." surname="Elz" fullname="R. Elz">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Bush" fullname="R. Bush">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1996" month="August"/>
+          <abstract>
+            <t indent="0">The DNS has long relied upon serial number arithmetic, a concept which has never really been defined, certainly not in an IETF document, though which has been widely understood.  This memo supplies the missing definition.  It is intended to update RFC1034 and RFC1035.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="1982"/>
+        <seriesInfo name="DOI" value="10.17487/RFC1982"/>
+      </reference>
+      <reference anchor="RFC5925" target="https://www.rfc-editor.org/info/rfc5925" quoteTitle="true" derivedAnchor="RFC5925">
+        <front>
+          <title>The TCP Authentication Option</title>
+          <author initials="J." surname="Touch" fullname="J. Touch">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Mankin" fullname="A. Mankin">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Bonica" fullname="R. Bonica">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2010" month="June"/>
+          <abstract>
+            <t indent="0">This document specifies the TCP Authentication Option (TCP-AO), which obsoletes the TCP MD5 Signature option of RFC 2385 (TCP MD5).  TCP-AO specifies the use of stronger Message Authentication Codes (MACs), protects against replays even for long-lived TCP connections, and provides more details on the association of security with TCP connections than TCP MD5.  TCP-AO is compatible with either a static Master Key Tuple (MKT) configuration or an external, out-of-band MKT management mechanism; in either case, TCP-AO also protects connections when using the same MKT across repeated instances of a connection, using traffic keys derived from the MKT, and coordinates MKT changes between endpoints.  The result is intended to support current infrastructure uses of TCP MD5, such as to protect long-lived connections (as used, e.g., in BGP and LDP), and to support a larger set of MACs with minimal other system and operational changes.  TCP-AO uses a different option identifier than TCP MD5, even though TCP-AO and TCP MD5 are never permitted to be used simultaneously.  TCP-AO supports IPv6, and is fully compatible with the proposed requirements for the replacement of TCP MD5.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="5925"/>
+        <seriesInfo name="DOI" value="10.17487/RFC5925"/>
+      </reference>
+      <reference anchor="RFC7323" target="https://www.rfc-editor.org/info/rfc7323" quoteTitle="true" derivedAnchor="RFC7323">
+        <front>
+          <title>TCP Extensions for High Performance</title>
+          <author initials="D." surname="Borman" fullname="D. Borman">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="B." surname="Braden" fullname="B. Braden">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Scheffenegger" fullname="R. Scheffenegger" role="editor">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="September"/>
+          <abstract>
+            <t indent="0">This document specifies a set of TCP extensions to improve performance over paths with a large bandwidth * delay product and to provide reliable operation over very high-speed paths.  It defines the TCP Window Scale (WS) option and the TCP Timestamps (TS) option and their semantics.  The Window Scale option is used to support larger receive windows, while the Timestamps option can be used for at least two distinct mechanisms, Protection Against Wrapped Sequences (PAWS) and Round-Trip Time Measurement (RTTM), that are also described herein.</t>
+            <t indent="0">This document obsoletes RFC 1323 and describes changes from it.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7323"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7323"/>
+      </reference>
+    </references>
+    <section anchor="sect-10" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">
+   The need for this document was first noted by <contact fullname="Juhamatti Kuusisaari"/>
+   in April 2020 during discussions of the pseudocode in RFC 5925.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author initials="J." surname="Touch" fullname="Joe Touch">
+        <organization abbrev="Independent Consultant" showOnFrontPage="true"/>
+        <address>
+          <postal>
+            <street/>
+            <city>Manhattan Beach</city>
+            <region>CA</region>
+            <code>90266</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1 (310) 560-0334</phone>
+          <email>touch@strayalpha.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

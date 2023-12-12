@@ -1,0 +1,439 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-sidrops-ov-egress-04" indexInclude="true" ipr="trust200902" number="8893" prepTime="2020-09-25T16:33:22" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="6811" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-sidrops-ov-egress-04" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8893" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="RPKI Origin Validation for BGP Export">Resource Public Key Infrastructure (RPKI) Origin Validation for BGP Export</title>
+    <seriesInfo name="RFC" value="8893" stream="IETF"/>
+    <author fullname="Randy Bush" initials="R." surname="Bush">
+      <organization showOnFrontPage="true">Internet Initiative Japan &amp; Arrcus</organization>
+      <address>
+        <postal>
+          <street>5147 Crystal Springs</street>
+          <city>Bainbridge Island</city>
+          <region>WA</region>
+          <code>98110</code>
+          <country>United States of America</country>
+        </postal>
+        <email>randy@psg.com</email>
+      </address>
+    </author>
+    <author fullname="Rüdiger Volk" initials="R." surname="Volk">
+      <organization showOnFrontPage="true"/>
+      <address>
+        <email>ietf@rewvolk.de</email>
+      </address>
+    </author>
+    <author fullname="Jakob Heitz" initials="J." surname="Heitz">
+      <organization showOnFrontPage="true">Cisco</organization>
+      <address>
+        <postal>
+          <street>170 West Tasman Drive</street>
+          <city>San Jose</city>
+          <region>CA</region>
+          <code>95134</code>
+          <country>United States of America</country>
+        </postal>
+        <email>jheitz@cisco.com</email>
+      </address>
+    </author>
+    <date month="09" year="2020"/>
+    <keyword>routing</keyword>
+    <keyword>security</keyword>
+    <keyword>RPKI</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">A BGP speaker may perform Resource Public Key Infrastructure (RPKI)
+      origin validation not only on 
+    routes received from BGP neighbors and routes that are redistributed
+    from other routing protocols, but also on routes it sends to BGP
+    neighbors.  For egress policy, it is important that the
+    classification use the 'effective origin AS' of the processed
+    route, which may specifically be altered by the commonly available
+    knobs, such as removing private ASes, confederation handling, and
+    other modifications of the origin AS.  This document updates RFC 6811.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8893" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-suggested-reading">Suggested Reading</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-egress-processing">Egress Processing</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-considerations">Operational Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">This document does not change the protocol or semantics of <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/>, BGP prefix origin validation.  It highlights an
+    important use case of origin validation in external BGP (eBGP) egress policies,
+    explaining specifics of correct implementation in this context.</t>
+      <t indent="0" pn="section-1-2">The term 'effective origin AS' as used in this document refers to
+    the Route Origin Autonomous System Number (ASN) <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/> of the UPDATE to be 
+    sent to neighboring BGP speakers.</t>
+      <t indent="0" pn="section-1-3">The effective origin AS of a BGP UPDATE is decided by
+    configuration and outbound policy of the BGP speaker.  A validating
+    BGP speaker <bcp14>MUST</bcp14> apply Route Origin Validation policy semantics (see
+    <xref target="RFC6811" sectionFormat="of" section="2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6811#section-2" derivedContent="RFC6811"/> and <xref target="RFC8481" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8481#section-4" derivedContent="RFC8481"/>)
+    after applying any egress configuration and policy.</t>
+      <t indent="0" pn="section-1-4">This effective origin AS of the announcement might be affected by
+    removal of private ASes, confederation <xref target="RFC5065" format="default" sectionFormat="of" derivedContent="RFC5065"/>,
+    migration <xref target="RFC7705" format="default" sectionFormat="of" derivedContent="RFC7705"/>, etc.  Any AS_PATH modifications
+    resulting in effective origin AS change <bcp14>MUST</bcp14> be taken into
+    account.</t>
+      <t indent="0" pn="section-1-5">This document updates <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/> by clarifying that
+    implementations must use the effective origin AS to determine the
+    Origin Validation state when applying egress policy.</t>
+      <t indent="0" pn="section-1-6">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", 
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as 
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="reading" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-suggested-reading">Suggested Reading</name>
+      <t indent="0" pn="section-2-1">It is assumed that the reader understands BGP <xref target="RFC4271" format="default" sectionFormat="of" derivedContent="RFC4271"/>, the RPKI <xref target="RFC6480" format="default" sectionFormat="of" derivedContent="RFC6480"/>,
+      Route Origin Authorizations (ROAs) <xref target="RFC6482" format="default" sectionFormat="of" derivedContent="RFC6482"/>, RPKI-based Prefix Validation <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/>, and Origin Validation
+    Clarifications <xref target="RFC8481" format="default" sectionFormat="of" derivedContent="RFC8481"/>.</t>
+    </section>
+    <section anchor="all" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-egress-processing">Egress Processing</name>
+      <t indent="0" pn="section-3-1">BGP implementations supporting RPKI-based origin validation <bcp14>MUST</bcp14>
+    provide the same policy configuration primitives for decisions based
+    on the validation state available for use in ingress, redistribution,
+    and egress policies.  When applied to egress policy, validation
+    state <bcp14>MUST</bcp14> be determined using the effective origin AS of
+    the route
+    as it will (or would) be announced to the peer.  The effective
+    origin AS may differ from that of the route in the RIB due to
+    commonly available knobs, such as removal of private ASes, AS path
+    manipulation, confederation handling, etc.</t>
+      <t indent="0" pn="section-3-2">Egress policy handling can provide more robust protection for
+    outbound eBGP than relying solely on ingress (iBGP, eBGP, connected,
+    static, etc.) redistribution being configured and working correctly
+    -- i.e., better support for the robustness principle.</t>
+    </section>
+    <section anchor="impl" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-operational-considerations">Operational Considerations</name>
+      <t indent="0" pn="section-4-1">Configurations may have a complex policy where the effective
+    origin AS may not be easily determined before the outbound policies
+    have been run.  It <bcp14>SHOULD</bcp14> be possible to specify a selective origin
+    validation policy to be applied after any existing non-validating
+    outbound policies.</t>
+      <t indent="0" pn="section-4-2">An implementation <bcp14>SHOULD</bcp14> be able to list announcements that were
+    not sent to a peer, e.g., because they were marked Invalid, as long
+    as the router still has them in memory.</t>
+    </section>
+    <section anchor="seccons" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-5-1">This document does not create security considerations beyond
+    those of <xref target="RFC6811" format="default" sectionFormat="of" derivedContent="RFC6811"/> and <xref target="RFC8481" format="default" sectionFormat="of" derivedContent="RFC8481"/>.  By
+    facilitating more correct validation, it attempts to improve BGP
+    reliability.</t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-6-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4271" target="https://www.rfc-editor.org/info/rfc4271" quoteTitle="true" derivedAnchor="RFC4271">
+          <front>
+            <title>A Border Gateway Protocol 4 (BGP-4)</title>
+            <author initials="Y." surname="Rekhter" fullname="Y. Rekhter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Li" fullname="T. Li" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hares" fullname="S. Hares" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="January"/>
+            <abstract>
+              <t indent="0">This document discusses the Border Gateway Protocol (BGP), which is an inter-Autonomous System routing protocol.</t>
+              <t indent="0">The primary function of a BGP speaking system is to exchange network reachability information with other BGP systems.  This network reachability information includes information on the list of Autonomous Systems (ASes) that reachability information traverses. This information is sufficient for constructing a graph of AS connectivity for this reachability from which routing loops may be pruned, and, at the AS level, some policy decisions may be enforced.</t>
+              <t indent="0">BGP-4 provides a set of mechanisms for supporting Classless Inter-Domain Routing (CIDR).  These mechanisms include support for advertising a set of destinations as an IP prefix, and eliminating the concept of network "class" within BGP.  BGP-4 also introduces mechanisms that allow aggregation of routes, including aggregation of AS paths.</t>
+              <t indent="0">This document obsoletes RFC 1771.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4271"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4271"/>
+        </reference>
+        <reference anchor="RFC5065" target="https://www.rfc-editor.org/info/rfc5065" quoteTitle="true" derivedAnchor="RFC5065">
+          <front>
+            <title>Autonomous System Confederations for BGP</title>
+            <author initials="P." surname="Traina" fullname="P. Traina">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McPherson" fullname="D. McPherson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="August"/>
+            <abstract>
+              <t indent="0">The Border Gateway Protocol (BGP) is an inter-autonomous system routing protocol designed for Transmission Control Protocol/Internet Protocol (TCP/IP) networks.  BGP requires that all BGP speakers within a single autonomous system (AS) must be fully meshed.  This represents a serious scaling problem that has been well documented in a number of proposals.</t>
+              <t indent="0">This document describes an extension to BGP that may be used to create a confederation of autonomous systems that is represented as a single autonomous system to BGP peers external to the confederation, thereby removing the "full mesh" requirement.  The intention of this extension is to aid in policy administration and reduce the management complexity of maintaining a large autonomous system.</t>
+              <t indent="0">This document obsoletes RFC 3065.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5065"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5065"/>
+        </reference>
+        <reference anchor="RFC6482" target="https://www.rfc-editor.org/info/rfc6482" quoteTitle="true" derivedAnchor="RFC6482">
+          <front>
+            <title>A Profile for Route Origin Authorizations (ROAs)</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Kong" fullname="D. Kong">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a standard profile for Route Origin Authorizations (ROAs).  A ROA is a digitally signed object that provides a means of verifying that an IP address block holder has authorized an Autonomous System (AS) to originate routes to one or more prefixes within the address block.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6482"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6482"/>
+        </reference>
+        <reference anchor="RFC6811" target="https://www.rfc-editor.org/info/rfc6811" quoteTitle="true" derivedAnchor="RFC6811">
+          <front>
+            <title>BGP Prefix Origin Validation</title>
+            <author initials="P." surname="Mohapatra" fullname="P. Mohapatra">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Scudder" fullname="J. Scudder">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ward" fullname="D. Ward">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bush" fullname="R. Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t indent="0">To help reduce well-known threats against BGP including prefix mis- announcing and monkey-in-the-middle attacks, one of the security requirements is the ability to validate the origination Autonomous System (AS) of BGP routes.  More specifically, one needs to validate that the AS number claiming to originate an address prefix (as derived from the AS_PATH attribute of the BGP route) is in fact authorized by the prefix holder to do so.  This document describes a simple validation mechanism to partially satisfy this requirement. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6811"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6811"/>
+        </reference>
+        <reference anchor="RFC7705" target="https://www.rfc-editor.org/info/rfc7705" quoteTitle="true" derivedAnchor="RFC7705">
+          <front>
+            <title>Autonomous System Migration Mechanisms and Their Effects on the BGP AS_PATH Attribute</title>
+            <author initials="W." surname="George" fullname="W. George">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Amante" fullname="S. Amante">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="November"/>
+            <abstract>
+              <t indent="0">This document discusses some existing commonly used BGP mechanisms for Autonomous System Number (ASN) migration that are not formally part of the BGP4 protocol specification.  It is necessary to document these de facto standards to ensure that they are properly supported in future BGP protocol work.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7705"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7705"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8481" target="https://www.rfc-editor.org/info/rfc8481" quoteTitle="true" derivedAnchor="RFC8481">
+          <front>
+            <title>Clarifications to BGP Origin Validation Based on Resource Public Key Infrastructure (RPKI)</title>
+            <author initials="R." surname="Bush" fullname="R. Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="September"/>
+            <abstract>
+              <t indent="0">Deployment of BGP origin validation based on Resource Public Key Infrastructure (RPKI) is hampered by, among other things, vendor misimplementations in two critical areas: which routes are validated and whether policy is applied when not specified by configuration. This document is meant to clarify possible misunderstandings causing those misimplementations; it thus updates RFC 6811 by clarifying that all prefixes should have their validation state set and that policy must not be applied without operator configuration.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8481"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8481"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC6480" target="https://www.rfc-editor.org/info/rfc6480" quoteTitle="true" derivedAnchor="RFC6480">
+          <front>
+            <title>An Infrastructure to Support Secure Internet Routing</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document describes an architecture for an infrastructure to support improved security of Internet routing.  The foundation of this architecture is a Resource Public Key Infrastructure (RPKI) that represents the allocation hierarchy of IP address space and Autonomous System (AS) numbers; and a distributed repository system for storing and disseminating the data objects that comprise the RPKI, as well as other signed objects necessary for improved routing security.  As an initial application of this architecture, the document describes how a legitimate holder of IP address space can explicitly and verifiably authorize one or more ASes to originate routes to that address space.  Such verifiable authorizations could be used, for example, to more securely construct BGP route filters.   This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6480"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6480"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acks" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">Thanks to reviews and comments from <contact fullname="Linda       Dunbar"/>, <contact fullname="Nick Hilliard"/>,
+    <contact fullname="Benjamin Kaduk"/>, <contact fullname="Chris Morrow"/>,
+    <contact fullname="Keyur Patel"/>,
+    <contact fullname="Alvaro Retana"/>, <contact fullname="Job Snijders"/>,
+    <contact fullname="Robert Sparks"/>, and <contact fullname="Robert     Wilton"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Randy Bush" initials="R." surname="Bush">
+        <organization showOnFrontPage="true">Internet Initiative Japan &amp; Arrcus</organization>
+        <address>
+          <postal>
+            <street>5147 Crystal Springs</street>
+            <city>Bainbridge Island</city>
+            <region>WA</region>
+            <code>98110</code>
+            <country>United States of America</country>
+          </postal>
+          <email>randy@psg.com</email>
+        </address>
+      </author>
+      <author fullname="Rüdiger Volk" initials="R." surname="Volk">
+        <organization showOnFrontPage="true"/>
+        <address>
+          <email>ietf@rewvolk.de</email>
+        </address>
+      </author>
+      <author fullname="Jakob Heitz" initials="J." surname="Heitz">
+        <organization showOnFrontPage="true">Cisco</organization>
+        <address>
+          <postal>
+            <street>170 West Tasman Drive</street>
+            <city>San Jose</city>
+            <region>CA</region>
+            <code>95134</code>
+            <country>United States of America</country>
+          </postal>
+          <email>jheitz@cisco.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>
