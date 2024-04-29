@@ -1,0 +1,901 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-quic-version-negotiation-14" indexInclude="true" ipr="trust200902" number="9368" prepTime="2023-05-31T10:22:52" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="8999" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-quic-version-negotiation-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9368" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="QUIC-Compatible VN">Compatible Version Negotiation for QUIC</title>
+    <seriesInfo name="RFC" value="9368" stream="IETF"/>
+    <author initials="D." surname="Schinazi" fullname="David Schinazi">
+      <organization showOnFrontPage="true">Google LLC</organization>
+      <address>
+        <postal>
+          <street>1600 Amphitheatre Parkway</street>
+          <city>Mountain View</city>
+          <region>CA</region>
+          <code>94043</code>
+          <country>United States of America</country>
+        </postal>
+        <email>dschinazi.ietf@gmail.com</email>
+      </address>
+    </author>
+    <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <email>ekr@rtfm.com</email>
+      </address>
+    </author>
+    <date month="05" year="2023"/>
+    <area>Transport</area>
+    <workgroup>QUIC</workgroup>
+    <keyword>quic</keyword>
+    <keyword>version</keyword>
+    <keyword>negotiation</keyword>
+    <keyword>compatible</keyword>
+    <keyword>incompatible</keyword>
+    <keyword>not quite tls</keyword>
+    <keyword>tls-ng</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">QUIC does not provide a complete version negotiation mechanism but instead only
+provides a way for the server to indicate that the version the client chose is
+unacceptable. This document describes a version negotiation mechanism that
+allows a client and server to select a mutually supported version. Optionally,
+if the client's chosen version and the negotiated version share a compatible
+first flight format, the negotiation can take place without incurring an extra
+round trip. This document updates RFC 8999.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9368" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions">Conventions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions">Definitions</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-version-negotiation-mechani">Version Negotiation Mechanism</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-incompatible-version-negoti">Incompatible Version Negotiation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compatible-versions">Compatible Versions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compatible-version-negotiat">Compatible Version Negotiation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t indent="0" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-connections-and-version-neg">Connections and Version Negotiation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.5">
+                <t indent="0" pn="section-toc.1-1.2.2.5.1"><xref derivedContent="2.5" format="counter" sectionFormat="of" target="section-2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-choice-of-original-v">Client Choice of Original Version</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-version-information">Version Information</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-version-downgrade-preventio">Version Downgrade Prevention</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-deployments-of-quic">Server Deployments of QUIC</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-application-layer-protocol-">Application-Layer Protocol Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-future-v">Considerations for Future Versions</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-retry">Interaction with Retry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-tls-resump">Interaction with TLS Resumption</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-0-rtt">Interaction with 0-RTT</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-special-handling-for-quic-v">Special Handling for QUIC Version 1</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-quic-transport-parameter">QUIC Transport Parameter</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-quic-transport-error-code">QUIC Transport Error Code</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The version-invariant properties of QUIC <xref target="RFC8999" format="default" sectionFormat="of" derivedContent="QUIC-INVARIANTS"/> define a
+Version Negotiation packet but do not specify how an endpoint reacts when it
+receives one. QUIC version 1 <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="QUIC"/> allows the server to use a
+Version Negotiation packet to indicate that the version the client chose is
+unacceptable, but it doesn't allow the client to safely make use of that
+information to create a new connection with a mutually supported version.
+This document updates <xref target="RFC8999" format="default" sectionFormat="of" derivedContent="QUIC-INVARIANTS"/> by defining version
+negotiation mechanisms that leverage the Version Negotiation packet.</t>
+      <t indent="0" pn="section-1-2">With proper safety mechanisms in place, the Version Negotiation packet can be
+part of a mechanism to allow two QUIC implementations to negotiate between two
+totally disjoint versions of QUIC. This document specifies version negotiation
+using Version Negotiation packets, which adds an extra round trip to connection
+establishment if needed.</t>
+      <t indent="0" pn="section-1-3">It is beneficial to avoid additional round trips whenever possible, especially
+given that most incremental versions are broadly similar to the previous
+version. This specification also defines a simple version negotiation mechanism which leverages similarities between versions and can negotiate between
+"compatible" versions without additional round trips.</t>
+      <section anchor="conventions" numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-conventions">Conventions</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section anchor="definitions" numbered="true" removeInRFC="false" toc="include" pn="section-1.2">
+        <name slugifiedName="name-definitions">Definitions</name>
+        <t indent="0" pn="section-1.2-1">The document uses the following terms:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1.2-2">
+          <li pn="section-1.2-2.1">In the context of a given QUIC connection, the "first flight" of packets
+refers to the set of packets the client creates and sends to initiate the
+connection before it has heard back from the server.</li>
+          <li pn="section-1.2-2.2">In the context of a given QUIC connection, the "client's Chosen Version" is
+the QUIC version of the connection's first flight.</li>
+          <li pn="section-1.2-2.3">The "Original Version" is the QUIC version of the very first packet the client
+sends to the server. If version negotiation spans multiple connections (see
+<xref target="connections" format="default" sectionFormat="of" derivedContent="Section 2.4"/>), the Original Version is equal to the client's Chosen Version
+of the first QUIC connection.</li>
+          <li pn="section-1.2-2.4">The "Negotiated Version" is the QUIC version in use on the connection once the
+version negotiation process completes.</li>
+          <li pn="section-1.2-2.5">The "Maximum Segment Lifetime" (MSL) represents the time a QUIC packet can
+exist in the network. Implementations can make this configurable, and a
+<bcp14>RECOMMENDED</bcp14> value is one minute. Note that the term "segment" here originated
+in <xref section="3.4.1" sectionFormat="of" target="RFC9293" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9293#section-3.4.1" derivedContent="TCP"/>.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="version-negotiation-mechanism" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-version-negotiation-mechani">Version Negotiation Mechanism</name>
+      <t indent="0" pn="section-2-1">This document specifies two means of performing version negotiation:
+1) "incompatible", which requires a round trip and is applicable to all versions,
+and 2) "compatible", which allows saving the round trip but only applies when the
+versions are compatible (see <xref target="compat" format="default" sectionFormat="of" derivedContent="Section 2.2"/>).</t>
+      <t indent="0" pn="section-2-2">The client initiates a QUIC connection by choosing an Original Version and
+sending a first flight of QUIC packets with a long header to the server
+<xref target="RFC8999" format="default" sectionFormat="of" derivedContent="QUIC-INVARIANTS"/>. The client's first flight includes Version Information (see
+<xref target="vers-info" format="default" sectionFormat="of" derivedContent="Section 3"/>), which will be used to optionally enable compatible version
+negotiation (see <xref target="compat-vn" format="default" sectionFormat="of" derivedContent="Section 2.3"/>) and to prevent version downgrade attacks (see
+<xref target="downgrade" format="default" sectionFormat="of" derivedContent="Section 4"/>).</t>
+      <t indent="0" pn="section-2-3">Upon receiving this first flight, the server verifies whether it knows how to
+parse first flights from the Chosen Version (which is also the Original Version in this case). If it does not, then it starts
+incompatible version negotiation (see <xref target="incompat-vn" format="default" sectionFormat="of" derivedContent="Section 2.1"/>), which causes the client
+to initiate a new connection with a different version. For instance, if the
+client initiates a
+connection with version A that the server can't parse, the server
+starts incompatible version negotiation; then, when the client
+initiates a new connection with version B, we say that the first
+connection's client Chosen Version is A, the second connection's
+client Chosen Version is B, and the Original Version for the entire
+sequence is A.</t>
+      <t indent="0" pn="section-2-4">If the server can parse the first flight, it can establish the connection
+using the client's Chosen Version, or it <bcp14>MAY</bcp14> select any other compatible
+version, as described in <xref target="compat-vn" format="default" sectionFormat="of" derivedContent="Section 2.3"/>.</t>
+      <t indent="0" pn="section-2-5">Note that it is possible for a server to have the ability to parse the first
+flight of a given version without fully supporting it, in the sense that it
+implements enough of the version's specification to parse first flight packets
+but not enough to fully establish a connection using that version.</t>
+      <section anchor="incompat-vn" numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-incompatible-version-negoti">Incompatible Version Negotiation</name>
+        <t indent="0" pn="section-2.1-1">The server starts incompatible version negotiation by sending a Version
+Negotiation packet. This packet <bcp14>SHALL</bcp14> include each entry from the server's set
+of Offered Versions (see <xref target="server-fleet" format="default" sectionFormat="of" derivedContent="Section 5"/>) in a Supported Version field. The
+server <bcp14>MAY</bcp14> add reserved versions (as defined in <xref section="6.3" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-6.3" derivedContent="QUIC"/>) in
+Supported Version fields.</t>
+        <t indent="0" pn="section-2.1-2">Clients will ignore a Version Negotiation packet if it contains the Original
+Version attempted by the client, as required by <xref target="downgrade" format="default" sectionFormat="of" derivedContent="Section 4"/>. The client also ignores a
+Version Negotiation packet that contains incorrect connection ID fields, as required by
+<xref section="6" sectionFormat="of" target="RFC8999" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8999#section-6" derivedContent="QUIC-INVARIANTS"/>.</t>
+        <t indent="0" pn="section-2.1-3">Upon receiving the Version Negotiation packet, the client <bcp14>SHALL</bcp14> search for a
+version it supports in the list provided by the server. If it doesn't find one,
+it <bcp14>SHALL</bcp14> abort the connection attempt. Otherwise, it <bcp14>SHALL</bcp14> select a mutually
+supported version and send a new first flight with that version -- this version
+is now the Negotiated Version.</t>
+        <t indent="0" pn="section-2.1-4">The new first flight will allow the endpoints to establish a connection using
+the Negotiated Version. The handshake of the Negotiated Version will exchange
+Version Information (see <xref target="vers-info" format="default" sectionFormat="of" derivedContent="Section 3"/>) that is required to ensure that version
+negotiation was genuine, i.e., that no attacker injected packets in order to
+influence the version negotiation process (see <xref target="downgrade" format="default" sectionFormat="of" derivedContent="Section 4"/>).</t>
+        <t indent="0" pn="section-2.1-5">Only servers can start incompatible version negotiation. Clients <bcp14>MUST NOT</bcp14> send
+Version Negotiation packets and servers <bcp14>MUST</bcp14> ignore all received Version
+Negotiation packets.</t>
+      </section>
+      <section anchor="compat" numbered="true" removeInRFC="false" toc="include" pn="section-2.2">
+        <name slugifiedName="name-compatible-versions">Compatible Versions</name>
+        <t indent="0" pn="section-2.2-1">If A and B are two distinct versions of QUIC, A is said to be "compatible" with
+B if it is possible to take a first flight of packets from version A and convert
+it into a first flight of packets from version B. As an example, if versions A
+and B are absolutely equal in their wire image and behavior during the handshake
+but differ after the handshake, then A is compatible with B and B is compatible
+with A. Note that the conversion of the first flight can be lossy; some data,
+such as QUIC version 1 0-RTT packets, could be ignored during conversion and
+retransmitted later.</t>
+        <t indent="0" pn="section-2.2-2">Version compatibility is not symmetric. It is possible for version A to be
+compatible with version B and for version B not to be compatible with version A. This could
+happen, for example, if version B is a strict superset of version A, i.e., if version A
+includes the concept of streams and STREAM frames and version B includes the
+concept of streams and the hypothetical concept of tubes along with STREAM and
+TUBE frames, then A would be compatible with B, but B would not be compatible
+with A.</t>
+        <t indent="0" pn="section-2.2-3">Note that version compatibility does not mean that every single possible
+instance of a first flight will succeed in conversion to the other version. A
+first flight using version A is said to be "compatible" with version B if two
+conditions are met: (1) version A is compatible with version B and
+(2) the conversion of this first flight to version B is well defined.
+For example, if version B is equal to version A in all aspects except it introduced a
+new frame in its first flight that version A cannot parse or even ignore, then version B
+could still be compatible with version A, as conversions would succeed for connections
+where that frame is not used. In this example, first flights using version B
+that carry this new frame would not be compatible with version A.</t>
+        <t indent="0" pn="section-2.2-4">When a new version of QUIC is defined, it is assumed to not be compatible with
+any other version unless otherwise specified. Similarly, no other version is
+compatible with the new version unless otherwise specified. Implementations <bcp14>MUST NOT</bcp14> assume compatibility between versions unless explicitly specified.</t>
+        <t indent="0" pn="section-2.2-5">Note that both endpoints might disagree on whether two versions are compatible
+or not. For example, two versions could have been defined concurrently and then
+specified as compatible in a third document much later -- in that scenario, one
+endpoint might be aware of the compatibility document, while the other may not.</t>
+      </section>
+      <section anchor="compat-vn" numbered="true" removeInRFC="false" toc="include" pn="section-2.3">
+        <name slugifiedName="name-compatible-version-negotiat">Compatible Version Negotiation</name>
+        <t indent="0" pn="section-2.3-1">When the server can parse the client's first flight using the client's Chosen
+Version, it can extract the client's Version Information structure (see
+<xref target="vers-info" format="default" sectionFormat="of" derivedContent="Section 3"/>). This contains the list of versions that the client knows its
+first flight is compatible with.</t>
+        <t indent="0" pn="section-2.3-2">In order to perform compatible version negotiation, the server <bcp14>MUST</bcp14> select one
+of these versions that it (1) supports and (2) knows the client's Chosen
+Version is compatible with. This selected version is now the Negotiated
+Version. After selecting it, the server attempts to convert the client's first
+flight into that version and replies to the client as if it had received the
+converted first flight.</t>
+        <t indent="0" pn="section-2.3-3">If those formats are identical, as in cases where the Negotiated Version is the
+same as the client's Chosen Version, then this will be the identity transformation.
+If the first flight is correctly formatted, then this conversion process cannot
+fail by definition of the first flight being compatible; if the server is unable
+to convert the first flight, it <bcp14>MUST</bcp14> abort the handshake.</t>
+        <t indent="0" pn="section-2.3-4">If a document specifies that a QUIC version is compatible with another, that
+document <bcp14>MUST</bcp14> specify the mechanism by which clients are made aware of the
+Negotiated Version. An example of such a mechanism is to have the client
+determine the server's Negotiated Version by examining the QUIC long header
+Version field. Note that, in this example mechanism, it is possible for the
+server to initially send packets with the client's Chosen Version before
+switching to the Negotiated Version (this can happen when the client's Version
+Information structure spans multiple packets; in that case, the server might
+acknowledge the first packet in the client's Chosen Version and later switch to
+a different Negotiated Version). Mutually compatible versions <bcp14>SHOULD</bcp14> use the
+same mechanism.</t>
+        <t indent="0" pn="section-2.3-5">Note that, after the first flight is converted to the Negotiated Version, the
+handshake completes in the Negotiated Version. If the Negotiated Version has
+requirements that apply during the handshake, those requirements apply to the
+entire handshake, including the converted first flight. In particular, if the
+Negotiated Version mandates that endpoints perform validations on Handshake
+packets, endpoints <bcp14>MUST</bcp14> also perform such validations on the converted first
+flight. For instance, if the Negotiated Version requires that the 5-tuple remain stable for the entire handshake (as QUIC version 1 does), then both endpoints need to validate the 5-tuple of all packets received during the handshake, including the converted first flight.</t>
+        <t indent="0" pn="section-2.3-6">Note also that the client can disable compatible version negotiation by only
+including the Chosen Version in the Available Versions field of the Version
+Information (see <xref target="vers-info" format="default" sectionFormat="of" derivedContent="Section 3"/>).</t>
+        <t indent="0" pn="section-2.3-7">If the server does not find a compatible version (including the client's Chosen
+Version), it will perform incompatible version negotiation instead (see
+<xref target="incompat-vn" format="default" sectionFormat="of" derivedContent="Section 2.1"/>).</t>
+        <t indent="0" pn="section-2.3-8">Note that it is possible to have incompatible version negotiation followed by
+compatible version negotiation. For instance, if version A is compatible with version B
+and version C is compatible with version D, the following scenario could occur:</t>
+        <figure anchor="fig-dual-example" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-combined-negotiation-exampl">Combined Negotiation Example</name>
+          <artwork align="left" pn="section-2.3-9.1">
+Client                                          Server
+
+Chosen = A, Available Versions = (A, B) -------------&gt;
+&lt;------------------------ Version Negotiation = (D, C)
+
+Chosen = C, Available Versions = (C, D) -------------&gt;
+&lt;------------- Chosen = D, Available Versions = (D, C)
+</artwork>
+        </figure>
+        <t indent="0" pn="section-2.3-10">In this example, the client selected C from the server's Version Negotiation
+packet, but the server preferred D and then selected it from the client's offer.</t>
+      </section>
+      <section anchor="connections" numbered="true" removeInRFC="false" toc="include" pn="section-2.4">
+        <name slugifiedName="name-connections-and-version-neg">Connections and Version Negotiation</name>
+        <t indent="0" pn="section-2.4-1">QUIC connections are shared state between a client and a server
+<xref target="RFC8999" format="default" sectionFormat="of" derivedContent="QUIC-INVARIANTS"/>. The compatible version negotiation mechanism defined in
+this document (see <xref target="compat-vn" format="default" sectionFormat="of" derivedContent="Section 2.3"/>) is performed as part of a single QUIC
+connection; that is, the packets with the client's Chosen Version are part of
+the same connection as the packets with the Negotiated Version.</t>
+        <t indent="0" pn="section-2.4-2">In comparison, the incompatible version negotiation mechanism, which leverages
+QUIC Version Negotiation packets (see <xref target="incompat-vn" format="default" sectionFormat="of" derivedContent="Section 2.1"/>), conceptually operates
+across two QUIC connections, i.e., the connection attempt prior to receiving the
+Version Negotiation packet is distinct from the connection with the incompatible
+version that follows.</t>
+        <t indent="0" pn="section-2.4-3">Note that this separation across two connections is conceptual, i.e., it applies to
+normative requirements on QUIC connections, but it does not require implementations
+to internally use two distinct connection objects.</t>
+      </section>
+      <section anchor="client-choice-of-original-version" numbered="true" removeInRFC="false" toc="include" pn="section-2.5">
+        <name slugifiedName="name-client-choice-of-original-v">Client Choice of Original Version</name>
+        <t indent="0" pn="section-2.5-1">When the client picks its Original Version, it <bcp14>SHOULD</bcp14> try to avoid incompatible
+version negotiation to save a round trip. Therefore, the client <bcp14>SHOULD</bcp14> pick an
+Original Version to maximize the combined probability that both:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2.5-2">
+          <li pn="section-2.5-2.1">the server knows how to parse first flights from the Original Version and</li>
+          <li pn="section-2.5-2.2">the Original Version is compatible with the client's preferred version.</li>
+        </ul>
+        <t indent="0" pn="section-2.5-3">Without additional information, this could mean selecting the oldest version
+that the client supports while advertising newer compatible versions in the
+client's first flight.</t>
+      </section>
+    </section>
+    <section anchor="vers-info" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-version-information">Version Information</name>
+      <t indent="0" pn="section-3-1">During the handshake, endpoints will exchange Version Information, which
+consists of a Chosen Version and a list of Available Versions. Any version of
+QUIC that supports this mechanism <bcp14>MUST</bcp14> provide a mechanism to exchange Version
+Information in both directions during the handshake, such that this data is
+      authenticated.</t>
+      <t indent="0" pn="section-3-2">In QUIC version 1, the Version Information is transmitted using a new
+version_information transport parameter (see <xref section="7.4" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-7.4" derivedContent="QUIC"/>). The
+contents of Version Information are shown below (using the notation from <xref target="RFC9000" section="1.3" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-1.3" derivedContent="QUIC"/>):</t>
+      <figure anchor="fig-vi-format" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-version-information-format">Version Information Format</name>
+        <artwork align="left" pn="section-3-3.1">
+Version Information {
+  Chosen Version (32),
+  Available Versions (32) ...,
+}
+</artwork>
+      </figure>
+      <t indent="0" pn="section-3-4">The content of each field is described below:</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-3-5">
+        <dt pn="section-3-5.1">Chosen Version:</dt>
+        <dd pn="section-3-5.2">
+          <t indent="0" pn="section-3-5.2.1">The version that the sender has chosen to use for this connection. In most
+cases, this field will be equal to the value of the Version field in the long
+header that carries this data; however, future versions or extensions can choose
+to set different values in the long header Version field.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-3-6">The contents of the Available Versions field depend on whether it is sent by
+the client or by the server.</t>
+      <dl spacing="compact" indent="3" newline="false" pn="section-3-7">
+        <dt pn="section-3-7.1">Client-Sent Available Versions:</dt>
+        <dd pn="section-3-7.2">
+          <t indent="0" pn="section-3-7.2.1">When sent by a client, the Available Versions field lists all the versions
+that this first flight is compatible with, ordered by descending preference.
+Note that the version in the Chosen Version field <bcp14>MUST</bcp14> be included in this list
+to allow the client to communicate the Chosen Version's preference. Note that
+this preference is only advisory; servers <bcp14>MAY</bcp14> choose to use their own preference
+instead.</t>
+        </dd>
+        <dt pn="section-3-7.3">Server-Sent Available Versions:</dt>
+        <dd pn="section-3-7.4">
+          <t indent="0" pn="section-3-7.4.1">When sent by a server, the Available Versions field lists all the
+Fully Deployed Versions of this server deployment (see <xref target="server-fleet" format="default" sectionFormat="of" derivedContent="Section 5"/>). The
+ordering of the versions in this field does not carry any semantics. Note
+that the version in the Chosen Version field is not necessarily included in this
+list, because the server operator could be in the process of removing support
+for this version. For the same reason, the Available Versions field <bcp14>MAY</bcp14> be empty.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-3-8">Clients and servers <bcp14>MAY</bcp14> both include versions following the pattern 0x?a?a?a?a
+in their Available Versions list. Those versions are reserved to exercise
+version negotiation (see <xref target="RFC9000" section="15" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-15" derivedContent="QUIC"/>) and will never be
+selected when choosing a version to use.</t>
+    </section>
+    <section anchor="downgrade" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-version-downgrade-preventio">Version Downgrade Prevention</name>
+      <t indent="0" pn="section-4-1">A version downgrade is an attack where a malicious entity manages to make the
+QUIC endpoints negotiate a QUIC version different from the one they would have
+negotiated in the absence of the attack. The mechanism described in this
+document is designed to prevent downgrade attacks.</t>
+      <t indent="0" pn="section-4-2">Clients <bcp14>MUST</bcp14> ignore any received Version Negotiation packets that contain the
+Original Version. A client that makes a connection attempt based on information
+received from a Version Negotiation packet <bcp14>MUST</bcp14> ignore any Version Negotiation
+packets it receives in response to that connection attempt.</t>
+      <t indent="0" pn="section-4-3">Both endpoints <bcp14>MUST</bcp14> parse their peer's Version Information during the handshake.
+If that leads to a parsing failure (for example, if it is too short or if
+its length is not divisible by four), then the endpoint <bcp14>MUST</bcp14> close the
+connection; if the connection was using QUIC version 1, that connection closure
+<bcp14>MUST</bcp14> use a transport error of type TRANSPORT_PARAMETER_ERROR. If an endpoint
+receives a Chosen Version equal to zero, or any Available Version equal to zero,
+it <bcp14>MUST</bcp14> treat it as a parsing failure. If a server receives Version
+Information where the Chosen Version is not included in Available Versions, it
+<bcp14>MUST</bcp14> treat it as a parsing failure.</t>
+      <t indent="0" pn="section-4-4">Every QUIC version that supports version negotiation <bcp14>MUST</bcp14> define a method for
+      closing the connection with a version negotiation error.
+
+      For QUIC version 1,
+version negotiation errors are signaled using a transport error of type
+VERSION_NEGOTIATION_ERROR (see <xref target="iana-error" format="default" sectionFormat="of" derivedContent="Section 10.2"/>).</t>
+      <t indent="0" pn="section-4-5">When a server receives a client's first flight, the server will first establish
+which QUIC version is in use for this connection in order to properly parse the
+first flight. This may involve examining data that is not part of the handshake transcript, such as parts of the packet header. When the server then processes the client's Version
+Information, the server <bcp14>MUST</bcp14> validate that the client's Chosen Version matches
+the version in use for the connection. If the two differ, the server <bcp14>MUST</bcp14> close
+the connection with a version negotiation error.</t>
+      <t indent="0" pn="section-4-6">In the specific case of QUIC version 1, the server determines that version 1 is in use by observing that the Version field of the first Long Header packet it receives is set to 0x00000001. Subsequently, if the server
+receives the client's Version Information over QUIC version 1 (as indicated by
+the Version field of the Long Header packets that carried the transport
+parameters) and the client's Chosen Version is not set to 0x00000001, the server
+<bcp14>MUST</bcp14> close the connection with a version negotiation error.</t>
+      <t indent="0" pn="section-4-7">Servers <bcp14>MAY</bcp14> complete the handshake even if the Version Information is missing.  Clients <bcp14>MUST NOT</bcp14> complete the handshake if they are reacting to a Version Negotiation packet and the Version Information is missing, but <bcp14>MAY</bcp14> do so otherwise.</t>
+      <t indent="0" pn="section-4-8">If a client receives Version Information where the server's Chosen Version was
+not sent by the client as part of its Available Versions, the client <bcp14>MUST</bcp14> close
+the connection with a version negotiation error. If a client has reacted to a Version Negotiation packet and the server's Version Information was missing, the client <bcp14>MUST</bcp14> close the connection with a version negotiation error.</t>
+      <t indent="0" pn="section-4-9">If the client received and acted on a Version Negotiation packet, the client
+<bcp14>MUST</bcp14> validate the server's Available Versions field. The Available Versions
+field is validated by confirming that the client would have attempted the same
+version with knowledge of the versions the server supports. That is, the client
+would have selected the same version if it received a Version Negotiation packet
+that listed the versions in the server's Available Versions field, plus the
+Negotiated Version. If the client would have selected a different version, the
+client <bcp14>MUST</bcp14> close the connection with a version negotiation error. In
+particular, if the client reacted to a Version Negotiation packet and the
+server's Available Versions field is empty, the client <bcp14>MUST</bcp14> close the connection
+with a version negotiation error. These connection closures prevent an attacker
+from being able to use forged Version Negotiation packets to force a version
+downgrade.</t>
+      <t indent="0" pn="section-4-10">As an example, let's assume a client supports hypothetical QUIC versions 10, 12,
+and 14 with a preference for higher versions. The client initiates a connection
+attempt with version 12. Let's explore two independent example scenarios:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-11">
+        <li pn="section-4-11.1">In the first scenario, the server supports versions 10, 13, and 14, but only 13
+and 14 are Fully Deployed (see <xref target="server-fleet" format="default" sectionFormat="of" derivedContent="Section 5"/>). The server sends a Version
+Negotiation packet with versions 10, 13, and 14. This triggers an incompatible
+version negotiation, and the client initiates a new connection with version 14.
+Then, the server's Available Versions field contains 13 and 14. In that
+scenario, the client would have also picked 14 if it had received a Version
+Negotiation packet with versions 13 and 14; therefore, the handshake succeeds
+using Negotiated Version 14.</li>
+        <li pn="section-4-11.2">In the second scenario, the server supports versions 10, 13, and 14, and they
+are all Fully Deployed. However, the attacker forges a Version Negotiation
+packet with versions 10 and 13. This triggers an incompatible version
+negotiation, and the client initiates a new connection with version 10. Then,
+the server's Available Versions field contains 10, 13, and 14. In that
+scenario, the client would have picked 14 instead of 10 if it had received a
+Version Negotiation packet with versions 10, 13, and 14; therefore, the client
+aborts the handshake with a version negotiation error.</li>
+      </ul>
+      <t indent="0" pn="section-4-12">This validation of Available Versions is not sufficient to prevent downgrade.
+Downgrade prevention also depends on the client ignoring Version Negotiation
+packets that contain the Original Version (see <xref target="incompat-vn" format="default" sectionFormat="of" derivedContent="Section 2.1"/>).</t>
+      <t indent="0" pn="section-4-13">After the process of version negotiation described in this document completes, the version
+in use for the connection is the version that the server sent in the Chosen
+Version field of its Version Information. That remains true even if other
+versions were used in the Version field of long headers at any point in the
+lifetime of the connection. In particular, since the client can be made aware of the Negotiated Version by the QUIC long
+header version during compatible  version negotiation (see <xref target="compat-vn" format="default" sectionFormat="of" derivedContent="Section 2.3"/>), clients <bcp14>MUST</bcp14> validate that the server's
+Chosen Version is equal to the Negotiated Version; if they do not match, the
+client <bcp14>MUST</bcp14> close the connection with a version negotiation error. This prevents
+an attacker's ability to influence version negotiation by forging the long header Version
+field.</t>
+    </section>
+    <section anchor="server-fleet" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-server-deployments-of-quic">Server Deployments of QUIC</name>
+      <t indent="0" pn="section-5-1">While this document mainly discusses a single QUIC server, it is common for
+deployments of QUIC servers to include a fleet of multiple server instances.
+Therefore, we define the following terms:</t>
+      <dl spacing="compact" indent="3" newline="false" pn="section-5-2">
+        <dt pn="section-5-2.1">Acceptable Versions:</dt>
+        <dd pn="section-5-2.2">
+          <t indent="0" pn="section-5-2.2.1">This is the set of versions supported by a given server instance. More
+specifically, these are the versions that a given server instance will use if a
+client sends a first flight using them.</t>
+        </dd>
+        <dt pn="section-5-2.3">Offered Versions:</dt>
+        <dd pn="section-5-2.4">
+          <t indent="0" pn="section-5-2.4.1">This is the set of versions that a given server instance will send in a
+Version Negotiation packet if it receives a first flight from an unknown
+version. This set will most often be equal to the Acceptable Versions set,
+except during short transitions while versions are added or removed (see below).</t>
+        </dd>
+        <dt pn="section-5-2.5">Fully Deployed Versions:</dt>
+        <dd pn="section-5-2.6">
+          <t indent="0" pn="section-5-2.6.1">This is the set of QUIC versions that is supported and negotiated by every
+single QUIC server instance in this deployment. If a deployment only contains a
+single server instance, then this set is equal to the Offered Versions set,
+except during short transitions while versions are added or removed (see below).</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-5-3">If a deployment contains multiple server instances, software updates may not
+happen at exactly the same time on all server instances. Because of this, a
+client might receive a Version Negotiation packet from a server instance that
+has already been updated, and the client's resulting connection attempt might
+reach a different server instance which hasn't been updated yet.</t>
+      <t indent="0" pn="section-5-4">However, even when there is only a single server instance, it is still possible
+to receive a stale Version Negotiation packet if the server performs its
+software update while the Version Negotiation packet is in flight.</t>
+      <t indent="0" pn="section-5-5">This could cause the version downgrade prevention mechanism described in
+<xref target="downgrade" format="default" sectionFormat="of" derivedContent="Section 4"/> to falsely detect a downgrade attack. To avoid that, server
+operators <bcp14>SHOULD</bcp14> perform a three-step process when they wish to add or remove
+support for a version, as described below.</t>
+      <t indent="0" pn="section-5-6">When adding support for a new version:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5-7">
+        <li pn="section-5-7.1">The first step is to progressively add support for the new version to all
+server instances. This step updates the Acceptable Versions but not the
+Offered Versions nor the Fully Deployed Versions. Once all server instances
+have been updated, operators wait for at least one MSL to allow any in-flight
+Version Negotiation packets to arrive.</li>
+        <li pn="section-5-7.2">Then, the second step is to progressively add the new version to Offered
+Versions on all server instances. Once complete, operators wait for at least
+another MSL.</li>
+        <li pn="section-5-7.3">Finally, the third step is to progressively add the new version to
+Fully Deployed Versions on all server instances.</li>
+      </ul>
+      <t indent="0" pn="section-5-8">When removing support for a version:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5-9">
+        <li pn="section-5-9.1">The first step is to progressively remove the version from Fully Deployed
+Versions on all server instances. Once it has been removed on all server
+instances, operators wait for at least one MSL to allow any in-flight Version
+Negotiation packets to arrive.</li>
+        <li pn="section-5-9.2">Then, the second step is to progressively remove the version from Offered
+Versions on all server instances. Once complete, operators wait for at least
+another MSL.</li>
+        <li pn="section-5-9.3">Finally, the third step is to progressively remove support for the version
+from all server instances. That step updates the Acceptable Versions.</li>
+      </ul>
+      <t indent="0" pn="section-5-10">Note that, during the update window, connections are vulnerable to
+      downgrade attacks for Acceptable Versions that are not Fully
+      Deployed.  This is because a client cannot distinguish such a
+      downgrade attack from legitimate exchanges with both updated and
+      non-updated server instances.</t>
+    </section>
+    <section anchor="application-layer-protocol-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-application-layer-protocol-">Application-Layer Protocol Considerations</name>
+      <t indent="0" pn="section-6-1">When a client creates a QUIC connection, its goal is to use an application-layer
+protocol. Therefore, when considering which versions are compatible, clients
+will only consider versions that support one of the intended application-layer
+protocols. If the client's first flight advertises multiple Application-Layer
+Protocol Negotiation (ALPN) <xref target="RFC7301" format="default" sectionFormat="of" derivedContent="ALPN"/> tokens and multiple compatible
+versions, it is possible for some application-layer protocols to not be able to
+run over some of the offered compatible versions. It is the server's
+responsibility to only select an ALPN token that can run over the compatible
+QUIC version that it selects.</t>
+      <t indent="0" pn="section-6-2">A given ALPN token <bcp14>MUST NOT</bcp14> be used with a new QUIC version that is different from the
+version for which the ALPN token was originally defined, unless all the
+following requirements are met:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6-3">
+        <li pn="section-6-3.1">The new QUIC version supports the transport features required by the
+application protocol.</li>
+        <li pn="section-6-3.2">The new QUIC version supports ALPN.</li>
+        <li pn="section-6-3.3">The version of QUIC for which the ALPN token was originally defined is
+compatible with the new QUIC version.</li>
+      </ul>
+      <t indent="0" pn="section-6-4">When incompatible version negotiation is in use, the second connection that is
+      created in response to the received Version
+      Negotiation packet <bcp14>MUST</bcp14> restart its application-layer protocol
+      negotiation process without taking into account the Original Version.</t>
+    </section>
+    <section anchor="considerations-for-future-versions" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-considerations-for-future-v">Considerations for Future Versions</name>
+      <t indent="0" pn="section-7-1">In order to facilitate the deployment of future versions of QUIC, designers of
+future versions <bcp14>SHOULD</bcp14> attempt to design their new version such that commonly
+deployed versions are compatible with it.</t>
+      <t indent="0" pn="section-7-2">QUIC version 1 defines multiple features which are not documented in the QUIC
+invariants. Since, at the time of writing, QUIC version 1 is widely deployed,
+this section discusses considerations for future versions to help with
+compatibility with QUIC version 1.</t>
+      <section anchor="interaction-with-retry" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-interaction-with-retry">Interaction with Retry</name>
+        <t indent="0" pn="section-7.1-1">QUIC version 1 features Retry packets, which the server can send to validate the
+client's IP address before parsing the client's first flight. A server that
+sends a Retry packet can do so before parsing the client's first flight. Therefore, a
+server that sends a Retry packet might not have processed the client's
+Version Information before doing so.</t>
+        <t indent="0" pn="section-7.1-2">If a future document wishes to define compatibility between two versions that
+support Retry, that document <bcp14>MUST</bcp14> specify how version negotiation (both
+compatible and incompatible) interacts with Retry during a handshake that
+requires both. For example, that could be accomplished by having the server
+first send a Retry packet in the Original Version, thereby validating the
+client's IP address before attempting compatible version negotiation. If both
+versions support authenticating Retry packets, the compatibility definition
+needs to define how to authenticate the Retry in the Negotiated Version
+handshake even though the Retry itself was sent using the client's Chosen
+Version.</t>
+      </section>
+      <section anchor="interaction-with-tls-resumption" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-interaction-with-tls-resump">Interaction with TLS Resumption</name>
+        <t indent="0" pn="section-7.2-1">QUIC version 1 uses TLS 1.3, which supports session resumption by sending
+session tickets in one connection that can be used in a later connection (see
+<xref section="2.2" sectionFormat="of" target="RFC8446" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-2.2" derivedContent="TLS"/>). New versions that also use TLS 1.3 <bcp14>SHOULD</bcp14>
+mandate that their session tickets are tightly scoped to one version of QUIC,
+i.e., require that clients not use them across multiple version and that servers
+validate this client requirement. This helps mitigate cross-protocol attacks.</t>
+      </section>
+      <section anchor="interaction-with-0-rtt" numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-interaction-with-0-rtt">Interaction with 0-RTT</name>
+        <t indent="0" pn="section-7.3-1">QUIC version 1 allows sending data from the client to the server during the
+handshake by using 0-RTT packets. If a future document wishes to define
+compatibility between two versions that support 0-RTT, that document <bcp14>MUST</bcp14>
+address the scenario where there are 0-RTT packets in the client's first flight.
+For example, this could be accomplished by defining which transformations are
+applied to 0-RTT packets. That document could specify that compatible version
+negotiation causes 0-RTT data to be rejected by the server.</t>
+      </section>
+    </section>
+    <section anchor="special-handling-for-quic-version-1" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-special-handling-for-quic-v">Special Handling for QUIC Version 1</name>
+      <t indent="0" pn="section-8-1">Because QUIC version 1 was the only QUIC version that was published
+      on the IETF Standards Track before this document, it is handled
+      specially as follows: if a client is starting a QUIC version 1
+      connection in response to a received Version Negotiation packet and
+      the version_information transport parameter is missing from the
+      server's transport parameters, then the client <bcp14>SHALL</bcp14> proceed as if
+      the server's transport parameters contained a version_information
+      transport parameter with a Chosen Version set to 0x00000001 and an
+      Available Version list containing exactly one version set to
+      0x00000001.  This allows version negotiation to work with servers
+      that only support QUIC version 1.  Note that implementations that
+      wish to use version negotiation to negotiate versions other than QUIC
+      version 1 <bcp14>MUST</bcp14> implement the version negotiation mechanism
+      defined in this document.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-9-1">The security of this version negotiation mechanism relies on the authenticity of
+the Version Information exchanged during the handshake. In QUIC version 1,
+transport parameters are authenticated, ensuring the security of this mechanism.
+Negotiation between compatible versions will have the security of the weakest
+common version.</t>
+      <t indent="0" pn="section-9-2">The requirement that versions not be assumed compatible mitigates the
+possibility of cross-protocol attacks, but more analysis is still needed here.
+That analysis is out of scope for this document.</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-10">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="quic-transport-parameter" numbered="true" removeInRFC="false" toc="include" pn="section-10.1">
+        <name slugifiedName="name-quic-transport-parameter">QUIC Transport Parameter</name>
+        <t indent="0" pn="section-10.1-1">IANA has registered the following value in the "QUIC Transport Parameters"
+registry maintained at <eref brackets="angle" target="https://www.iana.org/assignments/quic"/>.</t>
+        <dl spacing="compact" indent="3" newline="false" pn="section-10.1-2">
+          <dt pn="section-10.1-2.1">Value:</dt>
+          <dd pn="section-10.1-2.2">0x11</dd>
+          <dt pn="section-10.1-2.3">Parameter Name:</dt>
+          <dd pn="section-10.1-2.4">version_information</dd>
+          <dt pn="section-10.1-2.5">Status:</dt>
+          <dd pn="section-10.1-2.6">permanent</dd>
+          <dt pn="section-10.1-2.7">Specification:</dt>
+          <dd pn="section-10.1-2.8">RFC 9368</dd>
+        </dl>
+      </section>
+      <section anchor="iana-error" numbered="true" removeInRFC="false" toc="include" pn="section-10.2">
+        <name slugifiedName="name-quic-transport-error-code">QUIC Transport Error Code</name>
+        <t indent="0" pn="section-10.2-1">IANA has registered the following value in the "QUIC Transport Error Codes"
+	registry maintained at <eref brackets="angle" target="https://www.iana.org/assignments/quic"/>.</t>
+        <dl spacing="compact" indent="3" newline="false" pn="section-10.2-2">
+          <dt pn="section-10.2-2.1">Value:</dt>
+          <dd pn="section-10.2-2.2">0x11</dd>
+          <dt pn="section-10.2-2.3">Code:</dt>
+          <dd pn="section-10.2-2.4">VERSION_NEGOTIATION_ERROR</dd>
+          <dt pn="section-10.2-2.5">Description:</dt>
+          <dd pn="section-10.2-2.6">Error negotiating version</dd>
+          <dt pn="section-10.2-2.7">Status:</dt>
+          <dd pn="section-10.2-2.8">permanent</dd>
+          <dt pn="section-10.2-2.9">Specification:</dt>
+          <dd pn="section-10.2-2.10">RFC 9368</dd>
+        </dl>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC8999" to="QUIC-INVARIANTS"/>
+    <displayreference target="RFC9000" to="QUIC"/>
+    <displayreference target="RFC7301" to="ALPN"/>
+    <displayreference target="RFC8446" to="TLS"/>
+    <displayreference target="RFC9293" to="TCP"/>
+    <references pn="section-11">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-11.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC7301" target="https://www.rfc-editor.org/info/rfc7301" quoteTitle="true" derivedAnchor="ALPN">
+          <front>
+            <title>Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension</title>
+            <author fullname="S. Friedl" initials="S." surname="Friedl"/>
+            <author fullname="A. Popov" initials="A." surname="Popov"/>
+            <author fullname="A. Langley" initials="A." surname="Langley"/>
+            <author fullname="E. Stephan" initials="E." surname="Stephan"/>
+            <date month="July" year="2014"/>
+            <abstract>
+              <t indent="0">This document describes a Transport Layer Security (TLS) extension for application-layer protocol negotiation within the TLS handshake.  For instances in which multiple application protocols are supported on the same TCP or UDP port, this extension allows the application layer to negotiate which protocol will be used within the TLS connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7301"/>
+        </reference>
+        <reference anchor="RFC9000" target="https://www.rfc-editor.org/info/rfc9000" quoteTitle="true" derivedAnchor="QUIC">
+          <front>
+            <title>QUIC: A UDP-Based Multiplexed and Secure Transport</title>
+            <author fullname="J. Iyengar" initials="J." role="editor" surname="Iyengar"/>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines the core of the QUIC transport protocol.  QUIC provides applications with flow-controlled streams for structured communication, low-latency connection establishment, and network path migration.  QUIC includes security measures that ensure confidentiality, integrity, and availability in a range of deployment circumstances.  Accompanying documents describe the integration of TLS for key negotiation, loss detection, and an exemplary congestion control algorithm.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9000"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9000"/>
+        </reference>
+        <reference anchor="RFC8999" target="https://www.rfc-editor.org/info/rfc8999" quoteTitle="true" derivedAnchor="QUIC-INVARIANTS">
+          <front>
+            <title>Version-Independent Properties of QUIC</title>
+            <author fullname="M. Thomson" initials="M." surname="Thomson"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines the properties of the QUIC transport protocol that are common to all versions of the protocol.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8999"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8999"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="TLS">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2018"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol. TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961. This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+      </references>
+      <references pn="section-11.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC9293" target="https://www.rfc-editor.org/info/rfc9293" quoteTitle="true" derivedAnchor="TCP">
+          <front>
+            <title>Transmission Control Protocol (TCP)</title>
+            <author fullname="W. Eddy" initials="W." role="editor" surname="Eddy"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies the Transmission Control Protocol (TCP).  TCP is an important transport-layer protocol in the Internet protocol stack, and it has continuously evolved over decades of use and growth of the Internet.  Over this time, a number of changes have been made to TCP as it was specified in RFC 793, though these have only been documented in a piecemeal fashion.  This document collects and brings those changes together with the protocol specification from RFC 793.  This document obsoletes RFC 793, as well as RFCs 879, 2873, 6093, 6429, 6528, and 6691 that updated parts of RFC 793.  It updates RFCs 1011 and 1122, and it should be considered as a replacement for the portions of those documents dealing with TCP requirements.  It also updates RFC 5961 by adding a small clarification in reset handling while in the SYN-RECEIVED state.  The TCP header control bits from RFC 793 have also been updated based on RFC 3168.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="7"/>
+          <seriesInfo name="RFC" value="9293"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9293"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The authors would like to thank <contact fullname="Nick Banks"/>, <contact fullname="Mike Bishop"/>, <contact fullname="Martin Duke"/>, <contact fullname="Ryan Hamilton"/>, <contact fullname="Roberto Peon"/>, <contact fullname="Anthony Rossi"/>, and <contact fullname="Martin Thomson"/> for their input and
+contributions.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="D." surname="Schinazi" fullname="David Schinazi">
+        <organization showOnFrontPage="true">Google LLC</organization>
+        <address>
+          <postal>
+            <street>1600 Amphitheatre Parkway</street>
+            <city>Mountain View</city>
+            <region>CA</region>
+            <code>94043</code>
+            <country>United States of America</country>
+          </postal>
+          <email>dschinazi.ietf@gmail.com</email>
+        </address>
+      </author>
+      <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <email>ekr@rtfm.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,983 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-httpbis-binary-message-06" indexInclude="true" ipr="trust200902" number="9292" prepTime="2022-08-30T17:34:11" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-httpbis-binary-message-06" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9292" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Binary HTTP Messages">Binary Representation of HTTP Messages</title>
+    <seriesInfo name="RFC" value="9292" stream="IETF"/>
+    <author initials="M." surname="Thomson" fullname="Martin Thomson">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <email>mt@lowentropy.net</email>
+      </address>
+    </author>
+    <author initials="C. A." surname="Wood" fullname="Christopher A. Wood">
+      <organization showOnFrontPage="true">Cloudflare</organization>
+      <address>
+        <email>caw@heapingbits.net</email>
+      </address>
+    </author>
+    <date month="08" year="2022"/>
+    <area>art</area>
+    <workgroup>httpbis</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document defines a binary format for representing HTTP messages.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9292" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-definitions">Conventions and Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-format">Format</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-known-length-messages">Known-Length Messages</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-indeterminate-length-messag">Indeterminate-Length Messages</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-framing-indicator">Framing Indicator</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t indent="0" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-control-data">Request Control Data</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.5">
+                <t indent="0" pn="section-toc.1-1.3.2.5.1"><xref derivedContent="3.5" format="counter" sectionFormat="of" target="section-3.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-response-control-data">Response Control Data</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.5.2">
+                  <li pn="section-toc.1-1.3.2.5.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.5.2.1.1"><xref derivedContent="3.5.1" format="counter" sectionFormat="of" target="section-3.5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informational-status-codes">Informational Status Codes</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.6">
+                <t indent="0" pn="section-toc.1-1.3.2.6.1"><xref derivedContent="3.6" format="counter" sectionFormat="of" target="section-3.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-header-and-trailer-field-li">Header and Trailer Field Lines</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.7">
+                <t indent="0" pn="section-toc.1-1.3.2.7.1"><xref derivedContent="3.7" format="counter" sectionFormat="of" target="section-3.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-content">Content</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.8">
+                <t indent="0" pn="section-toc.1-1.3.2.8.1"><xref derivedContent="3.8" format="counter" sectionFormat="of" target="section-3.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-padding-and-truncation">Padding and Truncation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-invalid-messages">Invalid Messages</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples">Examples</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-example">Request Example</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-response-example">Response Example</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-notable-differences-with-ht">Notable Differences with HTTP Protocol Messages</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-message-bhttp-media-type">"message/bhttp" Media Type</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">This document defines a simple format for representing an HTTP message
+<xref target="RFC9110" format="default" sectionFormat="of" derivedContent="HTTP"/>, either request or response. This allows for the encoding of HTTP
+messages that can be conveyed outside an HTTP protocol. This enables the
+transformation of entire messages, including the application of authenticated
+encryption.</t>
+      <t indent="0" pn="section-1-2">The design of this format is informed by the framing structure of HTTP/2
+<xref target="RFC9113" format="default" sectionFormat="of" derivedContent="HTTP/2"/> and HTTP/3 <xref target="RFC9114" format="default" sectionFormat="of" derivedContent="HTTP/3"/>.  Rules for constructing messages rely on the rules
+defined in HTTP/2, but the format itself is distinct; see <xref target="differences" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+      <t indent="0" pn="section-1-3">This format defines <tt>"message/bhttp"</tt>, a binary alternative to the <tt>"message/http"</tt>
+content type defined in <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/>. A binary format permits more efficient
+encoding and processing of messages. A binary format also reduces exposure to
+security problems related to processing of HTTP messages.</t>
+      <t indent="0" pn="section-1-4">Two modes for encoding are described:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-5">
+        <li pn="section-1-5.1">a known-length encoding includes length prefixes for all major message
+components, and</li>
+        <li pn="section-1-5.2">an indeterminate-length encoding enables efficient generation of messages
+where lengths are not known when encoding starts.</li>
+      </ul>
+      <t indent="0" pn="section-1-6">This format is designed to convey the semantics of valid HTTP messages as simply
+and efficiently as possible.  It is not designed to capture all of the details
+of the encoding of messages from specific HTTP versions <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/> <xref target="RFC9113" format="default" sectionFormat="of" derivedContent="HTTP/2"/>
+        <xref target="RFC9114" format="default" sectionFormat="of" derivedContent="HTTP/3"/>.  As such, this format is unlikely to be suitable for applications that
+depend on an exact recording of the encoding of messages.</t>
+    </section>
+    <section anchor="conventions-and-definitions" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-and-definitions">Conventions and Definitions</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+      <t indent="0" pn="section-2-2">This document uses terminology from HTTP <xref target="RFC9110" format="default" sectionFormat="of" derivedContent="HTTP"/> and notation from QUIC
+(<xref section="1.3" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-1.3" derivedContent="QUIC"/>).</t>
+    </section>
+    <section anchor="format" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-format">Format</name>
+      <t indent="0" pn="section-3-1"><xref section="6" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-6" derivedContent="HTTP"/> defines the general structure of HTTP messages and
+composes those messages into distinct parts.  This format describes how those
+parts are composed into a sequence of bytes.  At a high level, binary messages
+are comprised of:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-3-2"><li pn="section-3-2.1" derivedCounter="1.">Framing indicator. This format uses a single integer to describe framing, which describes
+whether the message is a request or response and how subsequent sections are
+formatted; see <xref target="framing" format="default" sectionFormat="of" derivedContent="Section 3.3"/>.</li>
+        <li pn="section-3-2.2" derivedCounter="2.">For a response, zero or more informational responses.  Each informational
+response consists of an informational status code and header section.</li>
+        <li pn="section-3-2.3" derivedCounter="3.">Control data. For a request, this contains the request method and target.
+For a response, this contains the status code.</li>
+        <li pn="section-3-2.4" derivedCounter="4.">Header section.  This contains zero or more header fields.</li>
+        <li pn="section-3-2.5" derivedCounter="5.">Content.  This is a sequence of zero or more bytes.</li>
+        <li pn="section-3-2.6" derivedCounter="6.">Trailer section.  This contains zero or more trailer fields.</li>
+        <li pn="section-3-2.7" derivedCounter="7.">Optional padding. Any amount of zero-valued bytes.</li>
+      </ol>
+      <t indent="0" pn="section-3-3">All lengths and numeric values are encoded using the variable-length integer
+encoding from <xref section="16" sectionFormat="of" target="RFC9000" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9000#section-16" derivedContent="QUIC"/>.  Integer values do not need to be encoded
+on the minimum number of bytes necessary.</t>
+      <section anchor="known-length-messages" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-known-length-messages">Known-Length Messages</name>
+        <t indent="0" pn="section-3.1-1">A request or response that has a known length at the time of construction uses
+the format shown in <xref target="format-known-length" format="default" sectionFormat="of" derivedContent="Figure 1"/>.</t>
+        <figure anchor="format-known-length" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-known-length-message">Known-Length Message</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.1-2.1">
+Known-Length Request {
+  Framing Indicator (i) = 0,
+  Request Control Data (..),
+  Known-Length Field Section (..),
+  Known-Length Content (..),
+  Known-Length Field Section (..),
+  Padding (..),
+}
+
+Known-Length Response {
+  Framing Indicator (i) = 1,
+  Known-Length Informational Response (..) ...,
+  Final Response Control Data (..),
+  Known-Length Field Section (..),
+  Known-Length Content (..),
+  Known-Length Field Section (..),
+  Padding (..),
+}
+
+Known-Length Field Section {
+  Length (i),
+  Field Line (..) ...,
+}
+
+Known-Length Content {
+  Content Length (i),
+  Content (..),
+}
+
+Known-Length Informational Response {
+  Informational Response Control Data (..),
+  Known-Length Field Section (..),
+}
+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.1-3">A known-length request consists of a framing indicator (<xref target="framing" format="default" sectionFormat="of" derivedContent="Section 3.3"/>), request
+control data (<xref target="request-control" format="default" sectionFormat="of" derivedContent="Section 3.4"/>), a header section with a length prefix,
+binary content with a length prefix, a trailer section with a length prefix, and
+padding.</t>
+        <t indent="0" pn="section-3.1-4">A known-length response contains the same fields, with the exception that
+request control data is replaced by zero or more informational responses
+(<xref target="informational" format="default" sectionFormat="of" derivedContent="Section 3.5.1"/>) followed by response control data (<xref target="response-control" format="default" sectionFormat="of" derivedContent="Section 3.5"/>).</t>
+        <t indent="0" pn="section-3.1-5">For a known-length encoding, the length prefix on field sections and content is
+a variable-length encoding of an integer.  This integer is the number of bytes
+in the field section or content, not including the length field itself.</t>
+        <t indent="0" pn="section-3.1-6">Fields in the header and trailer sections consist of a length-prefixed name and
+length-prefixed value; see <xref target="fields" format="default" sectionFormat="of" derivedContent="Section 3.6"/>.</t>
+        <t indent="0" pn="section-3.1-7">The format allows for the message to be truncated before any of the length
+prefixes that precede the field sections or content; see <xref target="padding" format="default" sectionFormat="of" derivedContent="Section 3.8"/>.</t>
+        <t indent="0" pn="section-3.1-8">The variable-length integer encoding means that there is a limit of 2<sup>62</sup>-1
+bytes for each field section and the message content.</t>
+      </section>
+      <section anchor="indeterminate-length-messages" numbered="true" removeInRFC="false" toc="include" pn="section-3.2">
+        <name slugifiedName="name-indeterminate-length-messag">Indeterminate-Length Messages</name>
+        <t indent="0" pn="section-3.2-1">A request or response that is constructed without encoding a known length for
+each section uses the format shown in <xref target="format-indeterminate-length" format="default" sectionFormat="of" derivedContent="Figure 2"/>:</t>
+        <figure anchor="format-indeterminate-length" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-indeterminate-length-message">Indeterminate-Length Message</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.2-2.1">
+Indeterminate-Length Request  {
+  Framing Indicator (i) = 2,
+  Request Control Data (..),
+  Indeterminate-Length Field Section (..),
+  Indeterminate-Length Content (..),
+  Indeterminate-Length Field Section (..),
+  Padding (..),
+}
+
+Indeterminate-Length Response  {
+  Framing Indicator (i) = 3,
+  Indeterminate-Length Informational Response (..) ...,
+  Final Response Control Data (..),
+  Indeterminate-Length Field Section (..),
+  Indeterminate-Length Content (..),
+  Indeterminate-Length Field Section (..),
+  Padding (..),
+}
+
+Indeterminate-Length Content {
+  Indeterminate-Length Content Chunk (..) ...,
+  Content Terminator (i) = 0,
+}
+
+Indeterminate-Length Content Chunk {
+  Chunk Length (i) = 1..,
+  Chunk (..),
+}
+
+Indeterminate-Length Field Section {
+  Field Line (..) ...,
+  Content Terminator (i) = 0,
+}
+
+Indeterminate-Length Informational Response {
+  Informational Response Control Data (..),
+  Indeterminate-Length Field Section (..),
+}
+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.2-3">An indeterminate-length request consists of a framing indicator (<xref target="framing" format="default" sectionFormat="of" derivedContent="Section 3.3"/>),
+request control data (<xref target="request-control" format="default" sectionFormat="of" derivedContent="Section 3.4"/>), a header section that is terminated
+by a zero value, any number of non-zero-length chunks of binary content, a zero
+value, a trailer section that is terminated by a zero value, and padding.</t>
+        <t indent="0" pn="section-3.2-4">An indeterminate-length response contains the same fields, with the exception
+that request control data is replaced by zero or more informational responses
+(<xref target="informational" format="default" sectionFormat="of" derivedContent="Section 3.5.1"/>) and response control data (<xref target="response-control" format="default" sectionFormat="of" derivedContent="Section 3.5"/>).</t>
+        <t indent="0" pn="section-3.2-5">The indeterminate-length encoding only uses length prefixes for content blocks.
+Multiple length-prefixed portions of content can be included, each prefixed by a
+non-zero Chunk Length integer describing the number of bytes in the block.  The
+Chunk Length is encoded as a variable-length integer.</t>
+        <t indent="0" pn="section-3.2-6">Each Field Line in an Indeterminate-Length Field Section starts with a Name
+Length field.  An Indeterminate-Length Field Section ends with a Content
+Terminator field.  The zero value of the Content Terminator distinguishes it
+from the Name Length field, which cannot contain a value of 0.</t>
+        <t indent="0" pn="section-3.2-7">Indeterminate-length messages can be truncated in a way similar to that for
+known-length
+messages; see <xref target="padding" format="default" sectionFormat="of" derivedContent="Section 3.8"/>.</t>
+        <t indent="0" pn="section-3.2-8">Indeterminate-length messages use the same encoding for Field Line as
+known-length messages; see <xref target="fields" format="default" sectionFormat="of" derivedContent="Section 3.6"/>.</t>
+      </section>
+      <section anchor="framing" numbered="true" removeInRFC="false" toc="include" pn="section-3.3">
+        <name slugifiedName="name-framing-indicator">Framing Indicator</name>
+        <t indent="0" pn="section-3.3-1">The start of each binary message is a framing indicator that is a single integer that
+describes the structure of the subsequent sections. The framing indicator can
+take just four values:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.3-2">
+          <li pn="section-3.3-2.1">A value of 0 describes a request of known length.</li>
+          <li pn="section-3.3-2.2">A value of 1 describes a response of known length.</li>
+          <li pn="section-3.3-2.3">A value of 2 describes a request of indeterminate length.</li>
+          <li pn="section-3.3-2.4">A value of 3 describes a response of indeterminate length.</li>
+        </ul>
+        <t indent="0" pn="section-3.3-3">Other values cause the message to be invalid; see <xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+      </section>
+      <section anchor="request-control" numbered="true" removeInRFC="false" toc="include" pn="section-3.4">
+        <name slugifiedName="name-request-control-data">Request Control Data</name>
+        <t indent="0" pn="section-3.4-1">The control data for a request message contains the method and request target.
+That information is encoded as an ordered sequence of fields: Method, Scheme,
+Authority, Path. Each of these fields is prefixed with a length.</t>
+        <t indent="0" pn="section-3.4-2">The values of these fields follow the rules in HTTP/2 (<xref section="8.3.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.3.1" derivedContent="HTTP/2"/>)
+that apply to the <tt>":method"</tt>, <tt>":scheme"</tt>, <tt>":authority"</tt>, and <tt>":path"</tt> pseudo-header
+fields, respectively. However, where the <tt>":authority"</tt> pseudo-header field might
+be omitted in HTTP/2, a zero-length value is encoded instead.</t>
+        <t indent="0" pn="section-3.4-3">The format of request control data is shown in <xref target="format-request-control-data" format="default" sectionFormat="of" derivedContent="Figure 3"/>.</t>
+        <figure anchor="format-request-control-data" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-format-of-request-control-d">Format of Request Control Data</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.4-4.1">
+Request Control Data {
+  Method Length (i),
+  Method (..),
+  Scheme Length (i),
+  Scheme (..),
+  Authority Length (i),
+  Authority (..),
+  Path Length (i),
+  Path (..),
+}
+</artwork>
+        </figure>
+      </section>
+      <section anchor="response-control" numbered="true" removeInRFC="false" toc="include" pn="section-3.5">
+        <name slugifiedName="name-response-control-data">Response Control Data</name>
+        <t indent="0" pn="section-3.5-1">The control data for a response message consists of the status code. The status
+code (<xref section="15" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-15" derivedContent="HTTP"/>) is encoded as a variable-length integer, not a
+length-prefixed decimal string.</t>
+        <t indent="0" pn="section-3.5-2">The format of final response control data is shown in
+<xref target="format-response-control-data" format="default" sectionFormat="of" derivedContent="Figure 4"/>.</t>
+        <figure anchor="format-response-control-data" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-format-of-final-response-co">Format of Final Response Control Data</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.5-3.1">
+Final Response Control Data {
+  Status Code (i) = 200..599,
+}
+</artwork>
+        </figure>
+        <section anchor="informational" numbered="true" removeInRFC="false" toc="include" pn="section-3.5.1">
+          <name slugifiedName="name-informational-status-codes">Informational Status Codes</name>
+          <t indent="0" pn="section-3.5.1-1">Responses that include informational status codes (see <xref section="15.2" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-15.2" derivedContent="HTTP"/>)
+are encoded by repeating the response control data and associated header section
+until a final status code is encoded; that is, a Status Code field with a value from 200 to 599 (inclusive).  The status code distinguishes
+between informational and final responses.</t>
+          <t indent="0" pn="section-3.5.1-2">The format of the informational response control data is shown in
+<xref target="format-informational" format="default" sectionFormat="of" derivedContent="Figure 5"/>.</t>
+          <figure anchor="format-informational" align="left" suppress-title="false" pn="figure-5">
+            <name slugifiedName="name-format-of-informational-res">Format of Informational Response Control Data</name>
+            <artwork name="" type="" align="left" alt="" pn="section-3.5.1-3.1">
+Informational Response Control Data {
+  Status Code (i) = 100..199,
+}
+</artwork>
+          </figure>
+          <t indent="0" pn="section-3.5.1-4">A response message can include any number of informational responses that
+precede a final status code.  These convey an informational status code and a
+header block.</t>
+          <t indent="0" pn="section-3.5.1-5">If the response control data includes an informational status code (that is, a
+value between 100 and 199 inclusive), the control data is followed by a header
+section (encoded with known length or indeterminate length according to the framing
+indicator) and another block of control data.  This pattern repeats until the
+control data contains a final status code (200 to 599 inclusive).</t>
+        </section>
+      </section>
+      <section anchor="fields" numbered="true" removeInRFC="false" toc="include" pn="section-3.6">
+        <name slugifiedName="name-header-and-trailer-field-li">Header and Trailer Field Lines</name>
+        <t indent="0" pn="section-3.6-1">Header and trailer sections consist of zero or more field lines; see <xref section="5" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-5" derivedContent="HTTP"/>. The format of a field section depends on whether the message is of
+known length or indeterminate length.</t>
+        <t indent="0" pn="section-3.6-2">Each Field Line encoding includes a name and a value. Both the name and value are
+length-prefixed sequences of bytes.  The Name field is a minimum of one
+byte. The format of a Field Line is shown in <xref target="format-field-line" format="default" sectionFormat="of" derivedContent="Figure 6"/>.</t>
+        <figure anchor="format-field-line" align="left" suppress-title="false" pn="figure-6">
+          <name slugifiedName="name-format-of-a-field-line">Format of a Field Line</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.6-3.1">
+Field Line {
+  Name Length (i) = 1..,
+  Name (..),
+  Value Length (i),
+  Value (..),
+}
+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.6-4">For field names, byte values that are not permitted in an HTTP field name cause
+the message to be invalid; see <xref section="5.1" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-5.1" derivedContent="HTTP"/> for a definition of what
+is valid and <xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/> regarding the handling of invalid messages.  A recipient <bcp14>MUST</bcp14>
+treat a message that contains field values that would cause an HTTP/2 message to
+be malformed according to <xref section="8.2.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.2.1" derivedContent="HTTP/2"/> as invalid; see <xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+        <t indent="0" pn="section-3.6-5">The same field name can be repeated over more than one field line; see <xref section="5.2" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-5.2" derivedContent="HTTP"/> for the semantics of repeated field names and rules for combining
+values.</t>
+        <t indent="0" pn="section-3.6-6">Messages are invalid (<xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>) if they contain fields named <tt>":method"</tt>,
+<tt>":scheme"</tt>, <tt>":authority"</tt>, <tt>":path"</tt>, or <tt>":status"</tt>.  Other pseudo-fields that are
+defined by protocol extensions <bcp14>MAY</bcp14> be included; pseudo-fields cannot be included
+in trailers (see <xref section="8.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.1" derivedContent="HTTP/2"/>).  A Field Line containing pseudo-fields
+<bcp14>MUST</bcp14> precede other Field Line values.  A message that contains a pseudo-field after
+any other field is invalid; see <xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+        <t indent="0" pn="section-3.6-7">Fields that relate to connections (<xref section="7.6.1" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-7.6.1" derivedContent="HTTP"/>) cannot be used to
+produce the effect on a connection in this context.  These fields <bcp14>SHOULD</bcp14> be
+removed when constructing a binary message.  However, they do not cause a
+message to be invalid (<xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>); permitting these fields allows a binary
+message to capture messages that are exchanged in a protocol context.</t>
+        <t indent="0" pn="section-3.6-8">Like HTTP/2 or HTTP/3, this format has an exception for the combination of
+multiple instances of the <tt>Cookie</tt> field. Instances of fields with the
+ASCII-encoded value of <tt>"cookie"</tt> are combined using a semicolon octet (0x3b)
+rather than a comma; see <xref section="8.2.3" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.2.3" derivedContent="HTTP/2"/>.</t>
+      </section>
+      <section anchor="content" numbered="true" removeInRFC="false" toc="include" pn="section-3.7">
+        <name slugifiedName="name-content">Content</name>
+        <t indent="0" pn="section-3.7-1">The content of messages is a sequence of bytes of any length. Though a
+known-length message has a limit, this limit is large enough that it is
+unlikely to be a practical limitation. There is no limit to the size of content
+in an indeterminate-length message.</t>
+      </section>
+      <section anchor="padding" numbered="true" removeInRFC="false" toc="include" pn="section-3.8">
+        <name slugifiedName="name-padding-and-truncation">Padding and Truncation</name>
+        <t indent="0" pn="section-3.8-1">Messages can be padded with any number of zero-valued bytes.  Non-zero padding
+bytes cause a message to be invalid (see <xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>). Unlike other parts of a
+message, a processor <bcp14>MAY</bcp14> decide not to validate the value of padding bytes.</t>
+        <t indent="0" pn="section-3.8-2">Truncation can be used to reduce the size of messages that have no data in
+trailing field sections or content.  If the trailers of a message are empty, they
+<bcp14>MAY</bcp14> be omitted by the encoder in place of adding a length field equal to
+zero. An encoder <bcp14>MAY</bcp14> omit empty content in the same way if the trailers are also
+empty.  A message that is truncated at any other point is invalid; see
+<xref target="invalid" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+        <t indent="0" pn="section-3.8-3">Decoders <bcp14>MUST</bcp14> treat missing truncated fields as equivalent to having been sent
+with the length field set to zero.</t>
+        <t indent="0" pn="section-3.8-4">Padding is compatible with truncation of empty parts of the messages.
+Zero-valued bytes will be interpreted as a zero-length part, which is semantically
+equivalent to the part being absent.</t>
+      </section>
+    </section>
+    <section anchor="invalid" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-invalid-messages">Invalid Messages</name>
+      <t indent="0" pn="section-4-1">This document describes a number of ways that a message can be invalid. Invalid
+messages <bcp14>MUST NOT</bcp14> be processed further except to log an error and produce an
+error response.</t>
+      <t indent="0" pn="section-4-2">The format is designed to allow incremental processing. Implementations need to
+be aware of the possibility that an error might be detected after performing
+incremental processing.</t>
+    </section>
+    <section anchor="examples" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-examples">Examples</name>
+      <t indent="0" pn="section-5-1">This section includes example requests and responses encoded in both
+known-length and indeterminate-length forms.</t>
+      <section anchor="request-example" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-request-example">Request Example</name>
+        <t indent="0" pn="section-5.1-1">The example HTTP/1.1 message in <xref target="ex-request" format="default" sectionFormat="of" derivedContent="Figure 7"/> shows the content in the
+<tt>"message/http"</tt> format.</t>
+        <t indent="0" pn="section-5.1-2">Valid HTTP/1.1 messages require lines terminated with CRLF (the two bytes 0x0d and 0x0a). For simplicity and consistency, the content of these examples is
+limited to text, which also uses CRLF for line endings.</t>
+        <figure anchor="ex-request" align="left" suppress-title="false" pn="figure-7">
+          <name slugifiedName="name-sample-http-request">Sample HTTP Request</name>
+          <sourcecode type="http-message" markers="false" pn="section-5.1-3.1">
+GET /hello.txt HTTP/1.1
+User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3
+Host: www.example.com
+Accept-Language: en, mi
+</sourcecode>
+        </figure>
+        <t indent="0" pn="section-5.1-4">This can be expressed as a binary message (type <tt>"message/bhttp"</tt>) using a
+known-length encoding as shown in hexadecimal in <xref target="ex-bink-request" format="default" sectionFormat="of" derivedContent="Figure 8"/>.
+<xref target="ex-bink-request" format="default" sectionFormat="of" derivedContent="Figure 8"/> includes text alongside to show that most of the content is
+not modified.</t>
+        <figure anchor="ex-bink-request" align="left" suppress-title="false" pn="figure-8">
+          <name slugifiedName="name-known-length-binary-encodin">Known-Length Binary Encoding of Request</name>
+          <artwork type="" align="left" pn="section-5.1-5.1">
+00034745 54056874 74707300 0a2f6865  ..GET.https../he
+6c6c6f2e 74787440 6c0a7573 65722d61  llo.txt@l.user-a
+67656e74 34637572 6c2f372e 31362e33  gent4curl/7.16.3
+206c6962 6375726c 2f372e31 362e3320   libcurl/7.16.3
+4f70656e 53534c2f 302e392e 376c207a  OpenSSL/0.9.7l z
+6c69622f 312e322e 3304686f 73740f77  lib/1.2.3.host.w
+77772e65 78616d70 6c652e63 6f6d0f61  ww.example.com.a
+63636570 742d6c61 6e677561 67650665  ccept-language.e
+6e2c206d 690000                      n, mi..
+</artwork>
+        </figure>
+        <t indent="0" pn="section-5.1-6">This example shows that the Host header field is not replicated in the
+<tt>":authority"</tt> field, as is required for ensuring that the request is reproduced
+accurately; see <xref section="8.3.1" sectionFormat="of" target="RFC9113" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9113#section-8.3.1" derivedContent="HTTP/2"/>.</t>
+        <t indent="0" pn="section-5.1-7">The same message can be truncated with no effect on interpretation. In this
+case, the last two bytes -- corresponding to content and a trailer section -- can
+each be removed without altering the semantics of the message.</t>
+        <t indent="0" pn="section-5.1-8">The same message, encoded using an indeterminate-length encoding, is shown in
+<xref target="ex-bini-request" format="default" sectionFormat="of" derivedContent="Figure 9"/>. As the content of this message is empty, the difference in
+formats is negligible.</t>
+        <figure anchor="ex-bini-request" align="left" suppress-title="false" pn="figure-9">
+          <name slugifiedName="name-indeterminate-length-binary">Indeterminate-Length Binary Encoding of Request</name>
+          <artwork type="" align="left" pn="section-5.1-9.1">
+02034745 54056874 74707300 0a2f6865  ..GET.https../he
+6c6c6f2e 7478740a 75736572 2d616765  llo.txt.user-age
+6e743463 75726c2f 372e3136 2e33206c  nt4curl/7.16.3 l
+69626375 726c2f37 2e31362e 33204f70  ibcurl/7.16.3 Op
+656e5353 4c2f302e 392e376c 207a6c69  enSSL/0.9.7l zli
+622f312e 322e3304 686f7374 0f777777  b/1.2.3.host.www
+2e657861 6d706c65 2e636f6d 0f616363  .example.com.acc
+6570742d 6c616e67 75616765 06656e2c  ept-language.en,
+206d6900 00000000 00000000 00000000   mi.............
+</artwork>
+        </figure>
+        <t indent="0" pn="section-5.1-10">This indeterminate-length encoding contains 10 bytes of padding.  As two additional
+bytes can be truncated in the same way as the known-length example, anything up
+to 12 bytes can be removed from this message without affecting its meaning.</t>
+      </section>
+      <section anchor="response-example" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-response-example">Response Example</name>
+        <t indent="0" pn="section-5.2-1">Response messages can contain interim (1xx) status codes, as the message in
+<xref target="ex-response" format="default" sectionFormat="of" derivedContent="Figure 10"/> shows. <xref target="ex-response" format="default" sectionFormat="of" derivedContent="Figure 10"/> includes examples of informational
+status codes 102 and 103, as defined in <xref target="RFC2518" format="default" sectionFormat="of" derivedContent="RFC2518"/> (now obsolete but defines status code 102) and <xref target="RFC8297" format="default" sectionFormat="of" derivedContent="RFC8297"/>, respectively.</t>
+        <figure anchor="ex-response" align="left" suppress-title="false" pn="figure-10">
+          <name slugifiedName="name-sample-http-response">Sample HTTP Response</name>
+          <sourcecode type="http-message" markers="false" pn="section-5.2-2.1">
+HTTP/1.1 102 Processing
+Running: "sleep 15"
+
+HTTP/1.1 103 Early Hints
+Link: &lt;/style.css&gt;; rel=preload; as=style
+Link: &lt;/script.js&gt;; rel=preload; as=script
+
+HTTP/1.1 200 OK
+Date: Mon, 27 Jul 2009 12:28:53 GMT
+Server: Apache
+Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
+ETag: "34aa387-d-1568eb00"
+Accept-Ranges: bytes
+Content-Length: 51
+Vary: Accept-Encoding
+Content-Type: text/plain
+
+Hello World! My content includes a trailing CRLF.
+</sourcecode>
+        </figure>
+        <t indent="0" pn="section-5.2-3">As this is a longer example, only the indeterminate-length encoding is shown in
+<xref target="ex-bini-response" format="default" sectionFormat="of" derivedContent="Figure 11"/>. Note here that the specific text used in the reason
+phrase is not retained by this encoding.</t>
+        <figure anchor="ex-bini-response" align="left" suppress-title="false" pn="figure-11">
+          <name slugifiedName="name-binary-response-including-i">Binary Response, including Informational Responses</name>
+          <artwork type="" align="left" pn="section-5.2-4.1">
+03406607 72756e6e 696e670a 22736c65  .@f.running."sle
+65702031 35220040 67046c69 6e6b233c  ep 15".@g.link#&lt;
+2f737479 6c652e63 73733e3b 2072656c  /style.css&gt;; rel
+3d707265 6c6f6164 3b206173 3d737479  =preload; as=sty
+6c65046c 696e6b24 3c2f7363 72697074  le.link$&lt;/script
+2e6a733e 3b207265 6c3d7072 656c6f61  .js&gt;; rel=preloa
+643b2061 733d7363 72697074 0040c804  d; as=script.@..
+64617465 1d4d6f6e 2c203237 204a756c  date.Mon, 27 Jul
+20323030 39203132 3a32383a 35332047   2009 12:28:53 G
+4d540673 65727665 72064170 61636865  MT.server.Apache
+0d6c6173 742d6d6f 64696669 65641d57  .last-modified.W
+65642c20 3232204a 756c2032 30303920  ed, 22 Jul 2009
+31393a31 353a3536 20474d54 04657461  19:15:56 GMT.eta
+67142233 34616133 38372d64 2d313536  g."34aa387-d-156
+38656230 30220d61 63636570 742d7261  8eb00".accept-ra
+6e676573 05627974 65730e63 6f6e7465  nges.bytes.conte
+6e742d6c 656e6774 68023531 04766172  nt-length.51.var
+790f4163 63657074 2d456e63 6f64696e  y.Accept-Encodin
+670c636f 6e74656e 742d7479 70650a74  g.content-type.t
+6578742f 706c6169 6e003348 656c6c6f  ext/plain.3Hello
+20576f72 6c642120 4d792063 6f6e7465   World! My conte
+6e742069 6e636c75 64657320 61207472  nt includes a tr
+61696c69 6e672043 524c462e 0d0a0000  ailing CRLF.....
+</artwork>
+        </figure>
+        <t indent="0" pn="section-5.2-5">A response that uses the chunked encoding (see <xref section="7.1" sectionFormat="of" target="RFC9112" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9112#section-7.1" derivedContent="HTTP/1.1"/>) as
+shown in <xref target="ex-chunked" format="default" sectionFormat="of" derivedContent="Figure 12"/> can be encoded using indeterminate-length encoding, which
+minimizes buffering needed to translate into the binary format. However, chunk
+boundaries do not need to be retained, and any chunk extensions cannot be
+conveyed using the binary format; see <xref target="differences" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+        <figure anchor="ex-chunked" align="left" suppress-title="false" pn="figure-12">
+          <name slugifiedName="name-chunked-encoding-example">Chunked Encoding Example</name>
+          <sourcecode type="http-message" markers="false" pn="section-5.2-6.1">
+HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+
+4
+This
+6
+ conte
+13;chunk-extension=foo
+nt contains CRLF.
+
+0
+Trailer: text
+</sourcecode>
+        </figure>
+        <t indent="0" pn="section-5.2-7"><xref target="ex-bink-chunked" format="default" sectionFormat="of" derivedContent="Figure 13"/> shows this message using the known-length encoding. Note that
+the Transfer-Encoding header field is removed.</t>
+        <figure anchor="ex-bink-chunked" align="left" suppress-title="false" pn="figure-13">
+          <name slugifiedName="name-known-length-encoding-of-re">Known-Length Encoding of Response</name>
+          <artwork type="" align="left" pn="section-5.2-8.1">
+0140c800 1d546869 7320636f 6e74656e  .@...This conten
+7420636f 6e746169 6e732043 524c462e  t contains CRLF.
+0d0a0d07 74726169 6c657204 74657874  ....trailer.text
+</artwork>
+        </figure>
+      </section>
+    </section>
+    <section anchor="differences" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-notable-differences-with-ht">Notable Differences with HTTP Protocol Messages</name>
+      <t indent="0" pn="section-6-1">This format is designed to carry HTTP semantics just like HTTP/1.1 <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/>, HTTP/2 <xref target="RFC9113" format="default" sectionFormat="of" derivedContent="HTTP/2"/>, or
+HTTP/3 <xref target="RFC9114" format="default" sectionFormat="of" derivedContent="HTTP/3"/>.  However, there are some notable
+differences between this format and the format used in an interactive protocol
+version.</t>
+      <t indent="0" pn="section-6-2">In particular, as a standalone representation, this format lacks the following
+features of the formats used in those protocols:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6-3">
+        <li pn="section-6-3.1">chunk extensions (<xref section="7.1.1" sectionFormat="of" target="RFC9112" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9112#section-7.1.1" derivedContent="HTTP/1.1"/>) and transfer encoding
+(<xref section="6.1" sectionFormat="of" target="RFC9112" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9112#section-6.1" derivedContent="HTTP/1.1"/>)</li>
+        <li pn="section-6-3.2">generic framing and extensibility capabilities</li>
+        <li pn="section-6-3.3">field blocks other than a single header and trailer field block</li>
+        <li pn="section-6-3.4">carrying reason phrases in responses (<xref section="4" sectionFormat="of" target="RFC9112" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9112#section-4" derivedContent="HTTP/1.1"/>)</li>
+        <li pn="section-6-3.5">header compression <xref target="RFC7541" format="default" sectionFormat="of" derivedContent="HPACK"/> <xref target="RFC9204" format="default" sectionFormat="of" derivedContent="QPACK"/></li>
+        <li pn="section-6-3.6">response framing that depends on the corresponding request (such as HEAD)
+or the value of the status code (such as 204 or 304); these responses use the
+same framing as all other messages</li>
+      </ul>
+      <t indent="0" pn="section-6-4">Some of these features are also absent in HTTP/2 and HTTP/3.</t>
+      <t indent="0" pn="section-6-5">Unlike HTTP/2 and HTTP/3, this format uses a fixed format for control data
+rather than using pseudo-fields.</t>
+      <t indent="0" pn="section-6-6">Note that while some messages -- CONNECT or upgrade requests in particular -- can
+be represented using this format, doing so serves no purpose, as these requests
+are used to affect protocol behavior, which this format cannot do without
+additional mechanisms.</t>
+    </section>
+    <section anchor="media-type" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-message-bhttp-media-type">"message/bhttp" Media Type</name>
+      <t indent="0" pn="section-7-1">The <tt>"message/bhttp"</tt> media type can be used to enclose a single HTTP request or
+response message, provided that it obeys the MIME restrictions for all
+"message" types regarding line length and encodings.</t>
+      <dl spacing="compact" newline="false" indent="3" pn="section-7-2">
+        <dt pn="section-7-2.1">Type name:</dt>
+        <dd pn="section-7-2.2">
+          <t indent="0" pn="section-7-2.2.1">message</t>
+        </dd>
+        <dt pn="section-7-2.3">Subtype name:</dt>
+        <dd pn="section-7-2.4">
+          <t indent="0" pn="section-7-2.4.1">bhttp</t>
+        </dd>
+        <dt pn="section-7-2.5">Required parameters:</dt>
+        <dd pn="section-7-2.6">
+          <t indent="0" pn="section-7-2.6.1">N/A</t>
+        </dd>
+        <dt pn="section-7-2.7">Optional parameters:</dt>
+        <dd pn="section-7-2.8">
+          <t indent="0" pn="section-7-2.8.1">N/A</t>
+        </dd>
+        <dt pn="section-7-2.9">Encoding considerations:</dt>
+        <dd pn="section-7-2.10">
+          <t indent="0" pn="section-7-2.10.1">Only "8bit" or "binary" is permitted.</t>
+        </dd>
+        <dt pn="section-7-2.11">Security considerations:</dt>
+        <dd pn="section-7-2.12">
+          <t indent="0" pn="section-7-2.12.1">See <xref target="security" format="default" sectionFormat="of" derivedContent="Section 8"/>.</t>
+        </dd>
+        <dt pn="section-7-2.13">Interoperability considerations:</dt>
+        <dd pn="section-7-2.14">
+          <t indent="0" pn="section-7-2.14.1">N/A</t>
+        </dd>
+        <dt pn="section-7-2.15">Published specification:</dt>
+        <dd pn="section-7-2.16">
+          <t indent="0" pn="section-7-2.16.1">RFC 9292</t>
+        </dd>
+        <dt pn="section-7-2.17">Applications that use this media type:</dt>
+        <dd pn="section-7-2.18">
+          <t indent="0" pn="section-7-2.18.1">Applications seeking to convey HTTP semantics that are independent of a
+specific protocol.</t>
+        </dd>
+        <dt pn="section-7-2.19">Fragment identifier considerations:</dt>
+        <dd pn="section-7-2.20">
+          <t indent="0" pn="section-7-2.20.1">N/A</t>
+        </dd>
+        <dt pn="section-7-2.21">Additional information:</dt>
+        <dd pn="section-7-2.22">
+          <dl spacing="compact" newline="false" indent="3" pn="section-7-2.22.1">
+            <dt pn="section-7-2.22.1.1">Deprecated alias names for this type:</dt>
+            <dd pn="section-7-2.22.1.2">N/A</dd>
+            <dt pn="section-7-2.22.1.3">Magic number(s):</dt>
+            <dd pn="section-7-2.22.1.4">N/A</dd>
+            <dt pn="section-7-2.22.1.5">File extension(s):</dt>
+            <dd pn="section-7-2.22.1.6">N/A</dd>
+            <dt pn="section-7-2.22.1.7">Macintosh file type code(s):</dt>
+            <dd pn="section-7-2.22.1.8">N/A</dd>
+          </dl>
+        </dd>
+        <dt pn="section-7-2.23">Person &amp; email address to contact for further information:</dt>
+        <dd pn="section-7-2.24">
+          <t indent="0" pn="section-7-2.24.1">See the Authors' Addresses section.</t>
+        </dd>
+        <dt pn="section-7-2.25">Intended usage:</dt>
+        <dd pn="section-7-2.26">
+          <t indent="0" pn="section-7-2.26.1">COMMON</t>
+        </dd>
+        <dt pn="section-7-2.27">Restrictions on usage:</dt>
+        <dd pn="section-7-2.28">
+          <t indent="0" pn="section-7-2.28.1">N/A</t>
+        </dd>
+        <dt pn="section-7-2.29">Author:</dt>
+        <dd pn="section-7-2.30">
+          <t indent="0" pn="section-7-2.30.1">See the Authors' Addresses section.</t>
+        </dd>
+        <dt pn="section-7-2.31">Change controller:</dt>
+        <dd pn="section-7-2.32">
+          <t indent="0" pn="section-7-2.32.1">IESG</t>
+        </dd>
+      </dl>
+    </section>
+    <section anchor="security" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">Many of the considerations that apply to HTTP message handling apply to this
+format; see <xref section="17" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-17" derivedContent="HTTP"/> and <xref section="11" sectionFormat="of" target="RFC9112" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9112#section-11" derivedContent="HTTP/1.1"/> for common
+issues in handling HTTP messages.</t>
+      <t indent="0" pn="section-8-2">Strict parsing of the format with no tolerance for errors can help avoid a
+number of attacks. However, implementations still need to be aware of the
+possibility of resource exhaustion attacks that might arise from receiving
+large messages, particularly those with large numbers of fields.</t>
+      <t indent="0" pn="section-8-3">Implementations need to ensure that they aren't subject to resource exhaustion
+attacks from maliciously crafted messages.  Overall, the format is designed to
+allow for minimal state when processing messages.  However, producing a combined
+field value (<xref section="5.2" sectionFormat="of" target="RFC9110" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-5.2" derivedContent="HTTP"/>) for fields might require the commitment of
+resources.  In particular, combining might be necessary for the <tt>Cookie</tt> field
+when translating this format for use in other contexts, such as use in an API or
+translation to HTTP/1.1 <xref target="RFC9112" format="default" sectionFormat="of" derivedContent="HTTP/1.1"/>, where the recipient of the field might
+not expect multiple values.</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">IANA has added the media type <tt>"message/bhttp"</tt> to the "Media Types" registry at
+<eref target="https://www.iana.org/assignments/media-types" brackets="angle"/>. See <xref target="media-type" format="default" sectionFormat="of" derivedContent="Section 7"/> for registration
+information.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC9110" to="HTTP"/>
+    <displayreference target="RFC9000" to="QUIC"/>
+    <displayreference target="RFC9113" to="HTTP/2"/>
+    <displayreference target="RFC9112" to="HTTP/1.1"/>
+    <displayreference target="RFC7541" to="HPACK"/>
+    <displayreference target="RFC9114" to="HTTP/3"/>
+    <displayreference target="RFC9204" to="QPACK"/>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC9110" target="https://www.rfc-editor.org/info/rfc9110" quoteTitle="true" derivedAnchor="HTTP">
+          <front>
+            <title>HTTP Semantics</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document describes the overall architecture of HTTP, establishes common terminology, and defines aspects of the protocol that are shared by all versions. In this definition are core protocol elements, extensibility mechanisms, and the "http" and "https" Uniform Resource Identifier (URI) schemes.</t>
+              <t indent="0">This document updates RFC 3864 and obsoletes RFCs 2818, 7231, 7232, 7233, 7235, 7538, 7615, 7694, and portions of 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="97"/>
+          <seriesInfo name="RFC" value="9110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9110"/>
+        </reference>
+        <reference anchor="RFC9113" target="https://www.rfc-editor.org/info/rfc9113" quoteTitle="true" derivedAnchor="HTTP/2">
+          <front>
+            <title>HTTP/2</title>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <author fullname="C. Benfield" initials="C." role="editor" surname="Benfield"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2). HTTP/2 enables a more efficient use of network resources and a reduced latency by introducing field compression and allowing multiple concurrent exchanges on the same connection.</t>
+              <t indent="0">This document obsoletes RFCs 7540 and 8740.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9113"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9113"/>
+        </reference>
+        <reference anchor="RFC9000" target="https://www.rfc-editor.org/info/rfc9000" quoteTitle="true" derivedAnchor="QUIC">
+          <front>
+            <title>QUIC: A UDP-Based Multiplexed and Secure Transport</title>
+            <author fullname="J. Iyengar" initials="J." role="editor" surname="Iyengar"/>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines the core of the QUIC transport protocol.  QUIC provides applications with flow-controlled streams for structured communication, low-latency connection establishment, and network path migration.  QUIC includes security measures that ensure confidentiality, integrity, and availability in a range of deployment circumstances.  Accompanying documents describe the integration of TLS for key negotiation, loss detection, and an exemplary congestion control algorithm.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9000"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9000"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC7541" target="https://www.rfc-editor.org/info/rfc7541" quoteTitle="true" derivedAnchor="HPACK">
+          <front>
+            <title>HPACK: Header Compression for HTTP/2</title>
+            <author fullname="R. Peon" initials="R." surname="Peon"/>
+            <author fullname="H. Ruellan" initials="H." surname="Ruellan"/>
+            <date month="May" year="2015"/>
+            <abstract>
+              <t indent="0">This specification defines HPACK, a compression format for efficiently representing HTTP header fields, to be used in HTTP/2.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7541"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7541"/>
+        </reference>
+        <reference anchor="RFC9112" target="https://www.rfc-editor.org/info/rfc9112" quoteTitle="true" derivedAnchor="HTTP/1.1">
+          <front>
+            <title>HTTP/1.1</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document specifies the HTTP/1.1 message syntax, message parsing, connection management, and related security concerns.</t>
+              <t indent="0">This document obsoletes portions of RFC 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="99"/>
+          <seriesInfo name="RFC" value="9112"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9112"/>
+        </reference>
+        <reference anchor="RFC9114" target="https://www.rfc-editor.org/info/rfc9114" quoteTitle="true" derivedAnchor="HTTP/3">
+          <front>
+            <title>HTTP/3</title>
+            <author fullname="M. Bishop" initials="M." role="editor" surname="Bishop"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The QUIC transport protocol has several features that are desirable in a transport for HTTP, such as stream multiplexing, per-stream flow control, and low-latency connection establishment.  This document describes a mapping of HTTP semantics over QUIC.  This document also identifies HTTP/2 features that are subsumed by QUIC and describes how HTTP/2 extensions can be ported to HTTP/3.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9114"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9114"/>
+        </reference>
+        <reference anchor="RFC9204" target="https://www.rfc-editor.org/info/rfc9204" quoteTitle="true" derivedAnchor="QPACK">
+          <front>
+            <title>QPACK: Field Compression for HTTP/3</title>
+            <author fullname="C. Krasic" initials="C." surname="Krasic"/>
+            <author fullname="M. Bishop" initials="M." surname="Bishop"/>
+            <author fullname="A. Frindell" initials="A." role="editor" surname="Frindell"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">This specification defines QPACK: a compression format for efficiently representing HTTP fields that is to be used in HTTP/3.  This is a variation of HPACK compression that seeks to reduce head-of-line blocking.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9204"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9204"/>
+        </reference>
+        <reference anchor="RFC2518" target="https://www.rfc-editor.org/info/rfc2518" quoteTitle="true" derivedAnchor="RFC2518">
+          <front>
+            <title>HTTP Extensions for Distributed Authoring -- WEBDAV</title>
+            <author fullname="Y. Goland" initials="Y." surname="Goland"/>
+            <author fullname="E. Whitehead" initials="E." surname="Whitehead"/>
+            <author fullname="A. Faizi" initials="A." surname="Faizi"/>
+            <author fullname="S. Carter" initials="S." surname="Carter"/>
+            <author fullname="D. Jensen" initials="D." surname="Jensen"/>
+            <date month="February" year="1999"/>
+            <abstract>
+              <t indent="0">This document specifies a set of methods, headers, and content-types ancillary to HTTP/1.1 for the management of resource properties, creation and management of resource collections, namespace manipulation, and resource locking (collision avoidance). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2518"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2518"/>
+        </reference>
+        <reference anchor="RFC8297" target="https://www.rfc-editor.org/info/rfc8297" quoteTitle="true" derivedAnchor="RFC8297">
+          <front>
+            <title>An HTTP Status Code for Indicating Hints</title>
+            <author fullname="K. Oku" initials="K." surname="Oku"/>
+            <date month="December" year="2017"/>
+            <abstract>
+              <t indent="0">This memo introduces an informational HTTP status code that can be used to convey hints that help a client make preparations for processing the final response.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8297"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8297"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1"><contact fullname="Julian Reschke"/>, <contact fullname="David Schinazi"/>, <contact fullname="Lucas Pardue"/>, and <contact fullname="Tommy Pauly"/> provided
+excellent feedback on both the design and its documentation.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="M." surname="Thomson" fullname="Martin Thomson">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <email>mt@lowentropy.net</email>
+        </address>
+      </author>
+      <author initials="C. A." surname="Wood" fullname="Christopher A. Wood">
+        <organization showOnFrontPage="true">Cloudflare</organization>
+        <address>
+          <email>caw@heapingbits.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

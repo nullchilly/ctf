@@ -1,0 +1,1434 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" docName="draft-smyslov-esp-gost-14" indexInclude="true" ipr="trust200902" number="9227" prepTime="2022-03-31T17:43:47" scripts="Common,Latin" sortRefs="false" submissionType="independent" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-smyslov-esp-gost-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9227" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="GOST Ciphers in ESP and IKEv2">Using GOST Ciphers in the Encapsulating Security Payload (ESP) and Internet Key Exchange Version 2 (IKEv2) Protocols</title>
+    <seriesInfo name="RFC" value="9227" stream="independent"/>
+    <author initials="V." surname="Smyslov" fullname="Valery Smyslov">
+      <organization showOnFrontPage="true">ELVIS-PLUS</organization>
+      <address>
+        <postal>
+          <street>PO Box 81</street>
+          <city>Moscow (Zelenograd)</city>
+          <code>124460</code>
+          <country>Russian Federation</country>
+        </postal>
+        <phone>+7 495 276 0211</phone>
+        <email>svan@elvis.ru</email>
+      </address>
+    </author>
+    <date month="03" year="2022"/>
+    <keyword>AEAD</keyword>
+    <keyword>MGM</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1"> This document defines a set of encryption transforms for use in the Encapsulating Security Payload (ESP) 
+            and in the Internet Key Exchange version 2 (IKEv2) protocols, which are parts of the IP Security (IPsec) protocol suite. 
+            The transforms are based on the GOST R 34.12-2015 block ciphers (which are named "Magma" and "Kuznyechik") 
+            in Multilinear Galois Mode (MGM) and the external rekeying approach.
+      </t>
+      <t indent="0" pn="section-abstract-2"> This specification was developed to facilitate implementations that wish to support the GOST algorithms.  
+            This document does not imply IETF endorsement of the cryptographic algorithms used in this document.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This is a contribution to the RFC Series, independently of any
+            other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for
+            publication by the RFC Editor are not candidates for any level of
+            Internet Standard; see Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9227" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview">Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-description-of-transforms">Description of Transforms</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tree-based-external-rekeyin">Tree-Based External Rekeying</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-initialization-vector-forma">Initialization Vector Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-nonce-format-for-mgm">Nonce Format for MGM</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.3.2">
+                  <li pn="section-toc.1-1.4.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.3.2.1.1"><xref derivedContent="4.3.1" format="counter" sectionFormat="of" target="section-4.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mgm-nonce-format-for-transf">MGM Nonce Format for Transforms Based on the "Kuznyechik" Cipher</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.3.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.3.2.2.1"><xref derivedContent="4.3.2" format="counter" sectionFormat="of" target="section-4.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mgm-nonce-format-for-transfo">MGM Nonce Format for Transforms Based on the "Magma" Cipher</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-keying-material">Keying Material</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.5">
+                <t indent="0" pn="section-toc.1-1.4.2.5.1"><xref derivedContent="4.5" format="counter" sectionFormat="of" target="section-4.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-integrity-check-value">Integrity Check Value</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.6">
+                <t indent="0" pn="section-toc.1-1.4.2.6.1"><xref derivedContent="4.6" format="counter" sectionFormat="of" target="section-4.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-plaintext-padding">Plaintext Padding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.7">
+                <t indent="0" pn="section-toc.1-1.4.2.7.1"><xref derivedContent="4.7" format="counter" sectionFormat="of" target="section-4.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aad-construction">AAD Construction</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.7.2">
+                  <li pn="section-toc.1-1.4.2.7.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.7.2.1.1"><xref derivedContent="4.7.1" format="counter" sectionFormat="of" target="section-4.7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-esp-aad">ESP AAD</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.7.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.7.2.2.1"><xref derivedContent="4.7.2" format="counter" sectionFormat="of" target="section-4.7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ikev2-aad">IKEv2 AAD</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.8">
+                <t indent="0" pn="section-toc.1-1.4.2.8.1"><xref derivedContent="4.8" format="counter" sectionFormat="of" target="section-4.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-transforms">Using Transforms</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-test-vectors">Test Vectors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1"> The IP Security (IPsec) protocol suite consists of several protocols, of which 
+            the Encapsulating Security Payload (ESP) <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> and 
+            the Internet Key Exchange version 2 (IKEv2) <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> are most widely used.
+            This document defines four transforms for ESP and IKEv2 based on Russian cryptographic standard algorithms (often referred to as "GOST" algorithms).
+            These definitions are based on the recommendations <xref target="GOST-ESP" format="default" sectionFormat="of" derivedContent="GOST-ESP"/> established by the Federal Agency on Technical Regulating and Metrology (Rosstandart),
+            which describe how Russian cryptographic standard algorithms are used in ESP and IKEv2. The transforms defined in this document are based 
+            on two block ciphers from Russian cryptographic standard algorithms -- 
+            "Kuznyechik" <xref target="GOST3412-2015" format="default" sectionFormat="of" derivedContent="GOST3412-2015"/> <xref target="RFC7801" format="default" sectionFormat="of" derivedContent="RFC7801"/> 
+            and "Magma" <xref target="GOST3412-2015" format="default" sectionFormat="of" derivedContent="GOST3412-2015"/> <xref target="RFC8891" format="default" sectionFormat="of" derivedContent="RFC8891"/>
+            in Multilinear Galois Mode (MGM) <xref target="GOST-MGM" format="default" sectionFormat="of" derivedContent="GOST-MGM"/> <xref target="RFC9058" format="default" sectionFormat="of" derivedContent="RFC9058"/>. These transforms 
+            provide Authenticated Encryption with Associated Data (AEAD). An external rekeying mechanism, described in <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/>,
+            is also used in these transforms to limit the load on session keys. 
+      </t>
+      <t indent="0" pn="section-1-2"> Because the GOST specification includes the definition of both 128-bit ("Kuznyechik") and 64-bit ("Magma") 
+            block ciphers, both are included in this document. Implementers should make themselves aware of the relative security 
+            and other cost-benefit implications of the two ciphers. See <xref target="security" format="default" sectionFormat="of" derivedContent="Section 5"/> for more details.
+      </t>
+      <t indent="0" pn="section-1-3"> This specification was developed to facilitate implementations that wish to support the GOST algorithms.  
+            This document does not imply IETF endorsement of the cryptographic algorithms used in this document.
+      </t>
+    </section>
+    <section anchor="req_lang" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-language">Requirements Language</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+    </section>
+    <section anchor="overview" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-overview">Overview</name>
+      <t indent="0" pn="section-3-1"> Russian cryptographic standard algorithms, often referred to as "GOST" algorithms,
+            constitute a set of cryptographic algorithms of different types -- ciphers, hash functions, digital
+            signatures, etc. In particular, Russian cryptographic standard <xref target="GOST3412-2015" format="default" sectionFormat="of" derivedContent="GOST3412-2015"/> 
+            defines two block ciphers -- "Kuznyechik" (also defined in <xref target="RFC7801" format="default" sectionFormat="of" derivedContent="RFC7801"/>)
+            and "Magma" (also defined in <xref target="RFC8891" format="default" sectionFormat="of" derivedContent="RFC8891"/>). Both 
+            ciphers use a 256-bit key. "Kuznyechik" has a block size of 128 bits, while "Magma"
+            has a 64-bit block.
+      </t>
+      <t indent="0" pn="section-3-2"> Multilinear Galois Mode (MGM) is an AEAD mode defined in <xref target="GOST-MGM" format="default" sectionFormat="of" derivedContent="GOST-MGM"/> and <xref target="RFC9058" format="default" sectionFormat="of" derivedContent="RFC9058"/>. 
+            It is claimed to provide defense against some attacks on well-known AEAD modes, like Galois/Counter Mode (GCM).
+      </t>
+      <t indent="0" pn="section-3-3"> <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/> defines mechanisms that can be used
+            to limit the number of times any particular session key is used. One of these mechanisms,
+            called external rekeying with tree-based construction (defined in <xref target="RFC8645" sectionFormat="of" section="5.2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8645#section-5.2.3" derivedContent="RFC8645"/>),
+            is used in the defined transforms. For the purpose of deriving subordinate keys,
+            the Key Derivation Function (KDF) KDF_GOSTR3411_2012_256, defined in <xref target="RFC7836" sectionFormat="of" section="4.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7836#section-4.5" derivedContent="RFC7836"/>,
+ is used. This KDF is based on a Hashed Message Authentication Code (HMAC) construction <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="RFC2104"/> with 
+            a Russian GOST hash function defined in Russian cryptographic standard <xref target="GOST3411-2012" format="default" sectionFormat="of" derivedContent="GOST3411-2012"/> (also defined
+            in <xref target="RFC6986" format="default" sectionFormat="of" derivedContent="RFC6986"/>).
+      </t>
+    </section>
+    <section anchor="transforms" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-description-of-transforms">Description of Transforms</name>
+      <t indent="0" pn="section-4-1"> This document defines four transforms of Type 1 (Encryption Algorithm) for use in ESP and IKEv2. All of them use MGM as the mode of operation with tree-based 
+            external rekeying. The transforms differ in underlying ciphers and in cryptographic services they provide.
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-2">
+        <li pn="section-4-2.1">ENCR_KUZNYECHIK_MGM_KTREE (Transform ID 32) is an AEAD transform based on the "Kuznyechik" algorithm; it provides 
+                confidentiality and message authentication and thus can be used in both ESP and IKEv2.</li>
+        <li pn="section-4-2.2">ENCR_MAGMA_MGM_KTREE (Transform ID 33) is an AEAD transform based on the "Magma" algorithm; it provides 
+                confidentiality and message authentication and thus can be used in both ESP and IKEv2.</li>
+        <li pn="section-4-2.3">ENCR_KUZNYECHIK_MGM_MAC_KTREE (Transform ID 34) is a MAC-only transform based on the "Kuznyechik" algorithm; it provides 
+                no confidentiality and thus can only be used in ESP, but not in IKEv2.</li>
+        <li pn="section-4-2.4">ENCR_MAGMA_MGM_MAC_KTREE (Transform ID 35) is a MAC-only transform based on the "Magma" algorithm; it provides 
+                no confidentiality and thus can only be used in ESP, but not in IKEv2.</li>
+      </ul>
+      <t indent="0" pn="section-4-3">
+            Note that transforms ENCR_KUZNYECHIK_MGM_MAC_KTREE and ENCR_MAGMA_MGM_MAC_KTREE don't provide any confidentiality,
+            but they are defined as Type 1 (Encryption Algorithm) transforms because of the need to include an Initialization Vector (IV),
+            which is impossible for Type 3 (Integrity Algorithm) transforms.
+      </t>
+      <section anchor="key" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-tree-based-external-rekeyin">Tree-Based External Rekeying</name>
+        <t indent="0" pn="section-4.1-1"> All four transforms use the same tree-based external rekeying mechanism. The idea is that
+                the key that is provided for the transform is not directly used to protect messages. Instead, a tree of keys is derived using this key as a root.
+                This tree may have several levels. The leaf keys are used for message protection, while intermediate-node keys are used to derive
+                lower-level keys, including leaf keys.
+ See <xref target="RFC8645" sectionFormat="of" section="5.2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8645#section-5.2.3" derivedContent="RFC8645"/> for more details.
+                This construction allows us to protect a large amount of data, at the same time providing a bound on a number of times any particular key 
+                in the tree is used, thus defending against some side-channel attacks and also increasing the key lifetime limitations based on combinatorial properties.
+        </t>
+        <t indent="0" pn="section-4.1-2"> The transforms defined in this document use a three-level tree. The leaf key that protects a message is computed
+                as follows:
+
+        </t>
+        <artwork align="center" name="" type="" alt="" pn="section-4.1-3">
+K_msg = KDF (KDF (KDF (K, l1, 0x00 | i1), l2, i2), l3, i3)
+                  </artwork>
+        <t indent="0" pn="section-4.1-4">
+
+                where:
+        </t>
+        <dl newline="false" spacing="normal" indent="16" pn="section-4.1-5">
+          <dt pn="section-4.1-5.1">KDF (k, l, s)</dt>
+          <dd pn="section-4.1-5.2">Key Derivation Function KDF_GOSTR3411_2012_256 (defined in <xref target="RFC7836" sectionFormat="of" section="4.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7836#section-4.5" derivedContent="RFC7836"/>), which 
+                    accepts three input parameters -- a key (k), a label (l), and a seed (s) -- and provides a new key as output
+                    </dd>
+          <dt pn="section-4.1-5.3">K</dt>
+          <dd pn="section-4.1-5.4">the root key for the tree (see <xref target="keymat" format="default" sectionFormat="of" derivedContent="Section 4.4"/>)
+                    </dd>
+          <dt pn="section-4.1-5.5">l1, l2, l3</dt>
+          <dd pn="section-4.1-5.6">
+            <t indent="0" pn="section-4.1-5.6.1">labels defined as 6-octet ASCII strings without null termination:
+            </t>
+            <dl newline="false" spacing="normal" indent="3" pn="section-4.1-5.6.2">
+              <dt pn="section-4.1-5.6.2.1">l1 =</dt>
+              <dd pn="section-4.1-5.6.2.2">"level1"</dd>
+              <dt pn="section-4.1-5.6.2.3">l2 = </dt>
+              <dd pn="section-4.1-5.6.2.4">"level2"</dd>
+              <dt pn="section-4.1-5.6.2.5">l3 = </dt>
+              <dd pn="section-4.1-5.6.2.6">"level3"</dd>
+            </dl>
+          </dd>
+          <dt pn="section-4.1-5.7">i1, i2, i3</dt>
+          <dd pn="section-4.1-5.8">parameters that determine which keys out of the tree are used on each level.
+                    Together, they determine a leaf key that is used for message protection; the length of i1 is one octet, and 
+                    i2 and i3 are two-octet integers in network byte order
+                    </dd>
+          <dt pn="section-4.1-5.9">|</dt>
+          <dd pn="section-4.1-5.10">indicates concatenation
+                    </dd>
+        </dl>
+        <t indent="0" pn="section-4.1-6">
+                This construction allows us to generate up to 2<sup>8</sup> keys on level 1 and up to 2<sup>16</sup> keys on levels 2 and 3. 
+                So, the total number of possible leaf keys generated from a single Security Association (SA) key is 2<sup>40</sup>.
+        </t>
+        <t indent="0" pn="section-4.1-7">This specification doesn't impose any requirements on how frequently external rekeying takes place.
+                It is expected that the sending application will follow its own policy dictating how many times the keys on each level must be used.
+        </t>
+      </section>
+      <section anchor="iv" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-initialization-vector-forma">Initialization Vector Format</name>
+        <t indent="0" pn="section-4.2-1"> Each message protected by the defined transforms <bcp14>MUST</bcp14> contain an IV.
+                The IV has a size of 64 bits and consists of four fields. The fields i1, i2, and i3 are
+                parameters that determine the particular leaf key this message was protected with (see <xref target="key" format="default" sectionFormat="of" derivedContent="Section 4.1"/>).
+                The fourth field is a counter, representing the message number for this key.
+
+        </t>
+        <figure anchor="iv_format" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-iv-format">IV Format</name>
+          <artwork align="center" name="" type="" alt="" pn="section-4.2-2.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      i1       |               i2              |      i3       |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   i3 (cont)   |                     pnum                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                  </artwork>
+        </figure>
+        <t indent="0" pn="section-4.2-3">
+                where:
+        </t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-4.2-4">
+          <dt pn="section-4.2-4.1">i1 (1 octet), i2 (2 octets), i3 (2 octets):</dt>
+          <dd pn="section-4.2-4.2">parameters that  determine the particular key used to protect this message;
+                    2-octet parameters are integers in network byte order</dd>
+          <dt pn="section-4.2-4.3">pnum (3 octets):</dt>
+          <dd pn="section-4.2-4.4">message counter in network byte order for the leaf key protecting this message; up to 2<sup>24</sup> messages may be protected using 
+                    a single leaf key</dd>
+        </dl>
+        <t indent="0" pn="section-4.2-5">
+                For any given SA, the IV <bcp14>MUST NOT</bcp14> be used more than once, but there is no requirement that IV be unpredictable.
+        </t>
+      </section>
+      <section anchor="mgm_nonce" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-nonce-format-for-mgm">Nonce Format for MGM</name>
+        <t indent="0" pn="section-4.3-1"> MGM requires a per-message nonce (called the Initial Counter Nonce, or ICN in <xref target="RFC9058" format="default" sectionFormat="of" derivedContent="RFC9058"/>) 
+                that <bcp14>MUST</bcp14> be unique in the context of any leaf key. The size of the ICN
+                is n-1 bits, where n is the block size of the underlying cipher. The two ciphers used in the 
+                transforms defined in this document have different block sizes, so two different formats for the ICN are defined.
+        </t>
+        <t indent="0" pn="section-4.3-2"> MGM specification requires that the nonce be n-1 bits in size, where n is the block size of the underlying cipher. 
+                This document defines MGM nonces having n bits (the block size of the underlying cipher) in size.
+                Since n is always a multiple of 8 bits, this makes MGM nonces having a whole number of octets.
+                When used inside MGM, the most significant bit of the first octet of the nonce (represented as an octet string) is 
+                dropped, making the effective size of the nonce equal to n-1 bits. Note that the dropped bit is a part of the "zero" field
+                (see Figures <xref target="nonce_kuznyechik_format" format="counter" sectionFormat="of" derivedContent="2"/> and <xref target="nonce_magma_format" format="counter" sectionFormat="of" derivedContent="3"/>), which is always set to 0, 
+                so no information is lost when it is dropped.
+        </t>
+        <section anchor="nonce_kuznyechik" numbered="true" toc="include" removeInRFC="false" pn="section-4.3.1">
+          <name slugifiedName="name-mgm-nonce-format-for-transf">MGM Nonce Format for Transforms Based on the "Kuznyechik" Cipher</name>
+          <t indent="0" pn="section-4.3.1-1"> For transforms based on the "Kuznyechik" cipher (ENCR_KUZNYECHIK_MGM_KTREE and ENCR_KUZNYECHIK_MGM_MAC_KTREE),
+                    the ICN consists of a "zero" octet; a 24-bit message counter; and a 96-bit secret salt, which is fixed for the SA and is not transmitted. 
+          </t>
+          <figure anchor="nonce_kuznyechik_format" align="left" suppress-title="false" pn="figure-2">
+            <name slugifiedName="name-nonce-format-for-transforms">Nonce Format for Transforms Based on the "Kuznyechik" Cipher</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.3.1-2.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     zero      |                     pnum                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+|                             salt                              |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                      </artwork>
+          </figure>
+          <t indent="0" pn="section-4.3.1-3">
+                    where:
+          </t>
+          <dl spacing="normal" indent="3" newline="false" pn="section-4.3.1-4">
+            <dt pn="section-4.3.1-4.1">zero (1 octet):</dt>
+            <dd pn="section-4.3.1-4.2">set to 0</dd>
+            <dt pn="section-4.3.1-4.3">pnum (3 octets):</dt>
+            <dd pn="section-4.3.1-4.4">the counter for the messages protected by the given leaf key; this field <bcp14>MUST</bcp14> be equal to the pnum field in the IV</dd>
+            <dt pn="section-4.3.1-4.5">salt (12 octets):</dt>
+            <dd pn="section-4.3.1-4.6">secret salt. The salt is a string of bits that are formed when the SA is created (see <xref target="keymat" format="default" sectionFormat="of" derivedContent="Section 4.4"/> for details).  The salt does not change during the SA's lifetime and is not transmitted on the wire.  Every SA will have its own salt.</dd>
+          </dl>
+        </section>
+        <section anchor="nonce_magma" numbered="true" toc="include" removeInRFC="false" pn="section-4.3.2">
+          <name slugifiedName="name-mgm-nonce-format-for-transfo">MGM Nonce Format for Transforms Based on the "Magma" Cipher</name>
+          <t indent="0" pn="section-4.3.2-1"> For transforms based on the "Magma" cipher (ENCR_MAGMA_MGM_KTREE and ENCR_MAGMA_MGM_MAC_KTREE),
+                    the ICN consists of a "zero" octet; a 24-bit message counter; and a 32-bit secret salt, which is fixed for the SA and is not transmitted. 
+
+          </t>
+          <figure anchor="nonce_magma_format" align="left" suppress-title="false" pn="figure-3">
+            <name slugifiedName="name-nonce-format-for-transforms-">Nonce Format for Transforms Based on the "Magma" Cipher</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.3.2-2.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     zero      |                     pnum                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             salt                              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+          <t indent="0" pn="section-4.3.2-3">
+    
+                    where:
+          </t>
+          <dl spacing="normal" indent="3" newline="false" pn="section-4.3.2-4">
+            <dt pn="section-4.3.2-4.1">zero (1 octet):</dt>
+            <dd pn="section-4.3.2-4.2">set to 0</dd>
+            <dt pn="section-4.3.2-4.3">pnum (3 octets):</dt>
+            <dd pn="section-4.3.2-4.4">the counter for the messages protected by the given leaf key; this field <bcp14>MUST</bcp14> be equal to the pnum field in the IV</dd>
+            <dt pn="section-4.3.2-4.5">salt (4 octets):</dt>
+            <dd pn="section-4.3.2-4.6">secret salt. The salt is a string of bits that are formed when the SA is created (see <xref target="keymat" format="default" sectionFormat="of" derivedContent="Section 4.4"/> for details).  The salt does not change during the SA's lifetime and is not transmitted on the wire.  Every SA will have its own salt.</dd>
+          </dl>
+        </section>
+      </section>
+      <section anchor="keymat" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-keying-material">Keying Material</name>
+        <t indent="0" pn="section-4.4-1">We'll call a string of bits that is used to initialize the transforms
+   defined in this specification a "transform key". The transform key is a composite entity consisting of the root key for the tree and the secret salt.
+        </t>
+        <t indent="0" pn="section-4.4-2">The transform key for the ENCR_KUZNYECHIK_MGM_KTREE and ENCR_KUZNYECHIK_MGM_MAC_KTREE transforms consists of 352 bits (44 octets), of which
+                the first 256 bits is a root key for the tree (denoted as K in <xref target="key" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) and the remaining
+                96 bits is a secret salt (see <xref target="nonce_kuznyechik" format="default" sectionFormat="of" derivedContent="Section 4.3.1"/>).
+        </t>
+        <t indent="0" pn="section-4.4-3">The transform key for the ENCR_MAGMA_MGM_KTREE and ENCR_MAGMA_MGM_MAC_KTREE transforms consists of 288 bits (36 octets), of which
+                the first 256 bits is a root key for the tree (denoted as K in <xref target="key" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) and the remaining
+                32 bits is a secret salt (see <xref target="nonce_magma" format="default" sectionFormat="of" derivedContent="Section 4.3.2"/>).
+        </t>
+        <t indent="0" pn="section-4.4-4">In the case of ESP, the transform keys are extracted from the KEYMAT as defined in <xref target="RFC7296" sectionFormat="of" section="2.17" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.17" derivedContent="RFC7296"/>.
+                In the case of IKEv2, the transform keys are either SK_ei or SK_er, which are generated as defined in <xref target="RFC7296" sectionFormat="of" section="2.14" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-2.14" derivedContent="RFC7296"/>.
+                Note that since these transforms provide authenticated encryption, no additional keys are needed
+                for authentication. This means that, in the case of IKEv2, the keys SK_ai/SK_ar are not used and <bcp14>MUST</bcp14> be treated as 
+                having zero length.</t>
+      </section>
+      <section anchor="icv" numbered="true" toc="include" removeInRFC="false" pn="section-4.5">
+        <name slugifiedName="name-integrity-check-value">Integrity Check Value</name>
+        <t indent="0" pn="section-4.5-1"> The length of the authentication tag  that MGM can compute is in the range from 32 bits to the block size of the underlying cipher.
+                <xref target="RFC9058" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9058#section-4" derivedContent="RFC9058"/> states that the authentication tag length <bcp14>MUST</bcp14> be fixed for a particular protocol.
+                For transforms based on the "Kuznyechik" cipher (ENCR_KUZNYECHIK_MGM_KTREE and ENCR_KUZNYECHIK_MGM_MAC_KTREE), the resulting 
+                Integrity Check Value (ICV) length is set to 96 bits. For transforms based on the "Magma" cipher (ENCR_MAGMA_MGM_KTREE and ENCR_MAGMA_MGM_MAC_KTREE),
+                the full ICV length is set to the block size (64 bits).
+        </t>
+      </section>
+      <section anchor="padding" numbered="true" toc="include" removeInRFC="false" pn="section-4.6">
+        <name slugifiedName="name-plaintext-padding">Plaintext Padding</name>
+        <t indent="0" pn="section-4.6-1">The transforms defined in this document don't require any plaintext padding,
+                as specified in <xref target="RFC9058" format="default" sectionFormat="of" derivedContent="RFC9058"/>. This means that only those
+                padding requirements that are imposed by the protocol are applied (4 bytes for ESP,
+                no padding for IKEv2). 
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.7">
+        <name slugifiedName="name-aad-construction">AAD Construction</name>
+        <section anchor="esp_aad" numbered="true" toc="include" removeInRFC="false" pn="section-4.7.1">
+          <name slugifiedName="name-esp-aad">ESP AAD</name>
+          <t indent="0" pn="section-4.7.1-1"> Additional Authenticated Data (AAD) in ESP is constructed differently, depending on the 
+                    transform being used and whether the Extended Sequence Number (ESN) is in use or not.
+                    The ENCR_KUZNYECHIK_MGM_KTREE and ENCR_MAGMA_MGM_KTREE transforms
+                    provide confidentiality, so the content of the ESP body is encrypted and the AAD
+                    consists of the ESP Security Parameter Index (SPI) and (E)SN.
+ The AAD is constructed similarly to the AAD in <xref target="RFC4106" format="default" sectionFormat="of" derivedContent="RFC4106"/>.
+          </t>
+          <t indent="0" pn="section-4.7.1-2"> On the other hand, the ENCR_KUZNYECHIK_MGM_MAC_KTREE and ENCR_MAGMA_MGM_MAC_KTREE transforms
+                    don't provide confidentiality; they provide only message authentication.
+                    For this purpose, the IV and the part of the ESP packet that is normally encrypted are included
+                    in the AAD. For these transforms, the encryption capability provided by MGM
+                    is not used. The AAD is constructed similarly to the AAD in <xref target="RFC4543" format="default" sectionFormat="of" derivedContent="RFC4543"/>.
+
+          </t>
+          <figure anchor="aad_aead_32" align="left" suppress-title="false" pn="figure-4">
+            <name slugifiedName="name-aad-for-aead-transforms-wit">AAD for AEAD Transforms with 32-Bit SN</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.1-3.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               SPI                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     32-bit Sequence Number                    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+          <figure anchor="aad_aead_64" align="left" suppress-title="false" pn="figure-5">
+            <name slugifiedName="name-aad-for-aead-transforms-with">AAD for AEAD Transforms with 64-Bit ESN</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.1-4.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               SPI                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 64-bit Extended Sequence Number               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+          <figure anchor="aad_mac_32" align="left" suppress-title="false" pn="figure-6">
+            <name slugifiedName="name-aad-for-authentication-only">AAD for Authentication-Only Transforms with 32-Bit SN</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.1-5.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               SPI                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     32-bit Sequence Number                    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               IV                              |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                     Payload Data (variable)                   ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                    Padding (0-255 bytes)                      |
++                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               |  Pad Length   | Next Header   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+          <figure anchor="aad_mac_64" align="left" suppress-title="false" pn="figure-7">
+            <name slugifiedName="name-aad-for-authentication-only-">AAD for Authentication-Only Transforms with 64-Bit ESN</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.1-6.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               SPI                             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 64-bit Extended Sequence Number               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               IV                              |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+~                     Payload Data (variable)                   ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                    Padding (0-255 bytes)                      |
++                               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               |  Pad Length   | Next Header   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+        </section>
+        <section anchor="ikev2_aad" numbered="true" toc="include" removeInRFC="false" pn="section-4.7.2">
+          <name slugifiedName="name-ikev2-aad">IKEv2 AAD</name>
+          <t indent="0" pn="section-4.7.2-1"> For IKEv2, the AAD consists of the IKEv2 Header, 
+                    any unencrypted payloads following it (if present), and either the Encrypted payload header (<xref target="RFC7296" sectionFormat="of" section="3.14" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7296#section-3.14" derivedContent="RFC7296"/>)
+                    or the Encrypted Fragment payload (<xref target="RFC7383" sectionFormat="of" section="2.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7383#section-2.5" derivedContent="RFC7383"/>), depending on whether IKE fragmentation is used.
+ The AAD is constructed
+                    similarly to the AAD in <xref target="RFC5282" format="default" sectionFormat="of" derivedContent="RFC5282"/>.
+
+          </t>
+          <figure anchor="aad_ikev2_encr_payload_format" align="left" suppress-title="false" pn="figure-8">
+            <name slugifiedName="name-aad-for-ikev2-in-the-case-o">AAD for IKEv2 in the Case of the Encrypted Payload</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.2-2.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~                         IKEv2 Header                          ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~                   Unencrypted IKE Payloads                    ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Next Payload  |C|  RESERVED   |         Payload Length        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+          <figure anchor="aad_ikev2_encr_frag_payload_format" align="left" suppress-title="false" pn="figure-9">
+            <name slugifiedName="name-aad-for-ikev2-in-the-case-of">AAD for IKEv2 in the Case of the Encrypted Fragment Payload</name>
+            <artwork align="center" name="" type="" alt="" pn="section-4.7.2-3.1">
+                     1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~                         IKEv2 Header                          ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+~                   Unencrypted IKE Payloads                    ~
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Next Payload  |C|  RESERVED   |         Payload Length        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        Fragment Number        |        Total Fragments        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                    </artwork>
+          </figure>
+        </section>
+      </section>
+      <section anchor="use" numbered="true" toc="include" removeInRFC="false" pn="section-4.8">
+        <name slugifiedName="name-using-transforms">Using Transforms</name>
+        <t indent="0" pn="section-4.8-1">When the SA is established, the i1, i2, and i3 parameters are set to 0 by the sender and a leaf key is calculated.
+                The pnum parameter starts from 0 and is incremented with each message protected by the same leaf key.
+                When the sender decides that the leaf should be changed, it increments the i3 parameter and generates a new leaf key.
+                The pnum parameter for the new leaf key is reset to 0, and the process continues. If the sender decides
+                that a third-level key corresponding to i3 is used enough times, it increments i2, resets i3 to 0,
+                and calculates a new leaf key. The pnum is reset to 0 (as with every new leaf key), and the process continues.
+                A similar procedure is used when a second-level key needs to be changed.
+        </t>
+        <t indent="0" pn="section-4.8-2">A combination of i1, i2, i3, and pnum <bcp14>MUST NOT</bcp14> repeat for any particular SA. 
+                This means that the wrapping of these counters is not allowed: when i2, i3, or pnum reaches its respective maximum value, 
+                a procedure for changing a leaf key, described above, is executed, and if all four parameters reach their maximum values, 
+                the IPsec SA becomes unusable.
+        </t>
+        <t indent="0" pn="section-4.8-3">There may be other reasons to recalculate leaf keys besides reaching maximum values for the counters. 
+                For example, as described in <xref target="security" format="default" sectionFormat="of" derivedContent="Section 5"/>, it is <bcp14>RECOMMENDED</bcp14> that the sender count the number of
+                octets protected by a particular leaf key and generate a new key when some threshold is reached, and at the latest when 
+                reaching the octet limits stated in <xref target="security" format="default" sectionFormat="of" derivedContent="Section 5"/> for each of the ciphers.
+        </t>
+        <t indent="0" pn="section-4.8-4">The receiver always uses i1, i2, and i3 from the received message. If they differ from the values in previously received packets,
+                a new leaf key is calculated. The pnum parameter is always used from the 
+                received packet. To improve performance, implementations may cache recently used leaf keys.
+                When a new leaf key is calculated (based on the values from the received message),
+                the old key may be kept for some time to improve performance in the case of possible packet reordering
+                (when packets protected by the old leaf key are delayed and arrive later).
+        </t>
+      </section>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-5-1"> The most important security consideration for MGM is that the nonce <bcp14>MUST NOT</bcp14> repeat
+            for a given key. For this reason, the transforms defined in this document <bcp14>MUST NOT</bcp14> be used with manual keying.
+      </t>
+      <t indent="0" pn="section-5-2"> Excessive use of the same key can give an attacker advantages in breaking security properties of the 
+            transforms defined in this document. For this reason, the amount of data that any particular key is used to protect
+            should be limited. This is especially important for algorithms with a 64-bit block size (like "Magma"),
+            which currently are generally considered insecure after protecting a relatively
+            small amount of data. For example, Section 3.4 of <xref target="SP800-67" format="default" sectionFormat="of" derivedContent="SP800-67"/> limits the number of blocks 
+            that are allowed to be encrypted with the Triple DES cipher to 2<sup>20</sup> (8 MB of data).
+            This document defines a rekeying mechanism that allows the mitigation of  weak security of a 64-bit block cipher
+            by frequently changing the encryption key. 
+      </t>
+      <t indent="0" pn="section-5-3"> For transforms defined in this document, <xref target="GOST-ESP" format="default" sectionFormat="of" derivedContent="GOST-ESP"/> recommends
+            limiting the number of octets protected with a single K_msg key by the following values:
+      </t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-5-4">
+        <li pn="section-5-4.1">2<sup>41</sup> octets for transforms based on the "Kuznyechik" cipher (ENCR_KUZNYECHIK_MGM_KTREE and ENCR_KUZNYECHIK_MGM_MAC_KTREE)</li>
+        <li pn="section-5-4.2">2<sup>28</sup> octets for transforms based on the "Magma" cipher (ENCR_MAGMA_MGM_KTREE and ENCR_MAGMA_MGM_MAC_KTREE)</li>
+      </ul>
+      <t indent="0" pn="section-5-5">
+            These values are based on combinatorial properties and may be further restricted if side-channel attacks are taken into consideration.
+            Note that the limit for transforms based on the "Kuznyechik" cipher is unreachable because, due to the construction of the transforms,
+            the number of protected messages is limited to 2<sup>24</sup> and each message (either IKEv2 messages or ESP datagrams) is limited to 2<sup>16</sup> octets in size,
+            giving 2<sup>40</sup> octets as the maximum amount of data that can be protected with a single K_msg.
+      </t>
+      <t indent="0" pn="section-5-6"><xref target="RFC9058" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9058#section-4" derivedContent="RFC9058"/> discusses the possibility of truncating authentication tags in MGM 
+            as a trade-off between message expansion and the probability of forgery. This specification truncates an authentication
+            tag length for transforms based on the "Kuznyechik" cipher to 96 bits. This decreases message expansion while still providing a very low probability of forgery: 2<sup>-96</sup>.
+      </t>
+      <t indent="0" pn="section-5-7">An attacker can send a lot of packets with arbitrarily chosen i1, i2, and i3 parameters. This will 
+            1) force a recipient to recalculate the leaf key for every received packet if i1, i2, and i3 are different from these values in previously received packets,
+            thus consuming CPU resources and 2) force a recipient to make verification attempts (that would fail) on a large amount of data, 
+            thus allowing the attacker a deeper analysis of the underlying cryptographic primitive (see <xref target="AEAD-USAGE-LIMITS" format="default" sectionFormat="of" derivedContent="AEAD-USAGE-LIMITS"/>).
+            Implementations <bcp14>MAY</bcp14> initiate rekeying if they deem that they receive too many packets with an invalid ICV.
+      </t>
+      <t indent="0" pn="section-5-8"> Security properties of MGM are discussed in <xref target="MGM-SECURITY" format="default" sectionFormat="of" derivedContent="MGM-SECURITY"/>. 
+      </t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-6-1"> IANA maintains a registry called "Internet Key Exchange Version 2 (IKEv2) Parameters" with a subregistry called "Transform Type Values".
+            IANA has added the following four Transform IDs to the "Transform Type 1 - Encryption Algorithm Transform IDs" subregistry.
+      </t>
+      <table anchor="iana-table" align="center" pn="table-1">
+        <name slugifiedName="name-transform-ids">Transform IDs</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Number</th>
+            <th align="left" colspan="1" rowspan="1">Name</th>
+            <th align="left" colspan="1" rowspan="1">ESP Reference</th>
+            <th align="left" colspan="1" rowspan="1">IKEv2 Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">32</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_KUZNYECHIK_MGM_KTREE</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">33</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_MAGMA_MGM_KTREE</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">34</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_KUZNYECHIK_MGM_MAC_KTREE</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+            <td align="left" colspan="1" rowspan="1">Not allowed</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">35</td>
+            <td align="left" colspan="1" rowspan="1">ENCR_MAGMA_MGM_MAC_KTREE</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9227</td>
+            <td align="left" colspan="1" rowspan="1">Not allowed</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC4303" target="https://www.rfc-editor.org/info/rfc4303" quoteTitle="true" derivedAnchor="RFC4303">
+          <front>
+            <title>IP Encapsulating Security Payload (ESP)</title>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="December"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the Encapsulating Security Payload (ESP) protocol, which is designed to provide a mix of security services in IPv4 and IPv6.  ESP is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service (a form of partial sequence integrity), and limited traffic flow confidentiality.  This document obsoletes RFC 2406 (November 1998).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4303"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4303"/>
+        </reference>
+        <reference anchor="RFC7296" target="https://www.rfc-editor.org/info/rfc7296" quoteTitle="true" derivedAnchor="RFC7296">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+            <author initials="C." surname="Kaufman" fullname="C. Kaufman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Eronen" fullname="P. Eronen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Kivinen" fullname="T. Kivinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="October"/>
+            <abstract>
+              <t indent="0">This document describes version 2 of the Internet Key Exchange (IKE) protocol.  IKE is a component of IPsec used for performing mutual authentication and establishing and maintaining Security Associations (SAs).  This document obsoletes RFC 5996, and includes all of the errata for it.  It advances IKEv2 to be an Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="79"/>
+          <seriesInfo name="RFC" value="7296"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7296"/>
+        </reference>
+        <reference anchor="RFC7383" target="https://www.rfc-editor.org/info/rfc7383" quoteTitle="true" derivedAnchor="RFC7383">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2) Message Fragmentation</title>
+            <author initials="V." surname="Smyslov" fullname="V. Smyslov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="November"/>
+            <abstract>
+              <t indent="0">This document describes a way to avoid IP fragmentation of large Internet Key Exchange Protocol version 2 (IKEv2) messages.  This allows IKEv2 messages to traverse network devices that do not allow IP fragments to pass through.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7383"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7383"/>
+        </reference>
+        <reference anchor="RFC6986" target="https://www.rfc-editor.org/info/rfc6986" quoteTitle="true" derivedAnchor="RFC6986">
+          <front>
+            <title>GOST R 34.11-2012: Hash Function</title>
+            <author initials="V." surname="Dolmatov" fullname="V. Dolmatov" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Degtyarev" fullname="A. Degtyarev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="August"/>
+            <abstract>
+              <t indent="0">This document is intended to be a source of information about the Russian Federal standard hash function (GOST R 34.11-2012), which is one of the Russian cryptographic standard algorithms (called GOST algorithms).  This document updates RFC 5831.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6986"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6986"/>
+        </reference>
+        <reference anchor="RFC7801" target="https://www.rfc-editor.org/info/rfc7801" quoteTitle="true" derivedAnchor="RFC7801">
+          <front>
+            <title>GOST R 34.12-2015: Block Cipher "Kuznyechik"</title>
+            <author initials="V." surname="Dolmatov" fullname="V. Dolmatov" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t indent="0">This document is intended to be a source of information about the Russian Federal standard GOST R 34.12-2015 describing the block cipher with a block length of n=128 bits and a key length of k=256 bits, which is also referred to as "Kuznyechik".  This algorithm is one of the set of Russian cryptographic standard algorithms (called GOST algorithms).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7801"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7801"/>
+        </reference>
+        <reference anchor="RFC8891" target="https://www.rfc-editor.org/info/rfc8891" quoteTitle="true" derivedAnchor="RFC8891">
+          <front>
+            <title>GOST R 34.12-2015: Block Cipher "Magma"</title>
+            <author initials="V." surname="Dolmatov" fullname="V. Dolmatov" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Baryshkov" fullname="D. Baryshkov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="September"/>
+            <abstract>
+              <t indent="0">In addition to a new cipher with a block length of n=128 bits (referred to as "Kuznyechik" and described in RFC 7801), Russian Federal standard GOST R 34.12-2015 includes an updated version of the block cipher with a block length of n=64 bits and key length of k=256 bits, which is also referred to as "Magma". The algorithm is an updated version of an older block cipher with a block length of n=64 bits described in GOST 28147-89 (RFC 5830). This document is intended to be a source of information about the updated version of the 64-bit cipher. It may facilitate the use of the block cipher in Internet applications by providing information for developers and users of the GOST 64-bit cipher with the revised version of the cipher for encryption and decryption.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8891"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8891"/>
+        </reference>
+        <reference anchor="RFC9058" target="https://www.rfc-editor.org/info/rfc9058" quoteTitle="true" derivedAnchor="RFC9058">
+          <front>
+            <title>Multilinear Galois Mode (MGM)</title>
+            <author initials="S." surname="Smyshlyaev" fullname="S. Smyshlyaev" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Nozdrunov" fullname="V. Nozdrunov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Shishkin" fullname="V. Shishkin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Griboedova" fullname="E. Griboedova">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="June"/>
+            <abstract>
+              <t indent="0">Multilinear Galois Mode (MGM) is an Authenticated Encryption with Associated Data (AEAD) block cipher mode based on the Encrypt-then-MAC (EtM) principle. MGM is defined for use with 64-bit and 128-bit block ciphers. </t>
+              <t indent="0">MGM has been standardized in Russia. It is used as an AEAD mode for the GOST block cipher algorithms in many protocols, e.g., TLS 1.3 and IPsec. This document provides a reference for MGM to enable review of the mechanisms in use and to make MGM available for use with any block cipher.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9058"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9058"/>
+        </reference>
+        <reference anchor="RFC7836" target="https://www.rfc-editor.org/info/rfc7836" quoteTitle="true" derivedAnchor="RFC7836">
+          <front>
+            <title>Guidelines on the Cryptographic Algorithms to Accompany the Usage of Standards GOST R 34.10-2012 and GOST R 34.11-2012</title>
+            <author initials="S." surname="Smyshlyaev" fullname="S. Smyshlyaev" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Alekseev" fullname="E. Alekseev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Oshkin" fullname="I. Oshkin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Popov" fullname="V. Popov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Leontiev" fullname="S. Leontiev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Podobaev" fullname="V. Podobaev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Belyavsky" fullname="D. Belyavsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t indent="0">The purpose of this document is to make the specifications of the cryptographic algorithms defined by the Russian national standards GOST R 34.10-2012 and GOST R 34.11-2012 available to the Internet community for their implementation in the cryptographic protocols based on the accompanying algorithms.</t>
+              <t indent="0">These specifications define the pseudorandom functions, the key agreement algorithm based on the Diffie-Hellman algorithm and a hash function, the parameters of elliptic curves, the key derivation functions, and the key export functions.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7836"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7836"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="GOST3411-2012" quoteTitle="true" derivedAnchor="GOST3411-2012">
+          <front>
+            <title>Information technology. Cryptographic data security. Hash function</title>
+            <author>
+              <organization showOnFrontPage="true">Federal Agency on Technical Regulating and Metrology</organization>
+            </author>
+            <date month="August" year="2012"/>
+          </front>
+          <seriesInfo name="GOST R" value="34.11-2012"/>
+          <annotation>(In Russian)</annotation>
+        </reference>
+        <reference anchor="GOST3412-2015" quoteTitle="true" derivedAnchor="GOST3412-2015">
+          <front>
+            <title>Information technology. Cryptographic data security. Block ciphers</title>
+            <author>
+              <organization showOnFrontPage="true">Federal Agency on Technical Regulating and Metrology</organization>
+            </author>
+            <date month="June" year="2015"/>
+          </front>
+          <seriesInfo name="GOST R" value="34.12-2015"/>
+          <annotation>(In Russian)</annotation>
+        </reference>
+        <reference anchor="GOST-MGM" quoteTitle="true" derivedAnchor="GOST-MGM">
+          <front>
+            <title>Information technology. Cryptographic information security. Block Cipher Modes Implementing Authenticated Encryption</title>
+            <author>
+              <organization showOnFrontPage="true">Federal Agency on Technical Regulating and Metrology</organization>
+            </author>
+            <date month="September" year="2019"/>
+          </front>
+          <seriesInfo name="R" value="1323565.1.026-2019"/>
+          <annotation>(In Russian)</annotation>
+        </reference>
+        <reference anchor="GOST-ESP" quoteTitle="true" derivedAnchor="GOST-ESP">
+          <front>
+            <title>Information technology. Cryptographic information protection. The use of Russian cryptographic algorithms in the ESP information protection protocol</title>
+            <author>
+              <organization showOnFrontPage="true">Federal Agency on Technical Regulating and Metrology</organization>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="R" value="1323565.1.035-2021"/>
+          <annotation>(In Russian)</annotation>
+        </reference>
+        <reference anchor="RFC2104" target="https://www.rfc-editor.org/info/rfc2104" quoteTitle="true" derivedAnchor="RFC2104">
+          <front>
+            <title>HMAC: Keyed-Hashing for Message Authentication</title>
+            <author initials="H." surname="Krawczyk" fullname="H. Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Bellare" fullname="M. Bellare">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Canetti" fullname="R. Canetti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="February"/>
+            <abstract>
+              <t indent="0">This document describes HMAC, a mechanism for message authentication using cryptographic hash functions. HMAC can be used with any iterative cryptographic hash function, e.g., MD5, SHA-1, in combination with a secret shared key.  The cryptographic strength of HMAC depends on the properties of the underlying hash function.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2104"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2104"/>
+        </reference>
+        <reference anchor="RFC4106" target="https://www.rfc-editor.org/info/rfc4106" quoteTitle="true" derivedAnchor="RFC4106">
+          <front>
+            <title>The Use of Galois/Counter Mode (GCM) in IPsec Encapsulating Security Payload (ESP)</title>
+            <author initials="J." surname="Viega" fullname="J. Viega">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="June"/>
+            <abstract>
+              <t indent="0">This memo describes the use of the Advanced Encryption Standard (AES) in Galois/Counter Mode (GCM) as an IPsec Encapsulating Security Payload (ESP) mechanism to provide confidentiality and data origin authentication.  This method can be efficiently implemented in hardware for speeds of 10 gigabits per second and above, and is also well-suited to software implementations.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4106"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4106"/>
+        </reference>
+        <reference anchor="RFC4543" target="https://www.rfc-editor.org/info/rfc4543" quoteTitle="true" derivedAnchor="RFC4543">
+          <front>
+            <title>The Use of Galois Message Authentication Code (GMAC) in IPsec ESP and AH</title>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Viega" fullname="J. Viega">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="May"/>
+            <abstract>
+              <t indent="0">This memo describes the use of the Advanced Encryption Standard (AES) Galois Message Authentication Code (GMAC) as a mechanism to provide data origin authentication, but not confidentiality, within the IPsec Encapsulating Security Payload (ESP) and Authentication Header (AH). GMAC is based on the Galois/Counter Mode (GCM) of operation, and can be efficiently implemented in hardware for speeds of 10 gigabits per second and above, and is also well-suited to software implementations.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4543"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4543"/>
+        </reference>
+        <reference anchor="RFC5282" target="https://www.rfc-editor.org/info/rfc5282" quoteTitle="true" derivedAnchor="RFC5282">
+          <front>
+            <title>Using Authenticated Encryption Algorithms with the Encrypted Payload of the Internet Key Exchange version 2 (IKEv2) Protocol</title>
+            <author initials="D." surname="Black" fullname="D. Black">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">An authenticated encryption algorithm combines encryption and integrity into a single operation; such algorithms may also be referred to as combined modes of an encryption cipher or as combined mode algorithms.  This document describes the use of authenticated encryption algorithms with the Encrypted Payload of the Internet Key Exchange version 2 (IKEv2) protocol.</t>
+              <t indent="0">The use of two specific authenticated encryption algorithms with the IKEv2 Encrypted Payload is also described; these two algorithms are the Advanced Encryption Standard (AES) in Galois/Counter Mode (AES GCM) and AES in Counter with CBC-MAC Mode (AES CCM).  Additional documents may describe the use of other authenticated encryption algorithms with the IKEv2 Encrypted Payload.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5282"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5282"/>
+        </reference>
+        <reference anchor="RFC8645" target="https://www.rfc-editor.org/info/rfc8645" quoteTitle="true" derivedAnchor="RFC8645">
+          <front>
+            <title>Re-keying Mechanisms for Symmetric Keys</title>
+            <author initials="S." surname="Smyshlyaev" fullname="S. Smyshlyaev" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="August"/>
+            <abstract>
+              <t indent="0">A certain maximum amount of data can be safely encrypted when encryption is performed under a single key.  This amount is called the "key lifetime".  This specification describes a variety of methods for increasing the lifetime of symmetric keys.  It provides two types of re-keying mechanisms based on hash functions and block ciphers that can be used with modes of operations such as CTR, GCM, CBC, CFB, and OMAC.</t>
+              <t indent="0">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8645"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8645"/>
+        </reference>
+        <reference anchor="MGM-SECURITY" target="https://eprint.iacr.org/2019/123.pdf" quoteTitle="true" derivedAnchor="MGM-SECURITY">
+          <front>
+            <title>Security of Multilinear Galois Mode (MGM)</title>
+            <author fullname="Liliya Akhmetzyanova"/>
+            <author fullname="Evgeny Alekseev"/>
+            <author fullname="Grigory Karpunin"/>
+            <author fullname="Vladislav Nozdrunov"/>
+            <date year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="SP800-67" target="https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-67r2.pdf" quoteTitle="true" derivedAnchor="SP800-67">
+          <front>
+            <title>Recommendation for the Triple Data Encryption Algorithm (TDEA) Block Cipher</title>
+            <author>
+              <organization showOnFrontPage="true">National Institute of Standards and Technology</organization>
+            </author>
+            <date month="November" year="2017"/>
+          </front>
+          <seriesInfo name="DOI" value="10.6028/NIST.SP.800-67r2"/>
+        </reference>
+        <reference anchor="AEAD-USAGE-LIMITS" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-aead-limits-04" derivedAnchor="AEAD-USAGE-LIMITS">
+          <front>
+            <title>Usage Limits on AEAD Algorithms</title>
+            <author fullname="Felix Günther">
+              <organization showOnFrontPage="true">ETH Zurich</organization>
+            </author>
+            <author fullname="Martin Thomson">
+              <organization showOnFrontPage="true">Mozilla</organization>
+            </author>
+            <author fullname="Christopher A. Wood" initials="C.A.">
+              <organization showOnFrontPage="true">Cloudflare</organization>
+            </author>
+            <date month="March" day="7" year="2022"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-irtf-cfrg-aead-limits-04"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="testvec" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-test-vectors">Test Vectors</name>
+      <t indent="0" pn="section-appendix.a-1"> In the following test vectors, binary data is represented in hexadecimal format.
+            The numbers in square brackets indicate the size of the corresponding data in decimal format.
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.a-2"><li pn="section-appendix.a-2.1" derivedCounter="1.">
+          <t indent="0" pn="section-appendix.a-2.1.1">ENCR_KUZNYECHIK_MGM_KTREE (Example 1):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.1.2">
+transform key [44]:
+    b6 18 0c 14 5c 51 2d bd 69 d9 ce a9 2c ac 1b 5c
+    e1 bc fa 73 79 2d 61 af 0b 44 0d 84 b5 22 cc 38
+    7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+K [32]:
+    b6 18 0c 14 5c 51 2d bd 69 d9 ce a9 2c ac 1b 5c
+    e1 bc fa 73 79 2d 61 af 0b 44 0d 84 b5 22 cc 38
+salt [12]:
+    7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+i1 = 00, i2 = 0000, i3 = 0000, pnum = 000000
+K_msg [32]:
+    2f f1 c9 0e de 78 6e 06 1e 17 b3 74 d7 82 af 7b
+    d8 80 bd 52 7c 66 a2 ba dc 3e 56 9a ab 27 1d a4
+nonce [16]:
+    00 00 00 00 7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+IV [8]:
+    00 00 00 00 00 00 00 00
+AAD [8]:
+    51 46 53 6b 00 00 00 01
+plaintext [64]:
+    45 00 00 3c 23 35 00 00 7f 01 ee cc 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 f3 5b 02 00 58 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+ciphertext [64]:
+    18 9d 12 88 b7 18 f9 ea be 55 4b 23 9b ee 65 96
+    c6 d4 ea fd 31 64 96 ef 90 1c ac 31 60 05 aa 07
+    62 97 b2 24 bf 6d 2b e3 5f d6 f6 7e 7b 9d eb 31
+    85 ff e9 17 9c a9 bf 0b db af c2 3e ae 4d a5 6f
+ESP ICV [12]:
+    50 b0 70 a1 5a 2b d9 73 86 89 f8 ed
+ESP packet [112]:
+    45 00 00 70 00 4d 00 00 ff 32 91 4f 0a 6f 0a c5
+    0a 6f 0a 1d 51 46 53 6b 00 00 00 01 00 00 00 00
+    00 00 00 00 18 9d 12 88 b7 18 f9 ea be 55 4b 23
+    9b ee 65 96 c6 d4 ea fd 31 64 96 ef 90 1c ac 31
+    60 05 aa 07 62 97 b2 24 bf 6d 2b e3 5f d6 f6 7e
+    7b 9d eb 31 85 ff e9 17 9c a9 bf 0b db af c2 3e
+    ae 4d a5 6f 50 b0 70 a1 5a 2b d9 73 86 89 f8 ed
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.2" derivedCounter="2.">
+          <t indent="0" pn="section-appendix.a-2.2.1">ENCR_KUZNYECHIK_MGM_KTREE (Example 2):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.2.2">
+transform key [44]:
+    b6 18 0c 14 5c 51 2d bd 69 d9 ce a9 2c ac 1b 5c
+    e1 bc fa 73 79 2d 61 af 0b 44 0d 84 b5 22 cc 38
+    7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+K [32]:
+    b6 18 0c 14 5c 51 2d bd 69 d9 ce a9 2c ac 1b 5c
+    e1 bc fa 73 79 2d 61 af 0b 44 0d 84 b5 22 cc 38
+salt [12]:
+    7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+i1 = 00, i2 = 0001, i3 = 0001, pnum = 000000
+K_msg [32]:
+    9a ba c6 57 78 18 0e 6f 2a f6 1f b8 d5 71 62 36
+    66 c2 f5 13 0d 54 e2 11 6c 7d 53 0e 6e 7d 48 bc
+nonce [16]:
+    00 00 00 00 7b 67 e6 f2 44 f9 7f 06 78 95 2e 45
+IV [8]:
+    00 00 01 00 01 00 00 00
+AAD [8]:
+    51 46 53 6b 00 00 00 10
+plaintext [64]:
+    45 00 00 3c 23 48 00 00 7f 01 ee b9 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 e4 5b 02 00 67 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+ciphertext [64]:
+    78 0a 2c 62 62 32 15 7b fe 01 76 32 f3 2d b4 d0
+    a4 fa 61 2f 66 c2 bf 79 d5 e2 14 9b ac 1d fc 4b
+    15 4b 69 03 4d c2 1d ef 20 90 6d 59 62 81 12 7c
+    ff 72 56 ab f0 0b a1 22 bb 5e 6c 71 a4 d4 9a 4d
+ESP ICV [12]:
+    c2 2f 87 40 83 8e 3d fa ce 91 cc b8
+ESP packet [112]:
+    45 00 00 70 00 5c 00 00 ff 32 91 40 0a 6f 0a c5
+    0a 6f 0a 1d 51 46 53 6b 00 00 00 10 00 00 01 00
+    01 00 00 00 78 0a 2c 62 62 32 15 7b fe 01 76 32
+    f3 2d b4 d0 a4 fa 61 2f 66 c2 bf 79 d5 e2 14 9b
+    ac 1d fc 4b 15 4b 69 03 4d c2 1d ef 20 90 6d 59
+    62 81 12 7c ff 72 56 ab f0 0b a1 22 bb 5e 6c 71
+    a4 d4 9a 4d c2 2f 87 40 83 8e 3d fa ce 91 cc b8
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.3" derivedCounter="3.">
+          <t indent="0" pn="section-appendix.a-2.3.1">ENCR_MAGMA_MGM_KTREE (Example 1):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.3.2">
+transform key [36]:
+    5b 50 bf 33 78 87 02 38 f3 ca 74 0f d1 24 ba 6c
+    22 83 ef 58 9b e6 f4 6a 89 4a a3 5d 5f 06 b2 03
+    cf 36 63 12
+K [32]:
+    5b 50 bf 33 78 87 02 38 f3 ca 74 0f d1 24 ba 6c
+    22 83 ef 58 9b e6 f4 6a 89 4a a3 5d 5f 06 b2 03
+salt [4]:
+    cf 36 63 12
+i1 = 00, i2 = 0000, i3 = 0000, pnum = 000000
+K_msg [32]:
+    25 65 21 e2 70 b7 4a 16 4d fc 26 e6 bf 0c ca 76
+    5e 9d 41 02 7d 4b 7b 19 76 2b 1c c9 01 dc de 7f
+nonce [8]:
+    00 00 00 00 cf 36 63 12
+IV [8]:
+    00 00 00 00 00 00 00 00
+AAD [8]:
+    c8 c2 b2 8d 00 00 00 01
+plaintext [64]:
+    45 00 00 3c 24 2d 00 00 7f 01 ed d4 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 de 5b 02 00 6d 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+ciphertext [64]:
+    fa 08 40 33 2c 4f 3f c9 64 4d 8c 2c 4a 91 7e 0c
+    d8 6f 8e 61 04 03 87 64 6b b9 df bd 91 50 3f 4a
+    f5 d2 42 69 49 d3 5a 22 9e 1e 0e fc 99 ac ee 9e
+    32 43 e2 3b a4 d1 1e 84 5c 91 a7 19 15 52 cc e8
+ESP ICV [8]:
+    5f 4a fa 8b 02 94 0f 5c
+ESP packet [108]:
+    45 00 00 6c 00 62 00 00 ff 32 91 3e 0a 6f 0a c5
+    0a 6f 0a 1d c8 c2 b2 8d 00 00 00 01 00 00 00 00
+    00 00 00 00 fa 08 40 33 2c 4f 3f c9 64 4d 8c 2c
+    4a 91 7e 0c d8 6f 8e 61 04 03 87 64 6b b9 df bd
+    91 50 3f 4a f5 d2 42 69 49 d3 5a 22 9e 1e 0e fc
+    99 ac ee 9e 32 43 e2 3b a4 d1 1e 84 5c 91 a7 19
+    15 52 cc e8 5f 4a fa 8b 02 94 0f 5c
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.4" derivedCounter="4.">
+          <t indent="0" pn="section-appendix.a-2.4.1">ENCR_MAGMA_MGM_KTREE (Example 2):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.4.2">
+transform key [36]:
+    5b 50 bf 33 78 87 02 38 f3 ca 74 0f d1 24 ba 6c
+    22 83 ef 58 9b e6 f4 6a 89 4a a3 5d 5f 06 b2 03
+    cf 36 63 12
+K [32]:
+    5b 50 bf 33 78 87 02 38 f3 ca 74 0f d1 24 ba 6c
+    22 83 ef 58 9b e6 f4 6a 89 4a a3 5d 5f 06 b2 03
+salt [4]:
+    cf 36 63 12
+i1 = 00, i2 = 0001, i3 = 0001, pnum = 000000
+K_msg [32]:
+    20 e0 46 d4 09 83 9b 23 f0 66 a5 0a 7a 06 5b 4a
+    39 24 4f 0e 29 ef 1e 6f 2e 5d 2e 13 55 f5 da 08
+nonce [8]:
+    00 00 00 00 cf 36 63 12
+IV [8]:
+    00 00 01 00 01 00 00 00
+AAD [8]:
+    c8 c2 b2 8d 00 00 00 10
+plaintext [64]:
+    45 00 00 3c 24 40 00 00 7f 01 ed c1 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 cf 5b 02 00 7c 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+ciphertext [64]:
+    7a 71 48 41 a5 34 b7 58 93 6a 8e ab 26 91 40 a8
+    25 a7 f3 5d b9 e4 37 1f e7 6c 99 9c 9b 88 db 72
+    1d c7 59 f6 56 b5 b3 ea b6 b1 4d 6b d7 7a 07 1d
+    4b 93 78 bd 08 97 6c 33 ed 9a 01 91 bf fe a1 dd
+ESP ICV [8]:
+    dd 5d 50 9a fd b8 09 98
+ESP packet [108]:
+    45 00 00 6c 00 71 00 00 ff 32 91 2f 0a 6f 0a c5
+    0a 6f 0a 1d c8 c2 b2 8d 00 00 00 10 00 00 01 00
+    01 00 00 00 7a 71 48 41 a5 34 b7 58 93 6a 8e ab
+    26 91 40 a8 25 a7 f3 5d b9 e4 37 1f e7 6c 99 9c
+    9b 88 db 72 1d c7 59 f6 56 b5 b3 ea b6 b1 4d 6b
+    d7 7a 07 1d 4b 93 78 bd 08 97 6c 33 ed 9a 01 91
+    bf fe a1 dd dd 5d 50 9a fd b8 09 98
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.5" derivedCounter="5.">
+          <t indent="0" pn="section-appendix.a-2.5.1">ENCR_KUZNYECHIK_MGM_MAC_KTREE (Example 1):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.5.2">
+transform key [44]:
+    98 bd 34 ce 3b e1 9a 34 65 e4 87 c0 06 48 83 f4
+    88 cc 23 92 63 dc 32 04 91 9b 64 3f e7 57 b2 be
+    6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+K [32]:
+    98 bd 34 ce 3b e1 9a 34 65 e4 87 c0 06 48 83 f4
+    88 cc 23 92 63 dc 32 04 91 9b 64 3f e7 57 b2 be
+salt [12]:
+    6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+i1 = 00, i2 = 0000, i3 = 0000, pnum = 000000
+K_msg [32]:
+    98 f1 03 01 81 0a 04 1c da dd e1 bd 85 a0 8f 21
+    8b ac b5 7e 00 35 e2 22 c8 31 e3 e4 f0 a2 0c 8f
+nonce [16]:
+    00 00 00 00 6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+IV [8]:
+    00 00 00 00 00 00 00 00
+AAD [80]:
+    3d ac 92 6a 00 00 00 01 00 00 00 00 00 00 00 00
+    45 00 00 3c 0c f1 00 00 7f 01 05 11 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 48 5c 02 00 03 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+plaintext [0]:
+ciphertext [0]:
+ESP ICV [12]:
+    ca c5 8c e5 e8 8b 4b f3 2d 6c f0 4d
+ESP packet [112]:
+    45 00 00 70 00 01 00 00 ff 32 91 9b 0a 6f 0a c5
+    0a 6f 0a 1d 3d ac 92 6a 00 00 00 01 00 00 00 00
+    00 00 00 00 45 00 00 3c 0c f1 00 00 7f 01 05 11
+    0a 6f 0a c5 0a 6f 0a 1d 08 00 48 5c 02 00 03 00
+    61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70
+    71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69
+    01 02 02 04 ca c5 8c e5 e8 8b 4b f3 2d 6c f0 4d
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.6" derivedCounter="6.">
+          <t indent="0" pn="section-appendix.a-2.6.1">ENCR_KUZNYECHIK_MGM_MAC_KTREE (Example 2):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.6.2">
+transform key [44]:
+    98 bd 34 ce 3b e1 9a 34 65 e4 87 c0 06 48 83 f4
+    88 cc 23 92 63 dc 32 04 91 9b 64 3f e7 57 b2 be
+    6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+K [32]:
+    98 bd 34 ce 3b e1 9a 34 65 e4 87 c0 06 48 83 f4
+    88 cc 23 92 63 dc 32 04 91 9b 64 3f e7 57 b2 be
+salt [12]:
+    6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+i1 = 00, i2 = 0000, i3 = 0001, pnum = 000000
+K_msg [32]:
+    02 c5 41 87 7c c6 23 f3 f1 35 91 9a 75 13 b6 f8
+    a8 a1 8c b2 63 99 86 2f 50 81 4f 52 91 01 67 84
+nonce [16]:
+    00 00 00 00 6c 51 cb ac 93 c4 5b ea 99 62 79 1d
+IV [8]:
+    00 00 00 00 01 00 00 00
+AAD [80]:
+    3d ac 92 6a 00 00 00 06 00 00 00 00 01 00 00 00
+    45 00 00 3c 0c fb 00 00 7f 01 05 07 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 43 5c 02 00 08 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+plaintext [0]:
+ciphertext [0]:
+ESP ICV [12]:
+    ba bc 67 ec 72 a8 c3 1a 89 b4 0e 91
+ESP packet [112]:
+    45 00 00 70 00 06 00 00 ff 32 91 96 0a 6f 0a c5
+    0a 6f 0a 1d 3d ac 92 6a 00 00 00 06 00 00 00 00
+    01 00 00 00 45 00 00 3c 0c fb 00 00 7f 01 05 07
+    0a 6f 0a c5 0a 6f 0a 1d 08 00 43 5c 02 00 08 00
+    61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70
+    71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69
+    01 02 02 04 ba bc 67 ec 72 a8 c3 1a 89 b4 0e 91
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.7" derivedCounter="7.">
+          <t indent="0" pn="section-appendix.a-2.7.1">ENCR_MAGMA_MGM_MAC_KTREE (Example 1):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.7.2">
+transform key [36]:
+    d0 65 b5 30 fa 20 b8 24 c7 57 0c 1d 86 2a e3 39
+    2c 1c 07 6d fa da 69 75 74 4a 07 a8 85 7d bd 30
+    88 79 8f 29
+K [32]:
+    d0 65 b5 30 fa 20 b8 24 c7 57 0c 1d 86 2a e3 39
+    2c 1c 07 6d fa da 69 75 74 4a 07 a8 85 7d bd 30
+salt [4]:
+    88 79 8f 29
+i1 = 00, i2 = 0000, i3 = 0000, pnum = 000000
+K_msg [32]:
+    4c 61 45 99 a0 a0 67 f1 94 87 24 0a e1 00 e1 b7
+    ea f2 3e da f8 7e 38 73 50 86 1c 68 3b a4 04 46
+nonce [8]:
+    00 00 00 00 88 79 8f 29
+IV [8]:
+    00 00 00 00 00 00 00 00
+AAD [80]:
+    3e 40 69 9c 00 00 00 01 00 00 00 00 00 00 00 00
+    45 00 00 3c 0e 08 00 00 7f 01 03 fa 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 36 5c 02 00 15 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+plaintext [0]:
+ciphertext [0]:
+ESP ICV [8]:
+    4d d4 25 8a 25 35 95 df
+ESP packet [108]:
+    45 00 00 6c 00 13 00 00 ff 32 91 8d 0a 6f 0a c5
+    0a 6f 0a 1d 3e 40 69 9c 00 00 00 01 00 00 00 00
+    00 00 00 00 45 00 00 3c 0e 08 00 00 7f 01 03 fa
+    0a 6f 0a c5 0a 6f 0a 1d 08 00 36 5c 02 00 15 00
+    61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70
+    71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69
+    01 02 02 04 4d d4 25 8a 25 35 95 df
+</sourcecode>
+        </li>
+        <li pn="section-appendix.a-2.8" derivedCounter="8.">
+          <t indent="0" pn="section-appendix.a-2.8.1">ENCR_MAGMA_MGM_MAC_KTREE (Example 2):
+          </t>
+          <sourcecode name="" type="test-vectors" markers="false" pn="section-appendix.a-2.8.2">
+transform key [36]:
+    d0 65 b5 30 fa 20 b8 24 c7 57 0c 1d 86 2a e3 39
+    2c 1c 07 6d fa da 69 75 74 4a 07 a8 85 7d bd 30
+    88 79 8f 29
+K [32]:
+    d0 65 b5 30 fa 20 b8 24 c7 57 0c 1d 86 2a e3 39
+    2c 1c 07 6d fa da 69 75 74 4a 07 a8 85 7d bd 30
+salt [4]:
+    88 79 8f 29
+i1 = 00, i2 = 0000, i3 = 0001, pnum = 000000
+K_msg [32]:
+    b4 f3 f9 0d c4 87 fa b8 c4 af d0 eb 45 49 f2 f0
+    e4 36 32 b6 79 19 37 2e 1e 96 09 ea f0 b8 e2 28
+nonce [8]:
+    00 00 00 00 88 79 8f 29
+IV [8]:
+    00 00 00 00 01 00 00 00
+AAD [80]:
+    3e 40 69 9c 00 00 00 06 00 00 00 00 01 00 00 00
+    45 00 00 3c 0e 13 00 00 7f 01 03 ef 0a 6f 0a c5
+    0a 6f 0a 1d 08 00 31 5c 02 00 1a 00 61 62 63 64
+    65 66 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74
+    75 76 77 61 62 63 64 65 66 67 68 69 01 02 02 04
+plaintext [0]:
+ciphertext [0]:
+ESP ICV [8]:
+    84 84 a9 23 30 a0 b1 96
+ESP packet [108]:
+    45 00 00 6c 00 18 00 00 ff 32 91 88 0a 6f 0a c5
+    0a 6f 0a 1d 3e 40 69 9c 00 00 00 06 00 00 00 00
+    01 00 00 00 45 00 00 3c 0e 13 00 00 7f 01 03 ef
+    0a 6f 0a c5 0a 6f 0a 1d 08 00 31 5c 02 00 1a 00
+    61 62 63 64 65 66 67 68 69 6a 6b 6c 6d 6e 6f 70
+    71 72 73 74 75 76 77 61 62 63 64 65 66 67 68 69
+    01 02 02 04 84 84 a9 23 30 a0 b1 96
+</sourcecode>
+        </li>
+      </ol>
+    </section>
+    <section anchor="acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">The author wants to thank <contact fullname="Adrian Farrel"/>, <contact fullname="Russ Housley"/>, <contact fullname="Yaron Sheffer"/>, and <contact fullname="Stanislav Smyshlyaev"/> for valuable input during the
+          publication process for this document.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author initials="V." surname="Smyslov" fullname="Valery Smyslov">
+        <organization showOnFrontPage="true">ELVIS-PLUS</organization>
+        <address>
+          <postal>
+            <street>PO Box 81</street>
+            <city>Moscow (Zelenograd)</city>
+            <code>124460</code>
+            <country>Russian Federation</country>
+          </postal>
+          <phone>+7 495 276 0211</phone>
+          <email>svan@elvis.ru</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

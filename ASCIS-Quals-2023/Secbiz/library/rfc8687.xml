@@ -1,0 +1,639 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ospf-xaf-te-07" indexInclude="true" ipr="trust200902" number="8687" prepTime="2019-11-27T10:37:34" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="5786" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ospf-xaf-te-07" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8687" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="OSPF Routing with Cross-AF TE Tunnels">OSPF Routing with Cross-Address Family Traffic Engineering Tunnels</title>
+    <seriesInfo name="RFC" value="8687" stream="IETF"/>
+    <author fullname="Anton Smirnov" initials="A." surname="Smirnov">
+      <organization showOnFrontPage="true">Cisco Systems, Inc.</organization>
+      <address>
+        <postal>
+          <street>De Kleetlaan 6a</street>
+          <city>Diegem</city>
+          <region/>
+          <code>1831</code>
+          <country>Belgium</country>
+        </postal>
+        <email>as@cisco.com</email>
+      </address>
+    </author>
+    <author fullname="Alvaro Retana" initials="A." surname="Retana">
+      <organization showOnFrontPage="true">Futurewei Technologies, Inc.</organization>
+      <address>
+        <postal>
+          <street>2330 Central Expressway</street>
+          <city>Santa Clara</city>
+          <region>CA</region>
+          <code>95050</code>
+          <country>United States of America</country>
+        </postal>
+        <email>alvaro.retana@futurewei.com</email>
+      </address>
+    </author>
+    <author fullname="Michael Barnes" initials="M." surname="Barnes">
+      <organization showOnFrontPage="true"/>
+      <address>
+        <postal>
+          <street/>
+        </postal>
+        <email>michael_barnes@usa.net</email>
+      </address>
+    </author>
+    <date month="11" year="2019"/>
+    <area>Routing</area>
+    <workgroup>LSR</workgroup>
+    <keyword>OSPF</keyword>
+    <keyword>IPv4</keyword>
+    <keyword>IPv6</keyword>
+    <keyword>TE</keyword>
+    <keyword>MPLS</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">When using Traffic Engineering (TE) in a dual-stack IPv4/IPv6
+      network, the Multiprotocol Label Switching (MPLS) TE Label Switched
+      Path (LSP) infrastructure may be duplicated, even if the destination
+      IPv4 and IPv6 addresses belong to the same remote router.
+
+
+      In order to
+      achieve an integrated MPLS TE LSP infrastructure, OSPF routes must be
+      computed over MPLS TE tunnels created using information propagated in
+      another OSPF instance. This issue is solved by advertising cross-address
+      family (X-AF) OSPF TE information.</t>
+      <t pn="section-abstract-2">This document describes an update to RFC 5786 that allows for the easy
+      identification of a router's local X-AF IP addresses.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8687" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2019 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operation">Operation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-backward-compatibility">Backward Compatibility</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-automatically-switched-opti">Automatically Switched Optical Networks</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">TE extensions to <xref target="RFC3630" format="default" sectionFormat="of" derivedContent="RFC3630">OSPFv2</xref> 
+      and <xref target="RFC5329" format="default" sectionFormat="of" derivedContent="RFC5329">OSPFv3</xref> have been
+      described to support intra-area
+      TE in IPv4 and IPv6 networks, respectively. In both cases, the TE
+      database provides a tight coupling between the routed protocol and
+      advertised TE signaling information. In other words, any use of the TE
+      database is limited to IPv4 for <xref target="RFC2328" format="default" sectionFormat="of" derivedContent="RFC2328"> OSPFv2</xref>
+      and IPv6 for <xref target="RFC5340" format="default" sectionFormat="of" derivedContent="RFC5340">OSPFv3 </xref>.</t>
+      <t pn="section-1-2">In a dual-stack network, it may be desirable to set up common MPLS TE
+      LSPs to carry traffic destined to addresses from different address
+      families on a router. The use of common LSPs eases potential scalability
+      and management concerns by halving the number of LSPs in the
+      network.  Besides, it allows operators to group traffic based on
+   business characteristics, class of service, and/or applications;
+   the operators are not constrained by the network protocol used.
+      
+      </t>
+      <t pn="section-1-3">For example, an LSP created based on MPLS TE information propagated
+      by an OSPFv2 instance can be used to transport both IPv4 and IPv6
+      traffic, as opposed to using both OSPFv2 and OSPFv3 to provision a
+      separate LSP for each address family. Even if, in some cases, the address-family-specific traffic is to be separated, calculation from a common TE
+      database may prove to be operationally beneficial.</t>
+      <t pn="section-1-4">During the SPF calculation on the TE tunnel
+      head-end router, OSPF
+      computes shortcut routes using TE tunnels. A commonly used algorithm for
+      computing shortcuts is defined in <xref target="RFC3906" format="default" sectionFormat="of" derivedContent="RFC3906"/>. For that or
+      any similar algorithm to work with a common MPLS TE infrastructure in a
+      dual-stack network, a requirement is to reliably map the X-AF addresses
+      to the corresponding tail-end router. This mapping is a challenge
+      because the Link State Advertisements (LSAs) containing the routing
+      information are carried in one
+      OSPF instance, while the TE calculations may be done using a TE database
+      from a different OSPF instance.</t>
+      <t pn="section-1-5">A simple solution to this problem is to rely on the Router ID to
+      identify a node in the corresponding OSPFv2 and OSPFv3 Link State
+      Databases (LSDBs). This solution would mandate both instances on the
+      same router to be configured with the same Router ID. However, relying
+      on the correctness of configuration puts additional burden and cost on
+      the operation of the network. The network becomes even more difficult to
+      manage if OSPFv2 and OSPFv3 topologies do not match exactly, for example,
+      if area borders are chosen differently in the two protocols. Also, if
+      the routing processes do fall out of sync (e.g., having different Router
+      IDs for local administrative reasons), there is no defined way for other
+      routers to discover such misalignment and to take corrective measures
+      (such as to avoid routing traffic through affected TE tunnels or
+      alerting the network administrators). The use of misaligned Router IDs
+      may result in delivering the traffic to the wrong tail-end router, which
+      could lead to suboptimal routing or even traffic loops.</t>
+      <t pn="section-1-6">This document describes an update to <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/> that
+      allows for the easy identification of a router's local X-AF IP
+      addresses. <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/> defined the Node IPv4 Local Address
+      and Node IPv6 Local Address sub-TLVs of the Node Attribute TLV for a
+      router to advertise additional local IPv4 and IPv6 addresses. However,
+      <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/> did not describe the advertisement and usage of
+      these sub-TLVs when the address family of the advertised local address
+      differed from the address family of the OSPF traffic engineering
+      protocol.</t>
+      <t pn="section-1-7">This document updates <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/> so that a router can
+      also announce one or more local X-AF addresses using the corresponding
+      Local Address sub-TLV. Routers using the <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786">Node
+      Attribute TLV</xref> can include non-TE-enabled interface addresses in
+      their OSPF TE advertisements and also use the same sub-TLVs to carry
+      X-AF information, facilitating the mapping described above.</t>
+      <t pn="section-1-8">The method specified in this document can also be used to compute the
+      X-AF mapping of the egress Label Switching Router (LSR) for sub-LSPs of
+      a Point-to-Multipoint LSP <xref target="RFC4461" format="default" sectionFormat="of" derivedContent="RFC4461"/>. Considerations of
+      using Point-to-Multipoint MPLS TE for X-AF traffic forwarding is outside
+      the scope of this document.</t>
+    </section>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-language">Requirements Language</name>
+      <t pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+        <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals,
+    as shown here.
+      </t>
+    </section>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-operation">Operation</name>
+      <t pn="section-3-1">To implement the X-AF routing technique described in this document,
+      OSPFv2 will advertise the Node IPv6 Local Address sub-TLV and OSPFv3
+      will advertise the Node IPv4 Local Address sub-TLV, possibly in addition
+      to advertising other IP addresses as documented by <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/>.</t>
+      <t pn="section-3-2">Multiple instances of OSPFv3 are needed if it is used for both IPv4
+      and IPv6 <xref target="RFC5838" format="default" sectionFormat="of" derivedContent="RFC5838"/>. The operation in this section is
+      described with OSPFv2 as the protocol used for IPv4; that is the most
+      common case. The case of OSPFv3 being used for IPv4 follows the same
+      procedure as what is indicated for OSPFv2 below.</t>
+      <t pn="section-3-3">On a node that implements X-AF routing, each OSPF instance
+      advertises, using the Node Local Address sub-TLV, all X-AF IPv6 (for
+      OSPFv2 instance) or IPv4 (for OSPFv3) addresses local to the router that
+      can be used by the Constrained Shortest Path First (CSPF) to calculate MPLS TE LSPs: </t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-3-4">
+        <li pn="section-3-4.1">The OSPF instance <bcp14>MUST</bcp14> advertise the IP address listed in the Router
+          Address TLV <xref target="RFC3630" format="default" sectionFormat="of" derivedContent="RFC3630"/> <xref target="RFC5329" format="default" sectionFormat="of" derivedContent="RFC5329"/> of
+          the X-AF instance maintaining the TE database.</li>
+        <li pn="section-3-4.2">The OSPF instance <bcp14>SHOULD</bcp14> include additional local addresses
+          advertised by the X-AF OSPF instance in its Node Local Address
+          sub-TLVs.</li>
+        <li pn="section-3-4.3">An implementation <bcp14>MAY</bcp14> advertise other local X-AF addresses.</li>
+      </ul>
+      <t pn="section-3-5">When TE information is advertised in an OSPF instance, both natively
+      (i.e., as per RFC <xref target="RFC3630" format="default" sectionFormat="of" derivedContent="RFC3630"/> or <xref target="RFC5329" format="default" sectionFormat="of" derivedContent="RFC5329"/>)
+      and as X-AF Node Attribute TLV, it is left to local configuration to
+      determine which TE database is used to compute routes for the OSPF
+      instance.</t>
+      <t pn="section-3-6">On Area Border Routers (ABRs), each advertised X-AF IP address <bcp14>MUST</bcp14> be
+      advertised into, at most, one area. If OSPFv2 and OSPFv3 ABRs coincide
+      (i.e., the areas for all OSPFv2 and OSPFv3 interfaces
+      are the same), then the X-AF addresses <bcp14>MUST</bcp14> be advertised into the same
+      area in both instances. This allows other ABRs connected to the same set
+      of areas to know with which area to associate computed MPLS TE
+      tunnels.</t>
+      <t pn="section-3-7">During the X-AF routing calculation, X-AF IP addresses are used to
+      map locally created LSPs to tail-end routers in the
+      LSDB. The mapping algorithm can be described as: </t>
+      <ul empty="true" spacing="normal" bare="false" pn="section-3-8">
+        <li pn="section-3-8.1">Walk the list of all MPLS TE tunnels for which the computing
+          router is a head end. For each MPLS TE tunnel T:</li>
+        <li pn="section-3-8.2">
+          <ol spacing="normal" type="1" start="1" pn="section-3-8.2.1">
+            <li pn="section-3-8.2.1.1" derivedCounter="1.">If T's destination address is from the same address family as the
+          OSPF instance associated with the LSDB, then the extensions defined
+          in this document do not apply.</li>
+            <li pn="section-3-8.2.1.2" derivedCounter="2.">Otherwise, it is a X-AF MPLS TE tunnel. Note the tunnel's destination
+          IP address.</li>
+            <li pn="section-3-8.2.1.3" derivedCounter="3.">Walk the X-AF IP addresses in the LSDBs of all connected areas.
+          If a matching IP address is found, advertised by router R in area A,
+          then mark the tunnel T as belonging to area A and terminating on
+          tail-end router R. Assign the intra-area SPF cost to reach router R
+          within area A as the IGP cost of tunnel T.</li>
+          </ol>
+        </li>
+      </ul>
+      <t pn="section-3-9">After completing this calculation, each TE tunnel is associated with
+      an area and tail-end router in terms of the routing LSDB of the
+      computing OSPF instance and has a cost.</t>
+      <t pn="section-3-10">The algorithm described above is to be used only if the Node Local
+      Address sub-TLV includes X-AF information.</t>
+      <t pn="section-3-11">Note that, for clarity of description, the mapping algorithm is
+     specified as a single calculation.  Implementations may choose to support equivalent mapping
+     functionality without implementing the algorithm as described.</t>
+      <t pn="section-3-12">As an example, consider a router in a dual-stack network 
+      using OSPFv2 and OSPFv3 for IPv4 and IPv6 routing, respectively. Suppose the OSPFv2
+      instance is used to propagate MPLS TE information and the router is
+      configured to accept TE LSPs terminating at local addresses 198.51.100.1
+      and 198.51.100.2. The router advertises in OSPFv2 the IPv4 address
+      198.51.100.1 in the Router Address TLV, the additional local IPv4
+      address 198.51.100.2 in the Node IPv4 Local Address sub-TLV, and other
+      TE TLVs as required by <xref target="RFC3630" format="default" sectionFormat="of" derivedContent="RFC3630"/>. If the
+      OSPFv3 instance in the network is enabled for X-AF TE routing (that is,
+      to use MPLS TE LSPs computed by OSPFv2 for IPv6 routing), then the
+      OSPFv3 instance of the router will advertise the Node IPv4 Local Address
+      sub-TLV listing the local IPv4 addresses 198.51.100.1 and 198.51.100.2.
+      Other routers in the OSPFv3 network will use this information to
+      reliably identify this router as the egress LSR for MPLS TE LSPs
+      terminating at either 198.51.100.1 or 198.51.100.2.</t>
+    </section>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-backward-compatibility">Backward Compatibility</name>
+      <t pn="section-4-1">Only routers that serve as endpoints for one or more TE tunnels <bcp14>MUST</bcp14>
+      be upgraded to support the procedures described herein: </t>
+      <ul spacing="normal" bare="false" empty="false" pn="section-4-2">
+        <li pn="section-4-2.1">Tunnel tail-end routers advertise the Node IPv4 Local Address
+          sub-TLV and/or the Node IPv6 Local Address sub-TLV.</li>
+        <li pn="section-4-2.2">Tunnel head-end routers perform the X-AF routing calculation.</li>
+      </ul>
+      <t pn="section-4-3"> Both the endpoints <bcp14>MUST</bcp14> be upgraded before the tail end starts
+      advertising the X-AF information. Other routers in the network do not
+      need to support X-AF procedures.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-automatically-switched-opti">Automatically Switched Optical Networks</name>
+        <t pn="section-4.1-1"><xref target="RFC6827" format="default" sectionFormat="of" derivedContent="RFC6827"/> updates 
+        <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/> by
+        defining extensions to be used in an Automatically Switched Optical
+        Network (ASON). The Local TE Router ID sub-TLV is required for
+        determining ASON reachability. The implication is that if the Local TE
+        Router ID sub-TLV is present in the Node Attribute TLV, then the
+        procedures in <xref target="RFC6827" format="default" sectionFormat="of" derivedContent="RFC6827"/> apply, regardless of whether
+        any X-AF information is advertised.</t>
+      </section>
+    </section>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-5-1">This document describes the use of the Local Address sub-TLVs to
+      provide X-AF information. The advertisement of these sub-TLVs, in any
+      OSPF instance, is not precluded by <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/>. As such, no
+      new security threats are introduced beyond the considerations in <xref target="RFC2328" format="default" sectionFormat="of" derivedContent="RFC2328">OSPFv2</xref>, <xref target="RFC5340" format="default" sectionFormat="of" derivedContent="RFC5340">OSPFv3</xref>,
+      and <xref target="RFC5786" format="default" sectionFormat="of" derivedContent="RFC5786"/>.</t>
+      <t pn="section-5-2">The X-AF information is not used for SPF computation or normal
+      routing, so the mechanism specified here has no effect on IP routing.
+      However, generating incorrect information or tampering with the
+      sub-TLVs may have an effect on traffic engineering computations.
+      Specifically, TE traffic may be delivered to the wrong tail-end router,
+      which could lead to suboptimal routing, traffic loops, or exposing
+      the traffic to attacker inspection or modification. These threats are
+      already present in other TE-related specifications, and their
+      considerations apply here as well, including <xref target="RFC3630" format="default" sectionFormat="of" derivedContent="RFC3630"/>
+      and <xref target="RFC5329" format="default" sectionFormat="of" derivedContent="RFC5329"/>.</t>
+    </section>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-6-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3630" target="https://www.rfc-editor.org/info/rfc3630" quoteTitle="true" derivedAnchor="RFC3630">
+          <front>
+            <title>Traffic Engineering (TE) Extensions to OSPF Version 2</title>
+            <author initials="D." surname="Katz" fullname="D. Katz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Kompella" fullname="K. Kompella">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Yeung" fullname="D. Yeung">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="September"/>
+            <abstract>
+              <t>This document describes extensions to the OSPF protocol version 2 to support intra-area Traffic Engineering (TE), using Opaque Link State Advertisements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3630"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3630"/>
+        </reference>
+        <reference anchor="RFC5329" target="https://www.rfc-editor.org/info/rfc5329" quoteTitle="true" derivedAnchor="RFC5329">
+          <front>
+            <title>Traffic Engineering Extensions to OSPF Version 3</title>
+            <author initials="K." surname="Ishiguro" fullname="K. Ishiguro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Manral" fullname="V. Manral">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Davey" fullname="A. Davey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Lindem" fullname="A. Lindem" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="September"/>
+            <abstract>
+              <t>This document describes extensions to OSPFv3 to support intra-area Traffic Engineering (TE).  This document extends OSPFv2 TE to handle IPv6 networks.  A new TLV and several new sub-TLVs are defined to support IPv6 networks.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5329"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5329"/>
+        </reference>
+        <reference anchor="RFC5786" target="https://www.rfc-editor.org/info/rfc5786" quoteTitle="true" derivedAnchor="RFC5786">
+          <front>
+            <title>Advertising a Router's Local Addresses in OSPF Traffic Engineering (TE) Extensions</title>
+            <author initials="R." surname="Aggarwal" fullname="R. Aggarwal">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Kompella" fullname="K. Kompella">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="March"/>
+            <abstract>
+              <t>OSPF Traffic Engineering (TE) extensions are used to advertise TE Link State Advertisements (LSAs) containing information about TE-enabled links.  The only addresses belonging to a router that are advertised in TE LSAs are the local addresses corresponding to TE-enabled links, and the local address corresponding to the Router ID.</t>
+              <t>In order to allow other routers in a network to compute Multiprotocol Label Switching (MPLS) Traffic Engineered Label Switched Paths (TE LSPs) to a given router's local addresses, those addresses must also be advertised by OSPF TE.</t>
+              <t>This document describes procedures that enhance OSPF TE to advertise a router's local addresses.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5786"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5786"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC2328" target="https://www.rfc-editor.org/info/rfc2328" quoteTitle="true" derivedAnchor="RFC2328">
+          <front>
+            <title>OSPF Version 2</title>
+            <author initials="J." surname="Moy" fullname="J. Moy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="April"/>
+            <abstract>
+              <t>This memo documents version 2 of the OSPF protocol.  OSPF is a link- state routing protocol.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="54"/>
+          <seriesInfo name="RFC" value="2328"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2328"/>
+        </reference>
+        <reference anchor="RFC3906" target="https://www.rfc-editor.org/info/rfc3906" quoteTitle="true" derivedAnchor="RFC3906">
+          <front>
+            <title>Calculating Interior Gateway Protocol (IGP) Routes Over Traffic Engineering Tunnels</title>
+            <author initials="N." surname="Shen" fullname="N. Shen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Smit" fullname="H. Smit">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="October"/>
+            <abstract>
+              <t>This document describes how conventional hop-by-hop link-state routing protocols interact with new Traffic Engineering capabilities to create Interior Gateway Protocol (IGP) shortcuts.  In particular, this document describes how Dijkstra's Shortest Path First (SPF) algorithm can be adapted so that link-state IGPs will calculate IP routes to forward traffic over tunnels that are set up by Traffic Engineering.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3906"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3906"/>
+        </reference>
+        <reference anchor="RFC4461" target="https://www.rfc-editor.org/info/rfc4461" quoteTitle="true" derivedAnchor="RFC4461">
+          <front>
+            <title>Signaling Requirements for Point-to-Multipoint Traffic-Engineered MPLS Label Switched Paths (LSPs)</title>
+            <author initials="S." surname="Yasukawa" fullname="S. Yasukawa" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="April"/>
+            <abstract>
+              <t>This document presents a set of requirements for the establishment and maintenance of Point-to-Multipoint (P2MP) Traffic-Engineered (TE) Multiprotocol Label Switching (MPLS) Label Switched Paths (LSPs).</t>
+              <t>There is no intent to specify solution-specific details or application-specific requirements in this document.</t>
+              <t>The requirements presented in this document not only apply to packet-switched networks under the control of MPLS protocols, but also encompass the requirements of Layer Two Switching (L2SC), Time Division Multiplexing (TDM), lambda, and port switching networks managed by Generalized MPLS (GMPLS) protocols.  Protocol solutions developed to meet the requirements set out in this document must attempt to be equally applicable to MPLS and GMPLS.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4461"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4461"/>
+        </reference>
+        <reference anchor="RFC5340" target="https://www.rfc-editor.org/info/rfc5340" quoteTitle="true" derivedAnchor="RFC5340">
+          <front>
+            <title>OSPF for IPv6</title>
+            <author initials="R." surname="Coltun" fullname="R. Coltun">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Ferguson" fullname="D. Ferguson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Moy" fullname="J. Moy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Lindem" fullname="A. Lindem">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="July"/>
+            <abstract>
+              <t>This document describes the modifications to OSPF to support version 6 of the Internet Protocol (IPv6).  The fundamental mechanisms of OSPF (flooding, Designated Router (DR) election, area support, Short Path First (SPF) calculations, etc.) remain unchanged.  However, some changes have been necessary, either due to changes in protocol semantics between IPv4 and IPv6, or simply to handle the increased address size of IPv6.  These modifications will necessitate incrementing the protocol version from version 2 to version 3.  OSPF for IPv6 is also referred to as OSPF version 3 (OSPFv3).</t>
+              <t>Changes between OSPF for IPv4, OSPF Version 2, and OSPF for IPv6 as described herein include the following.  Addressing semantics have been removed from OSPF packets and the basic Link State Advertisements (LSAs).  New LSAs have been created to carry IPv6 addresses and prefixes.  OSPF now runs on a per-link basis rather than on a per-IP-subnet basis.  Flooding scope for LSAs has been generalized.  Authentication has been removed from the OSPF protocol and instead relies on IPv6's Authentication Header and Encapsulating Security Payload (ESP).</t>
+              <t>Even with larger IPv6 addresses, most packets in OSPF for IPv6 are almost as compact as those in OSPF for IPv4.  Most fields and packet- size limitations present in OSPF for IPv4 have been relaxed.  In addition, option handling has been made more flexible.</t>
+              <t>All of OSPF for IPv4's optional capabilities, including demand circuit support and Not-So-Stubby Areas (NSSAs), are also supported in OSPF for IPv6.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5340"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5340"/>
+        </reference>
+        <reference anchor="RFC5838" target="https://www.rfc-editor.org/info/rfc5838" quoteTitle="true" derivedAnchor="RFC5838">
+          <front>
+            <title>Support of Address Families in OSPFv3</title>
+            <author initials="A." surname="Lindem" fullname="A. Lindem" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Mirtorabi" fullname="S. Mirtorabi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Roy" fullname="A. Roy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Barnes" fullname="M. Barnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Aggarwal" fullname="R. Aggarwal">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="April"/>
+            <abstract>
+              <t>This document describes a mechanism for supporting multiple address families (AFs) in OSPFv3 using multiple instances.  It maps an AF to an OSPFv3 instance using the Instance ID field in the OSPFv3 packet header.  This approach is fairly simple and minimizes extensions to OSPFv3 for supporting multiple AFs.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5838"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5838"/>
+        </reference>
+        <reference anchor="RFC6827" target="https://www.rfc-editor.org/info/rfc6827" quoteTitle="true" derivedAnchor="RFC6827">
+          <front>
+            <title>Automatically Switched Optical Network (ASON) Routing for OSPFv2 Protocols</title>
+            <author initials="A." surname="Malis" fullname="A. Malis" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Lindem" fullname="A. Lindem" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Papadimitriou" fullname="D. Papadimitriou" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t>The ITU-T has defined an architecture and requirements for operating an Automatically Switched Optical Network (ASON).</t>
+              <t>The Generalized Multiprotocol Label Switching (GMPLS) protocol suite is designed to provide a control plane for a range of network technologies.  These include optical networks such as time division multiplexing (TDM) networks including the Synchronous Optical Network/Synchronous Digital Hierarchy (SONET/SDH), Optical Transport Networks (OTNs), and lambda switching optical networks.</t>
+              <t>The requirements for GMPLS routing to satisfy the requirements of ASON routing and an evaluation of existing GMPLS routing protocols are provided in other documents.  This document defines extensions to the OSPFv2 Link State Routing Protocol to meet the requirements for routing in an ASON.</t>
+              <t>Note that this work is scoped to the requirements and evaluation expressed in RFC 4258 and RFC 4652 and the ITU-T Recommendations that were current when those documents were written.  Future extensions or revisions of this work may be necessary if the ITU-T Recommendations are revised or if new requirements are introduced into a revision of RFC 4258.  This document obsoletes RFC 5787 and updates RFC 5786. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6827"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6827"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.a-1">The authors would like to thank Peter Psenak and Eric Osborne for
+      early discussions and Acee Lindem for discussing compatibility with ASON
+      extensions. Also, Eric Vyncke, Ben Kaduk, and Roman Danyliw provided
+      useful comments. </t>
+      <t pn="section-appendix.a-2">We would also like to thank the authors of RFC 5786 for laying down
+      the foundation for this work.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Anton Smirnov" initials="A." surname="Smirnov">
+        <organization showOnFrontPage="true">Cisco Systems, Inc.</organization>
+        <address>
+          <postal>
+            <street>De Kleetlaan 6a</street>
+            <city>Diegem</city>
+            <region/>
+            <code>1831</code>
+            <country>Belgium</country>
+          </postal>
+          <email>as@cisco.com</email>
+        </address>
+      </author>
+      <author fullname="Alvaro Retana" initials="A." surname="Retana">
+        <organization showOnFrontPage="true">Futurewei Technologies, Inc.</organization>
+        <address>
+          <postal>
+            <street>2330 Central Expressway</street>
+            <city>Santa Clara</city>
+            <region>CA</region>
+            <code>95050</code>
+            <country>United States of America</country>
+          </postal>
+          <email>alvaro.retana@futurewei.com</email>
+        </address>
+      </author>
+      <author fullname="Michael Barnes" initials="M." surname="Barnes">
+        <organization showOnFrontPage="true"/>
+        <address>
+          <postal>
+            <street/>
+          </postal>
+          <email>michael_barnes@usa.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

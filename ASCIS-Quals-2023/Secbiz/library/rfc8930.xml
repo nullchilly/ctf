@@ -1,0 +1,841 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-6lo-minimal-fragment-15" indexInclude="true" ipr="trust200902" number="8930" prepTime="2020-11-23T11:43:53" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-6lo-minimal-fragment-15" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8930" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Fragment Forwarding">On Forwarding 6LoWPAN Fragments over a Multi-Hop IPv6 Network</title>
+    <seriesInfo name="RFC" value="8930" stream="IETF"/>
+    <author initials="T." surname="Watteyne" fullname="Thomas Watteyne" role="editor">
+      <organization showOnFrontPage="true">Analog Devices</organization>
+      <address>
+        <postal>
+          <street>32990 Alvarado-Niles Road, Suite 910</street>
+          <city>Union City</city>
+          <region>CA</region>
+          <code>94587</code>
+          <country>United States of America</country>
+        </postal>
+        <email>thomas.watteyne@analog.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Thubert" fullname="Pascal Thubert" role="editor">
+      <organization abbrev="Cisco Systems" showOnFrontPage="true">Cisco Systems, Inc</organization>
+      <address>
+        <postal>
+          <extaddr>Building D</extaddr>
+          <street>45 Allee des Ormes - BP1200</street>
+          <city>Mougins - Sophia Antipolis</city>
+          <code>06254</code>
+          <country>France</country>
+        </postal>
+        <phone>+33 497 23 26 34</phone>
+        <email>pthubert@cisco.com</email>
+      </address>
+    </author>
+    <author initials="C." surname="Bormann" fullname="Carsten Bormann">
+      <organization showOnFrontPage="true">Universität Bremen TZI</organization>
+      <address>
+        <postal>
+          <street>Postfach 330440</street>
+          <city>Bremen</city>
+          <code>D-28359</code>
+          <country>Germany</country>
+        </postal>
+        <phone>+49-421-218-63921</phone>
+        <email>cabo@tzi.org</email>
+      </address>
+    </author>
+    <date month="11" year="2020"/>
+    <area>Internet Area</area>
+    <workgroup>6lo</workgroup>
+    <keyword>6LoWPAN</keyword>
+    <keyword>Fragment</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document provides generic rules to enable the forwarding of an
+IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) fragment
+over a route-over network. Forwarding fragments can improve both
+end-to-end latency and reliability as well as reduce the buffer requirements in intermediate nodes; it may be implemented using RFC 4944 and Virtual Reassembly Buffers (VRBs).</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8930" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-background">Background</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-terms">New Terms</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview-of-6lowpan-fragmen">Overview of 6LoWPAN Fragmentation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-limitations-of-per-hop-frag">Limitations of Per-Hop Fragmentation and Reassembly</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-latency">Latency</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-memory-management-and-relia">Memory Management and Reliability</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-forwarding-fragments">Forwarding Fragments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-virtual-reassembly-buffer-v">Virtual Reassembly Buffer (VRB) Implementation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="Intro" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The original 6LoWPAN fragmentation is defined in <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/> for use over a single Layer 3 hop, though multiple
+Layer 2 hops in a mesh-under network is also possible, and was not modified by the update in <xref target="RFC6282" format="default" sectionFormat="of" derivedContent="RFC6282"/>.
+6LoWPAN operations including fragmentation depend on a link-layer security that prevents any rogue access to the network.
+</t>
+      <t indent="0" pn="section-1-2">
+In a route-over 6LoWPAN network, an IP packet is expected to be reassembled at each intermediate hop, uncompressed, pushed to Layer 3 to be routed, and then compressed and fragmented again.
+
+This document introduces an alternate approach called 6LoWPAN Fragment Forwarding (6LFF) whereby an intermediate node forwards a fragment (or the bulk thereof, MTU
+permitting) without reassembling if the next hop is a similar 6LoWPAN
+link. The routing decision is made on the first fragment of the datagram, which has the IPv6 routing information. The first fragment is forwarded immediately, and a state is stored to enable forwarding the next fragments along the same path.
+</t>
+      <t indent="0" pn="section-1-3">
+
+Done right, 6LoWPAN Fragment Forwarding techniques lead to more streamlined operations, less buffer bloat, and lower latency. But it may be wasteful when fragments are missing, leading to locked resources and low throughput, and it may be misused to the point that the end-to-end latency of one packet falls behind that of per-hop reassembly.
+</t>
+      <t indent="0" pn="section-1-4">
+This specification provides a generic overview of 6LFF, discusses advantages and caveats, and introduces a particular 6LFF technique called "Virtual Reassembly Buffer" (VRB) that can be used while retaining the message formats defined in <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/>. Basic recommendations such as the insertion of an inter-frame gap between fragments are provided to avoid the most typical caveats.
+</t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <section anchor="bcp" numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-2.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-2.2">
+        <name slugifiedName="name-background">Background</name>
+        <t indent="0" pn="section-2.2-1">
+	  
+		Past experience with fragmentation, e.g., as described in <xref target="RFC4963" format="default" sectionFormat="of" derivedContent="RFC4963">"IPv4 Reassembly Errors at High Data Rates"</xref> and references therein,  has shown that misassociated or lost
+        fragments can lead to poor network behavior and, occasionally, trouble
+        at the application layer.
+		That experience led to the definition of the <xref target="RFC8201" format="default" sectionFormat="of" derivedContent="RFC8201">"Path
+        MTU Discovery for IP version 6"</xref> protocol that limits fragmentation over the
+        Internet.
+        </t>
+        <t indent="0" pn="section-2.2-2"><xref target="RFC8900" format="default" sectionFormat="of" derivedContent="RFC8900">"IP Fragmentation
+        Considered Fragile"</xref> discusses security threats that are linked to
+        using IP fragmentation. The 6LoWPAN fragmentation takes place underneath the IP Layer,
+        but some issues described there may still apply to 6LoWPAN fragments
+        (as discussed in further details in
+        <xref target="security-considerations" format="default" sectionFormat="of" derivedContent="Section 7"/>).
+        </t>
+        <t indent="0" pn="section-2.2-3">Readers are expected to be familiar with all the terms and concepts
+	    that are discussed in <xref target="RFC4919" format="default" sectionFormat="of" derivedContent="RFC4919">"IPv6 over Low-Power
+	    Wireless Personal Area Networks (6LoWPANs): Overview, Assumptions,
+	    Problem Statement, and Goals"</xref> and <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944">
+	    "Transmission of IPv6 Packets over IEEE 802.15.4 Networks"</xref>.
+        </t>
+        <t indent="0" pn="section-2.2-4"><xref target="RFC3031" format="default" sectionFormat="of" derivedContent="RFC3031">"Multiprotocol Label Switching
+        Architecture"</xref> states that with MPLS,</t>
+        <blockquote pn="section-2.2-5">
+        packets are "labeled" before
+        they are forwarded. At subsequent hops, there is
+        no further analysis of the packet's network layer header.  Rather, the
+        label is used as an index into a table which specifies the next hop,
+        and a new label. 
+</blockquote>
+        <t indent="0" pn="section-2.2-6">The MPLS
+        technique is leveraged in the present specification to forward
+        fragments that actually
+        do not have a network-layer header, since the fragmentation occurs below
+        IP.
+        </t>
+      </section>
+      <section anchor="new" numbered="true" removeInRFC="false" toc="include" pn="section-2.3">
+        <name slugifiedName="name-new-terms">New Terms</name>
+        <t indent="0" pn="section-2.3-1">
+    This specification uses the following terms:
+        </t>
+        <dl indent="3" newline="false" spacing="normal" pn="section-2.3-2">
+          <dt pn="section-2.3-2.1">6LoWPAN Fragment Forwarding Endpoints:</dt>
+          <dd pn="section-2.3-2.2">
+	    The 6LFF endpoints are the first and last nodes in an unbroken string
+        of 6LFF nodes. They are also the only points
+        where the fragmentation and reassembly operations take place.
+
+        </dd>
+          <dt pn="section-2.3-2.3">Compressed Form:</dt>
+          <dd pn="section-2.3-2.4">
+	    This specification uses the generic term "compressed form" to refer to
+        the format of a datagram after the action of <xref target="RFC6282" format="default" sectionFormat="of" derivedContent="RFC6282"/>
+        and possibly <xref target="RFC8138" format="default" sectionFormat="of" derivedContent="RFC8138"/> for Routing Protocol for Low-Power and Lossy Network (RPL) <xref target="RFC6550" format="default" sectionFormat="of" derivedContent="RFC6550"/>
+        artifacts.
+        </dd>
+          <dt pn="section-2.3-2.5">Datagram_Size:</dt>
+          <dd pn="section-2.3-2.6">
+        The size of the datagram in its compressed form before it is fragmented.
+    
+        </dd>
+          <dt pn="section-2.3-2.7">Datagram_Tag:</dt>
+          <dd pn="section-2.3-2.8">
+        An identifier of a datagram that is locally unique to the Layer 2 sender.
+        Associated with the link-layer address of the sender, this becomes a globally
+        unique identifier for the datagram within the duration of its transmission.
+	    </dd>
+          <dt pn="section-2.3-2.9">Fragment_Offset:</dt>
+          <dd pn="section-2.3-2.10">
+        The offset of a fragment of a datagram in its compressed form.
+        </dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="overview-of-6lowpan-fragmentation" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-overview-of-6lowpan-fragmen">Overview of 6LoWPAN Fragmentation</name>
+      <t indent="0" pn="section-3-1"><xref target="FIGperhop" format="default" sectionFormat="of" derivedContent="Figure 1"/> illustrates 6LoWPAN fragmentation.
+We assume node A forwards a packet to node B, possibly as part of a multi-hop route between 6LoWPAN Fragment Forwarding endpoints, which may be neither A nor B, though 6LoWPAN may compress the IP header better when they are both the 6LFF and the 6LoWPAN compression endpoints.</t>
+      <figure anchor="FIGperhop" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-fragmentation-at-node-a-and">Fragmentation at Node A, and Reassembly at Node B</name>
+        <artwork align="left" pn="section-3-2.1">
+               +---+                     +---+
+        ... ---| A |--------------------&gt;| B |--- ...
+               +---+                     +---+
+                              # (frag. 5)
+
+             123456789                 123456789
+            +---------+               +---------+
+            |   #  ###|               |###  #   |
+            +---------+               +---------+
+               outgoing                incoming
+          fragmentation                reassembly
+                 buffer                buffer
+</artwork>
+      </figure>
+      <t indent="0" pn="section-3-3">Typically, node A starts with an uncompressed packet and compacts the IPv6 packet using the header compression mechanism defined in <xref target="RFC6282" format="default" sectionFormat="of" derivedContent="RFC6282"/>.
+If the resulting 6LoWPAN packet does not fit into a single link-layer frame, node A's 6LoWPAN sub-layer cuts it into multiple 6LoWPAN fragments, which it transmits as separate link-layer frames to node B.
+Node B's 6LoWPAN sub-layer reassembles these fragments, inflates the compressed header fields back to the original IPv6 header, and hands over the full IPv6 packet to its IPv6 layer.</t>
+      <t indent="0" pn="section-3-4">In <xref target="FIGperhop" format="default" sectionFormat="of" derivedContent="Figure 1"/>, a packet forwarded by node A to node B is cut into nine fragments, numbered 1 to 9 as follows:</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-3-5">
+        <li pn="section-3-5.1">Each fragment is represented by the '#' symbol.</li>
+        <li pn="section-3-5.2">Node A has sent fragments 1, 2, 3, 5, and 6 to node B.</li>
+        <li pn="section-3-5.3">Node B has received fragments 1, 2, 3, and 6 from node A.</li>
+        <li pn="section-3-5.4">Fragment 5 is still being transmitted at the link layer from node A to node B.</li>
+      </ul>
+      <t indent="0" pn="section-3-6">The reassembly buffer for 6LoWPAN is indexed in node B by:</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-3-7">
+        <li pn="section-3-7.1">a unique identifier of node A (e.g., node A's link-layer address).</li>
+        <li pn="section-3-7.2">the Datagram_Tag chosen by node A for this fragmented datagram.</li>
+      </ul>
+      <t indent="0" pn="section-3-8">Because it may be hard for node B to correlate all possible link-layer addresses that node A may use (e.g., short versus long addresses), node A must use the same link-layer address to send all the fragments of the same datagram to node B.
+</t>
+      <t indent="0" pn="section-3-9">Conceptually, the reassembly buffer in node B contains:</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-3-10">
+        <li pn="section-3-10.1">a Datagram_Tag as received in the incoming fragments, associated
+      with the interface and the link-layer address of node A for which the received Datagram_Tag is unique,</li>
+        <li pn="section-3-10.2">the actual packet data from the fragments received so far, in a form that makes it possible to detect when the whole packet has been received and can be processed or forwarded,</li>
+        <li pn="section-3-10.3">a state indicating the fragments already received,</li>
+        <li pn="section-3-10.4">a Datagram_Size, and</li>
+        <li pn="section-3-10.5">a timer that allows discarding a partially reassembled packet after some timeout.</li>
+      </ul>
+      <t indent="0" pn="section-3-11">A fragmentation header is added to each fragment; it indicates what portion of the packet that fragment corresponds to.
+<xref target="RFC4944" sectionFormat="of" section="5.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4944#section-5.3" derivedContent="RFC4944"/> defines the format of the header for the first and subsequent fragments.
+All fragments are tagged with a 16-bit "Datagram_Tag", used to identify which packet each fragment belongs to.
+Each datagram can be uniquely identified by the sender link-layer addresses of the frame that carries it and the Datagram_Tag that the sender allocated for this datagram.
+<xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/> also mandates that the first fragment is sent first and with a particular format that is different than that of the next fragments. Each fragment except for the first one can be identified within its datagram by the datagram-offset.</t>
+      <t indent="0" pn="section-3-12">Node B's typical behavior, per <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/>, is as follows.
+Upon receiving a fragment from node A with a Datagram_Tag previously unseen from node A, node B allocates a buffer large enough to hold the entire packet.
+The length of the packet is indicated in each fragment (the Datagram_Size field), so node B can allocate the buffer even if the fragment it receives first is not the first fragment.
+As fragments come in, node B fills the buffer.
+When all fragments have been received, node B inflates the compressed header fields into an IPv6 header and hands the resulting IPv6 packet to the IPv6 layer, which performs the route lookup. This behavior typically results in per-hop fragmentation and reassembly.
+That is, the packet is fully reassembled, then (re-)fragmented, at every hop.</t>
+    </section>
+    <section anchor="SEClimits" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-limitations-of-per-hop-frag">Limitations of Per-Hop Fragmentation and Reassembly</name>
+      <t indent="0" pn="section-4-1">There are at least two limitations to doing per-hop fragmentation and reassembly.
+See <xref target="ARTICLE" format="default" sectionFormat="of" derivedContent="ARTICLE"/> for detailed simulation results on both limitations.</t>
+      <section anchor="latency" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-latency">Latency</name>
+        <t indent="0" pn="section-4.1-1">When reassembling, a node needs to wait for all the fragments to be received before being able to re-form the IPv6 packet and possibly forwarding it to the next hop. This repeats at every hop.</t>
+        <t indent="0" pn="section-4.1-2">This may result in increased end-to-end latency compared to a case where each fragment is forwarded without per-hop reassembly.</t>
+      </section>
+      <section anchor="memory-management-and-reliability" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-memory-management-and-relia">Memory Management and Reliability</name>
+        <t indent="0" pn="section-4.2-1">Constrained nodes have limited memory. Assuming a reassembly buffer for a 6LoWPAN MTU of 1280 bytes as defined in <xref target="RFC4944" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4944#section-4" derivedContent="RFC4944"/>, typical nodes only have enough memory for 1-3 reassembly buffers.</t>
+        <t indent="0" pn="section-4.2-2">To illustrate this, we use the topology from <xref target="FIGtopology" format="default" sectionFormat="of" derivedContent="Figure 2"/>, where nodes A, B, C, and D all send packets through node E.
+We further assume that node E's memory can only hold 3 reassembly buffers.</t>
+        <figure anchor="FIGtopology" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-illustrating-the-memory-man">Illustrating the Memory Management Issue</name>
+          <artwork align="left" pn="section-4.2-3.1">
+               +---+       +---+
+       ... ---&gt;| A |------&gt;| B |
+               +---+       +---+\
+                                 \
+                                 +---+    +---+
+                                 | E |---&gt;| F | ...
+                                 +---+    +---+
+                                 /
+                                /
+               +---+       +---+
+       ... ---&gt;| C |------&gt;| D |
+               +---+       +---+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-4.2-4">When nodes A, B, and C concurrently send fragmented packets, all three reassembly buffers in node E are occupied.
+If, at that moment, node D also sends a fragmented packet, node E has no option but to drop one of the packets, lowering end-to-end reliability.</t>
+      </section>
+    </section>
+    <section anchor="ff" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-forwarding-fragments">Forwarding Fragments</name>
+      <t indent="0" pn="section-5-1">
+A 6LoWPAN Fragment Forwarding technique makes the routing decision on the first fragment, which is always the one with the IPv6 address of the destination. Upon receiving a first fragment, a forwarding node (e.g., node B in an A-&gt;B-&gt;C sequence) that does fragment forwarding <bcp14>MUST</bcp14> attempt to create a state and forward the fragment. This is an atomic operation, and if the first fragment cannot be forwarded, then the state <bcp14>MUST</bcp14> be removed.
+</t>
+      <t indent="0" pn="section-5-2">
+Since the Datagram_Tag is uniquely associated with the source link-layer address of the fragment, the forwarding node <bcp14>MUST</bcp14> assign a new Datagram_Tag from its own namespace for the next hop and rewrite the fragment header of each fragment with that Datagram_Tag.
+</t>
+      <t indent="0" pn="section-5-3">
+
+When a forwarding node receives a fragment other than a first fragment, it <bcp14>MUST</bcp14> look up state based on the source link-layer address and the Datagram_Tag in the received fragment. If no such state is found, the fragment <bcp14>MUST</bcp14> be dropped; otherwise, the fragment <bcp14>MUST</bcp14> be forwarded using the information in the state found.
+</t>
+      <t indent="0" pn="section-5-4">
+Compared to <xref target="overview-of-6lowpan-fragmentation" format="default" sectionFormat="of" derivedContent="Section 3"/>, the conceptual reassembly buffer in node B now contains the following, assuming that node B is neither the source nor the final destination:</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-5-5">
+        <li pn="section-5-5.1">a Datagram_Tag as received in the incoming fragments, associated with the interface and the link-layer address of node A for which the received Datagram_Tag is unique.</li>
+        <li pn="section-5-5.2">the link-layer address that node B uses as the source to forward the fragments.</li>
+        <li pn="section-5-5.3"> the interface and the link-layer address of the next-hop C that is resolved on the first fragment.</li>
+        <li pn="section-5-5.4">a Datagram_Tag that node B uniquely allocated for this datagram and that is used when forwarding the fragments of the datagram.</li>
+        <li pn="section-5-5.5">a buffer for the remainder of a previous fragment left to be sent.</li>
+        <li pn="section-5-5.6">a timer that allows discarding the stale 6LFF state after some timeout.
+  The duration of the timer should be longer than that which covers the reassembly at the receiving endpoint.
+  </li>
+      </ul>
+      <t indent="0" pn="section-5-6">
+ A node that has not received the first fragment cannot forward the next fragments. This means that if node B receives a fragment, node A was in possession of the first fragment at some point. To keep the operation simple and consistent with <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/>, the first fragment <bcp14>MUST</bcp14> always be sent first. When that is done, if node B receives a fragment that is not the first and for which it has no state, then node B treats it as an error and refrains from creating a state or attempting to forward.
+ This also means that node A should perform all its possible retries on the first fragment before it attempts to send the next fragments, and that it should abort the datagram and release its state if it fails to send the first fragment.
+</t>
+      <t indent="0" pn="section-5-7">Fragment forwarding obviates some of the benefits of the 6LoWPAN header compression <xref target="RFC6282" format="default" sectionFormat="of" derivedContent="RFC6282"/> in intermediate hops. In return, the memory used to store the packet is distributed along the path, which limits the buffer-bloat effect. Multiple fragments may progress simultaneously along the network as long as they do not interfere.
+ An associated caveat is that on a half-duplex radio, if node A sends the next fragment at the same time as node B forwards the previous fragment to node C down the path, then node B will miss it.
+
+ If node C forwards the previous fragment to node D at the same time and on the same frequency as node A sends the next fragment to node B, this may result in a hidden terminal problem. In that case, the transmission from node C interferes at node B with that from node A, unbeknownst to node A.
+
+ Consecutive fragments of a same datagram <bcp14>MUST</bcp14> be separated with an inter-frame gap that allows one fragment to progress beyond the next hop and beyond the interference domain before the next shows up. This can be achieved by interleaving packets or fragments sent via different next-hop routers.
+
+</t>
+    </section>
+    <section anchor="virtual-reassembly-buffer-vrb-implementation" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-virtual-reassembly-buffer-v">Virtual Reassembly Buffer (VRB) Implementation</name>
+      <t indent="0" pn="section-6-1">
+The VRB <xref target="I-D.ietf-lwig-6lowpan-virtual-reassembly" format="default" sectionFormat="of" derivedContent="LWIG-VRB"/> is a particular incarnation of a 6LFF that can be implemented without a change to <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/>.
+</t>
+      <t indent="0" pn="section-6-2">VRB overcomes the limitations listed in <xref target="SEClimits" format="default" sectionFormat="of" derivedContent="Section 4"/>.
+Nodes do not wait for the last fragment before forwarding, reducing end-to-end latency.
+Similarly, the memory footprint of VRB is just the VRB table, reducing the packet drop probability significantly.</t>
+      <t indent="0" pn="section-6-3">However, there are other caveats:</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-6-4">
+        <dt pn="section-6-4.1">Non-zero Packet Drop Probability:</dt>
+        <dd pn="section-6-4.2">
+  The abstract data in a VRB table entry contains at a minimum the link-layer address of the predecessor and the successor, the Datagram_Tag used by the predecessor, and the local Datagram_Tag that this node will swap with it. The VRB may need to store a few octets from the last fragment that may not have fit within MTU and that will be prepended to the next fragment.
+This yields a small footprint that is 2 orders of magnitude smaller, compared to needing a 1280-byte reassembly buffer for each packet.
+Yet, the size of the VRB table necessarily remains finite.
+In the extreme case where a node is required to concurrently forward more packets than it has entries in its VRB table, packets are dropped.</dd>
+        <dt pn="section-6-4.3">No Fragment Recovery:</dt>
+        <dd pn="section-6-4.4">
+  There is no mechanism in VRB for the node that reassembles a packet to request a single missing fragment.
+Dropping a fragment requires the whole packet to be resent.
+This causes unnecessary traffic, as fragments are forwarded even when the destination node can never construct the original IPv6 packet.</dd>
+        <dt pn="section-6-4.5">No Per-Fragment Routing:</dt>
+        <dd pn="section-6-4.6">
+  All subsequent fragments follow the same sequence of hops from the source to the destination node as the first fragment, because the IP header is required in order to route the fragment and is only present in the first fragment. A side effect is that the first fragment must always be forwarded first.</dd>
+      </dl>
+      <t indent="0" pn="section-6-5">The severity and occurrence of these caveats depend on the link layer used.
+Whether they are acceptable depends entirely on the requirements the application places on the network.</t>
+      <t indent="0" pn="section-6-6">If the caveats are present and not acceptable for the application, alternative specifications may define new protocols to overcome them.
+One example is <xref target="RFC8931" format="default" sectionFormat="of" derivedContent="RFC8931"/>, which specifies a 6LFF technique that allows the end-to-end fragment recovery between the 6LFF endpoints.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">
+   An attacker can perform a Denial-of-Service (DoS) attack on a node
+   implementing VRB by generating a large number of bogus "fragment 1"
+   fragments without sending subsequent fragments.  This causes the VRB
+   table to fill up.  Note that the VRB does not need to remember the
+   full datagram as received so far but only possibly a few octets from
+   the last fragment that could not fit in it.  It is expected that an
+   implementation protects itself to keep the number of VRBs within
+   capacity, and that old VRBs are protected by a timer of a reasonable
+   duration for the technology and destroyed upon timeout.
+</t>
+      <t indent="0" pn="section-7-2">Secure joining and the link-layer security that it sets up protects against those attacks from network outsiders.</t>
+      <t indent="0" pn="section-7-3"><xref target="RFC8900" format="default" sectionFormat="of" derivedContent="RFC8900">"IP Fragmentation Considered Fragile"</xref> discusses security threats and other caveats that are linked to using IP fragmentation. The 6LoWPAN fragmentation takes place underneath the IP Layer, but some issues described there may still apply to 6LoWPAN fragments.</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-7-4">
+        <li pn="section-7-4.1">Overlapping fragment attacks are possible with 6LoWPAN fragments, but there is no known firewall operation that would work on 6LoWPAN fragments at the time of this writing, so the exposure is limited. An implementation of a firewall <bcp14>SHOULD NOT</bcp14> forward fragments but instead should recompose the IP packet, check it in the uncompressed form, and then forward it again as fragments if necessary. Overlapping fragments are acceptable as long as they contain the same payload. The firewall <bcp14>MUST</bcp14> drop the whole packet if overlapping fragments are encountered that result in different data at the same offset. </li>
+        <li pn="section-7-4.2">Resource-exhaustion attacks are certainly possible and a sensitive issue in a constrained network. An attacker can perform a DoS attack on a node implementing VRB by generating a large number of bogus first fragments without sending subsequent fragments. This causes the VRB table to fill up. When hop-by-hop reassembly is used, the same attack can be more damaging if the node allocates a full Datagram_Size for each bogus first fragment. With the VRB, the attack can be performed remotely on all nodes along a path, but each node suffers a lesser hit. This is because the VRB does not need to remember the full datagram as received so far but only possibly a few octets from the last fragment that could not fit in it.
+   An implementation <bcp14>MUST</bcp14> protect itself to keep the number of VRBs within capacity and to ensure that old VRBs are protected by a timer of a reasonable duration for the technology and destroyed upon timeout.</li>
+        <li pn="section-7-4.3">Attacks based on predictable fragment identification values are also possible but can be avoided. The Datagram_Tag <bcp14>SHOULD</bcp14> be assigned pseudorandomly in order to reduce the risk of such attacks. A larger size of the
+   Datagram_Tag makes the guessing more difficult and reduces the chances of an
+   accidental reuse while the original packet is still in flight, at the expense of more space in each frame.
+   Nonetheless, some level of risk remains because an
+      attacker that is able to authenticate to and send traffic on the
+      network can guess a valid Datagram_Tag value, since there are only
+      a limited number of possible values.
+   </li>
+        <li pn="section-7-4.4">Evasion of Network Intrusion Detection Systems (NIDSs) leverages ambiguity in the reassembly of the fragment. This attack makes little sense in the context of this specification since the fragmentation happens within the Low-Power and Lossy Network (LLN), meaning that the intruder should already be inside to perform the attack.
+
+   NIDS systems would probably not be installed within the LLN either but
+   rather at a bottleneck at the exterior edge of the network.</li>
+      </ul>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-8-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-lwig-6lowpan-virtual-reassembly" to="LWIG-VRB"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4919" target="https://www.rfc-editor.org/info/rfc4919" quoteTitle="true" derivedAnchor="RFC4919">
+          <front>
+            <title>IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs): Overview, Assumptions, Problem Statement, and Goals</title>
+            <author initials="N." surname="Kushalnagar" fullname="N. Kushalnagar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Schumacher" fullname="C. Schumacher">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="August"/>
+            <abstract>
+              <t indent="0">This document describes the assumptions, problem statement, and goals for transmitting IP over IEEE 802.15.4 networks.  The set of goals enumerated in this document form an initial set only.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4919"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4919"/>
+        </reference>
+        <reference anchor="RFC4944" target="https://www.rfc-editor.org/info/rfc4944" quoteTitle="true" derivedAnchor="RFC4944">
+          <front>
+            <title>Transmission of IPv6 Packets over IEEE 802.15.4 Networks</title>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Kushalnagar" fullname="N. Kushalnagar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hui" fullname="J. Hui">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Culler" fullname="D. Culler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document describes the frame format for transmission of IPv6 packets and the method of forming IPv6 link-local addresses and statelessly autoconfigured addresses on IEEE 802.15.4 networks. Additional specifications include a simple header compression scheme using shared context and provisions for packet delivery in IEEE 802.15.4 meshes.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4944"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4944"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="ARTICLE" target="https://ieeexplore.ieee.org/abstract/document/8771317" quoteTitle="true" derivedAnchor="ARTICLE">
+          <front>
+            <title>6LoWPAN Fragment Forwarding</title>
+            <author initials="Y." surname="Tanaka" fullname="Yasuyuki Tanaka">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Minet" fullname="Pascale Minet">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Watteyne" fullname="Thomas Watteyne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="2019"/>
+          </front>
+          <refcontent>IEEE Communications Standards Magazine, Vol. 3, Issue 1, pp. 35-39</refcontent>
+          <seriesInfo name="DOI" value="10.1109/MCOMSTD.2019.1800029"/>
+        </reference>
+        <reference anchor="I-D.ietf-lwig-6lowpan-virtual-reassembly" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-lwig-6lowpan-virtual-reassembly-02" derivedAnchor="LWIG-VRB">
+          <front>
+            <title>Virtual reassembly buffers in 6LoWPAN</title>
+            <author fullname="Carsten Bormann">
+              <organization showOnFrontPage="true">Universitaet Bremen TZI</organization>
+            </author>
+            <author fullname="Thomas Watteyne">
+              <organization showOnFrontPage="true">Analog Devices</organization>
+            </author>
+            <date month="March" day="9" year="2020"/>
+            <abstract>
+              <t indent="0">   When employing adaptation layer fragmentation in 6LoWPAN, it may be
+   beneficial for a forwarder not to have to reassemble each packet in
+   its entirety before forwarding it.
+
+   This has been always possible with the original fragmentation design
+   of RFC 4944.  Apart from a brief mention of the way to do this in
+   Section 2.5.2 of the 6LoWPAN book, this has not been extensively
+   described in the literature.  The present document attempts to fill
+   that gap.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-lwig-6lowpan-virtual-reassembly-02"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-lwig-6lowpan-virtual-reassembly-02.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC3031" target="https://www.rfc-editor.org/info/rfc3031" quoteTitle="true" derivedAnchor="RFC3031">
+          <front>
+            <title>Multiprotocol Label Switching Architecture</title>
+            <author initials="E." surname="Rosen" fullname="E. Rosen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Viswanathan" fullname="A. Viswanathan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Callon" fullname="R. Callon">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="January"/>
+            <abstract>
+              <t indent="0">This document specifies the architecture for Multiprotocol Label Switching (MPLS).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3031"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3031"/>
+        </reference>
+        <reference anchor="RFC4963" target="https://www.rfc-editor.org/info/rfc4963" quoteTitle="true" derivedAnchor="RFC4963">
+          <front>
+            <title>IPv4 Reassembly Errors at High Data Rates</title>
+            <author initials="J." surname="Heffner" fullname="J. Heffner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Mathis" fullname="M. Mathis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Chandler" fullname="B. Chandler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="July"/>
+            <abstract>
+              <t indent="0">IPv4 fragmentation is not sufficiently robust for use under some conditions in today's Internet.  At high data rates, the 16-bit IP identification field is not large enough to prevent frequent incorrectly assembled IP fragments, and the TCP and UDP checksums are insufficient to prevent the resulting corrupted datagrams from being delivered to higher protocol layers.  This note describes some easily reproduced experiments demonstrating the problem, and discusses some of the operational implications of these observations.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4963"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4963"/>
+        </reference>
+        <reference anchor="RFC6282" target="https://www.rfc-editor.org/info/rfc6282" quoteTitle="true" derivedAnchor="RFC6282">
+          <front>
+            <title>Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks</title>
+            <author initials="J." surname="Hui" fullname="J. Hui" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Thubert" fullname="P. Thubert">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="September"/>
+            <abstract>
+              <t indent="0">This document updates RFC 4944, "Transmission of IPv6 Packets over IEEE 802.15.4 Networks".  This document specifies an IPv6 header compression format for IPv6 packet delivery in Low Power Wireless Personal Area Networks (6LoWPANs).  The compression format relies on shared context to allow compression of arbitrary prefixes.  How the information is maintained in that shared context is out of scope. This document specifies compression of multicast addresses and a framework for compressing next headers.  UDP header compression is specified within this framework.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6282"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6282"/>
+        </reference>
+        <reference anchor="RFC6550" target="https://www.rfc-editor.org/info/rfc6550" quoteTitle="true" derivedAnchor="RFC6550">
+          <front>
+            <title>RPL: IPv6 Routing Protocol for Low-Power and Lossy Networks</title>
+            <author initials="T." surname="Winter" fullname="T. Winter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Thubert" fullname="P. Thubert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Brandt" fullname="A. Brandt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hui" fullname="J. Hui">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Kelsey" fullname="R. Kelsey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Levis" fullname="P. Levis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Pister" fullname="K. Pister">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Struik" fullname="R. Struik">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="JP." surname="Vasseur" fullname="JP. Vasseur">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Alexander" fullname="R. Alexander">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="March"/>
+            <abstract>
+              <t indent="0">Low-Power and Lossy Networks (LLNs) are a class of network in which both the routers and their interconnect are constrained.  LLN routers typically operate with constraints on processing power, memory, and energy (battery power).  Their interconnects are characterized by high loss rates, low data rates, and instability.  LLNs are comprised of anything from a few dozen to thousands of routers.  Supported traffic flows include point-to-point (between devices inside the LLN), point-to-multipoint (from a central control point to a subset of devices inside the LLN), and multipoint-to-point (from devices inside the LLN towards a central control point).  This document specifies the IPv6 Routing Protocol for Low-Power and Lossy Networks (RPL), which provides a mechanism whereby multipoint-to-point traffic from devices inside the LLN towards a central control point as well as point-to-multipoint traffic from the central control point to the devices inside the LLN are supported.  Support for point-to-point traffic is also available.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6550"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6550"/>
+        </reference>
+        <reference anchor="RFC8138" target="https://www.rfc-editor.org/info/rfc8138" quoteTitle="true" derivedAnchor="RFC8138">
+          <front>
+            <title>IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) Routing Header</title>
+            <author initials="P." surname="Thubert" fullname="P. Thubert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Toutain" fullname="L. Toutain">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Cragie" fullname="R. Cragie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="April"/>
+            <abstract>
+              <t indent="0">This specification introduces a new IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) dispatch type for use in 6LoWPAN route-over topologies, which initially covers the needs of Routing Protocol for Low-Power and Lossy Networks (RPL) data packet compression (RFC 6550).  Using this dispatch type, this specification defines a method to compress the RPL Option (RFC 6553) information and Routing Header type 3 (RFC 6554), an efficient IP-in-IP technique, and is extensible for more applications.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8138"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8138"/>
+        </reference>
+        <reference anchor="RFC8201" target="https://www.rfc-editor.org/info/rfc8201" quoteTitle="true" derivedAnchor="RFC8201">
+          <front>
+            <title>Path MTU Discovery for IP version 6</title>
+            <author initials="J." surname="McCann" fullname="J. McCann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mogul" fullname="J. Mogul">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hinden" fullname="R. Hinden" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="July"/>
+            <abstract>
+              <t indent="0">This document describes Path MTU Discovery (PMTUD) for IP version 6. It is largely derived from RFC 1191, which describes Path MTU Discovery for IP version 4.  It obsoletes RFC 1981.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="87"/>
+          <seriesInfo name="RFC" value="8201"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8201"/>
+        </reference>
+        <reference anchor="RFC8900" target="https://www.rfc-editor.org/info/rfc8900" quoteTitle="true" derivedAnchor="RFC8900">
+          <front>
+            <title>IP Fragmentation Considered Fragile</title>
+            <author initials="R." surname="Bonica" fullname="R. Bonica">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Baker" fullname="F. Baker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hinden" fullname="R. Hinden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Troan" fullname="O. Troan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Gont" fullname="F. Gont">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="September"/>
+            <abstract>
+              <t indent="0">This document describes IP fragmentation and explains how it introduces fragility to Internet communication.</t>
+              <t indent="0">This document also proposes alternatives to IP fragmentation and provides recommendations for developers and network operators.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="230"/>
+          <seriesInfo name="RFC" value="8900"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8900"/>
+        </reference>
+        <reference anchor="RFC8931" target="https://www.rfc-editor.org/info/rfc8931" quoteTitle="true" derivedAnchor="RFC8931">
+          <front>
+            <title>IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) Selective Fragment Recovery</title>
+            <author initials="P" surname="Thubert" fullname="Pascal Thubert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="November" year="2020"/>
+          </front>
+          <seriesInfo name="RFC" value="8931"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8931"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The authors would like to thank <contact fullname="Carles Gomez Montenegro"/>, <contact fullname="Yasuyuki Tanaka"/>, <contact fullname="Ines Robles"/>, and <contact fullname="Dave Thaler"/> for their in-depth review of this document and suggestions for improvement. Many thanks to <contact fullname="Georgios Papadopoulos"/> and <contact fullname="Dominique Barthel"/> for their contributions during the WG activities. And many thanks as well to <contact fullname="Roman Danyliw"/>, <contact fullname="Barry Leiba"/>, <contact fullname="Murray Kucherawy"/>, <contact fullname="Derrell Piper"/>, <contact fullname="Sarah Banks"/>, <contact fullname="Joerg Ott"/>, <contact fullname="Francesca Palombini"/>, <contact fullname="Mirja Kühlewind"/>, <contact fullname="Éric Vyncke"/>, and especially <contact fullname="Benjamin Kaduk"/> for their constructive reviews through the IETF last call and IESG process.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="T." surname="Watteyne" fullname="Thomas Watteyne" role="editor">
+        <organization showOnFrontPage="true">Analog Devices</organization>
+        <address>
+          <postal>
+            <street>32990 Alvarado-Niles Road, Suite 910</street>
+            <city>Union City</city>
+            <region>CA</region>
+            <code>94587</code>
+            <country>United States of America</country>
+          </postal>
+          <email>thomas.watteyne@analog.com</email>
+        </address>
+      </author>
+      <author initials="P." surname="Thubert" fullname="Pascal Thubert" role="editor">
+        <organization abbrev="Cisco Systems" showOnFrontPage="true">Cisco Systems, Inc</organization>
+        <address>
+          <postal>
+            <extaddr>Building D</extaddr>
+            <street>45 Allee des Ormes - BP1200</street>
+            <city>Mougins - Sophia Antipolis</city>
+            <code>06254</code>
+            <country>France</country>
+          </postal>
+          <phone>+33 497 23 26 34</phone>
+          <email>pthubert@cisco.com</email>
+        </address>
+      </author>
+      <author initials="C." surname="Bormann" fullname="Carsten Bormann">
+        <organization showOnFrontPage="true">Universität Bremen TZI</organization>
+        <address>
+          <postal>
+            <street>Postfach 330440</street>
+            <city>Bremen</city>
+            <code>D-28359</code>
+            <country>Germany</country>
+          </postal>
+          <phone>+49-421-218-63921</phone>
+          <email>cabo@tzi.org</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

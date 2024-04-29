@@ -1,0 +1,674 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-cose-aes-ctr-and-cbc-06" number="9459" submissionType="IETF" category="std" consensus="true" tocInclude="true" sortRefs="true" symRefs="true" updates="" obsoletes="" xml:lang="en" prepTime="2023-09-14T14:44:03" indexInclude="true" scripts="Common,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-cose-aes-ctr-and-cbc-06" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9459" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="AES-CTR and AES-CBC with COSE">CBOR Object Signing and Encryption (COSE): AES-CTR and AES-CBC</title>
+    <seriesInfo name="RFC" value="9459" stream="IETF"/>
+    <author initials="R." surname="Housley" fullname="Russ Housley">
+      <organization abbrev="Vigil Security" showOnFrontPage="true">Vigil Security, LLC</organization>
+      <address>
+        <email>housley@vigilsec.com</email>
+      </address>
+    </author>
+    <author initials="H." surname="Tschofenig" fullname="Hannes Tschofenig">
+      <address>
+        <email>hannes.tschofenig@gmx.net</email>
+      </address>
+    </author>
+    <date month="09" year="2023"/>
+    <area>sec</area>
+    <workgroup>cose</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The Concise Binary Object Representation (CBOR) data format is designed
+for small code size and small message size. CBOR Object Signing and
+Encryption (COSE) is specified in RFC 9052 to provide basic
+security services using the CBOR data format. This document specifies the
+conventions for using AES-CTR and AES-CBC as content encryption
+algorithms with COSE.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9459" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-terminology">Conventions and Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-modes-of-operation">AES Modes of Operation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-counter-mode">AES Counter Mode</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-ctr-cose-key">AES-CTR COSE Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-ctr-cose-algorithm-iden">AES-CTR COSE Algorithm Identifiers</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-cipher-block-chaining-m">AES Cipher Block Chaining Mode</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-cbc-cose-key">AES-CBC COSE Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aes-cbc-cose-algorithm-iden">AES-CBC COSE Algorithm Identifiers</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implementation-consideratio">Implementation Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">This document specifies the conventions for using AES-CTR and AES-CBC 
+as content encryption algorithms with the CBOR Object Signing and Encryption
+(COSE) <xref target="RFC9052" format="default" sectionFormat="of" derivedContent="RFC9052"/> syntax.  Today, encryption with COSE uses Authenticated
+Encryption with Associated Data (AEAD) algorithms <xref target="RFC5116" format="default" sectionFormat="of" derivedContent="RFC5116"/>, which provide
+both confidentiality and integrity protection.  However, there are situations
+where another mechanism, such as a digital signature, is used to provide
+integrity.  In these cases, an AEAD algorithm is not needed.  The software
+manifest being defined by the IETF SUIT WG <xref target="I-D.ietf-suit-manifest" format="default" sectionFormat="of" derivedContent="SUIT-MANIFEST"/> is one
+example where a digital signature is always present.</t>
+    </section>
+    <section anchor="conventions-and-terminology" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-and-terminology">Conventions and Terminology</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+      </t>
+    </section>
+    <section anchor="aes-alg" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-aes-modes-of-operation">AES Modes of Operation</name>
+      <t indent="0" pn="section-3-1">NIST has defined several modes of operation for the Advanced Encryption
+Standard <xref target="AES" format="default" sectionFormat="of" derivedContent="AES"/> <xref target="MODES" format="default" sectionFormat="of" derivedContent="MODES"/>.  AES supports three key sizes: 128 bits,
+192 bits, and 256 bits.  AES has a block size of 128 bits (16 octets).
+Each of these modes has different characteristics.  The modes include:
+CBC (Cipher Block Chaining), CFB (Cipher FeedBack), OFB (Output FeedBack),
+and CTR (Counter).</t>
+      <t indent="0" pn="section-3-2">Only AES Counter (AES-CTR) mode and AES Cipher Block Chaining (AES-CBC) are
+discussed in this document.</t>
+    </section>
+    <section anchor="aes-ctr" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-aes-counter-mode">AES Counter Mode</name>
+      <t indent="0" pn="section-4-1">When AES-CTR is used as a COSE content encryption algorithm, the
+encryptor generates a unique value that is communicated to the
+decryptor.  This value is called an "Initialization Vector" (or "IV") in this
+document.  The same IV and AES key combination <bcp14>MUST NOT</bcp14> be used more
+than once.  The encryptor can generate the IV in any manner that ensures
+the same IV value is not used more than once with the same AES key.</t>
+      <t indent="0" pn="section-4-2">When using AES-CTR, each AES encrypt operation generates 128 bits of key
+stream.  AES-CTR encryption is the XOR of the key stream with the
+plaintext.  AES-CTR decryption is the XOR of the key stream with the
+ciphertext.  If the generated key stream is longer than the plaintext or
+ciphertext, the extra key stream bits are simply discarded.  For this reason,
+AES-CTR does not require the plaintext to be padded to a multiple of the
+      block size.</t>
+      <t indent="0" pn="section-4-3">AES-CTR has many properties that make it an attractive COSE content encryption
+algorithm.  AES-CTR uses the AES block cipher to create a stream cipher.  Data
+is encrypted and decrypted by XORing with the key stream produced by AES
+      encrypting sequential IV block values, called "counter blocks", where:</t>
+      <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-4-4">
+        <li pn="section-4-4.1">The first
+      block of the key stream is the AES encryption of the IV.</li>
+        <li pn="section-4-4.2">The second block of
+      the key stream is the AES encryption of (IV + 1) mod 2<sup>128</sup>.</li>
+        <li pn="section-4-4.3">The third block of
+the key stream is the AES encryption of (IV + 2) mod 2<sup>128</sup>, and so on.</li>
+      </ul>
+      <t indent="0" pn="section-4-5">AES-CTR
+is easy to implement, can be pipelined and parallelized, and supports key stream precomputation.  Sending of the IV is the only
+source of expansion because the plaintext and ciphertext are the same size.</t>
+      <t indent="0" pn="section-4-6">When used correctly, AES-CTR provides a high level of confidentiality.
+Unfortunately, AES-CTR is easy to use incorrectly.  Being a stream
+cipher, reuse of the IV with the same key is catastrophic.  An IV
+collision immediately leaks information about the plaintext.  For
+this reason, it is inappropriate to use AES-CTR with static
+keys.  Extraordinary measures would be needed to prevent reuse of an
+IV value with the static key across power cycles.  To be safe,
+implementations <bcp14>MUST</bcp14> use fresh keys with AES-CTR.</t>
+      <t indent="0" pn="section-4-7">AES-CTR keys may be obtained either from a key structure or from a recipient
+structure.  Implementations encrypting and decrypting <bcp14>MUST</bcp14> validate that the
+key type, key length, and algorithm are correct and appropriate for the
+entities involved.</t>
+      <t indent="0" pn="section-4-8">With AES-CTR, it is trivial to use a valid ciphertext to forge other
+(valid to the decryptor) ciphertexts.  Thus, it is equally catastrophic to
+use AES-CTR without a companion authentication and integrity
+mechanism.  Implementations <bcp14>MUST</bcp14> use AES-CTR in conjunction with an
+authentication and integrity mechanism, such as a digital signature.</t>
+      <t indent="0" pn="section-4-9">The instructions in <xref target="RFC9052" sectionFormat="of" section="5.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9052#section-5.4" derivedContent="RFC9052"/> are followed for AES-CTR.
+Since AES-CTR cannot provide integrity protection for external additional
+authenticated data, the decryptor <bcp14>MUST</bcp14> ensure that no external additional
+      authenticated data was supplied.  See <xref target="impl-cons" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+      <t indent="0" pn="section-4-10">The 'protected' header <bcp14>MUST</bcp14> be a zero-length byte string.</t>
+      <section anchor="aes-ctr-key" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-aes-ctr-cose-key">AES-CTR COSE Key</name>
+        <t indent="0" pn="section-4.1-1">When using a COSE key for the AES-CTR algorithm, the following checks are made:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1-2">
+          <li pn="section-4.1-2.1">The 'kty' field <bcp14>MUST</bcp14> be present, and it <bcp14>MUST</bcp14> be 'Symmetric'.</li>
+          <li pn="section-4.1-2.2">If the 'alg' field is present, it <bcp14>MUST</bcp14> match the AES-CTR algorithm being used.</li>
+          <li pn="section-4.1-2.3">If the 'key_ops' field is present, it <bcp14>MUST</bcp14> include 'encrypt' when encrypting.</li>
+          <li pn="section-4.1-2.4">If the 'key_ops' field is present, it <bcp14>MUST</bcp14> include 'decrypt' when decrypting.</li>
+        </ul>
+      </section>
+      <section anchor="aes-ctr-alg" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-aes-ctr-cose-algorithm-iden">AES-CTR COSE Algorithm Identifiers</name>
+        <t indent="0" pn="section-4.2-1">The following table defines the COSE AES-CTR algorithm values.  Note that
+these algorithms are being registered as "Deprecated" to avoid accidental
+use without a companion integrity protection mechanism.</t>
+        <table align="center" pn="table-1">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Name</th>
+              <th align="center" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Key Size</th>
+              <th align="center" colspan="1" rowspan="1">Description</th>
+              <th align="right" colspan="1" rowspan="1">Recommended</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A128CTR</td>
+              <td align="center" colspan="1" rowspan="1">-65534</td>
+              <td align="center" colspan="1" rowspan="1">128</td>
+              <td align="center" colspan="1" rowspan="1">AES-CTR w/ 128-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A192CTR</td>
+              <td align="center" colspan="1" rowspan="1">-65533</td>
+              <td align="center" colspan="1" rowspan="1">192</td>
+              <td align="center" colspan="1" rowspan="1">AES-CTR w/ 192-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A256CTR</td>
+              <td align="center" colspan="1" rowspan="1">-65532</td>
+              <td align="center" colspan="1" rowspan="1">256</td>
+              <td align="center" colspan="1" rowspan="1">AES-CTR w/ 256-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+    <section anchor="aes-cbc" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-aes-cipher-block-chaining-m">AES Cipher Block Chaining Mode</name>
+      <t indent="0" pn="section-5-1">AES-CBC mode requires a 16-octet IV.  Use of a
+randomly or pseudorandomly generated IV ensures that the encryption of the
+same plaintext will yield different ciphertext.</t>
+      <t indent="0" pn="section-5-2">AES-CBC performs an XOR of the IV with the first plaintext block before it
+is encrypted.  For successive blocks, AES-CBC performs an XOR of the previous
+ciphertext block with the current plaintext before it is encrypted.</t>
+      <t indent="0" pn="section-5-3">AES-CBC requires padding of the plaintext; the padding algorithm specified
+in <xref target="RFC5652" sectionFormat="of" section="6.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5652#section-6.3" derivedContent="RFC5652"/> <bcp14>MUST</bcp14> be used prior to encrypting the
+plaintext.  This padding algorithm allows the decryptor to unambiguously
+remove the padding.</t>
+      <t indent="0" pn="section-5-4">The simplicity of AES-CBC makes it an attractive COSE content encryption
+algorithm.  The need to carry an IV and the need for padding lead to an
+increase in the overhead (when compared to AES-CTR).  AES-CBC is much safer
+for use with static keys than AES-CTR.  That said, as described in <xref target="RFC4107" format="default" sectionFormat="of" derivedContent="RFC4107"/>,
+the use of automated key management to generate fresh keys is greatly
+preferred.</t>
+      <t indent="0" pn="section-5-5">AES-CBC does not provide integrity protection.  Thus, an attacker
+can introduce undetectable errors if AES-CBC is used without a companion
+authentication and integrity mechanism.  Implementations <bcp14>MUST</bcp14> use AES-CBC
+in conjunction with an authentication and integrity mechanism, such as a
+digital signature.</t>
+      <t indent="0" pn="section-5-6">The instructions in <xref target="RFC9052" sectionFormat="of" section="5.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9052#section-5.4" derivedContent="RFC9052"/> are followed for AES-CBC.
+Since AES-CBC cannot provide integrity protection for external additional
+authenticated data, the decryptor <bcp14>MUST</bcp14> ensure that no external additional
+      authenticated data was supplied.  See <xref target="impl-cons" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+      <t indent="0" pn="section-5-7">The 'protected' header <bcp14>MUST</bcp14> be a zero-length byte string.</t>
+      <section anchor="aes-cbc-key" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-aes-cbc-cose-key">AES-CBC COSE Key</name>
+        <t indent="0" pn="section-5.1-1">When using a COSE key for the AES-CBC algorithm, the following checks are made:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1-2">
+          <li pn="section-5.1-2.1">The 'kty' field <bcp14>MUST</bcp14> be present, and it <bcp14>MUST</bcp14> be 'Symmetric'.</li>
+          <li pn="section-5.1-2.2">If the 'alg' field is present, it <bcp14>MUST</bcp14> match the AES-CBC algorithm being used.</li>
+          <li pn="section-5.1-2.3">If the 'key_ops' field is present, it <bcp14>MUST</bcp14> include 'encrypt' when encrypting.</li>
+          <li pn="section-5.1-2.4">If the 'key_ops' field is present, it <bcp14>MUST</bcp14> include 'decrypt' when decrypting.</li>
+        </ul>
+      </section>
+      <section anchor="aes-cbc-alg" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-aes-cbc-cose-algorithm-iden">AES-CBC COSE Algorithm Identifiers</name>
+        <t indent="0" pn="section-5.2-1">The following table defines the COSE AES-CBC algorithm values. Note that
+these algorithms are being registered as "Deprecated" to avoid accidental
+use without a companion integrity protection mechanism.</t>
+        <table align="center" pn="table-2">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Name</th>
+              <th align="center" colspan="1" rowspan="1">Value</th>
+              <th align="center" colspan="1" rowspan="1">Key Size</th>
+              <th align="center" colspan="1" rowspan="1">Description</th>
+              <th align="right" colspan="1" rowspan="1">Recommended</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A128CBC</td>
+              <td align="center" colspan="1" rowspan="1">-65531</td>
+              <td align="center" colspan="1" rowspan="1">128</td>
+              <td align="center" colspan="1" rowspan="1">AES-CBC w/ 128-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A192CBC</td>
+              <td align="center" colspan="1" rowspan="1">-65530</td>
+              <td align="center" colspan="1" rowspan="1">192</td>
+              <td align="center" colspan="1" rowspan="1">AES-CBC w/ 192-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">A256CBC</td>
+              <td align="center" colspan="1" rowspan="1">-65529</td>
+              <td align="center" colspan="1" rowspan="1">256</td>
+              <td align="center" colspan="1" rowspan="1">AES-CBC w/ 256-bit key</td>
+              <td align="right" colspan="1" rowspan="1">Deprecated</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+    <section anchor="impl-cons" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-implementation-consideratio">Implementation Considerations</name>
+      <t indent="0" pn="section-6-1">COSE libraries that support either AES-CTR or AES-CBC and accept
+Additional Authenticated Data (AAD) as input <bcp14>MUST</bcp14> return an
+error if one of these non-AEAD content encryption algorithms is
+selected.  This ensures that a caller does not expect the AAD
+to be protected when the cryptographic algorithm is unable to do so.</t>
+    </section>
+    <section anchor="iana-cons" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">IANA has registered six COSE algorithm identifiers for AES-CTR and
+AES-CBC in the "COSE Algorithms" registry <xref target="IANA-COSE" format="default" sectionFormat="of" derivedContent="IANA-COSE"/>.</t>
+      <t indent="0" pn="section-7-2">The information for the six COSE algorithm identifiers is provided in
+Sections <xref target="aes-ctr-alg" format="counter" sectionFormat="of" derivedContent="4.2"/> and <xref target="aes-cbc-alg" format="counter" sectionFormat="of" derivedContent="5.2"/>.  Also, for all six entries, the
+"Capabilities" column contains "[kty]", the "Change Controller"
+column contains "IETF", and the "Reference" column contains
+a reference to this document.</t>
+    </section>
+    <section anchor="sec-cons" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">This document specifies AES-CTR and AES-CBC for COSE, which are not
+AEAD ciphers.  The use of the ciphers is limited to special use cases, such as firmware encryption, where integrity and authentication is provided by another mechanism.</t>
+      <t indent="0" pn="section-8-2">Since AES has a 128-bit block size, regardless of the mode
+employed, the ciphertext generated by AES encryption becomes
+distinguishable from random values after 2<sup>64</sup> blocks are encrypted
+with a single key.  Implementations should change the key before
+reaching this limit.</t>
+      <t indent="0" pn="section-8-3">To avoid cross-protocol concerns, implementations <bcp14>MUST NOT</bcp14> use the same
+keying material with more than one mode.  For example, the same keying
+material must not be used with AES-CTR and AES-CBC.</t>
+      <t indent="0" pn="section-8-4">There are fairly generic precomputation attacks against all block cipher
+modes that allow a meet-in-the-middle attack against the key.  These attacks
+require the creation and searching of huge tables of ciphertext associated
+with known plaintext and known keys.  Assuming that the memory and processor
+resources are available for a precomputation attack, then the theoretical
+strength of AES-CTR and AES-CBC is limited to 2<sup>(n/2)</sup> bits, where n is the
+number of bits in the key.  The use of long keys is the best countermeasure
+to precomputation attacks.</t>
+      <t indent="0" pn="section-8-5">When used properly, AES-CTR mode provides strong confidentiality. Unfortunately,
+it is very easy to misuse this counter mode.  If counter block values are ever
+used for more than one plaintext with the same key, then the same key stream
+will be used to encrypt both plaintexts, and the confidentiality guarantees are
+voided.</t>
+      <t indent="0" pn="section-8-6">What happens if the encryptor XORs the same key stream with two different
+plaintexts? Suppose two plaintext octet sequences P1, P2, P3 and Q1, Q2, Q3
+are both encrypted with key stream K1, K2, K3. The two corresponding
+ciphertexts are:</t>
+      <artwork align="left" pn="section-8-7">
+   (P1 XOR K1), (P2 XOR K2), (P3 XOR K3)
+
+   (Q1 XOR K1), (Q2 XOR K2), (Q3 XOR K3)
+</artwork>
+      <t indent="0" pn="section-8-8">If both of these two ciphertext streams are exposed to an attacker, then a
+catastrophic failure of confidentiality results, since:</t>
+      <artwork align="left" pn="section-8-9">
+   (P1 XOR K1) XOR (Q1 XOR K1) = P1 XOR Q1
+   (P2 XOR K2) XOR (Q2 XOR K2) = P2 XOR Q2
+   (P3 XOR K3) XOR (Q3 XOR K3) = P3 XOR Q3
+</artwork>
+      <t indent="0" pn="section-8-10">Once the attacker obtains the two plaintexts XORed together, it is relatively
+straightforward to separate them.  Thus, using any stream cipher, including
+AES-CTR, to encrypt two plaintexts under the same key stream leaks the
+plaintext.</t>
+      <t indent="0" pn="section-8-11">Data forgery is trivial with AES-CTR mode. The demonstration of this attack
+is similar to the key stream reuse discussion above.  If a known plaintext
+octet sequence P1, P2, P3 is encrypted with key stream K1, K2, K3, then the
+attacker can replace the plaintext with one of its own choosing.  The
+ciphertext is:</t>
+      <artwork align="left" pn="section-8-12">
+   (P1 XOR K1), (P2 XOR K2), (P3 XOR K3)
+</artwork>
+      <t indent="0" pn="section-8-13">The attacker simply XORs a selected sequence Q1, Q2, Q3 with the
+ciphertext to obtain:</t>
+      <artwork align="left" pn="section-8-14">
+   (Q1 XOR (P1 XOR K1)), (Q2 XOR (P2 XOR K2)), (Q3 XOR (P3 XOR K3))
+</artwork>
+      <t indent="0" pn="section-8-15">Which is the same as:</t>
+      <artwork align="left" pn="section-8-16">
+   ((Q1 XOR P1) XOR K1), ((Q2 XOR P2) XOR K2), ((Q3 XOR P3) XOR K3)
+</artwork>
+      <t indent="0" pn="section-8-17">Decryption of the attacker-generated ciphertext will yield exactly what
+the attacker intended:</t>
+      <artwork align="left" pn="section-8-18">
+   (Q1 XOR P1), (Q2 XOR P2), (Q3 XOR P3)
+</artwork>
+      <t indent="0" pn="section-8-19">AES-CBC does not provide integrity protection.  Thus, an attacker
+can introduce undetectable errors if AES-CBC is used without a companion
+      authentication mechanism.</t>
+      <t indent="0" pn="section-8-20">If an attacker is able to strip the authentication and integrity mechanism,
+then the attacker can replace it with one of their own creation, even
+without knowing the plaintext.  The usual defense against such an attack is
+an Authenticated Encryption with Associated Data (AEAD) algorithm <xref target="RFC5116" format="default" sectionFormat="of" derivedContent="RFC5116"/>.  Of course, neither AES-CTR nor AES-CBC is an AEAD.  Thus,
+an implementation should provide integrity protection for the 'kid' field
+to prevent undetected stripping of the authentication and integrity
+mechanism; this prevents an attacker from altering the 'kid' to trick the
+recipient into using a different key.</t>
+      <t indent="0" pn="section-8-21">With AES-CBC mode, implementers should perform integrity checks prior to
+decryption to avoid padding oracle vulnerabilities <xref target="Vaudenay" format="default" sectionFormat="of" derivedContent="Vaudenay"/>.</t>
+      <t indent="0" pn="section-8-22">With the assignment of COSE algorithm identifiers for AES-CTR and
+AES-CBC in the COSE Algorithms Registry, an attacker can replace the
+COSE algorithm identifiers with one of these identifiers.  Then, the
+attacker might be able to manipulate the ciphertext to learn some of the
+plaintext or extract the keying material used for authentication and
+integrity.</t>
+      <t indent="0" pn="section-8-23">Since AES-CCM <xref target="RFC3610" format="default" sectionFormat="of" derivedContent="RFC3610"/> and AES-GCM <xref target="GCMMODE" format="default" sectionFormat="of" derivedContent="GCMMODE"/> use AES-CTR for encryption,
+an attacker can switch the algorithm identifier to AES-CTR and then strip the
+authentication tag to bypass the authentication and integrity, allowing the
+      attacker to manipulate the ciphertext.</t>
+      <t indent="0" pn="section-8-24">An attacker can switch the algorithm identifier from AES-GCM to AES-CBC,
+guessing 16 bytes of plaintext at a time, and see if the recipient
+accepts the padding. Padding oracle vulnerabilities are discussed
+further in <xref target="Vaudenay" format="default" sectionFormat="of" derivedContent="Vaudenay"/>.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-suit-manifest" to="SUIT-MANIFEST"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="AES" quoteTitle="true" target="https://doi.org/10.6028/NIST.FIPS.197-upd1" derivedAnchor="AES">
+          <front>
+            <title>Advanced Encryption Standard (AES)</title>
+            <author>
+              <organization showOnFrontPage="true">National Institute of Standards and Technology (NIST)</organization>
+            </author>
+            <date year="2023" month="May"/>
+          </front>
+          <seriesInfo name="NIST FIPS" value="197"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.FIPS.197-upd1"/>
+        </reference>
+        <reference anchor="MODES" quoteTitle="true" target="https://doi.org/10.6028/NIST.SP.800-38A" derivedAnchor="MODES">
+          <front>
+            <title>Recommendation for Block Cipher Modes of Operation: Methods and Techniques</title>
+            <author initials="M." surname="Dworkin" fullname="Morris Dworkin">
+              <organization showOnFrontPage="true">National Institute of Standards and Technology (NIST)</organization>
+            </author>
+            <date year="2001" month="December"/>
+          </front>
+          <seriesInfo name="NIST Special Publication" value="800-38A"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.SP.800-38A"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4107" target="https://www.rfc-editor.org/info/rfc4107" quoteTitle="true" derivedAnchor="RFC4107">
+          <front>
+            <title>Guidelines for Cryptographic Key Management</title>
+            <author fullname="S. Bellovin" initials="S." surname="Bellovin"/>
+            <author fullname="R. Housley" initials="R." surname="Housley"/>
+            <date month="June" year="2005"/>
+            <abstract>
+              <t indent="0">The question often arises of whether a given security system requires some form of automated key management, or whether manual keying is sufficient. This memo provides guidelines for making such decisions. When symmetric cryptographic mechanisms are used in a protocol, the presumption is that automated key management is generally but not always needed. If manual keying is proposed, the burden of proving that automated key management is not required falls to the proposer. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="107"/>
+          <seriesInfo name="RFC" value="4107"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4107"/>
+        </reference>
+        <reference anchor="RFC5652" target="https://www.rfc-editor.org/info/rfc5652" quoteTitle="true" derivedAnchor="RFC5652">
+          <front>
+            <title>Cryptographic Message Syntax (CMS)</title>
+            <author fullname="R. Housley" initials="R." surname="Housley"/>
+            <date month="September" year="2009"/>
+            <abstract>
+              <t indent="0">This document describes the Cryptographic Message Syntax (CMS). This syntax is used to digitally sign, digest, authenticate, or encrypt arbitrary message content. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="70"/>
+          <seriesInfo name="RFC" value="5652"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5652"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC9052" target="https://www.rfc-editor.org/info/rfc9052" quoteTitle="true" derivedAnchor="RFC9052">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE): Structures and Process</title>
+            <author fullname="J. Schaad" initials="J." surname="Schaad"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">Concise Binary Object Representation (CBOR) is a data format designed for small code size and small message size. There is a need to be able to define basic security services for this data format. This document defines the CBOR Object Signing and Encryption (COSE) protocol. This specification describes how to create and process signatures, message authentication codes, and encryption using CBOR for serialization. This specification additionally describes how to represent cryptographic keys using CBOR.</t>
+              <t indent="0">This document, along with RFC 9053, obsoletes RFC 8152.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="96"/>
+          <seriesInfo name="RFC" value="9052"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9052"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="GCMMODE" quoteTitle="true" target="https://doi.org/10.6028/NIST.SP.800-38D" derivedAnchor="GCMMODE">
+          <front>
+            <title>Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC</title>
+            <author initials="M." surname="Dworkin" fullname="Morris Dworkin">
+              <organization showOnFrontPage="true">National Institute of Standards and Technology (NIST)</organization>
+            </author>
+            <date year="2007" month="November"/>
+          </front>
+          <seriesInfo name="NIST Special Publication" value="800-38D"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.SP.800-38D"/>
+        </reference>
+        <reference anchor="IANA-COSE" target="https://www.iana.org/assignments/cose" quoteTitle="true" derivedAnchor="IANA-COSE">
+          <front>
+            <title>CBOR Object Signing and Encryption (COSE)</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="RFC3610" target="https://www.rfc-editor.org/info/rfc3610" quoteTitle="true" derivedAnchor="RFC3610">
+          <front>
+            <title>Counter with CBC-MAC (CCM)</title>
+            <author fullname="D. Whiting" initials="D." surname="Whiting"/>
+            <author fullname="R. Housley" initials="R." surname="Housley"/>
+            <author fullname="N. Ferguson" initials="N." surname="Ferguson"/>
+            <date month="September" year="2003"/>
+            <abstract>
+              <t indent="0">Counter with CBC-MAC (CCM) is a generic authenticated encryption block cipher mode. CCM is defined for use with 128-bit block ciphers, such as the Advanced Encryption Standard (AES).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3610"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3610"/>
+        </reference>
+        <reference anchor="RFC5116" target="https://www.rfc-editor.org/info/rfc5116" quoteTitle="true" derivedAnchor="RFC5116">
+          <front>
+            <title>An Interface and Algorithms for Authenticated Encryption</title>
+            <author fullname="D. McGrew" initials="D." surname="McGrew"/>
+            <date month="January" year="2008"/>
+            <abstract>
+              <t indent="0">This document defines algorithms for Authenticated Encryption with Associated Data (AEAD), and defines a uniform interface and a registry for such algorithms. The interface and registry can be used as an application-independent set of cryptoalgorithm suites. This approach provides advantages in efficiency and security, and promotes the reuse of crypto implementations. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5116"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5116"/>
+        </reference>
+        <reference anchor="I-D.ietf-suit-manifest" target="https://datatracker.ietf.org/doc/html/draft-ietf-suit-manifest-22" quoteTitle="true" derivedAnchor="SUIT-MANIFEST">
+          <front>
+            <title>A Concise Binary Object Representation (CBOR)-based Serialization Format for the Software Updates for Internet of Things (SUIT) Manifest</title>
+            <author fullname="Brendan Moran" initials="B." surname="Moran">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <author fullname="Hannes Tschofenig" initials="H." surname="Tschofenig">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <author fullname="Henk Birkholz" initials="H." surname="Birkholz">
+              <organization showOnFrontPage="true">Fraunhofer SIT</organization>
+            </author>
+            <author fullname="Koen Zandberg" initials="K." surname="Zandberg">
+              <organization showOnFrontPage="true">Inria</organization>
+            </author>
+            <author fullname="Øyvind Rønningstad" initials="Ø." surname="Rønningstad">
+              <organization showOnFrontPage="true">Nordic Semiconductor</organization>
+            </author>
+            <date day="27" month="February" year="2023"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-suit-manifest-22"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Vaudenay" target="https://www.iacr.org/cryptodb/archive/2002/EUROCRYPT/2850/2850.pdf" quoteTitle="true" derivedAnchor="Vaudenay">
+          <front>
+            <title>Security Flaws Induced by CBC Padding -- Applications to SSL, IPSEC, WTLS...</title>
+            <author initials="S." surname="Vaudenay" fullname="Serge Vaudenay">
+              <organization showOnFrontPage="true">Swiss Federal Institute of Technology (EPFL)</organization>
+            </author>
+            <date year="2002"/>
+          </front>
+          <seriesInfo name="EUROCRYPT" value="2002"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">Many thanks to <contact fullname="David Brown"/> for raising the need for non-AEAD algorithms
+to support encryption within the SUIT manifest.  Many thanks to
+<contact fullname="Ilari Liusvaara"/>,
+<contact fullname="Scott Arciszewski"/>,
+<contact fullname="John Preuß Mattsson"/>,
+<contact fullname="Laurence Lundblade"/>,
+<contact fullname="Paul Wouters"/>,
+<contact fullname="Roman Danyliw"/>,
+<contact fullname="Sophie Schmieg"/>, <contact fullname="Stephen Farrell"/>, <contact fullname="Carsten Bormann"/>, <contact fullname="Scott Fluhrer"/>, <contact fullname="Brendan Moran"/>, and
+<contact fullname="John Scudder"/>
+for the review and thoughtful comments.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="R." surname="Housley" fullname="Russ Housley">
+        <organization abbrev="Vigil Security" showOnFrontPage="true">Vigil Security, LLC</organization>
+        <address>
+          <email>housley@vigilsec.com</email>
+        </address>
+      </author>
+      <author initials="H." surname="Tschofenig" fullname="Hannes Tschofenig">
+        <address>
+          <email>hannes.tschofenig@gmx.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

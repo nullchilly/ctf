@@ -1,0 +1,1006 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-rtcweb-data-protocol-09" indexInclude="true" ipr="trust200902" number="8832" prepTime="2021-01-16T21:37:59" scripts="Common,Latin" sortRefs="false" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-rtcweb-data-protocol-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8832" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>WebRTC Data Channel Establishment Protocol</title>
+    <seriesInfo name="RFC" value="8832" stream="IETF"/>
+    <author initials="R." surname="Jesup" fullname="Randell Jesup">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <postal>
+          <street/>
+          <code/>
+          <city/>
+          <country>United States of America</country>
+        </postal>
+        <email>randell-ietf@jesup.org</email>
+      </address>
+    </author>
+    <author initials="S." surname="Loreto" fullname="Salvatore Loreto">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street>Hirsalantie 11</street>
+          <code>02420</code>
+          <city>Jorvas</city>
+          <country>Finland</country>
+        </postal>
+        <email>salvatore.loreto@ericsson.com</email>
+      </address>
+    </author>
+    <author initials="M." surname="Tüxen" fullname="Michael Tüxen">
+      <organization abbrev="Münster Univ. of Appl. Sciences" showOnFrontPage="true">Münster University of Applied Sciences</organization>
+      <address>
+        <postal>
+          <street>Stegerwaldstrasse 39</street>
+          <code>48565</code>
+          <city> Steinfurt</city>
+          <country>Germany</country>
+        </postal>
+        <email>tuexen@fh-muenster.de</email>
+      </address>
+    </author>
+    <date month="01" year="2021"/>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The WebRTC framework specifies protocol support for direct interactive
+rich communication using audio, video, and data between two peers' web browsers.
+This document specifies a simple protocol for establishing symmetric
+data channels between the peers. It uses a two-way handshake and allows
+sending of user data without waiting for the handshake to complete.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8832" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions">Conventions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-overview">Protocol Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-message-formats">Message Formats</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-data_channel_open-message">DATA_CHANNEL_OPEN Message</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-data_channel_ack-message">DATA_CHANNEL_ACK Message</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-procedures">Procedures</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sctp-payload-protocol-ident">SCTP Payload Protocol Identifier</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-standalone-registry-for">New Standalone Registry for DCEP</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2.2.2">
+                  <li pn="section-toc.1-1.8.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.1.1"><xref derivedContent="8.2.1" format="counter" sectionFormat="of" target="section-8.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-message-type-registry">New Message Type Registry</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.2.1"><xref derivedContent="8.2.2" format="counter" sectionFormat="of" target="section-8.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-channel-type-registry">New Channel Type Registry</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Data Channel Establishment Protocol (DCEP) is designed to provide, in the
+WebRTC data channel context <xref target="RFC8831" format="default" sectionFormat="of" derivedContent="RFC8831"/>,
+a simple in-band method for opening symmetric data channels.
+As discussed in <xref target="RFC8831" format="default" sectionFormat="of" derivedContent="RFC8831"/>, the protocol uses
+the Stream Control Transmission Protocol (SCTP) <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/>
+encapsulated in Datagram Transport Layer Security (DTLS) (described in
+<xref target="RFC8261" format="default" sectionFormat="of" derivedContent="RFC8261"/>). This allows DCEP to benefit from the
+already standardized transport
+and security features of SCTP and DTLS.
+DTLS 1.0 is defined in <xref target="RFC4347" format="default" sectionFormat="of" derivedContent="RFC4347"/>; the present
+latest version, DTLS 1.2, is defined in <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/>; and 
+an upcoming version, DTLS 1.3, is defined in <xref target="I-D.ietf-tls-dtls13" format="default" sectionFormat="of" derivedContent="TLS-DTLS13"/>.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-conventions">Conventions</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP?14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/>
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-3-1">This document uses the following terms:
+</t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-3-2">
+        <dt pn="section-3-2.1">Association:</dt>
+        <dd pn="section-3-2.2">An SCTP association.</dd>
+        <dt pn="section-3-2.3">Stream:</dt>
+        <dd pn="section-3-2.4">
+A unidirectional stream of an SCTP association. It is uniquely identified
+by an SCTP stream identifier (0-65534).
+Note: The SCTP stream identifier 65535 is reserved due to SCTP INIT and
+INIT-ACK chunks only allowing a maximum of 65535 streams to be
+negotiated (0-65534).</dd>
+        <dt pn="section-3-2.5">Stream Identifier:</dt>
+        <dd pn="section-3-2.6">
+The SCTP stream identifier uniquely identifying a stream.</dd>
+        <dt pn="section-3-2.7">Data Channel:</dt>
+        <dd pn="section-3-2.8">
+Two streams with the same stream identifier, one in each direction,
+which are managed together.</dd>
+      </dl>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-protocol-overview">Protocol Overview</name>
+      <t indent="0" pn="section-4-1">The Data Channel Establishment Protocol is a simple, low-overhead way
+to establish bidirectional data channels over an SCTP association with a
+consistent set of properties.</t>
+      <t indent="0" pn="section-4-2">The set of consistent properties includes:
+</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-3">
+        <li pn="section-4-3.1">reliable or unreliable message transmission. In case of unreliable
+   transmissions, the same level of unreliability is used.</li>
+        <li pn="section-4-3.2">in-order or out-of-order message delivery.</li>
+        <li pn="section-4-3.3">the priority of the data channel.</li>
+        <li pn="section-4-3.4">an optional label for the data channel.</li>
+        <li pn="section-4-3.5">an optional protocol for the data channel.</li>
+        <li pn="section-4-3.6">the streams.</li>
+      </ul>
+      <t indent="0" pn="section-4-4">This protocol uses a two-way handshake to open a data channel.
+The handshake pairs one incoming and one outgoing stream, both having the
+same stream identifier, into a single bidirectional data channel.
+The peer that initiates opening a data channel selects a stream
+identifier for which the corresponding incoming and outgoing streams
+are unused and sends a DATA_CHANNEL_OPEN message on the outgoing stream.
+The peer responds with a DATA_CHANNEL_ACK message on its corresponding
+outgoing stream. Then the data channel is open.
+DCEP messages are sent on the same stream as
+the user messages belonging to the data channel.
+The demultiplexing is based on the SCTP Payload Protocol Identifier (PPID),
+since DCEP uses a specific PPID.</t>
+      <aside pn="section-4-5">
+        <t indent="0" pn="section-4-5.1">Note: The opening side <bcp14>MAY</bcp14> send user messages before the DATA_CHANNEL_ACK
+is received.</t>
+      </aside>
+      <t indent="0" pn="section-4-6">To avoid collisions where both sides try to open a data channel with
+the same stream identifiers, each side <bcp14>MUST</bcp14> use streams with either even or
+odd stream identifiers when sending a DATA_CHANNEL_OPEN message.
+When using SCTP over DTLS <xref target="RFC8261" format="default" sectionFormat="of" derivedContent="RFC8261"/>,
+the method used to determine which side uses odd or even is based on the
+underlying DTLS connection role:
+the side acting as the DTLS client <bcp14>MUST</bcp14> use streams with even
+stream identifiers; the side acting as the DTLS server <bcp14>MUST</bcp14> use streams
+with odd stream identifiers.</t>
+      <aside pn="section-4-7">
+        <t indent="0" pn="section-4-7.1">Note: There is no attempt to ensure uniqueness for the label;
+if both sides open a data channel labeled "x" at the same time, there will be
+two data channels labeled "x" -- one on an even stream pair, one on an odd pair.</t>
+      </aside>
+      <t indent="0" pn="section-4-8">The purpose of the protocol field is to ease cross-application interoperation ("federation")
+by identifying the user data being passed by means of an IANA-registered string
+from the "WebSocket Subprotocol Name Registry" defined in <xref target="RFC6455" format="default" sectionFormat="of" derivedContent="RFC6455"/>.
+The field may be useful for homogeneous applications that may create more than one
+type of data channel.
+Note that there is no attempt to ensure uniqueness for the protocol
+field.</t>
+    </section>
+    <section anchor="msg_format" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-message-formats">Message Formats</name>
+      <t indent="0" pn="section-5-1">Every DCEP message starts with a one-byte
+field called "Message Type" that indicates the type of the message.
+The corresponding values are managed by IANA
+(see <xref target="iana_msg_type" format="default" sectionFormat="of" derivedContent="Section 8.2.1"/>).</t>
+      <section anchor="open_msg_format" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-data_channel_open-message">DATA_CHANNEL_OPEN Message</name>
+        <t indent="0" pn="section-5.1-1">This message is initially sent using the data channel on the stream used
+for user messages.</t>
+        <artwork align="center" name="" type="" alt="" pn="section-5.1-2">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Message Type |  Channel Type |            Priority           |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                    Reliability Parameter                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Label Length          |       Protocol Length         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+\                                                               /
+|                             Label                             |
+/                                                               \
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+\                                                               /
+|                            Protocol                           |
+/                                                               \
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</artwork>
+        <dl newline="true" spacing="normal" indent="3" pn="section-5.1-3">
+          <dt pn="section-5.1-3.1">Message Type: 1 byte (unsigned integer)</dt>
+          <dd pn="section-5.1-3.2">
+            <t indent="0" pn="section-5.1-3.2.1">
+This field holds the IANA-defined message type for the DATA_CHANNEL_OPEN
+message. The value of this field is 0x03, as specified in
+<xref target="iana_msg_type" format="default" sectionFormat="of" derivedContent="Section 8.2.1"/>.</t>
+          </dd>
+          <dt pn="section-5.1-3.3">Channel Type: 1 byte (unsigned integer)</dt>
+          <dd pn="section-5.1-3.4">
+            <t indent="0" pn="section-5.1-3.4.1">
+This field specifies the type of data channel to be opened. The
+values are managed by IANA (see <xref target="iana_channel_type" format="default" sectionFormat="of" derivedContent="Section 8.2.2"/>):
+</t>
+            <dl newline="false" spacing="normal" indent="3" pn="section-5.1-3.4.2">
+              <dt pn="section-5.1-3.4.2.1">DATA_CHANNEL_RELIABLE (0x00):</dt>
+              <dd pn="section-5.1-3.4.2.2">
+The data channel provides a reliable in-order bidirectional communication.</dd>
+              <dt pn="section-5.1-3.4.2.3">DATA_CHANNEL_RELIABLE_UNORDERED (0x80):</dt>
+              <dd pn="section-5.1-3.4.2.4">
+The data channel provides a reliable unordered bidirectional communication.</dd>
+              <dt pn="section-5.1-3.4.2.5">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT (0x01):</dt>
+              <dd pn="section-5.1-3.4.2.6">
+The data channel provides a partially reliable in-order bidirectional
+communication. User messages will not be retransmitted more times
+than specified in the Reliability Parameter.</dd>
+              <dt pn="section-5.1-3.4.2.7">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT_UNORDERED (0x81):</dt>
+              <dd pn="section-5.1-3.4.2.8">
+The data channel provides a partially reliable unordered bidirectional
+communication. User messages will not be retransmitted more times
+than specified in the Reliability Parameter.</dd>
+              <dt pn="section-5.1-3.4.2.9">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED (0x02):</dt>
+              <dd pn="section-5.1-3.4.2.10">
+The data channel provides a partially reliable in-order bidirectional
+communication. User messages might not be transmitted or
+retransmitted after a specified lifetime given in milliseconds in the
+Reliability Parameter. This lifetime starts when providing the user
+message to the protocol stack.</dd>
+              <dt pn="section-5.1-3.4.2.11">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED_UNORDERED (0x82):</dt>
+              <dd pn="section-5.1-3.4.2.12">
+The data channel provides a partially reliable unordered bidirectional
+communication. User messages might not be transmitted or
+retransmitted after a specified lifetime given in milliseconds in the
+Reliability Parameter. This lifetime starts when providing the user
+message to the protocol stack.</dd>
+            </dl>
+          </dd>
+          <dt pn="section-5.1-3.5">Priority: 2 bytes (unsigned integer)</dt>
+          <dd pn="section-5.1-3.6">
+            <t indent="0" pn="section-5.1-3.6.1">
+The priority of the data channel, as described in
+<xref target="RFC8831" format="default" sectionFormat="of" derivedContent="RFC8831"/>.</t>
+          </dd>
+          <dt pn="section-5.1-3.7">Reliability Parameter: 4 bytes (unsigned integer)</dt>
+          <dd pn="section-5.1-3.8">
+            <t indent="0" pn="section-5.1-3.8.1">
+For reliable data channels, this field <bcp14>MUST</bcp14> be set to 0 on the sending side
+and <bcp14>MUST</bcp14> be ignored on the receiving side.
+If a partially reliable data channel with a limited number of retransmissions is
+used, this field specifies the number of retransmissions. If a partially
+reliable data channel with a limited lifetime is used, this field specifies
+the maximum lifetime in milliseconds. The following table summarizes this:</t>
+          </dd>
+        </dl>
+        <table align="center" pn="table-1">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Channel Type</th>
+              <th align="center" colspan="1" rowspan="1">Reliability Parameter</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_RELIABLE</td>
+              <td align="center" colspan="1" rowspan="1">Ignored</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_RELIABLE_UNORDERED</td>
+              <td align="center" colspan="1" rowspan="1">Ignored</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT</td>
+              <td align="center" colspan="1" rowspan="1">Number of RTX</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT_UNORDERED</td>
+              <td align="center" colspan="1" rowspan="1">Number of RTX</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED</td>
+              <td align="center" colspan="1" rowspan="1">Lifetime in ms</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED_UNORDERED</td>
+              <td align="center" colspan="1" rowspan="1">Lifetime in ms</td>
+            </tr>
+          </tbody>
+        </table>
+        <dl newline="true" spacing="normal" indent="3" pn="section-5.1-5">
+          <dt pn="section-5.1-5.1">Label Length: 2 bytes (unsigned integer)</dt>
+          <dd pn="section-5.1-5.2">
+            <t indent="0" pn="section-5.1-5.2.1">
+The length of the label field in bytes.</t>
+          </dd>
+          <dt pn="section-5.1-5.3">Protocol Length: 2 bytes (unsigned integer)</dt>
+          <dd pn="section-5.1-5.4">
+            <t indent="0" pn="section-5.1-5.4.1">
+The length of the protocol field in bytes.</t>
+          </dd>
+          <dt pn="section-5.1-5.5">Label: Variable Length (sequence of characters)</dt>
+          <dd pn="section-5.1-5.6">
+            <t indent="0" pn="section-5.1-5.6.1">
+The name of the data channel as a UTF-8-encoded string, as specified in
+<xref target="RFC3629" format="default" sectionFormat="of" derivedContent="RFC3629"/>. This may be an empty string.</t>
+          </dd>
+          <dt pn="section-5.1-5.7">Protocol: Variable Length (sequence of characters)</dt>
+          <dd pn="section-5.1-5.8">
+            <t indent="0" pn="section-5.1-5.8.1">
+If this is an empty string, the protocol is unspecified.
+If it is a non-empty string, it specifies a protocol registered in the
+"WebSocket Subprotocol Name Registry" created in
+<xref target="RFC6455" format="default" sectionFormat="of" derivedContent="RFC6455"/>. This string is UTF-8 encoded, as specified in
+<xref target="RFC3629" format="default" sectionFormat="of" derivedContent="RFC3629"/>.</t>
+          </dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-data_channel_ack-message">DATA_CHANNEL_ACK Message</name>
+        <t indent="0" pn="section-5.2-1">This message is sent in response to a
+DATA_CHANNEL_OPEN_RESPONSE message. It is sent on the stream used for user
+messages using the data channel.
+Reception of this message tells the opener that the data channel setup
+handshake is complete.</t>
+        <artwork align="center" name="" type="" alt="" pn="section-5.2-2">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Message Type |
++-+-+-+-+-+-+-+-+</artwork>
+        <dl newline="true" spacing="normal" indent="3" pn="section-5.2-3">
+          <dt pn="section-5.2-3.1">Message Type: 1 byte (unsigned integer)</dt>
+          <dd pn="section-5.2-3.2">
+            <t indent="0" pn="section-5.2-3.2.1">
+This field holds the IANA-defined message type for the DATA_CHANNEL_ACK
+message. The value of this field is 0x02, as specified in
+<xref target="iana_msg_type" format="default" sectionFormat="of" derivedContent="Section 8.2.1"/>.</t>
+          </dd>
+        </dl>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-procedures">Procedures</name>
+      <t indent="0" pn="section-6-1">All DCEP messages <bcp14>MUST</bcp14> be sent using ordered delivery and reliable
+transmission. They <bcp14>MUST</bcp14> be sent on the same outgoing stream as the user messages
+belonging to the corresponding data channel.
+Multiplexing and demultiplexing is done by using the SCTP PPID.
+Therefore, a DCEP message <bcp14>MUST</bcp14> be sent with the
+assigned PPID for the Data Channel Establishment Protocol
+(see <xref target="iana_ppid" format="default" sectionFormat="of" derivedContent="Section 8.1"/>).
+Other messages <bcp14>MUST NOT</bcp14> be sent using this PPID.</t>
+      <t indent="0" pn="section-6-2">The peer that initiates opening a data channel selects a stream identifier
+for which the corresponding incoming and outgoing streams are unused.
+If the side is acting as the DTLS client, it <bcp14>MUST</bcp14> choose an even stream identifier;
+if the side is acting as the DTLS server, it <bcp14>MUST</bcp14> choose an odd one. The initiating peer
+fills in the parameters of the DATA_CHANNEL_OPEN message and sends it on
+the chosen stream.</t>
+      <t indent="0" pn="section-6-3">If a DATA_CHANNEL_OPEN message is received on an unused stream,
+the stream identifier corresponds to the role of the peer, and
+all parameters in the DATA_CHANNEL_OPEN message are valid,
+then a corresponding DATA_CHANNEL_ACK message is sent on the stream with the
+same stream identifier as the one the DATA_CHANNEL_OPEN message was
+received on.</t>
+      <t indent="0" pn="section-6-4">If the DATA_CHANNEL_OPEN message doesn't satisfy the conditions above, the
+receiver <bcp14>MUST</bcp14> close the corresponding data channel using the procedure
+described in <xref target="RFC8831" format="default" sectionFormat="of" derivedContent="RFC8831"/> and <bcp14>MUST NOT</bcp14> send a DATA_CHANNEL_ACK
+message in response to the received message. This might occur if, for example,
+a DATA_CHANNEL_OPEN message is received on an already used stream, there are
+problems with parameters within the DATA_CHANNEL_OPEN
+message, the odd/even rule is violated, or the DATA_CHANNEL_OPEN message itself
+is not well formed. Therefore, receiving an SCTP stream-reset request for a stream on which
+no DATA_CHANNEL_ACK message has been received indicates to the sender of the
+corresponding DATA_CHANNEL_OPEN message the failure of the data channel
+setup procedure. After also successfully resetting the corresponding outgoing
+stream, which concludes the data channel closing initiated by the peer,
+a new DATA_CHANNEL_OPEN message can be sent on the stream.</t>
+      <t indent="0" pn="section-6-5">After the DATA_CHANNEL_OPEN message has been sent, the sender of that message
+<bcp14>MAY</bcp14> start sending messages containing user data without
+waiting for the reception of the corresponding DATA_CHANNEL_ACK message.
+However, before the DATA_CHANNEL_ACK message or any other message has been
+received on a data channel, all other messages containing user data and
+belonging to this data channel <bcp14>MUST</bcp14> be sent ordered, no matter
+whether the data channel is ordered or not.
+After the DATA_CHANNEL_ACK or any other message has been received on the
+data channel, messages containing user data <bcp14>MUST</bcp14> be sent ordered on ordered
+data channels and <bcp14>MUST</bcp14> be sent unordered on unordered data channels.
+Therefore, receiving a message containing user data on an unused stream
+indicates an error. In that case, the corresponding data channel <bcp14>MUST</bcp14> be closed, as described
+in <xref target="RFC8831" format="default" sectionFormat="of" derivedContent="RFC8831"/>.</t>
+    </section>
+    <section anchor="sec-security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">The DATA_CHANNEL_OPEN message contains two variable-length fields:
+the protocol and the label. A receiver must be prepared to receive
+DATA_CHANNEL_OPEN messages where these fields have the maximum length of
+65535 bytes. Error cases such as using inconsistent lengths of fields,
+using unknown parameter values, or violating the odd/even rule must also be handled
+by closing the corresponding data channel. An end point must also be prepared
+for the peer to open the maximum number of data channels.</t>
+      <t indent="0" pn="section-7-2">This protocol does not provide privacy, integrity, or authentication.
+It needs to be used as part of a protocol suite that contains all these things.
+Such a protocol suite is specified in
+<xref target="RFC8261" format="default" sectionFormat="of" derivedContent="RFC8261"/>.</t>
+      <t indent="0" pn="section-7-3">For general considerations, see <xref target="RFC8826" format="default" sectionFormat="of" derivedContent="RFC8826"/> and
+<xref target="RFC8827" format="default" sectionFormat="of" derivedContent="RFC8827"/>.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-8-1">IANA has updated the reference of an already existing SCTP PPID
+assignment (<xref target="iana_ppid" format="default" sectionFormat="of" derivedContent="Section 8.1"/>) and created a new
+standalone registry with its own URL for DCEP (<xref target="iana_dcep_registry" format="default" sectionFormat="of" derivedContent="Section 8.2"/>) containing two new
+registration tables (Sections <xref format="counter" target="iana_msg_type" sectionFormat="of" derivedContent="8.2.1"/>
+and <xref format="counter" target="iana_channel_type" sectionFormat="of" derivedContent="8.2.2"/>).</t>
+      <section anchor="iana_ppid" numbered="true" toc="include" removeInRFC="false" pn="section-8.1">
+        <name slugifiedName="name-sctp-payload-protocol-ident">SCTP Payload Protocol Identifier</name>
+        <t indent="0" pn="section-8.1-1">This document uses an SCTP Payload Protocol
+Identifier (PPID) previously registered as "WebRTC Control".
+
+<xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/> created the
+"SCTP Payload Protocol Identifiers" registry, in which this identifier was assigned.
+IANA has updated the PPID name from "WebRTC Control" to "WebRTC DCEP" and has
+updated the reference to point to this document. The corresponding date has been
+kept.</t>
+        <t indent="0" pn="section-8.1-2">Therefore, this assignment now appears as follows:</t>
+        <table align="center" pn="table-2">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="left" colspan="1" rowspan="1">SCTP PPID</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+              <th align="left" colspan="1" rowspan="1">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">WebRTC DCEP</td>
+              <td align="left" colspan="1" rowspan="1">50</td>
+              <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              <td align="left" colspan="1" rowspan="1">2013-09-20</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section anchor="iana_dcep_registry" numbered="true" toc="include" removeInRFC="false" pn="section-8.2">
+        <name slugifiedName="name-new-standalone-registry-for">New Standalone Registry for DCEP</name>
+        <t indent="0" pn="section-8.2-1">IANA has created the "Data Channel Establishment Protocol (DCEP)
+	Parameters" registry.  It contains the two tables provided in Sections
+	<xref format="counter" target="iana_msg_type" sectionFormat="of" derivedContent="8.2.1"/>
+and <xref format="counter" target="iana_channel_type" sectionFormat="of" derivedContent="8.2.2"/>.</t>
+        <section anchor="iana_msg_type" numbered="true" toc="include" removeInRFC="false" pn="section-8.2.1">
+          <name slugifiedName="name-new-message-type-registry">New Message Type Registry</name>
+          <t indent="0" pn="section-8.2.1-1">IANA has created the "Message Types" registry for DCEP to manage
+	  the one-byte "Message Type" field in DCEP messages (see <xref target="msg_format" format="default" sectionFormat="of" derivedContent="Section 5"/>). This registration table
+	  is a subregistry of the registry described in <xref target="iana_dcep_registry" format="default" sectionFormat="of" derivedContent="Section 8.2"/>.</t>
+          <t indent="0" pn="section-8.2.1-2">The assignment of new message types is done through an RFC Required action,
+as defined in <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.
+Documentation of new message types <bcp14>MUST</bcp14> contain the following information:
+</t>
+          <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-8.2.1-3">
+            <li pn="section-8.2.1-3.1" derivedCounter="1.">A name for the new message type.</li>
+            <li pn="section-8.2.1-3.2" derivedCounter="2.">A detailed procedural description of how each message type is used with
+	    within DCEP.</li>
+          </ol>
+          <t indent="0" pn="section-8.2.1-4">The following are the initial registrations:</t>
+          <table align="center" pn="table-3">
+            <thead>
+              <tr>
+                <th align="left" colspan="1" rowspan="1">Name</th>
+                <th align="left" colspan="1" rowspan="1">Type</th>
+                <th align="left" colspan="1" rowspan="1">Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Reserved</td>
+                <td align="left" colspan="1" rowspan="1">0x00     </td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Reserved</td>
+                <td align="left" colspan="1" rowspan="1">0x01     </td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_ACK</td>
+                <td align="left" colspan="1" rowspan="1">0x02     </td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_OPEN</td>
+                <td align="left" colspan="1" rowspan="1">0x03     </td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Unassigned</td>
+                <td align="left" colspan="1" rowspan="1">0x04-0xfe</td>
+                <td align="left" colspan="1" rowspan="1"> </td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Reserved</td>
+                <td align="left" colspan="1" rowspan="1">0xff     </td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+            </tbody>
+          </table>
+          <t indent="0" pn="section-8.2.1-6">Note that values 0x00 and 0x01 are reserved to avoid
+interoperability problems, since they have been used in draft versions
+of the document.
+The value 0xff has been reserved for future extensibility.
+The range of possible values is from 0x00 to 0xff.</t>
+        </section>
+        <section anchor="iana_channel_type" numbered="true" toc="include" removeInRFC="false" pn="section-8.2.2">
+          <name slugifiedName="name-new-channel-type-registry">New Channel Type Registry</name>
+          <t indent="0" pn="section-8.2.2-1">IANA has created the "Channel Types" registry
+for DCEP to manage the one-byte
+"Channel Type" field in DATA_CHANNEL_OPEN messages
+(see <xref target="open_msg_format" format="default" sectionFormat="of" derivedContent="Section 5.1"/>).
+This registration table is a subregistry within the registry described in
+<xref target="iana_dcep_registry" format="default" sectionFormat="of" derivedContent="Section 8.2"/>.</t>
+          <t indent="0" pn="section-8.2.2-2">The assignment of new message types is done through an RFC Required action,
+as defined in <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/>.
+Documentation of new Channel Types <bcp14>MUST</bcp14> contain the following information:
+</t>
+          <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-8.2.2-3">
+            <li pn="section-8.2.2-3.1" derivedCounter="1.">A name for the new Channel Type.</li>
+            <li pn="section-8.2.2-3.2" derivedCounter="2.">A detailed procedural description of the user message handling for
+data channels using this new Channel Type.</li>
+          </ol>
+          <t indent="0" pn="section-8.2.2-4">
+If new Channel Types support ordered and unordered message
+delivery, the high-order bit <bcp14>MUST</bcp14> be used to indicate whether
+or not the message delivery is unordered.</t>
+          <t indent="0" pn="section-8.2.2-5">The following are the initial registrations:</t>
+          <table align="center" pn="table-4">
+            <thead>
+              <tr>
+                <th align="left" colspan="1" rowspan="1">Name</th>
+                <th align="left" colspan="1" rowspan="1">Type</th>
+                <th align="left" colspan="1" rowspan="1">Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_RELIABLE</td>
+                <td align="left" colspan="1" rowspan="1">0x00</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_RELIABLE_UNORDERED</td>
+                <td align="left" colspan="1" rowspan="1">0x80</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT</td>
+                <td align="left" colspan="1" rowspan="1">0x01</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_REXMIT_UNORDERED</td>
+                <td align="left" colspan="1" rowspan="1">0x81</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED</td>
+                <td align="left" colspan="1" rowspan="1">0x02</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">DATA_CHANNEL_PARTIAL_RELIABLE_TIMED_UNORDERED</td>
+                <td align="left" colspan="1" rowspan="1">0x82</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Reserved</td>
+                <td align="left" colspan="1" rowspan="1">0x7f</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Reserved</td>
+                <td align="left" colspan="1" rowspan="1">0xff</td>
+                <td align="left" colspan="1" rowspan="1">RFC 8832</td>
+              </tr>
+              <tr>
+                <td align="left" colspan="1" rowspan="1">Unassigned</td>
+                <td align="left" colspan="1" rowspan="1">rest</td>
+                <td align="left" colspan="1" rowspan="1">         </td>
+              </tr>
+            </tbody>
+          </table>
+          <t indent="0" pn="section-8.2.2-7">Values 0x7f and 0xff have been reserved for future
+extensibility.
+The range of possible values is from 0x00 to 0xff.</t>
+        </section>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-tls-dtls13" to="TLS-DTLS13"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC3629" target="https://www.rfc-editor.org/info/rfc3629" quoteTitle="true" derivedAnchor="RFC3629">
+          <front>
+            <title>UTF-8, a transformation format of ISO 10646</title>
+            <author initials="F." surname="Yergeau" fullname="F. Yergeau">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="November"/>
+            <abstract>
+              <t indent="0">ISO/IEC 10646-1 defines a large character set called the Universal Character Set (UCS) which encompasses most of the world's writing systems.  The originally proposed encodings of the UCS, however, were not compatible with many current applications and protocols, and this has led to the development of UTF-8, the object of this memo.  UTF-8 has the characteristic of preserving the full US-ASCII range, providing compatibility with file systems, parsers and other software that rely on US-ASCII values but are transparent to other values.  This memo obsoletes and replaces RFC 2279.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="63"/>
+          <seriesInfo name="RFC" value="3629"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3629"/>
+        </reference>
+        <reference anchor="RFC4960" target="https://www.rfc-editor.org/info/rfc4960" quoteTitle="true" derivedAnchor="RFC4960">
+          <front>
+            <title>Stream Control Transmission Protocol</title>
+            <author initials="R." surname="Stewart" fullname="R. Stewart" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document obsoletes RFC 2960 and RFC 3309.  It describes the Stream Control Transmission Protocol (SCTP).  SCTP is designed to transport Public Switched Telephone Network (PSTN) signaling messages over IP networks, but is capable of broader applications.</t>
+              <t indent="0">SCTP is a reliable transport protocol operating on top of a connectionless packet network such as IP.  It offers the following services to its users:</t>
+              <t indent="0">--  acknowledged error-free non-duplicated transfer of user data,</t>
+              <t indent="0">--  data fragmentation to conform to discovered path MTU size,</t>
+              <t indent="0">--  sequenced delivery of user messages within multiple streams, with an option for order-of-arrival delivery of individual user messages,</t>
+              <t indent="0">--  optional bundling of multiple user messages into a single SCTP packet, and</t>
+              <t indent="0">--  network-level fault tolerance through supporting of multi-homing at either or both ends of an association.</t>
+              <t indent="0"> The design of SCTP includes appropriate congestion avoidance behavior and resistance to flooding and masquerade attacks.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4960"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4960"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8261" target="https://www.rfc-editor.org/info/rfc8261" quoteTitle="true" derivedAnchor="RFC8261">
+          <front>
+            <title>Datagram Transport Layer Security (DTLS) Encapsulation of SCTP Packets</title>
+            <author initials="M." surname="Tuexen" fullname="M. Tuexen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Stewart" fullname="R. Stewart">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Jesup" fullname="R. Jesup">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Loreto" fullname="S. Loreto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="November"/>
+            <abstract>
+              <t indent="0">The Stream Control Transmission Protocol (SCTP) is a transport protocol originally defined to run on top of the network protocols IPv4 or IPv6.  This document specifies how SCTP can be used on top of the Datagram Transport Layer Security (DTLS) protocol.  Using the encapsulation method described in this document, SCTP is unaware of the protocols being used below DTLS; hence, explicit IP addresses cannot be used in the SCTP control chunks.  As a consequence, the SCTP associations carried over DTLS can only be single-homed.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8261"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8261"/>
+        </reference>
+        <reference anchor="RFC8831" target="https://www.rfc-editor.org/info/rfc8831" quoteTitle="true" derivedAnchor="RFC8831">
+          <front>
+            <title>WebRTC Data Channels</title>
+            <author initials="R" surname="Jesup" fullname="Randell Jesup">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S" surname="Loreto" fullname="Salvatore Loreto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Tüxen" fullname="Michael Tüxen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="RFC" value="8831"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8831"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC4347" target="https://www.rfc-editor.org/info/rfc4347" quoteTitle="true" derivedAnchor="RFC4347">
+          <front>
+            <title>Datagram Transport Layer Security</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="April"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.0 of the Datagram Transport Layer Security (DTLS) protocol.  The DTLS protocol provides communications privacy for datagram protocols.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  The DTLS protocol is based on the Transport Layer Security (TLS) protocol and provides equivalent security guarantees.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4347"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4347"/>
+        </reference>
+        <reference anchor="RFC6347" target="https://www.rfc-editor.org/info/rfc6347" quoteTitle="true" derivedAnchor="RFC6347">
+          <front>
+            <title>Datagram Transport Layer Security Version 1.2</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="January"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.2 of the Datagram Transport Layer Security (DTLS) protocol.  The DTLS protocol provides communications privacy for datagram protocols.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  The DTLS protocol is based on the Transport Layer Security (TLS) protocol and provides equivalent security guarantees.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.  This document updates DTLS 1.0 to work with TLS version 1.2.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6347"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6347"/>
+        </reference>
+        <reference anchor="RFC6455" target="https://www.rfc-editor.org/info/rfc6455" quoteTitle="true" derivedAnchor="RFC6455">
+          <front>
+            <title>The WebSocket Protocol</title>
+            <author initials="I." surname="Fette" fullname="I. Fette">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Melnikov" fullname="A. Melnikov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="December"/>
+            <abstract>
+              <t indent="0">The WebSocket Protocol enables two-way communication between a client running untrusted code in a controlled environment to a remote host that has opted-in to communications from that code.  The security model used for this is the origin-based security model commonly used by web browsers.  The protocol consists of an opening handshake followed by basic message framing, layered over TCP.  The goal of this technology is to provide a mechanism for browser-based applications that need two-way communication with servers that does not rely on opening multiple HTTP connections (e.g., using XMLHttpRequest or &lt;iframe&gt;s and long polling).  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6455"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6455"/>
+        </reference>
+        <reference anchor="RFC8826" target="https://www.rfc-editor.org/info/rfc8826" quoteTitle="true" derivedAnchor="RFC8826">
+          <front>
+            <title>Security Considerations for WebRTC</title>
+            <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="RFC" value="8826"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8826"/>
+        </reference>
+        <reference anchor="RFC8827" target="https://www.rfc-editor.org/info/rfc8827" quoteTitle="true" derivedAnchor="RFC8827">
+          <front>
+            <title>WebRTC Security Architecture</title>
+            <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2021"/>
+          </front>
+          <seriesInfo name="RFC" value="8827"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8827"/>
+        </reference>
+        <reference anchor="I-D.ietf-tls-dtls13" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-tls-dtls13-39" derivedAnchor="TLS-DTLS13">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+              <organization showOnFrontPage="true">RTFM, Inc.</organization>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="Hannes Tschofenig">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="Nagendra Modadugu">
+              <organization showOnFrontPage="true">Google, Inc.</organization>
+            </author>
+            <date month="November" day="2" year="2020"/>
+            <abstract>
+              <t indent="0">   This document specifies Version 1.3 of the Datagram Transport Layer
+   Security (DTLS) protocol.  DTLS 1.3 allows client/server applications
+   to communicate over the Internet in a way that is designed to prevent
+   eavesdropping, tampering, and message forgery.
+
+   The DTLS 1.3 protocol is intentionally based on the Transport Layer
+   Security (TLS) 1.3 protocol and provides equivalent security
+   guarantees with the exception of order protection/non-replayability.
+   Datagram semantics of the underlying transport are preserved by the
+   DTLS protocol.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-dtls13-39"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-tls-dtls13-39.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">The authors wish to thank
+<contact fullname="Harald Alvestrand"/>,
+<contact fullname="Richard Barnes"/>,
+<contact fullname="Adam Bergkvist"/>,
+<contact fullname="Spencer Dawkins"/>,
+<contact fullname="Barry Dingle"/>,
+<contact fullname="Stefan Håkansson"/>,
+<contact fullname="Cullen Jennings"/>,
+<contact fullname="Paul Kyzivat"/>,
+<contact fullname="Doug Leonard"/>,
+<contact fullname="Alexey Melnikov"/>,
+<contact fullname="Pete Resnick"/>,
+<contact fullname="Irene Rüngeler"/>,
+<contact fullname="Randall Stewart"/>,
+<contact fullname="Peter Thatcher"/>,
+<contact fullname="Martin Thomson"/>,
+<contact fullname="Justin Uberti"/>,
+and many others for their invaluable comments.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="R." surname="Jesup" fullname="Randell Jesup">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <postal>
+            <street/>
+            <code/>
+            <city/>
+            <country>United States of America</country>
+          </postal>
+          <email>randell-ietf@jesup.org</email>
+        </address>
+      </author>
+      <author initials="S." surname="Loreto" fullname="Salvatore Loreto">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street>Hirsalantie 11</street>
+            <code>02420</code>
+            <city>Jorvas</city>
+            <country>Finland</country>
+          </postal>
+          <email>salvatore.loreto@ericsson.com</email>
+        </address>
+      </author>
+      <author initials="M." surname="Tüxen" fullname="Michael Tüxen">
+        <organization abbrev="Münster Univ. of Appl. Sciences" showOnFrontPage="true">Münster University of Applied Sciences</organization>
+        <address>
+          <postal>
+            <street>Stegerwaldstrasse 39</street>
+            <code>48565</code>
+            <city> Steinfurt</city>
+            <country>Germany</country>
+          </postal>
+          <email>tuexen@fh-muenster.de</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

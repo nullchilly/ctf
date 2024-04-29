@@ -1,0 +1,999 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tls-exported-authenticator-15" indexInclude="true" ipr="trust200902" number="9261" prepTime="2022-07-13T15:48:25" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-exported-authenticator-15" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9261" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="TLS Exported Authenticator">Exported Authenticators in TLS</title>
+    <seriesInfo name="RFC" value="9261" stream="IETF"/>
+    <author initials="N." surname="Sullivan" fullname="Nick Sullivan">
+      <organization showOnFrontPage="true">Cloudflare Inc.</organization>
+      <address>
+        <email>nick@cloudflare.com</email>
+      </address>
+    </author>
+    <date month="07" year="2022"/>
+    <area>sec</area>
+    <workgroup>tls</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes a mechanism that builds on Transport Layer Security (TLS) or
+Datagram Transport Layer Security (DTLS) and enables peers to
+provide proof of ownership of an identity, such as an X.509 certificate.  This proof can
+be exported by one peer, transmitted out of band to the other peer, and verified by the
+receiving peer.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9261" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-terminology">Conventions and Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-message-sequences">Message Sequences</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticator-request">Authenticator Request</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticator">Authenticator</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticator-keys">Authenticator Keys</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticator-construction">Authenticator Construction</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.2.2">
+                  <li pn="section-toc.1-1.5.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.1.1"><xref derivedContent="5.2.1" format="counter" sectionFormat="of" target="section-5.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate">Certificate</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.2.1"><xref derivedContent="5.2.2" format="counter" sectionFormat="of" target="section-5.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificateverify">CertificateVerify</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.3.1"><xref derivedContent="5.2.3" format="counter" sectionFormat="of" target="section-5.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-finished">Finished</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.4">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.4.1"><xref derivedContent="5.2.4" format="counter" sectionFormat="of" target="section-5.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticator-creation">Authenticator Creation</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-empty-authenticator">Empty Authenticator</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-api-considerations">API Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-request-api">The "request" API</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-get-context-api">The "get context" API</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-authenticate-api">The "authenticate" API</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-validate-api">The "validate" API</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-of-the-tls-extension">Update of the TLS ExtensionType Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-of-the-tls-exporter-">Update of the TLS Exporter Labels Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="8.3" format="counter" sectionFormat="of" target="section-8.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-of-the-tls-handshake">Update of the TLS HandshakeType Registry</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">This document provides a way to authenticate one party of a Transport Layer
+Security (TLS) or Datagram Transport Layer Security (DTLS) connection to its peer
+using authentication messages created after the session
+has been established.  This allows both the client and server to prove ownership
+of additional identities at any time after the handshake has completed.  This
+proof of authentication can be exported and transmitted out of band from one
+party to be validated by its peer.</t>
+      <t indent="0" pn="section-1-2">This mechanism provides two advantages over the authentication that TLS and DTLS natively
+provide:</t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-1-3">
+        <dt pn="section-1-3.1">multiple identities:</dt>
+        <dd pn="section-1-3.2">
+  Endpoints that are authoritative for multiple identities, but that do not have a
+single certificate that includes all of the identities, can authenticate additional
+	identities over a single connection.</dd>
+        <dt pn="section-1-3.3">spontaneous authentication:</dt>
+        <dd pn="section-1-3.4">
+After a connection is established, endpoints can authenticate in response to
+events in a higher-layer protocol; they can also integrate more context (such as context from the application).</dd>
+      </dl>
+      <t indent="0" pn="section-1-4">Versions of TLS prior to TLS 1.3 used renegotiation as a way to enable
+post-handshake client authentication given an existing TLS connection.
+The mechanism described in this document may be used to replace the
+post-handshake authentication functionality provided by renegotiation.
+Unlike renegotiation, Exported Authenticator-based post-handshake
+      authentication does not require any changes at the TLS layer.</t>
+      <t indent="0" pn="section-1-5">Post-handshake authentication is defined in TLS 1.3 <xref target="RFC8446" sectionFormat="of" section="4.6.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.6.2" derivedContent="RFC8446"/>, but it has the
+disadvantage of requiring additional state to be stored as part of the TLS
+state machine.  Furthermore, the authentication boundaries of TLS 1.3 post-handshake authentication align with TLS record boundaries,
+which are often not aligned with the authentication boundaries of the
+higher-layer protocol.  For example, multiplexed connection protocols
+like HTTP/2 <xref target="RFC9113" format="default" sectionFormat="of" derivedContent="RFC9113"/> do not have a notion of which TLS record
+a given message is a part of.</t>
+      <t indent="0" pn="section-1-6">Exported Authenticators are meant to be used as a building block for
+application protocols.  Mechanisms such as those required to advertise
+support and handle authentication errors are not handled by TLS (or DTLS).</t>
+      <t indent="0" pn="section-1-7">The minimum version of TLS and DTLS required to implement the mechanisms
+      described in this document are TLS 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> and DTLS 1.2 <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/>. (These were obsoleted by TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> and 
+   DTLS 1.3 <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>.)</t>
+    </section>
+    <section anchor="conventions-and-terminology" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-conventions-and-terminology">Conventions and Terminology</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+      <t indent="0" pn="section-2-2">This document uses terminology such as client, server, connection,
+handshake, endpoint, and peer that are defined in
+<xref target="RFC8446" sectionFormat="of" section="1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-1.1" derivedContent="RFC8446"/>.  The term "initial connection" refers to the (D)TLS
+connection from which the Exported Authenticator messages are derived.</t>
+    </section>
+    <section anchor="message-sequences" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-message-sequences">Message Sequences</name>
+      <t indent="0" pn="section-3-1">There are two types of messages defined in this document: authenticator requests and authenticators.  These can be combined in the following three sequences:</t>
+      <t indent="0" pn="section-3-2">Client Authentication</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-3">
+        <li pn="section-3-3.1">Server generates authenticator request</li>
+        <li pn="section-3-3.2">Client generates Authenticator from Server's authenticator request</li>
+        <li pn="section-3-3.3">Server validates Client's authenticator</li>
+      </ul>
+      <t indent="0" pn="section-3-4">Server Authentication</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-5">
+        <li pn="section-3-5.1">Client generates authenticator request</li>
+        <li pn="section-3-5.2">Server generates authenticator from Client's authenticator request</li>
+        <li pn="section-3-5.3">Client validates Server's authenticator</li>
+      </ul>
+      <t indent="0" pn="section-3-6">Spontaneous Server Authentication</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-7">
+        <li pn="section-3-7.1">Server generates authenticator</li>
+        <li pn="section-3-7.2">Client validates Server's authenticator</li>
+      </ul>
+    </section>
+    <section anchor="authenticator-request" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-authenticator-request">Authenticator Request</name>
+      <t indent="0" pn="section-4-1">The authenticator request is a structured message that can be created by either
+party of a (D)TLS connection using data exported from that connection.  It can
+be transmitted to the other party of the (D)TLS connection at the application
+layer.  The application-layer protocol used to send the authenticator request
+<bcp14>SHOULD</bcp14> use a secure transport channel with equivalent security to TLS, such as QUIC <xref target="RFC9001" format="default" sectionFormat="of" derivedContent="RFC9001"/>, as its
+underlying transport to keep the request confidential.  The
+application <bcp14>MAY</bcp14> use the existing (D)TLS connection to transport the authenticator.</t>
+      <t indent="0" pn="section-4-2">An authenticator request message can be constructed by either the client or the
+server.  Server-generated authenticator requests use the CertificateRequest
+message from <xref target="RFC8446" sectionFormat="of" section="4.3.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.3.2" derivedContent="RFC8446"/>.  Client-generated
+authenticator requests use a new message, called the "ClientCertificateRequest",
+that uses the same structure as CertificateRequest.  (Note that the latter
+is not a request for a client certificate, but rather a certificate request
+generated by the client.)  These message
+structures are used even if the connection protocol is TLS 1.2 or DTLS 1.2.</t>
+      <t indent="0" pn="section-4-3">The CertificateRequest and ClientCertificateRequest messages are used to define the
+parameters in a request for an authenticator.  These are encoded as TLS handshake messages, including 
+length and type fields. They do not include any TLS record-layer framing and are not encrypted with a handshake or application-data key.</t>
+      <t indent="0" pn="section-4-4">The structures are defined to be:</t>
+      <sourcecode type="tls-presentation" markers="false" pn="section-4-5">
+   struct {
+      opaque certificate_request_context&lt;0..2^8-1&gt;;
+      Extension extensions&lt;2..2^16-1&gt;;
+   } ClientCertificateRequest;
+
+   struct {
+      opaque certificate_request_context&lt;0..2^8-1&gt;;
+      Extension extensions&lt;2..2^16-1&gt;;
+   } CertificateRequest;
+</sourcecode>
+      <dl newline="false" spacing="normal" indent="3" pn="section-4-6">
+        <dt pn="section-4-6.1">certificate_request_context:</dt>
+        <dd pn="section-4-6.2">
+  An opaque string that identifies the authenticator request and that will
+be echoed in the authenticator message.  A certificate_request_context value <bcp14>MUST</bcp14> be unique for
+each authenticator request within the scope of a connection
+(preventing replay and context confusion).  The
+certificate_request_context <bcp14>SHOULD</bcp14> be chosen to be unpredictable
+to the peer (e.g., by randomly generating it) in order to prevent
+an attacker who has temporary access to the peer's private key
+from precomputing valid authenticators.  For example, the application
+may choose this value to correspond to a value used in an existing
+data structure in the software to simplify implementation.</dd>
+        <dt pn="section-4-6.3">extensions:</dt>
+        <dd pn="section-4-6.4">
+  The set of extensions allowed in the structures of CertificateRequest
+ and ClientCertificateRequest is comprised of those
+defined in the "TLS ExtensionType Values" IANA registry containing CR in the "TLS 1.3" column (see <xref target="IANA-TLS" format="default" sectionFormat="of" derivedContent="IANA-TLS"/> and <xref target="RFC8447" format="default" sectionFormat="of" derivedContent="RFC8447"/>).  In addition, the set of
+extensions in the ClientCertificateRequest structure <bcp14>MAY</bcp14>
+include the server_name extension <xref target="RFC6066" format="default" sectionFormat="of" derivedContent="RFC6066"/>.</dd>
+      </dl>
+      <t indent="0" pn="section-4-7">The uniqueness requirements of the certificate_request_context apply
+across CertificateRequest and ClientCertificateRequest messages that
+are used as part of authenticator requests. A certificate_request_context value used
+in a ClientCertificateRequest cannot be used in an authenticator
+CertificateRequest on the same connection, and vice versa.  There is no impact
+if the value
+of a certificate_request_context used in an authenticator
+request matches the value of a certificate_request_context in the handshake or
+in a post-handshake message.</t>
+    </section>
+    <section anchor="authenticator" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-authenticator">Authenticator</name>
+      <t indent="0" pn="section-5-1">The authenticator is a structured message that can be exported from either
+party of a (D)TLS connection.  It can be transmitted to the other party of
+the (D)TLS connection at the application layer.  The application-layer protocol used to send the authenticator
+<bcp14>SHOULD</bcp14> use a secure transport channel with equivalent security to TLS, such as QUIC <xref target="RFC9001" format="default" sectionFormat="of" derivedContent="RFC9001"/>, as its
+underlying transport to keep the authenticator confidential.
+The application <bcp14>MAY</bcp14> use the existing (D)TLS connection to transport the authenticator.</t>
+      <t indent="0" pn="section-5-2">An authenticator message can be constructed by either the client or the
+server given an established (D)TLS connection; an identity, such as an X.509 certificate;
+and a corresponding private key.  Clients <bcp14>MUST NOT</bcp14> send an authenticator
+without a preceding authenticator request; for servers, an
+authenticator request is optional.  For authenticators that do not correspond
+to authenticator requests, the certificate_request_context is chosen by
+the server.</t>
+      <section anchor="authenticator-keys" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-authenticator-keys">Authenticator Keys</name>
+        <t indent="0" pn="section-5.1-1">Each authenticator is computed using a Handshake Context and Finished MAC (Message Authentication Code) Key
+derived from the (D)TLS connection.  These values are derived using an exporter as
+described in <xref target="RFC5705" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5705#section-4" derivedContent="RFC5705"/> (for (D)TLS 1.2) or <xref target="RFC8446" sectionFormat="of" section="7.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-7.5" derivedContent="RFC8446"/> (for
+(D)TLS 1.3).  For (D)TLS 1.3, the exporter_master_secret <bcp14>MUST</bcp14> be used, not the
+early_exporter_master_secret.  These values use different labels depending on the role of the
+sender:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1-2">
+          <li pn="section-5.1-2.1">The Handshake Context is an exporter value that is derived using the label
+"EXPORTER-client authenticator handshake context" or "EXPORTER-server
+authenticator handshake context" for authenticators sent by the client or
+server, respectively.</li>
+          <li pn="section-5.1-2.2">The Finished MAC Key is an exporter value derived using the label
+"EXPORTER-client authenticator finished key" or "EXPORTER-server authenticator
+finished key" for authenticators sent by the client or server, respectively.</li>
+        </ul>
+        <t indent="0" pn="section-5.1-3">The context_value used for the exporter is empty (zero length) for all four
+values.  There is no need to include additional context
+information at this stage because the application-supplied context
+is included in the authenticator itself.  The length of the exported
+value is equal to the length of the output of the hash function associated with the selected ciphersuite (for TLS 1.3) or the hash function used
+for the pseudorandom function (PRF) (for (D)TLS 1.2).  Exported Authenticators cannot be
+used with (D)TLS 1.2 ciphersuites that do not use the TLS PRF and with TLS 1.3 ciphersuites that do not have an associated
+hash function.  This hash is referred to as the "authenticator hash".</t>
+        <t indent="0" pn="section-5.1-4">To avoid key synchronization attacks, Exported Authenticators <bcp14>MUST NOT</bcp14> be generated or
+accepted on (D)TLS 1.2 connections that did not negotiate
+the extended master secret extension <xref target="RFC7627" format="default" sectionFormat="of" derivedContent="RFC7627"/>.</t>
+      </section>
+      <section anchor="authenticator-construction" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-authenticator-construction">Authenticator Construction</name>
+        <t indent="0" pn="section-5.2-1">An authenticator is formed from the concatenation of TLS 1.3 
+Certificate, CertificateVerify, and Finished messages <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>. These messages are
+encoded as TLS handshake messages, including length and type fields.
+They do not include any TLS record-layer framing and are not encrypted with a handshake or application-data key.</t>
+        <t indent="0" pn="section-5.2-2">If the peer populating the certificate_request_context field in an authenticator's Certificate message has already created or
+correctly validated an authenticator with the same value, then no
+authenticator should be constructed.  If there is no authenticator request,
+the extensions are chosen from those presented in the (D)TLS handshake's ClientHello.
+Only servers can provide an authenticator without a corresponding request.</t>
+        <t indent="0" pn="section-5.2-3">ClientHello extensions are used to determine permissible extensions
+in the server's unsolicited Certificate message in order to follow the general model for
+extensions in (D)TLS in which extensions can only be included
+as part of a Certificate message if they were previously sent as
+part of a CertificateRequest message or ClientHello message.  This ensures that the recipient
+will be able to process such extensions.</t>
+        <section anchor="certificate" numbered="true" toc="include" removeInRFC="false" pn="section-5.2.1">
+          <name slugifiedName="name-certificate">Certificate</name>
+          <t indent="0" pn="section-5.2.1-1">The Certificate message contains the identity to be used for authentication, such as the
+end-entity certificate and any supporting certificates in the chain. This structure is
+defined in <xref target="RFC8446" sectionFormat="of" section="4.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.2" derivedContent="RFC8446"/>.</t>
+          <t indent="0" pn="section-5.2.1-2">The Certificate message contains an opaque string called
+"certificate_request_context", which is extracted from the authenticator request, if
+present.  If no authenticator request is provided, the certificate_request_context
+can be chosen arbitrarily; however, it <bcp14>MUST</bcp14> be unique within the scope of the connection
+and be unpredictable to the peer.</t>
+          <t indent="0" pn="section-5.2.1-3">Certificates chosen in the Certificate message <bcp14>MUST</bcp14> conform to the
+requirements of a Certificate message in the negotiated version of (D)TLS.  In
+particular, the entries of certificate_list <bcp14>MUST</bcp14> be valid for the signature algorithms
+indicated by the peer in the "signature_algorithms" and "signature_algorithms_cert"
+extensions, as described in <xref target="RFC8446" sectionFormat="of" section="4.2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.3" derivedContent="RFC8446"/> for (D)TLS 1.3 or
+in Sections <xref target="RFC5246" section="7.4.2" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5246#section-7.4.2" derivedContent="RFC5246"/> and <xref target="RFC5246" section="7.4.6" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5246#section-7.4.6" derivedContent="RFC5246"/> of <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> for (D)TLS 1.2.</t>
+          <t indent="0" pn="section-5.2.1-4">In addition to "signature_algorithms" and "signature_algorithms_cert",
+the "server_name" <xref target="RFC6066" format="default" sectionFormat="of" derivedContent="RFC6066"/>, "certificate_authorities"
+(<xref target="RFC8446" sectionFormat="of" section="4.2.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.4" derivedContent="RFC8446"/>), and "oid_filters"
+(<xref target="RFC8446" sectionFormat="of" section="4.2.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.5" derivedContent="RFC8446"/>) extensions are used to guide certificate
+selection.</t>
+          <t indent="0" pn="section-5.2.1-5">Only the X.509 certificate type defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> is supported.
+Alternative certificate formats such as Raw Public Keys as described in <xref target="RFC7250" format="default" sectionFormat="of" derivedContent="RFC7250"/> are
+not supported in this version of the specification and their use in this context
+has not yet been analyzed.</t>
+          <t indent="0" pn="section-5.2.1-6">If an authenticator request was provided, the Certificate message <bcp14>MUST</bcp14> contain
+only extensions present in the authenticator request.  Otherwise, the
+Certificate message <bcp14>MUST</bcp14> contain only extensions present in the (D)TLS ClientHello.
+Unrecognized extensions in the authenticator request <bcp14>MUST</bcp14> be ignored.</t>
+        </section>
+        <section anchor="certificateverify" numbered="true" toc="include" removeInRFC="false" pn="section-5.2.2">
+          <name slugifiedName="name-certificateverify">CertificateVerify</name>
+          <t indent="0" pn="section-5.2.2-1">This message is used to provide explicit proof that an endpoint possesses the
+private key corresponding to its identity.  The format of this message is taken from TLS 1.3:</t>
+          <sourcecode type="tls-presentation" markers="false" pn="section-5.2.2-2">
+   struct {
+      SignatureScheme algorithm;
+      opaque signature&lt;0..2^16-1&gt;;
+   } CertificateVerify;
+</sourcecode>
+          <t indent="0" pn="section-5.2.2-3">The algorithm field specifies the signature algorithm used (see <xref target="RFC8446" sectionFormat="of" section="4.2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.3" derivedContent="RFC8446"/>
+for the definition of this field).  The signature is a digital signature
+using that algorithm.</t>
+          <t indent="0" pn="section-5.2.2-4">The signature scheme <bcp14>MUST</bcp14> be a valid signature scheme for TLS 1.3. This
+excludes all RSASSA-PKCS1-v1_5 algorithms and combinations of Elliptic Curve Digital Signature Algorithm (ECDSA) and hash
+algorithms that are not supported in TLS 1.3.</t>
+          <t indent="0" pn="section-5.2.2-5">If an authenticator request is present, the signature algorithm <bcp14>MUST</bcp14> be chosen
+from one of the signature schemes present in the "signature_algorithms"
+extension of the authenticator request.
+Otherwise, with spontaneous server authentication, the signature algorithm used <bcp14>MUST</bcp14> be chosen
+from the "signature_algorithms" sent by the peer in the ClientHello of the (D)TLS
+handshake.  If there are no available signature algorithms, then no
+authenticator should be constructed.</t>
+          <t indent="0" pn="section-5.2.2-6">The signature is computed using the chosen signature scheme over the concatenation of:</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.2.2-7">
+            <li pn="section-5.2.2-7.1">a string that consists of octet 32 (0x20) repeated 64 times,</li>
+            <li pn="section-5.2.2-7.2">the context string "Exported Authenticator" (which is not NUL-terminated),</li>
+            <li pn="section-5.2.2-7.3">a single 0 octet that serves as the separator, and</li>
+            <li pn="section-5.2.2-7.4">the hashed authenticator transcript.</li>
+          </ul>
+          <t indent="0" pn="section-5.2.2-8">The authenticator transcript is the hash of the concatenated Handshake Context,
+authenticator request (if present), and Certificate message:</t>
+          <artwork name="" type="" align="left" alt="" pn="section-5.2.2-9">
+Hash(Handshake Context || authenticator request || Certificate)
+</artwork>
+          <t indent="0" pn="section-5.2.2-10">Where Hash is the authenticator hash defined in <xref target="authenticator-keys" format="default" sectionFormat="of" derivedContent="Section 5.1"/>.  If the authenticator request
+is not present, it is omitted from this construction, i.e., it is zero-length.</t>
+          <t indent="0" pn="section-5.2.2-11">If the party that generates the authenticator does so with a different
+connection than the party that is validating it, then the Handshake Context will
+not match, resulting in a CertificateVerify message that does not validate.
+This includes situations in which the application data is sent via TLS-terminating
+proxy.  Given a failed CertificateVerify validation, it may be helpful for
+the application to confirm that both peers share the same connection
+using a value derived from the connection secrets (such as the Handshake Context)
+before taking a user-visible action.</t>
+        </section>
+        <section anchor="finished" numbered="true" toc="include" removeInRFC="false" pn="section-5.2.3">
+          <name slugifiedName="name-finished">Finished</name>
+          <t indent="0" pn="section-5.2.3-1">An HMAC <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="HMAC"/> over the hashed authenticator transcript is the
+concatenation of the Handshake Context, authenticator request (if present),
+Certificate, and CertificateVerify.  The HMAC is computed using the authenticator hash, using the Finished MAC Key as
+a key.</t>
+          <artwork name="" type="" align="left" alt="" pn="section-5.2.3-2">
+Finished = HMAC(Finished MAC Key, Hash(Handshake Context ||
+     authenticator request || Certificate || CertificateVerify))
+</artwork>
+        </section>
+        <section anchor="authenticator-creation" numbered="true" toc="include" removeInRFC="false" pn="section-5.2.4">
+          <name slugifiedName="name-authenticator-creation">Authenticator Creation</name>
+          <t indent="0" pn="section-5.2.4-1">An endpoint constructs an authenticator by serializing the Certificate, CertificateVerify, and Finished as TLS handshake messages and concatenating the octets:</t>
+          <artwork name="" type="" align="left" alt="" pn="section-5.2.4-2">
+Certificate || CertificateVerify || Finished
+</artwork>
+          <t indent="0" pn="section-5.2.4-3">An authenticator is valid if the CertificateVerify message is correctly constructed given the authenticator request (if
+used) and the Finished message matches the expected value.  When validating an authenticator, constant-time
+comparisons <bcp14>SHOULD</bcp14> be used for signature and MAC validation.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="empty-authenticator" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-empty-authenticator">Empty Authenticator</name>
+      <t indent="0" pn="section-6-1">If, given an authenticator request, the endpoint does not have an appropriate
+identity or does not want to return one, it constructs an authenticated
+refusal called an "empty authenticator".  This is a Finished
+message sent without a Certificate or CertificateVerify. This message is an
+HMAC over the hashed authenticator transcript with a Certificate message
+containing no CertificateEntries and the CertificateVerify message omitted.
+The HMAC is computed using the authenticator hash, using the Finished MAC Key as a key.
+This message is encoded as a TLS handshake message, including length and type field.
+It does not include TLS record-layer framing and is not encrypted with a handshake or application-data key.</t>
+      <artwork name="" type="" align="left" alt="" pn="section-6-2">
+Finished = HMAC(Finished MAC Key, Hash(Handshake Context ||
+     authenticator request || Certificate))
+</artwork>
+    </section>
+    <section anchor="api-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-api-considerations">API Considerations</name>
+      <t indent="0" pn="section-7-1">The creation and validation of both authenticator requests and authenticators
+<bcp14>SHOULD</bcp14> be implemented inside the (D)TLS library even if it is possible to implement
+it at the application layer.  (D)TLS implementations supporting the use of Exported
+Authenticators <bcp14>SHOULD</bcp14> provide application programming interfaces by which clients
+and servers may request and verify Exported Authenticator messages.</t>
+      <t indent="0" pn="section-7-2">Notwithstanding the success conditions described below, all APIs <bcp14>MUST</bcp14> fail if:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7-3">
+        <li pn="section-7-3.1">the connection uses a (D)TLS version of 1.1 or earlier, or</li>
+        <li pn="section-7-3.2">the connection is (D)TLS 1.2 and the extended master secret extension <xref target="RFC7627" format="default" sectionFormat="of" derivedContent="RFC7627"/> was not
+negotiated</li>
+      </ul>
+      <t indent="0" pn="section-7-4">The following sections describe APIs that are considered necessary to
+implement Exported Authenticators.  These are informative only.</t>
+      <section anchor="the-request-api" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-the-request-api">The "request" API</name>
+        <t indent="0" pn="section-7.1-1">The "request" API takes as input:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.1-2">
+          <li pn="section-7.1-2.1">certificate_request_context (from 0 to 255 octets)</li>
+          <li pn="section-7.1-2.2">the set of extensions to include (this <bcp14>MUST</bcp14> include signature_algorithms) and the
+contents thereof</li>
+        </ul>
+        <t indent="0" pn="section-7.1-3">It returns an authenticator request, which is a sequence of octets
+that comprises a CertificateRequest or ClientCertificateRequest message.</t>
+      </section>
+      <section anchor="the-get-context-api" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-the-get-context-api">The "get context" API</name>
+        <t indent="0" pn="section-7.2-1">The "get context" API takes as input:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.2-2">
+          <li pn="section-7.2-2.1">authenticator or authenticator request</li>
+        </ul>
+        <t indent="0" pn="section-7.2-3">It returns the certificate_request_context.</t>
+      </section>
+      <section anchor="the-authenticate-api" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-the-authenticate-api">The "authenticate" API</name>
+        <t indent="0" pn="section-7.3-1">The "authenticate" API takes as input:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.3-2">
+          <li pn="section-7.3-2.1">a reference to the initial connection</li>
+          <li pn="section-7.3-2.2">an identity, such as a set of certificate chains and associated extensions
+(OCSP <xref target="RFC6960" format="default" sectionFormat="of" derivedContent="RFC6960"/>, SCT <xref target="RFC6962" format="default" sectionFormat="of" derivedContent="RFC6962"/> (obsoleted by <xref target="RFC9162" format="default" sectionFormat="of" derivedContent="RFC9162"/>), etc.)</li>
+          <li pn="section-7.3-2.3">a signer (either the private key associated with the identity or the interface to perform private key operations) for each chain</li>
+          <li pn="section-7.3-2.4">an authenticator request or certificate_request_context (from 0 to 255 octets)</li>
+        </ul>
+        <t indent="0" pn="section-7.3-3">It returns either the authenticator or an empty authenticator
+as a sequence of octets.  It is <bcp14>RECOMMENDED</bcp14> that
+the logic for selecting the certificates and extensions to include
+in the exporter be implemented in the TLS library.  Implementing this
+in the TLS library lets the implementer take advantage of existing
+extension and certificate selection logic, and the implementer can more easily remember
+which extensions were sent in the ClientHello.</t>
+        <t indent="0" pn="section-7.3-4">It is also possible to implement this API outside of the TLS library using
+TLS exporters.  This may be preferable in cases where the application
+does not have access to a TLS library with these APIs or when TLS is
+handled independently of the application-layer protocol.</t>
+      </section>
+      <section anchor="the-validate-api" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-the-validate-api">The "validate" API</name>
+        <t indent="0" pn="section-7.4-1">The "validate" API takes as input:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.4-2">
+          <li pn="section-7.4-2.1">a reference to the initial connection</li>
+          <li pn="section-7.4-2.2">an optional authenticator request</li>
+          <li pn="section-7.4-2.3">an authenticator</li>
+          <li pn="section-7.4-2.4">a function for validating a certificate chain</li>
+        </ul>
+        <t indent="0" pn="section-7.4-3">It returns a status to indicate whether or not the authenticator is valid after
+applying the function for validating the certificate chain to the chain
+contained in the authenticator.  If validation is successful, it also returns
+the identity, such as the certificate chain and its extensions.</t>
+        <t indent="0" pn="section-7.4-4">The API should return a failure if the certificate_request_context of the
+authenticator was used in a different authenticator that was previously validated.
+Well-formed empty authenticators are returned as invalid.</t>
+        <t indent="0" pn="section-7.4-5">When validating an authenticator, constant-time comparison should be used.</t>
+      </section>
+    </section>
+    <section anchor="iana-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="update-of-the-tls-extensiontype-registry" numbered="true" toc="include" removeInRFC="false" pn="section-8.1">
+        <name slugifiedName="name-update-of-the-tls-extension">Update of the TLS ExtensionType Registry</name>
+        <t indent="0" pn="section-8.1-1">IANA has updated the entry for server_name(0) in the "TLS ExtensionType Values" registry <xref target="IANA-TLS" format="default" sectionFormat="of" derivedContent="IANA-TLS"/> (defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>) by replacing the value in the "TLS 1.3"
+column with the value "CH, EE, CR" and listing this document in the "Reference" column.</t>
+        <t indent="0" pn="section-8.1-2">IANA has also added the following note to the registry:</t>
+        <blockquote pn="section-8.1-3">
+          <t indent="0" pn="section-8.1-3.1">The addition of the "CR" to the "TLS 1.3" column for the server_name(0) extension only marks the extension as valid in a ClientCertificateRequest created as part of client-generated authenticator requests.</t>
+        </blockquote>
+      </section>
+      <section anchor="update-of-the-tls-exporter-labels-registry" numbered="true" toc="include" removeInRFC="false" pn="section-8.2">
+        <name slugifiedName="name-update-of-the-tls-exporter-">Update of the TLS Exporter Labels Registry</name>
+        <t indent="0" pn="section-8.2-1">IANA has added the following entries to the "TLS Exporter Labels" registry <xref target="IANA-EXPORT" format="default" sectionFormat="of" derivedContent="IANA-EXPORT"/> (defined in <xref target="RFC5705" format="default" sectionFormat="of" derivedContent="RFC5705"/>): "EXPORTER-client authenticator handshake context",
+"EXPORTER-server authenticator handshake context", 
+"EXPORTER-client authenticator finished key" and 
+"EXPORTER-server authenticator finished key" with "DTLS-OK" and "Recommended" set to "Y" and
+this document listed as the reference.</t>
+      </section>
+      <section anchor="update-of-the-tls-handshaketype-registry" numbered="true" toc="include" removeInRFC="false" pn="section-8.3">
+        <name slugifiedName="name-update-of-the-tls-handshake">Update of the TLS HandshakeType Registry</name>
+        <t indent="0" pn="section-8.3-1">IANA has added the following entry to the "TLS HandshakeType" registry <xref target="IANA-HANDSHAKE" format="default" sectionFormat="of" derivedContent="IANA-HANDSHAKE"/> (defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>): "client_certificate_request" (17) 
+with "DTLS-OK" set to "Y" and this document listed
+as the reference.  In addition, the following appears in the "Comment" column:</t>
+        <blockquote pn="section-8.3-2">
+          <t indent="0" pn="section-8.3-2.1">Used in TLS versions prior to 1.3.</t>
+        </blockquote>
+      </section>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-9-1">The Certificate/Verify/Finished pattern intentionally looks like the
+      TLS 1.3 pattern that now has been analyzed several times. For example,
+<xref target="SIGMAC" format="default" sectionFormat="of" derivedContent="SIGMAC"/> presents a relevant framework for analysis, and  <xref target="RFC8446" sectionFormat="of" section="E.1.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-E.1.6" derivedContent="RFC8446"/>
+contains a comprehensive set of references.</t>
+      <t indent="0" pn="section-9-2">Authenticators are independent and unidirectional.  There is no explicit state change
+inside TLS when an authenticator is either created or validated.  The application in
+possession of a validated authenticator can rely on any semantics associated with data
+in the certificate_request_context.</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-9-3">
+        <li pn="section-9-3.1">This property makes it difficult to formally prove that a server is jointly authoritative
+over multiple identities, rather than individually authoritative over each.</li>
+        <li pn="section-9-3.2">There is no indication in (D)TLS about which point in time an authenticator was
+computed.  Any feedback about the time of creation or validation of the authenticator
+should be tracked as part of the application-layer semantics if required.</li>
+      </ul>
+      <t indent="0" pn="section-9-4">The signatures generated with this API cover the context string
+"Exported Authenticator"; therefore, they cannot be transplanted into other
+protocols.</t>
+      <t indent="0" pn="section-9-5">In TLS 1.3, the client cannot explicitly learn from the TLS layer whether its
+Finished message was accepted. Because the application traffic keys are not
+dependent on the client's final flight, receiving messages from the server
+does not prove that the server received the client's Finished message.
+To avoid disagreement between the client and server
+on the authentication status of Exported Authenticators, servers <bcp14>MUST</bcp14> verify the client Finished message
+before sending an EA or processing a received Exported Authenticator.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC2104" to="HMAC"/>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2104" target="https://www.rfc-editor.org/info/rfc2104" quoteTitle="true" derivedAnchor="HMAC">
+          <front>
+            <title>HMAC: Keyed-Hashing for Message Authentication</title>
+            <author initials="H." surname="Krawczyk" fullname="H. Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Bellare" fullname="M. Bellare">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Canetti" fullname="R. Canetti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="February"/>
+            <abstract>
+              <t indent="0">This document describes HMAC, a mechanism for message authentication using cryptographic hash functions. HMAC can be used with any iterative cryptographic hash function, e.g., MD5, SHA-1, in combination with a secret shared key.  The cryptographic strength of HMAC depends on the properties of the underlying hash function.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2104"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2104"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC5705" target="https://www.rfc-editor.org/info/rfc5705" quoteTitle="true" derivedAnchor="RFC5705">
+          <front>
+            <title>Keying Material Exporters for Transport Layer Security (TLS)</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="March"/>
+            <abstract>
+              <t indent="0">A number of protocols wish to leverage Transport Layer Security (TLS) to perform key establishment but then use some of the keying material for their own purposes.  This document describes a general mechanism for allowing that.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5705"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5705"/>
+        </reference>
+        <reference anchor="RFC6066" target="https://www.rfc-editor.org/info/rfc6066" quoteTitle="true" derivedAnchor="RFC6066">
+          <front>
+            <title>Transport Layer Security (TLS) Extensions: Extension Definitions</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="January"/>
+            <abstract>
+              <t indent="0">This document provides specifications for existing TLS extensions.  It is a companion document for RFC 5246, "The Transport Layer Security (TLS) Protocol Version 1.2".  The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6066"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6066"/>
+        </reference>
+        <reference anchor="RFC6347" target="https://www.rfc-editor.org/info/rfc6347" quoteTitle="true" derivedAnchor="RFC6347">
+          <front>
+            <title>Datagram Transport Layer Security Version 1.2</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="January"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.2 of the Datagram Transport Layer Security (DTLS) protocol.  The DTLS protocol provides communications privacy for datagram protocols.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  The DTLS protocol is based on the Transport Layer Security (TLS) protocol and provides equivalent security guarantees.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.  This document updates DTLS 1.0 to work with TLS version 1.2.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6347"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6347"/>
+        </reference>
+        <reference anchor="RFC7627" target="https://www.rfc-editor.org/info/rfc7627" quoteTitle="true" derivedAnchor="RFC7627">
+          <front>
+            <title>Transport Layer Security (TLS) Session Hash and Extended Master Secret Extension</title>
+            <author initials="K." surname="Bhargavan" fullname="K. Bhargavan" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Delignat-Lavaud" fullname="A. Delignat-Lavaud">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Pironti" fullname="A. Pironti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Langley" fullname="A. Langley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Ray" fullname="M. Ray">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="September"/>
+            <abstract>
+              <t indent="0">The Transport Layer Security (TLS) master secret is not cryptographically bound to important session parameters such as the server certificate.  Consequently, it is possible for an active attacker to set up two sessions, one with a client and another with a server, such that the master secrets on the two sessions are the same.  Thereafter, any mechanism that relies on the master secret for authentication, including session resumption, becomes vulnerable to a man-in-the-middle attack, where the attacker can simply forward messages back and forth between the client and server.  This specification defines a TLS extension that contextually binds the master secret to a log of the full handshake that computes it, thus preventing such attacks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7627"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7627"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC8447" target="https://www.rfc-editor.org/info/rfc8447" quoteTitle="true" derivedAnchor="RFC8447">
+          <front>
+            <title>IANA Registry Updates for TLS and DTLS</title>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Turner" fullname="S. Turner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document describes a number of changes to TLS and DTLS IANA registries that range from adding notes to the registry all the way to changing the registration policy.  These changes were mostly motivated by WG review of the TLS- and DTLS-related registries undertaken as part of the TLS 1.3 development process.</t>
+              <t indent="0">This document updates the following RFCs: 3749, 5077, 4680, 5246, 5705, 5878, 6520, and 7301.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8447"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8447"/>
+        </reference>
+        <reference anchor="RFC9147" target="https://www.rfc-editor.org/info/rfc9147" quoteTitle="true" derivedAnchor="RFC9147">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="April"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Datagram Transport Layer Security (DTLS) protocol. DTLS 1.3 allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">The DTLS 1.3 protocol is based on the Transport Layer Security (TLS) 1.3 protocol and provides equivalent security guarantees with the exception of order protection / non-replayability.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.</t>
+              <t indent="0">This document obsoletes RFC 6347.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9147"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9147"/>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="IANA-EXPORT" target="https://www.iana.org/assignments/tls-parameters/" quoteTitle="true" derivedAnchor="IANA-EXPORT">
+          <front>
+            <title>TLS Exporter Labels</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="IANA-HANDSHAKE" target="https://www.iana.org/assignments/tls-parameters/" quoteTitle="true" derivedAnchor="IANA-HANDSHAKE">
+          <front>
+            <title>TLS HandshakeType</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="IANA-TLS" target="https://www.iana.org/assignments/tls-extensiontype-values/" quoteTitle="true" derivedAnchor="IANA-TLS">
+          <front>
+            <title>TLS ExtensionType Values</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="RFC6960" target="https://www.rfc-editor.org/info/rfc6960" quoteTitle="true" derivedAnchor="RFC6960">
+          <front>
+            <title>X.509 Internet Public Key Infrastructure Online Certificate Status Protocol - OCSP</title>
+            <author initials="S." surname="Santesson" fullname="S. Santesson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Myers" fullname="M. Myers">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Ankney" fullname="R. Ankney">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Malpani" fullname="A. Malpani">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Galperin" fullname="S. Galperin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Adams" fullname="C. Adams">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="June"/>
+            <abstract>
+              <t indent="0">This document specifies a protocol useful in determining the current status of a digital certificate without requiring Certificate Revocation Lists (CRLs). Additional mechanisms addressing PKIX operational requirements are specified in separate documents.  This document obsoletes RFCs 2560 and 6277.  It also updates RFC 5912.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6960"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6960"/>
+        </reference>
+        <reference anchor="RFC6962" target="https://www.rfc-editor.org/info/rfc6962" quoteTitle="true" derivedAnchor="RFC6962">
+          <front>
+            <title>Certificate Transparency</title>
+            <author initials="B." surname="Laurie" fullname="B. Laurie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Langley" fullname="A. Langley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Kasper" fullname="E. Kasper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="June"/>
+            <abstract>
+              <t indent="0">This document describes an experimental protocol for publicly logging the existence of Transport Layer Security (TLS) certificates as they are issued or observed, in a manner that allows anyone to audit certificate authority (CA) activity and notice the issuance of suspect certificates as well as to audit the certificate logs themselves.  The intent is that eventually clients would refuse to honor certificates that do not appear in a log, effectively forcing CAs to add all issued certificates to the logs.</t>
+              <t indent="0">Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6962"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6962"/>
+        </reference>
+        <reference anchor="RFC7250" target="https://www.rfc-editor.org/info/rfc7250" quoteTitle="true" derivedAnchor="RFC7250">
+          <front>
+            <title>Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="P." surname="Wouters" fullname="P. Wouters" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Gilmore" fullname="J. Gilmore">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Weiler" fullname="S. Weiler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Kivinen" fullname="T. Kivinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">This document specifies a new certificate type and two TLS extensions for exchanging raw public keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS).  The new certificate type allows raw public keys to be used for authentication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7250"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7250"/>
+        </reference>
+        <reference anchor="RFC9001" target="https://www.rfc-editor.org/info/rfc9001" quoteTitle="true" derivedAnchor="RFC9001">
+          <front>
+            <title>Using TLS to Secure QUIC</title>
+            <author initials="M." surname="Thomson" fullname="M. Thomson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Turner" fullname="S. Turner" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="May"/>
+            <abstract>
+              <t indent="0">This document describes how Transport Layer Security (TLS) is used to secure QUIC.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9001"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9001"/>
+        </reference>
+        <reference anchor="RFC9113" target="https://www.rfc-editor.org/info/rfc9113" quoteTitle="true" derivedAnchor="RFC9113">
+          <front>
+            <title>HTTP/2</title>
+            <author initials="M." surname="Thomson" fullname="M. Thomson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Benfield" fullname="C. Benfield" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="June"/>
+            <abstract>
+              <t indent="0">This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2). HTTP/2 enables a more efficient use of network resources and a reduced latency by introducing field compression and allowing multiple concurrent exchanges on the same connection.</t>
+              <t indent="0">This document obsoletes RFCs 7540 and 8740.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9113"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9113"/>
+        </reference>
+        <reference anchor="RFC9162" target="https://www.rfc-editor.org/info/rfc9162" quoteTitle="true" derivedAnchor="RFC9162">
+          <front>
+            <title>Certificate Transparency Version 2.0</title>
+            <author initials="B." surname="Laurie" fullname="B. Laurie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Messeri" fullname="E. Messeri">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Stradling" fullname="R. Stradling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="December"/>
+            <abstract>
+              <t indent="0">This document describes version 2.0 of the Certificate Transparency (CT) protocol for publicly logging the existence of Transport Layer Security (TLS) server certificates as they are issued or observed, in a manner that allows anyone to audit certification authority (CA) activity and notice the issuance of suspect certificates as well as to audit the certificate logs themselves. The intent is that eventually clients would refuse to honor certificates that do not appear in a log, effectively forcing CAs to add all issued certificates to the logs.</t>
+              <t indent="0">This document obsoletes RFC 6962.  It also specifies a new TLS extension that is used to send various CT log artifacts.</t>
+              <t indent="0">Logs are network services that implement the protocol operations for submissions and queries that are defined in this document.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9162"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9162"/>
+        </reference>
+        <reference anchor="SIGMAC" target="https://eprint.iacr.org/2016/711.pdf" quoteTitle="true" derivedAnchor="SIGMAC">
+          <front>
+            <title>A Unilateral-to-Mutual Authentication Compiler for Key Exchange (with Applications to Client Authentication in TLS 1.3)</title>
+            <author initials="H" surname="Krawczyk" fullname="Hugo Krawczyk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="August" year="2016"/>
+          </front>
+          <refcontent>Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security</refcontent>
+          <seriesInfo name="DOI" value="10.1145/2976749.2978325"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="ack" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">Comments on this proposal were provided by <contact fullname="Martin Thomson"/>.  Suggestions for
+<xref target="security" format="default" sectionFormat="of" derivedContent="Section 9"/> were provided by <contact fullname="Karthikeyan Bhargavan"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author initials="N." surname="Sullivan" fullname="Nick Sullivan">
+        <organization showOnFrontPage="true">Cloudflare Inc.</organization>
+        <address>
+          <email>nick@cloudflare.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

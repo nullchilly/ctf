@@ -1,0 +1,947 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" docName="draft-pkcs5-gost-09" indexInclude="true" ipr="trust200902" number="9337" prepTime="2022-12-09T14:25:55" scripts="Common,Latin" sortRefs="true" submissionType="independent" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-pkcs5-gost-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9337" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="GOST Password-Based Keys">Generating Password-Based Keys Using the GOST Algorithms</title>
+    <seriesInfo name="RFC" value="9337" stream="independent"/>
+    <author fullname="Ekaterina Karelina" initials="E." role="editor" surname="Karelina">
+      <organization showOnFrontPage="true">InfoTeCS</organization>
+      <address>
+        <postal>
+          <street>2B stroenie 1, ul. Otradnaya</street>
+          <city>Moscow</city>
+          <code>127273</code>
+          <country>Russian Federation</country>
+        </postal>
+        <email>Ekaterina.Karelina@infotecs.ru</email>
+      </address>
+    </author>
+    <date month="12" year="2022"/>
+    <keyword>password-based cryptography, derived key, GOST algorithms, pkcs5, gost</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1"> This document specifies how to use "PKCS #5: Password-Based Cryptography Specification Version 2.1" (RFC 8018) to generate a symmetric key from a password in conjunction with the
+Russian national standard GOST algorithms.
+      </t>
+      <t indent="0" pn="section-abstract-2">
+            PKCS #5 applies a Pseudorandom Function (PRF) -- a cryptographic hash,
+            cipher, or Hash-Based Message Authentication Code (HMAC) -- to the
+            input password along with a salt value and repeats the process
+            many times to produce a derived key.
+      </t>
+      <t indent="0" pn="section-abstract-3">
+            This specification has been developed outside the IETF.  The purpose of publication being to
+            facilitate interoperable implementations that wish to support the
+            GOST algorithms.  This document does not imply IETF endorsement of the cryptographic algorithms
+used here.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This is a contribution to the RFC Series, independently of any
+            other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for
+            publication by the RFC Editor are not candidates for any level of
+            Internet Standard; see Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9337" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-used-in-this-do">Conventions Used in This Document</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-basic-terms-and-definitions">Basic Terms and Definitions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-for-generating-a-">Algorithm for Generating a Key from a Password</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-data-encryption">Data Encryption</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-gost-r-3412-2015-data-encry">GOST R 34.12-2015 Data Encryption</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.1.2">
+                  <li pn="section-toc.1-1.5.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.1.1"><xref derivedContent="5.1.1" format="counter" sectionFormat="of" target="section-5.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-encryption">Encryption</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.2.1"><xref derivedContent="5.1.2" format="counter" sectionFormat="of" target="section-5.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-decryption">Decryption</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-message-authentication">Message Authentication</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mac-generation">MAC Generation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mac-verification">MAC Verification</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-identifiers-and-parameters">Identifiers and Parameters</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pbkdf2">PBKDF2</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pbes2">PBES2</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-identifier-and-parameters-o">Identifier and Parameters of Gost34.12-2015 Encryption Scheme</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pbmac1">PBMAC1</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pbkdf2-hmac_gostr3411-test-">PBKDF2 HMAC_GOSTR3411 Test Vectors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="Introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+            This document provides a specification of usage of GOST R
+            34.12-2015 encryption algorithms and the GOST R 34.11-2012 hashing
+            functions with PKCS #5. The methods described in this document are designed to generate
+            key information using the user's password and to protect
+            information using the generated keys.
+      </t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-used-in-this-do">Conventions Used in This Document</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="Definition" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-basic-terms-and-definitions">Basic Terms and Definitions</name>
+      <t indent="0" pn="section-3-1">
+           Throughout this document, the following notation is used:
+      </t>
+      <table align="center" pn="table-1">
+        <name slugifiedName="name-terms-and-definitions">Terms and Definitions</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Notation</th>
+            <th align="left" colspan="1" rowspan="1">Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1">a password encoded as a Unicode UTF-8 string</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">S</td>
+            <td align="left" colspan="1" rowspan="1">a random initializing value</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">c</td>
+            <td align="left" colspan="1" rowspan="1">a number of iterations of algorithm, a positive integer</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">dkLen</td>
+            <td align="left" colspan="1" rowspan="1">a length in octets of derived key, a positive integer</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">DK</td>
+            <td align="left" colspan="1" rowspan="1">a derived key of length dkLen</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">B<sub>n</sub></td>
+            <td align="left" colspan="1" rowspan="1">                                                                                                         
+            a set of all octet strings of length n, n &gt;= 0;                                                                        
+            if n = 0, then the set B<sub>n</sub> consists of an empty string of length 0</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A||C</td>
+            <td align="left" colspan="1" rowspan="1">a concatenation of two octet strings A, C, i.e.,
+            a vector from B<sub>|A|+|C|</sub>, where the left subvector from B<sub>|A|</sub>
+            is equal to the vector A and the right subvector from B<sub>|C|</sub> is
+            equal to the vector C: A = (a<sub>n<sub>1</sub></sub>,...,a<sub>1</sub>) in B<sub>n<sub>1</sub></sub> and C =
+            (c<sub>n<sub>2</sub></sub>,..., c<sub>1</sub>) in B<sub>n<sub>2</sub></sub>, res = (a<sub>n<sub>1</sub></sub>,...,a<sub>1</sub>,c<sub>n<sub>2</sub></sub>,...,
+            c<sub>1</sub>) in B<sub>n<sub>1</sub>+n<sub>2</sub></sub>)</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">\xor</td>
+            <td align="left" colspan="1" rowspan="1">a bit-wise exclusive-or of two octet strings of the same length</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MSB<sup>n</sup><sub>r</sub>: B<sub>n</sub> -&gt; B<sub>r</sub></td>
+            <td align="left" colspan="1" rowspan="1">a truncating of an octet string to size r by
+            removing the least significant n-r octets:
+            MSB<sup>n</sup><sub>r</sub>(a<sub>n</sub>,...,a<sub>n-r+1</sub>,a<sub>n-r</sub>,...,a<sub>1</sub>) =(a<sub>n</sub>,...,a<sub>n-r+1</sub>)
+            </td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">LSB<sup>n</sup><sub>r</sub>: B<sub>n</sub> -&gt; B<sub>r</sub></td>
+            <td align="left" colspan="1" rowspan="1">a truncating of an octet string to size r by
+            removing the most significant n-r octets:
+            LSB<sup>n</sup><sub>r</sub>(a<sub>n</sub>,...,a<sub>n-r+1</sub>,a<sub>n-r</sub>,...,a<sub>1</sub>) =(a<sub>r</sub>,...,a<sub>1</sub>)
+            </td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Int(i)</td>
+            <td align="left" colspan="1" rowspan="1">a four-octet encoding of the integer i =&lt; 2<sup>32</sup>: (i<sub>1</sub>, i<sub>2</sub>, i<sub>3</sub>, i<sub>4</sub>) in B<sub>4</sub>, i = i<sub>1</sub> + 2<sup>8</sup> * i<sub>2</sub> +    
+2<sup>16</sup> * i<sub>3</sub> + 2<sup>24</sup> * i<sub>4</sub></td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">b[i, j]</td>
+            <td align="left" colspan="1" rowspan="1">a substring extraction operator, extracts octets i through j, 0 =&lt; i =&lt; j</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">CEIL(x)</td>
+            <td align="left" colspan="1" rowspan="1">the smallest integer greater than or equal to x</td>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-3-3">
+      This document uses the following abbreviations and symbols:</t>
+      <table align="center" pn="table-2">
+        <name slugifiedName="name-abbreviations-and-symbols">Abbreviations and Symbols</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Abbreviations and Symbols</th>
+            <th align="left" colspan="1" rowspan="1">Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">HMAC_GOSTR3411</td>
+            <td align="left" colspan="1" rowspan="1">Hashed-Based Message Authentication Code. A
+            function for calculating a Message Authentication Code (MAC) based
+            on the GOST R 34.11-2012 hash function (see <xref target="RFC6986" format="default" sectionFormat="of" derivedContent="RFC6986"/>) with 512-bit output in accordance with <xref target="RFC2104" format="default" sectionFormat="of" derivedContent="RFC2104"/>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="Algorithm" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-algorithm-for-generating-a-">Algorithm for Generating a Key from a Password</name>
+      <t indent="0" pn="section-4-1">
+            The DK is calculated by means of a key derivation function
+            PBKDF2 (P, S, c, dkLen) (see <xref target="RFC8018" sectionFormat="comma" section="5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8018#section-5.2" derivedContent="RFC8018"/>) using the HMAC_GOSTR3411
+            function as the PRF:
+      </t>
+      <t indent="6" pn="section-4-2">
+        DK = PBKDF2 (P, S, c, dkLen).
+      </t>
+      <t indent="0" pn="section-4-3">
+            The PBKDF2 function is defined as the following algorithm:
+            
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4-4"><li pn="section-4-4.1" derivedCounter="1.">
+            If dkLen &gt; (2<sup>32</sup> - 1) * 64, output "derived key too long" and stop.
+            </li>
+        <li pn="section-4-4.2" derivedCounter="2.">
+            Calculate n = CEIL (dkLen / 64).
+            </li>
+        <li pn="section-4-4.3" derivedCounter="3.">
+          <t indent="0" pn="section-4-4.3.1">
+            Calculate a set of values for each i from 1 to n:
+          </t>
+          <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-4-4.3.2">
+            <li pn="section-4-4.3.2.1">U<sub>1</sub>(i) = HMAC_GOSTR3411 (P, S || INT (i)),</li>
+            <li pn="section-4-4.3.2.2">U<sub>2</sub>(i) = HMAC_GOSTR3411 (P, U<sub>1</sub>(i)),</li>
+            <li pn="section-4-4.3.2.3">...</li>
+            <li pn="section-4-4.3.2.4">U<sub>c</sub>(i) = HMAC_GOSTR3411 (P, U<sub>c-1</sub>(i)),</li>
+            <li pn="section-4-4.3.2.5">T(i) = U<sub>1</sub>(i) \xor U<sub>2</sub>(i) \xor ... \xor U<sub>c</sub>(i).</li>
+          </ul>
+        </li>
+        <li pn="section-4-4.4" derivedCounter="4.">
+          <t indent="0" pn="section-4-4.4.1">
+            Concatenate the octet strings T(i) and extract the first dkLen octets to
+            produce a derived key DK:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-4.4.2">
+            <li pn="section-4-4.4.2.1">DK = MSB<sup>n * 64</sup><sub>dkLen</sub>(T(1)||T(2)||...||T(n))</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+    <section anchor="Encryption" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-data-encryption">Data Encryption</name>
+      <section anchor="GOST-34.12-2015" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-gost-r-3412-2015-data-encry">GOST R 34.12-2015 Data Encryption</name>
+        <t indent="0" pn="section-5.1-1">Data encryption using the DK is carried out in accordance with the PBES2 scheme (see <xref target="RFC8018" sectionFormat="comma" section="6.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8018#section-6.2" derivedContent="RFC8018"/>) using GOST R 34.12-2015 in CTR_ACPKM mode (see <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/>).</t>
+        <section anchor="Enc_GOST-34.12-2015" numbered="true" removeInRFC="false" toc="include" pn="section-5.1.1">
+          <name slugifiedName="name-encryption">Encryption</name>
+          <t indent="0" pn="section-5.1.1-1">                                                                                                             
+                The encryption process for PBES2 consists of the following
+                steps:
+          </t>
+          <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.1.1-2"><li pn="section-5.1.1-2.1" derivedCounter="1.">Select the random value S of a length from 8 to 32 octets.</li>
+            <li pn="section-5.1.1-2.2" derivedCounter="2.">Select the iteration count c depending on the conditions of use (see <xref target="GostPkcs5" format="default" sectionFormat="of" derivedContent="GostPkcs5"/>).         
+                The minimum allowable value for the parameter is 1000.</li>
+            <li pn="section-5.1.1-2.3" derivedCounter="3.">Set the value dkLen = 32.</li>
+            <li pn="section-5.1.1-2.4" derivedCounter="4.">
+              <t indent="0" pn="section-5.1.1-2.4.1">Apply the key derivation function to the password P, the
+              random value S, and the iteration count c to produce a derived
+              key DK of length dkLen octets in accordance with the algorithm
+              from <xref target="Algorithm" format="default" sectionFormat="of" derivedContent="Section 4"/>.
+	      Generate the sequence T(1) and
+              truncate it to 32 octets, i.e.,</t>
+              <ul empty="true" bare="false" indent="3" spacing="normal" pn="section-5.1.1-2.4.2">
+                <li pn="section-5.1.1-2.4.2.1">DK = PBKDF2 (P, S, c, 32) =
+              MSB<sup>64</sup><sub>32</sub>(T(1)).</li>
+              </ul>
+            </li>
+            <li pn="section-5.1.1-2.5" derivedCounter="5.">
+              <t indent="0" pn="section-5.1.1-2.5.1">Generate the random value ukm of size n, where n takes a
+              value of 12 or 16 octets depending on the selected encryption
+              algorithm:
+              </t>
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1.1-2.5.2">
+                <li pn="section-5.1.1-2.5.2.1">GOST R 34.12-2015 "Kuznyechik"   n = 16 (see <xref target="RFC7801" format="default" sectionFormat="of" derivedContent="RFC7801"/>)</li>
+                <li pn="section-5.1.1-2.5.2.2">GOST R 34.12-2015 "Magma" n = 12 (see <xref target="RFC8891" format="default" sectionFormat="of" derivedContent="RFC8891"/>)</li>
+              </ul>
+            </li>
+            <li pn="section-5.1.1-2.6" derivedCounter="6.">Set the value S' = ukm[1..n-8].</li>
+            <li pn="section-5.1.1-2.7" derivedCounter="7.">For the
+            id-gostr3412-2015-magma-ctracpkm and
+            id-gostr3412-2015-kuznyechik-ctracpkm algorithms (see <xref target="ParamGost3412-2015" format="default" sectionFormat="of" derivedContent="Section 7.3"/>), encrypt the message M with the GOST R
+            34.12-2015 algorithm with the derived key DK and the random value
+            S' to produce a ciphertext C.</li>
+            <li pn="section-5.1.1-2.8" derivedCounter="8.">
+              <t indent="0" pn="section-5.1.1-2.8.1">For the id-gostr3412-2015-magma-ctracpkm-omac and
+              id-gostr3412-2015-kuznyechik-ctracpkm-omac algorithms (see <xref target="ParamGost3412-2015" format="default" sectionFormat="of" derivedContent="Section 7.3"/>), encrypt the message M with the GOST R
+              34.12-2015 algorithm with the derived key DK and the ukm in
+              accordance with the following steps:
+              </t>
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1.1-2.8.2">
+                <li pn="section-5.1.1-2.8.2.1">
+                  <t indent="0" pn="section-5.1.1-2.8.2.1.1">Generate two keys from the derived key DK using the
+                  KDF_TREE_GOSTR3411_2012_256 algorithm (see <xref target="RFC7836" format="default" sectionFormat="of" derivedContent="RFC7836"/>):
+                  </t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.2">encryption key K(1)</t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.3">MAC key K(2)</t>
+                  <t indent="0" pn="section-5.1.1-2.8.2.1.4">                                                                                                     
+                    Input parameters for the KDF_TREE_GOSTR3411_2012_256
+                    algorithm take the following values:
+                  </t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.5">K<sub>in</sub> = DK</t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.6">label = "kdf tree" (8 octets)</t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.7">seed = ukm[n-7..n]</t>
+                  <t indent="3" pn="section-5.1.1-2.8.2.1.8">R = 1</t>
+                  <t indent="0" pn="section-5.1.1-2.8.2.1.9">                                                                                                     
+                    The input string label above is encoded using ASCII (see <xref target="RFC0020" format="default" sectionFormat="of" derivedContent="RFC0020"/>).
+                  </t>
+                </li>
+                <li pn="section-5.1.1-2.8.2.2">Compute the MAC for the message M using the K(2) key in accordance with the GOST R 34.12-2015 algorithm.   
+Append the computed MAC value to the message M: M||MAC.</li>
+                <li pn="section-5.1.1-2.8.2.3">Encrypt the resulting octet string with MAC with the GOST R 34.12-2015 algorithm with the derived key 
+K(1) and the random value S' to produce a ciphertext C.</li>
+              </ul>
+            </li>
+            <li pn="section-5.1.1-2.9" derivedCounter="9.">Serialize the parameters S, c, and ukm as algorithm parameters in accordance with <xref target="PBES2" format="default" sectionFormat="of" derivedContent="Section 7.2"/>.</li>
+          </ol>
+        </section>
+        <section anchor="Dec_GOST-34.12-2015" numbered="true" removeInRFC="false" toc="include" pn="section-5.1.2">
+          <name slugifiedName="name-decryption">Decryption</name>
+          <t indent="0" pn="section-5.1.2-1">                                                                                                             
+                The decryption process for PBES2 consists of the following
+                steps:
+          </t>
+          <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.1.2-2"><li pn="section-5.1.2-2.1" derivedCounter="1.">Set the value dkLen = 32.</li>
+            <li pn="section-5.1.2-2.2" derivedCounter="2.">Apply the key derivation function PBKDF2 to the password P,
+            the random value S, and the iteration count c to produce a derived
+            key DK of length dkLen octets in accordance with the algorithm
+            from <xref target="Algorithm" format="default" sectionFormat="of" derivedContent="Section 4"/>.  Generate the sequence T(1) and
+            truncate it to 32 octets, i.e., DK = PBKFD2 (P, S, c, 32) =
+            MSB<sup>64</sup><sub>32</sub>(T(1)).</li>
+            <li pn="section-5.1.2-2.3" derivedCounter="3.">Set the value S' = ukm[1..n-8], where n is the size of ukm in
+            octets.</li>
+            <li pn="section-5.1.2-2.4" derivedCounter="4.">For the id-gostr3412-2015-magma-ctracpkm and
+            id-gostr3412-2015-kuznyechik-ctracpkm algorithms (see <xref target="ParamGost3412-2015" format="default" sectionFormat="of" derivedContent="Section 7.3"/>), decrypt the ciphertext C with the GOST
+            R 34.12-2015 algorithm with the derived key DK and the random
+            value S' to produce the message M.</li>
+            <li pn="section-5.1.2-2.5" derivedCounter="5.">
+              <t indent="0" pn="section-5.1.2-2.5.1">For id-gostr3412-2015-magma-ctracpkm-omac and
+              id-gostr3412-2015-kuznyechik-ctracpkm-omac algorithms (see <xref target="ParamGost3412-2015" format="default" sectionFormat="of" derivedContent="Section 7.3"/>), decrypt the ciphertext C with the
+              GOST R 34.12-2015 algorithm with the derived key DK and the ukm
+              in accordance with the following steps:
+              </t>
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1.2-2.5.2">
+                <li pn="section-5.1.2-2.5.2.1">
+                  <t indent="0" pn="section-5.1.2-2.5.2.1.1">Generate two keys from the derived key DK using the
+                  KDF_TREE_GOSTR3411_2012_256 algorithm:
+                  </t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.2">encryption key K(1)</t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.3">MAC key K(2)</t>
+                  <t indent="0" pn="section-5.1.2-2.5.2.1.4">                                                                                                     
+                    Input parameters for the KDF_TREE_GOSTR3411_2012_256
+                    algorithm take the following values:
+                  </t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.5">K<sub>in</sub> = DK</t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.6">label = "kdf tree" (8 octets)</t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.7">seed = ukm[n-7..n]</t>
+                  <t indent="3" pn="section-5.1.2-2.5.2.1.8">R = 1</t>
+                  <t indent="0" pn="section-5.1.2-2.5.2.1.9">                                                                                                     
+                    The input string label above is encoded using ASCII (see <xref target="RFC0020" format="default" sectionFormat="of" derivedContent="RFC0020"/>).
+                  </t>
+                </li>
+                <li pn="section-5.1.2-2.5.2.2">Decrypt the ciphertext C with the GOST R 34.12-2015
+                algorithm with the derived key K(1) and the random value S' to
+                produce the plaintext.  The last k octets of the text are the MAC, where k depends on the
+                selected encryption algorithm.</li>
+                <li pn="section-5.1.2-2.5.2.3">Compute the MAC for the text[1..m - k] using the K(2) key
+                in accordance with GOST R 34.12-2015 algorithm, where m is the
+                size of text.</li>
+                <li pn="section-5.1.2-2.5.2.4">Compare the computing MAC
+                and the receiving MAC.  If the
+                sizes or values do not match, the message is distorted.</li>
+              </ul>
+            </li>
+          </ol>
+        </section>
+      </section>
+    </section>
+    <section anchor="Integrity" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-message-authentication">Message Authentication</name>
+      <t indent="0" pn="section-6-1">The PBMAC1 scheme is used for message authentication (see <xref target="RFC8018" sectionFormat="comma" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8018#section-7.1" derivedContent="RFC8018"/>). 
+        This scheme is based on the HMAC_GOSTR3411 function.</t>
+      <section anchor="MAC_generation" numbered="true" removeInRFC="false" toc="include" pn="section-6.1">
+        <name slugifiedName="name-mac-generation">MAC Generation</name>
+        <t indent="0" pn="section-6.1-1">The MAC generation operation for PBMAC1 consists of the following steps:
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-6.1-2"><li pn="section-6.1-2.1" derivedCounter="1.">Select the random value S of a length from 8 to 32 octets.</li>
+          <li pn="section-6.1-2.2" derivedCounter="2.">Select the iteration count c depending on the conditions of use (see <xref target="GostPkcs5" format="default" sectionFormat="of" derivedContent="GostPkcs5"/>). 
+            The minimum allowable value for the parameter is 1000.</li>
+          <li pn="section-6.1-2.3" derivedCounter="3.">Set the dkLen to at least 32 octets. The number of octets depends on previous parameter values.</li>
+          <li pn="section-6.1-2.4" derivedCounter="4.">Apply the key derivation function to the password P, the random
+          value S, and the iteration count c to generate a sequence K of
+          length dkLen octets in accordance with the algorithm from <xref target="Algorithm" format="default" sectionFormat="of" derivedContent="Section 4"/>. </li>
+          <li pn="section-6.1-2.5" derivedCounter="5.">Truncate the sequence K to 32 octets to get the derived key DK, i.e., DK = LSB<sup>dkLen</sup><sub>32</sub>(K).</li>
+          <li pn="section-6.1-2.6" derivedCounter="6.">Process the message M with the underlying message authentication scheme with the derived key DK to generate a message authentication code T.</li>
+          <li pn="section-6.1-2.7" derivedCounter="7.">Save the parameters S and c as algorithm parameters in accordance with <xref target="PBMAC1" format="default" sectionFormat="of" derivedContent="Section 7.4"/>.</li>
+        </ol>
+      </section>
+      <section anchor="MAC_verification" numbered="true" removeInRFC="false" toc="include" pn="section-6.2">
+        <name slugifiedName="name-mac-verification">MAC Verification</name>
+        <t indent="0" pn="section-6.2-1">The MAC verification operation for PBMAC1 consists of the following steps:
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-6.2-2"><li pn="section-6.2-2.1" derivedCounter="1.">Set the dkLen to at least 32 octets. The number of octets depends on previous parameter values.</li>
+          <li pn="section-6.2-2.2" derivedCounter="2.">Apply the key derivation function to the password P, the random value S, and the iteration count c 
+            to generate a sequence K of length dkLen octets in accordance with the algorithm from <xref target="Algorithm" format="default" sectionFormat="of" derivedContent="Section 4"/>. </li>
+          <li pn="section-6.2-2.3" derivedCounter="3.">Truncate the sequence K to 32 octets to get the derived key DK, i.e., DK = LSB<sup>dkLen</sup><sub>32</sub>(K).</li>
+          <li pn="section-6.2-2.4" derivedCounter="4.">Process the message M with the underlying message authentication scheme with the derived key DK to generate a MAC.</li>
+          <li pn="section-6.2-2.5" derivedCounter="5.">Compare the computing MAC and the receiving MAC. If the sizes or values do not match, the message is distorted. </li>
+        </ol>
+      </section>
+    </section>
+    <section anchor="Ident_Params" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-identifiers-and-parameters">Identifiers and Parameters</name>
+      <t indent="0" pn="section-7-1">This section defines the ASN.1 syntax for the key derivation functions, the encryption schemes, the message authentication scheme, and
+        supporting techniques (see <xref target="RFC8018" format="default" sectionFormat="of" derivedContent="RFC8018"/>).</t>
+      <sourcecode type="asn.1" markers="false" pn="section-7-2">
+rsadsi OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840) 113549 }
+pkcs OBJECT IDENTIFIER ::= { rsadsi 1 }
+pkcs-5 OBJECT IDENTIFIER ::= { pkcs 5 }</sourcecode>
+      <section anchor="PBKDF2" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-pbkdf2">PBKDF2</name>
+        <t indent="0" pn="section-7.1-1">The Object Identifier (OID) id-PBKDF2 identifies the PBKDF2 key derivation function:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.1-2">
+id-PBKDF2 OBJECT IDENTIFIER ::= { pkcs-5 12 }</sourcecode>
+        <t indent="0" pn="section-7.1-3">The parameters field associated with this OID in an AlgorithmIdentifier <bcp14>SHALL</bcp14> have type PBKDF2-params:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.1-4">
+PBKDF2-params ::= SEQUENCE
+{
+    salt            CHOICE
+    {
+        specified       OCTET STRING,
+        otherSource     AlgorithmIdentifier {{PBKDF2-SaltSources}}
+    },
+    iterationCount  INTEGER (1000..MAX),
+    keyLength       INTEGER (32..MAX) OPTIONAL,
+    prf             AlgorithmIdentifier {{PBKDF2-PRFs}}
+}</sourcecode>
+        <t indent="0" pn="section-7.1-5">The fields of type PBKDF2-params have the following meanings:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.1-6">
+          <li pn="section-7.1-6.1">salt contains the random value S in OCTET STRING.</li>
+          <li pn="section-7.1-6.2">iterationCount specifies the iteration count c.</li>
+          <li pn="section-7.1-6.3">keyLength is the length of the derived key in octets. It is an optional field for the PBES2 scheme since it is always 32 octets.
+            It <bcp14>MUST</bcp14> be present for the PBMAC1 scheme and <bcp14>MUST</bcp14> be at least 32 octets since the HMAC_GOSTR3411 function has a variable key size.</li>
+          <li pn="section-7.1-6.4">prf identifies the pseudorandom function. The identifier value <bcp14>MUST</bcp14> be id-tc26-hmac-gost-3411-12-512 and the parameters value must be NULL:</li>
+        </ul>
+        <sourcecode type="asn.1" markers="false" pn="section-7.1-7">
+id-tc26-hmac-gost-3411-12-512 OBJECT IDENTIFIER ::=
+{
+    iso(1) member-body(2) ru(643) reg7(7)
+    tk26(1) algorithms(1) hmac(4) 512(2)
+}</sourcecode>
+      </section>
+      <section anchor="PBES2" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-pbes2">PBES2</name>
+        <t indent="0" pn="section-7.2-1">The OID id-PBES2 identifies the PBES2 encryption scheme:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.2-2">
+id-PBES2 OBJECT IDENTIFIER ::= { pkcs-5 13 }</sourcecode>
+        <t indent="0" pn="section-7.2-3">The parameters field associated with this OID in an AlgorithmIdentifier <bcp14>SHALL</bcp14> have type PBES2-params:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.2-4">
+PBES2-params ::= SEQUENCE
+{
+    keyDerivationFunc   AlgorithmIdentifier { { PBES2-KDFs } },
+    encryptionScheme    AlgorithmIdentifier { { PBES2-Encs } }
+}</sourcecode>
+        <t indent="0" pn="section-7.2-5">The fields of type PBES2-params have the following meanings:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.2-6">
+          <li pn="section-7.2-6.1">keyDerivationFunc identifies the key derivation function in accordance with <xref target="PBKDF2" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.</li>
+          <li pn="section-7.2-6.2">encryptionScheme identifies the encryption scheme in accordance with <xref target="ParamGost3412-2015" format="default" sectionFormat="of" derivedContent="Section 7.3"/>.</li>
+        </ul>
+      </section>
+      <section anchor="ParamGost3412-2015" numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-identifier-and-parameters-o">Identifier and Parameters of Gost34.12-2015 Encryption Scheme</name>
+        <t indent="0" pn="section-7.3-1">The Gost34.12-2015 encryption algorithm identifier <bcp14>SHALL</bcp14> take one of the following values:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.3-2">
+id-gostr3412-2015-magma-ctracpkm OBJECT IDENTIFIER ::=
+{
+    iso(1) member-body(2) ru(643) rosstandart(7)
+    tc26(1) algorithms(1) cipher(5)
+    gostr3412-2015-magma(1) mode-ctracpkm(1)
+}</sourcecode>
+        <t indent="0" pn="section-7.3-3">When the id-gostr3412-2015-magma-ctracpkm identifier is used, the data is encrypted by the GOST R 34.12-2015 Magma cipher in CTR_ACPKM mode in accordance with <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/>.
+                The block size is 64 bits and the section size is fixed within a specific protocol based on the requirements of the system capacity and the key lifetime.</t>
+        <sourcecode type="asn.1" markers="false" pn="section-7.3-4">
+id-gostr3412-2015-magma-ctracpkm-omac OBJECT IDENTIFIER ::=
+{
+    iso(1) member-body(2) ru(643) rosstandart(7)
+    tc26(1) algorithms(1) cipher(5)
+    gostr3412-2015-magma(1) mode-ctracpkm-omac(2)
+}</sourcecode>
+        <t indent="0" pn="section-7.3-5">When the id-gostr3412-2015-magma-ctracpkm-omac identifier is used, the
+        data is encrypted by the GOST R 34.12-2015 Magma cipher in CTR_ACPKM
+        mode in accordance with <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/> and the MAC is computed
+        by the GOST R 34.12-2015 Magma cipher in MAC mode (MAC size is 64
+        bits).  The block size is 64 bits and the section size is fixed within a
+        specific protocol based on the requirements of the system capacity and
+        the key lifetime.</t>
+        <sourcecode type="asm.1" markers="false" pn="section-7.3-6">
+id-gostr3412-2015-kuznyechik-ctracpkm OBJECT IDENTIFIER ::=
+{
+    iso(1) member-body(2) ru(643) rosstandart(7)
+    tc26(1) algorithms(1) cipher(5)
+    gostr3412-2015-kuznyechik(2) mode-ctracpkm(1)
+}</sourcecode>
+        <t indent="0" pn="section-7.3-7">When the id-gostr3412-2015-kuznyechik-ctracpkm identifier is used, the data is encrypted by the GOST R 34.12-2015 Kuznyechik cipher in CTR_ACPKM mode in accordance with <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/>.
+                The block size is 128 bits and the section size is fixed within a specific protocol based on the requirements of the system capacity and the key lifetime.</t>
+        <sourcecode type="asm.1" markers="false" pn="section-7.3-8">
+id-gostr3412-2015-kuznyechik-ctracpkm-omac OBJECT IDENTIFIER ::=
+{
+    iso(1) member-body(2) ru(643) rosstandart(7)
+    tc26(1) algorithms(1) cipher(5)
+    gostr3412-2015-kuznyechik(2) mode-ctracpkm-omac(2)
+}</sourcecode>
+        <t indent="0" pn="section-7.3-9">When the id-gostr3412-2015-kuznyechik-ctracpkm-omac identifier is used, the data is encrypted by the GOST R 34.12-2015 Kuznyechik cipher in CTR_ACPKM mode in accordance with <xref target="RFC8645" format="default" sectionFormat="of" derivedContent="RFC8645"/> 
+                and MAC is computed by the GOST R 34.12-2015 Kuznyechik cipher in MAC mode (MAC size is 128 bits).
+                The block size is 128 bits and the section size is fixed within a specific protocol based on the requirements of the system capacity and the key lifetime.</t>
+        <t indent="0" pn="section-7.3-10">The parameters field in an AlgorithmIdentifier <bcp14>SHALL</bcp14> have type Gost3412-15-Encryption-Parameters:</t>
+        <sourcecode type="asm.1" markers="false" pn="section-7.3-11">
+Gost3412-15-Encryption-Parameters ::= SEQUENCE
+{
+    ukm OCTET STRING
+}</sourcecode>
+        <t indent="0" pn="section-7.3-12">The field of type Gost3412-15-Encryption-Parameters have the following meanings:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.3-13">
+          <li pn="section-7.3-13.1">
+            <t indent="0" pn="section-7.3-13.1.1">ukm <bcp14>MUST</bcp14> be present and <bcp14>MUST</bcp14> contain n octets. Its value depends on the selected encryption algorithm:
+            </t>
+            <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.3-13.1.2">
+              <li pn="section-7.3-13.1.2.1">GOST R 34.12-2015 "Kuznyechik" n = 16 (see <xref target="RFC7801" format="default" sectionFormat="of" derivedContent="RFC7801"/>)</li>
+              <li pn="section-7.3-13.1.2.2">GOST R 34.12-2015 "Magma" n = 12 (see <xref target="RFC8891" format="default" sectionFormat="of" derivedContent="RFC8891"/>)</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <section anchor="PBMAC1" numbered="true" removeInRFC="false" toc="include" pn="section-7.4">
+        <name slugifiedName="name-pbmac1">PBMAC1</name>
+        <t indent="0" pn="section-7.4-1">The OID id-PBMAC1 identifies the PBMAC1 message authentication scheme:</t>
+        <sourcecode type="asm.1" markers="false" pn="section-7.4-2">
+id-PBMAC1 OBJECT IDENTIFIER ::= { pkcs-5 14 }</sourcecode>
+        <t indent="0" pn="section-7.4-3">The parameters field associated with this OID in an AlgorithmIdentifier <bcp14>SHALL</bcp14> have type PBMAC1-params:</t>
+        <sourcecode type="asm.1" markers="false" pn="section-7.4-4">
+PBMAC1-params ::=  SEQUENCE
+{
+    keyDerivationFunc AlgorithmIdentifier { { PBMAC1-KDFs } },
+    messageAuthScheme AlgorithmIdentifier { { PBMAC1-MACs } }
+}</sourcecode>
+        <t indent="0" pn="section-7.4-5">The fields of type PBMAC1-params have the following meanings:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.4-6">
+          <li pn="section-7.4-6.1">keyDerivationFunc is the identifier and parameters of key derivation function in accordance with <xref target="PBKDF2" format="default" sectionFormat="of" derivedContent="Section 7.1"/>. </li>
+          <li pn="section-7.4-6.2">messageAuthScheme is the identifier and parameters of the  HMAC_GOSTR3411 algorithm.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">For information on security considerations for password-based cryptography, see <xref target="RFC8018" format="default" sectionFormat="of" derivedContent="RFC8018"/>.</t>
+      <t indent="0" pn="section-8-2">Conforming applications <bcp14>MUST</bcp14> use unique values for ukm and S in order to avoid the encryption of different data on the same keys with the same initialization vector.</t>
+      <t indent="0" pn="section-8-3">It is <bcp14>RECOMMENDED</bcp14> that parameter S consist of at least 32 octets of pseudorandom data in order to reduce the probability of collisions of keys generated from the same password.</t>
+    </section>
+    <section anchor="IANA_Considerations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="GostPkcs5" quoteTitle="true" derivedAnchor="GostPkcs5">
+          <front>
+            <title>Information technology. Cryptographic Data Security. Password-based key security.</title>
+            <author initials="A." surname="Potashnikov" fullname="A. Potashnikov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Karelina" fullname="E. Karelina">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Pianov" fullname="S. Pianov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Naumenko" fullname="A. Naumenko">
+              <organization showOnFrontPage="true"/>
+            </author>
+          </front>
+          <refcontent>R 1323565.1.040-2022. Federal Agency on Technical Regulating and Metrology (In Russian)</refcontent>
+        </reference>
+        <reference anchor="RFC0020" target="https://www.rfc-editor.org/info/rfc20" quoteTitle="true" derivedAnchor="RFC0020">
+          <front>
+            <title>ASCII format for network interchange</title>
+            <author fullname="V.G. Cerf" initials="V.G." surname="Cerf"/>
+            <date month="October" year="1969"/>
+          </front>
+          <seriesInfo name="STD" value="80"/>
+          <seriesInfo name="RFC" value="20"/>
+          <seriesInfo name="DOI" value="10.17487/RFC0020"/>
+          <format target="https://www.rfc-editor.org/info/rfc20" type="TXT"/>
+        </reference>
+        <reference anchor="RFC2104" target="https://www.rfc-editor.org/info/rfc2104" quoteTitle="true" derivedAnchor="RFC2104">
+          <front>
+            <title>HMAC: Keyed-Hashing for Message Authentication</title>
+            <author fullname="H. Krawczyk" initials="H." surname="Krawczyk"/>
+            <author fullname="M. Bellare" initials="M." surname="Bellare"/>
+            <author fullname="R. Canetti" initials="R." surname="Canetti"/>
+            <date month="February" year="1997"/>
+            <abstract>
+              <t indent="0">This document describes HMAC, a mechanism for message authentication using cryptographic hash functions.  HMAC can be used with any iterative cryptographic hash function, e.g., MD5, SHA-1, in combination with a secret shared key.  The cryptographic strength of HMAC depends on the properties of the underlying hash function.  This memo provides information for the Internet community.  This memo does not specify an Internet standard of any kind</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2104"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2104"/>
+          <format target="https://www.rfc-editor.org/info/rfc2104" type="TXT"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+          <format target="https://www.rfc-editor.org/info/rfc2119" type="TXT"/>
+        </reference>
+        <reference anchor="RFC6986" target="https://www.rfc-editor.org/info/rfc6986" quoteTitle="true" derivedAnchor="RFC6986">
+          <front>
+            <title>GOST R 34.11-2012: Hash Function</title>
+            <author fullname="V. Dolmatov" initials="V." role="editor" surname="Dolmatov"/>
+            <author fullname="A. Degtyarev" initials="A." surname="Degtyarev"/>
+            <date month="August" year="2013"/>
+            <abstract>
+              <t indent="0">This document is intended to be a source of information about the Russian Federal standard hash function (GOST R 34.11-2012), which is one of the Russian cryptographic standard algorithms (called GOST algorithms).  This document updates RFC 5831.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6986"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6986"/>
+          <format target="https://www.rfc-editor.org/info/rfc6986" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7801" target="https://www.rfc-editor.org/info/rfc7801" quoteTitle="true" derivedAnchor="RFC7801">
+          <front>
+            <title>GOST R 34.12-2015: Block Cipher "Kuznyechik"</title>
+            <author fullname="V. Dolmatov" initials="V." role="editor" surname="Dolmatov"/>
+            <date month="March" year="2016"/>
+            <abstract>
+              <t indent="0">This document is intended to be a source of information about the Russian Federal standard GOST R 34.12-2015 describing the block cipher with a block length of n=128 bits and a key length of k=256 bits, which is also referred to as "Kuznyechik".  This algorithm is one of the set of Russian cryptographic standard algorithms (called GOST algorithms).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7801"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7801"/>
+          <format target="https://www.rfc-editor.org/info/rfc7801" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7836" target="https://www.rfc-editor.org/info/rfc7836" quoteTitle="true" derivedAnchor="RFC7836">
+          <front>
+            <title>Guidelines on the Cryptographic Algorithms to Accompany the Usage of Standards GOST R 34.10-2012 and GOST R 34.11-2012</title>
+            <author fullname="S. Smyshlyaev" initials="S." role="editor" surname="Smyshlyaev"/>
+            <author fullname="E. Alekseev" initials="E." surname="Alekseev"/>
+            <author fullname="I. Oshkin" initials="I." surname="Oshkin"/>
+            <author fullname="V. Popov" initials="V." surname="Popov"/>
+            <author fullname="S. Leontiev" initials="S." surname="Leontiev"/>
+            <author fullname="V. Podobaev" initials="V." surname="Podobaev"/>
+            <author fullname="D. Belyavsky" initials="D." surname="Belyavsky"/>
+            <date month="March" year="2016"/>
+            <abstract>
+              <t indent="0">The purpose of this document is to make the specifications of the cryptographic algorithms defined by the Russian national standards GOST R 34.10-2012 and GOST R 34.11-2012 available to the Internet community for their implementation in the cryptographic protocols based on the accompanying algorithms.</t>
+              <t indent="0">These specifications define the pseudorandom functions, the key agreement algorithm based on the Diffie-Hellman algorithm and a hash function, the parameters of elliptic curves, the key derivation functions, and the key export functions.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7836"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7836"/>
+          <format target="https://www.rfc-editor.org/info/rfc7836" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8018" target="https://www.rfc-editor.org/info/rfc8018" quoteTitle="true" derivedAnchor="RFC8018">
+          <front>
+            <title>PKCS #5: Password-Based Cryptography Specification Version 2.1</title>
+            <author fullname="K. Moriarty" initials="K." role="editor" surname="Moriarty"/>
+            <author fullname="B. Kaliski" initials="B." surname="Kaliski"/>
+            <author fullname="A. Rusch" initials="A." surname="Rusch"/>
+            <date month="January" year="2017"/>
+            <abstract>
+              <t indent="0">This document provides recommendations for the implementation of password-based cryptography, covering key derivation functions, encryption schemes, message authentication schemes, and ASN.1 syntax identifying the techniques.</t>
+              <t indent="0">This document represents a republication of PKCS #5 v2.1 from RSA Laboratories' Public-Key Cryptography Standards (PKCS) series. By publishing this RFC, change control is transferred to the IETF.</t>
+              <t indent="0">This document also obsoletes RFC 2898.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8018"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8018"/>
+          <format target="https://www.rfc-editor.org/info/rfc8018" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+          <format target="https://www.rfc-editor.org/info/rfc8174" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8645" target="https://www.rfc-editor.org/info/rfc8645" quoteTitle="true" derivedAnchor="RFC8645">
+          <front>
+            <title>Re-keying Mechanisms for Symmetric Keys</title>
+            <author fullname="S. Smyshlyaev" initials="S." role="editor" surname="Smyshlyaev"/>
+            <date month="August" year="2019"/>
+            <abstract>
+              <t indent="0">A certain maximum amount of data can be safely encrypted when encryption is performed under a single key. This amount is called the "key lifetime". This specification describes a variety of methods for increasing the lifetime of symmetric keys. It provides two types of re-keying mechanisms based on hash functions and block ciphers that can be used with modes of operations such as CTR, GCM, CBC, CFB, and OMAC.</t>
+              <t indent="0">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8645"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8645"/>
+          <format target="https://www.rfc-editor.org/info/rfc8645" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8891" target="https://www.rfc-editor.org/info/rfc8891" quoteTitle="true" derivedAnchor="RFC8891">
+          <front>
+            <title>GOST R 34.12-2015: Block Cipher "Magma"</title>
+            <author fullname="V. Dolmatov" initials="V." role="editor" surname="Dolmatov"/>
+            <author fullname="D. Baryshkov" initials="D." surname="Baryshkov"/>
+            <date month="September" year="2020"/>
+            <abstract>
+              <t indent="0">In addition to a new cipher with a block length of n=128 bits (referred to as "Kuznyechik" and described in RFC 7801), Russian Federal standard GOST R 34.12-2015 includes an updated version of the block cipher with a block length of n=64 bits and key length of k=256 bits, which is also referred to as "Magma".  The algorithm is an updated version of an older block cipher with a block length of n=64 bits described in GOST 28147-89 (RFC 5830).  This document is intended to be a source of information about the updated version of the 64-bit cipher.  It may facilitate the use of the block cipher in Internet applications by providing information for developers and users of the GOST 64-bit cipher with the revised version of the cipher for encryption and decryption.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8891"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8891"/>
+          <format target="https://www.rfc-editor.org/info/rfc8891" type="TXT"/>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC6070" target="https://www.rfc-editor.org/info/rfc6070" quoteTitle="true" derivedAnchor="RFC6070">
+          <front>
+            <title>PKCS #5: Password-Based Key Derivation Function 2 (PBKDF2) Test Vectors</title>
+            <author fullname="S. Josefsson" initials="S." surname="Josefsson"/>
+            <date month="January" year="2011"/>
+            <abstract>
+              <t indent="0">This document contains test vectors for the Public-Key Cryptography Standards (PKCS) #5 Password-Based Key Derivation Function 2 (PBKDF2) with the Hash-based Message Authentication Code (HMAC) Secure Hash Algorithm (SHA-1) pseudorandom function.  This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6070"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6070"/>
+          <format target="https://www.rfc-editor.org/info/rfc6070" type="TXT"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Example" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-pbkdf2-hmac_gostr3411-test-">PBKDF2 HMAC_GOSTR3411 Test Vectors</name>
+      <t indent="0" pn="section-appendix.a-1">These test vectors are formed by analogy with test vectors from <xref target="RFC6070" format="default" sectionFormat="of" derivedContent="RFC6070"/>. 
+        The input strings below are encoded using ASCII (see <xref target="RFC0020" format="default" sectionFormat="of" derivedContent="RFC0020"/>).
+        The sequence "\0" (without quotation marks) means a literal ASCII NULL
+        value (1 octet). "DK" refers to the derived key.</t>
+      <sourcecode type="" markers="false" pn="section-appendix.a-2">
+Input:
+    P = "password" (8 octets)
+    S = "salt" (4 octets)
+    c = 1
+    dkLen = 64
+
+Output:
+    DK = 64 77 0a f7 f7 48 c3 b1 c9 ac 83 1d bc fd 85 c2
+         61 11 b3 0a 8a 65 7d dc 30 56 b8 0c a7 3e 04 0d
+         28 54 fd 36 81 1f 6d 82 5c c4 ab 66 ec 0a 68 a4
+         90 a9 e5 cf 51 56 b3 a2 b7 ee cd db f9 a1 6b 47
+
+Input:
+    P = "password" (8 octets)
+    S = "salt" (4 octets)
+    c = 2
+    dkLen = 64
+
+Output:
+    DK = 5a 58 5b af df bb 6e 88 30 d6 d6 8a a3 b4 3a c0
+         0d 2e 4a eb ce 01 c9 b3 1c 2c ae d5 6f 02 36 d4
+         d3 4b 2b 8f bd 2c 4e 89 d5 4d 46 f5 0e 47 d4 5b
+         ba c3 01 57 17 43 11 9e 8d 3c 42 ba 66 d3 48 de
+
+Input:
+    P = "password" (8 octets)
+    S = "salt" (4 octets)
+    c = 4096
+    dkLen = 64
+
+Output:
+    DK = e5 2d eb 9a 2d 2a af f4 e2 ac 9d 47 a4 1f 34 c2
+         03 76 59 1c 67 80 7f 04 77 e3 25 49 dc 34 1b c7
+         86 7c 09 84 1b 6d 58 e2 9d 03 47 c9 96 30 1d 55
+         df 0d 34 e4 7c f6 8f 4e 3c 2c da f1 d9 ab 86 c3
+
+Input:
+    P = "password" (8 octets)
+    S = "salt" (4 octets)
+    c = 16777216
+    dkLen = 64
+
+Output:
+    DK = 49 e4 84 3b ba 76 e3 00 af e2 4c 4d 23 dc 73 92
+         de f1 2f 2c 0e 24 41 72 36 7c d7 0a 89 82 ac 36
+         1a db 60 1c 7e 2a 31 4e 8c b7 b1 e9 df 84 0e 36
+         ab 56 15 be 5d 74 2b 6c f2 03 fb 55 fd c4 80 71
+
+Input:
+    P = "passwordPASSWORDpassword" (24 octets)
+    S = "saltSALTsaltSALTsaltSALTsaltSALTsalt" (36 octets)
+    c = 4096
+    dkLen = 100
+
+Output:
+    DK = b2 d8 f1 24 5f c4 d2 92 74 80 20 57 e4 b5 4e 0a
+         07 53 aa 22 fc 53 76 0b 30 1c f0 08 67 9e 58 fe
+         4b ee 9a dd ca e9 9b a2 b0 b2 0f 43 1a 9c 5e 50
+         f3 95 c8 93 87 d0 94 5a ed ec a6 eb 40 15 df c2
+         bd 24 21 ee 9b b7 11 83 ba 88 2c ee bf ef 25 9f
+         33 f9 e2 7d c6 17 8c b8 9d c3 74 28 cf 9c c5 2a
+         2b aa 2d 3a
+
+Input:
+    P = "pass\0word" (9 octets)
+    S = "sa\0lt" (5 octets)
+    c = 4096
+    dkLen = 64
+
+Output:
+    DK = 50 df 06 28 85 b6 98 01 a3 c1 02 48 eb 0a 27 ab
+         6e 52 2f fe b2 0c 99 1c 66 0f 00 14 75 d7 3a 4e
+         16 7f 78 2c 18 e9 7e 92 97 6d 9c 1d 97 08 31 ea
+         78 cc b8 79 f6 70 68 cd ac 19 10 74 08 44 e8 30</sourcecode>
+    </section>
+    <section anchor="Acknowledgments" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">The author thanks <contact fullname="Potashnikov Alexander"/>, <contact fullname="Pianov Semen"/>, <contact fullname="Davletshina Alexandra"/>, <contact fullname="Belyavsky Dmitry"/>, and <contact fullname="Smyslov Valery"/> for their careful readings and useful comments.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author fullname="Ekaterina Karelina" initials="E." role="editor" surname="Karelina">
+        <organization showOnFrontPage="true">InfoTeCS</organization>
+        <address>
+          <postal>
+            <street>2B stroenie 1, ul. Otradnaya</street>
+            <city>Moscow</city>
+            <code>127273</code>
+            <country>Russian Federation</country>
+          </postal>
+          <email>Ekaterina.Karelina@infotecs.ru</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,637 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" submissionType="IETF" category="std" consensus="true" docName="draft-ietf-avtcore-rfc7983bis-09" number="9443" updates="5764, 7983" ipr="trust200902" obsoletes="" xml:lang="en" symRefs="true" sortRefs="true" tocInclude="true" prepTime="2023-07-12T10:48:00" indexInclude="true" scripts="Common,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-avtcore-rfc7983bis-09" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9443" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Multiplexing Scheme Updates for QUIC</title>
+    <seriesInfo name="RFC" value="9443" stream="IETF"/>
+    <author initials="B." surname="Aboba" fullname="Bernard Aboba">
+      <organization showOnFrontPage="true">Microsoft Corporation</organization>
+      <address>
+        <postal>
+          <street>One Microsoft Way</street>
+          <city>Redmond</city>
+          <region>WA</region>
+          <code>98052</code>
+          <country>United States of America</country>
+        </postal>
+        <email>bernard.aboba@gmail.com</email>
+      </address>
+    </author>
+    <author initials="G." surname="Salgueiro" fullname="Gonzalo Salgueiro">
+      <organization showOnFrontPage="true">Cisco Systems</organization>
+      <address>
+        <postal>
+          <street>7200-12 Kit Creek Road</street>
+          <city>Research Triangle Park</city>
+          <region>NC</region>
+          <code>27709</code>
+          <country>United States of America</country>
+        </postal>
+        <email>gsalguei@cisco.com</email>
+      </address>
+    </author>
+    <author initials="C." surname="Perkins" fullname="Colin Perkins">
+      <organization abbrev="University of Glasgow" showOnFrontPage="true">School of Computing Science</organization>
+      <address>
+        <postal>
+          <street>University of Glasgow</street>
+          <city>Glasgow</city>
+          <code>G12 8QQ</code>
+          <country>United Kingdom</country>
+        </postal>
+        <email>csp@csperkins.org</email>
+      </address>
+    </author>
+    <date month="07" year="2023"/>
+    <area>art</area>
+    <workgroup>avtcore</workgroup>
+    <keyword>RTP</keyword>
+    <keyword>ZRTP</keyword>
+    <keyword>STUN</keyword>
+    <keyword>TURN</keyword>
+    <keyword>DTLS</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+   RFC 7983 defines a scheme for a Real-time Transport Protocol (RTP)
+   receiver to demultiplex Datagram Transport Layer Security (DTLS),
+   Session Traversal Utilities for NAT (STUN), Secure Real-time
+   Transport Protocol (SRTP) / Secure Real-time Transport Control
+   Protocol (SRTCP), ZRTP, and Traversal Using Relays around NAT (TURN)
+   channel packets arriving on a single port.  This document updates RFC
+   7983 and RFC 5764 to also allow QUIC packets to be multiplexed on a
+   single receiving socket.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9443" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-multiplexing-of-turn-channe">Multiplexing of TURN Channels</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updates-to-rfc-7983">Updates to RFC 7983</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sect-1" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+   "Multiplexing Scheme Updates for Secure Real-time Transport Protocol (SRTP) Extension for Datagram Transport Layer Security (DTLS)"
+   <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/> defines a scheme for a Real-time Transport Protocol (RTP)
+   <xref target="RFC3550" format="default" sectionFormat="of" derivedContent="RFC3550"/> receiver to demultiplex DTLS <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>, Session Traversal
+   Utilities for NAT (STUN) <xref target="RFC8489" format="default" sectionFormat="of" derivedContent="RFC8489"/>, Secure Real-time Transport
+   Protocol (SRTP) / Secure Real-time Transport Control Protocol (SRTCP)
+   <xref target="RFC3711" format="default" sectionFormat="of" derivedContent="RFC3711"/>, ZRTP <xref target="RFC6189" format="default" sectionFormat="of" derivedContent="RFC6189"/>, and Traversal Using Relays around NAT
+   (TURN) channel packets arriving on a single port. This document
+   updates <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/> and "Datagram Transport Layer Security (DTLS) Extension to Establish Keys for the Secure Real-time Transport Protocol (SRTP)" <xref target="RFC5764" format="default" sectionFormat="of" derivedContent="RFC5764"/> to also allow QUIC <xref target="RFC9000" format="default" sectionFormat="of" derivedContent="RFC9000"/> to be
+   multiplexed on the same port.</t>
+      <t indent="0" pn="section-1-2">
+   The multiplexing scheme described in this document supports multiple
+   use cases. In the WebRTC scenarios described in <xref target="P2P-QUIC" format="default" sectionFormat="of" derivedContent="P2P-QUIC"/> and <xref target="P2P-QUIC-TRIAL" format="default" sectionFormat="of" derivedContent="P2P-QUIC-TRIAL"/>, SRTP transports audio and video while peer-to-peer QUIC is used for data exchange.
+For this use case, SRTP
+   <xref target="RFC3711" format="default" sectionFormat="of" derivedContent="RFC3711"/> is keyed using DTLS-SRTP <xref target="RFC5764" format="default" sectionFormat="of" derivedContent="RFC5764"/>; therefore, SRTP/SRTCP
+   <xref target="RFC3550" format="default" sectionFormat="of" derivedContent="RFC3550"/>, STUN, TURN, DTLS, and QUIC need to be multiplexed on the
+   same port.  Were SRTP to be keyed using QUIC-SRTP (not yet
+   specified), SRTP/SRTCP, STUN, TURN, and QUIC would need to be
+   multiplexed on the same port. Where QUIC is used for peer-to-peer
+   transport of data as well as RTP/RTCP <xref target="I-D.ietf-avtcore-rtp-over-quic" format="default" sectionFormat="of" derivedContent="RTP-OVER-QUIC"/>,
+   STUN, TURN, and QUIC need to be multiplexed on the same port.</t>
+      <t indent="0" pn="section-1-3">
+   While the scheme described in this document is compatible with QUIC
+   version 2 <xref target="RFC9369" format="default" sectionFormat="of" derivedContent="RFC9369"/>, it is not compatible with QUIC bit
+   greasing <xref target="RFC9287" format="default" sectionFormat="of" derivedContent="RFC9287"/>.  As a result, endpoints that wish to use
+   multiplexing on their socket <bcp14>MUST NOT</bcp14> send the grease_quic_bit
+   transport parameter.</t>
+      <section anchor="sect-1.1" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="sect-2" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-multiplexing-of-turn-channe">Multiplexing of TURN Channels</name>
+      <t indent="0" pn="section-2-1">
+   TURN channels are an optimization where data packets are exchanged
+   with a 4-byte prefix instead of the standard 36-byte STUN overhead
+   (see <xref target="RFC8656" sectionFormat="of" section="3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8656#section-3.5" derivedContent="RFC8656"/>).  <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/> allocates the values from
+   64 to 79 in order to allow TURN channels to be demultiplexed when the
+   TURN client does the channel binding request in combination with the
+   demultiplexing scheme described in <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/>.</t>
+      <t indent="0" pn="section-2-2">
+   In the absence of QUIC bit greasing, the first octet of a QUIC packet
+   (e.g. a short header packet in QUIC v1 or v2) may fall in the range
+   64 to 127, thereby overlapping with the allocated range for TURN
+   channels of 64 to 79.  However, in practice this overlap does not
+   represent a problem.  TURN channel packets will only be received from
+   a TURN server to which TURN allocation and channel-binding requests
+   have been sent.  Therefore, a TURN client receiving packets from the
+   source IP address and port of a TURN server only needs to
+   disambiguate STUN (i.e., regular TURN) packets from TURN channel
+   packets; (S)RTP, (S)RTCP, ZRTP, DTLS, or QUIC packets will not be sent
+   from a source IP address and port that had previously responded to
+   TURN allocation or channel-binding requests.</t>
+      <t indent="0" pn="section-2-3">
+   As a result, if the source IP address and port of a packet do not
+   match that of a responding TURN server, a packet with a first octet
+   of 64 to 127 can be unambiguously demultiplexed as QUIC.</t>
+    </section>
+    <section anchor="sect-3" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-updates-to-rfc-7983">Updates to RFC 7983</name>
+      <t indent="0" pn="section-3-1">
+   This document updates the text in <xref target="RFC7983" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7983#section-7" derivedContent="RFC7983"/> (which in
+   turn updates <xref target="RFC5764" format="default" sectionFormat="of" derivedContent="RFC5764"/>) as follows:</t>
+      <t indent="0" pn="section-3-2">
+   OLD TEXT</t>
+      <blockquote pn="section-3-3">
+        <t indent="0" pn="section-3-3.1">
+   The process for demultiplexing a packet is as follows.  The receiver
+   looks at the first byte of the packet.  If the value of this byte is
+   in between 0 and 3 (inclusive), then the packet is STUN.  If the
+   value is between 16 and 19 (inclusive), then the packet is ZRTP.  If
+   the value is between 20 and 63 (inclusive), then the packet is DTLS.
+   If the value is between 64 and 79 (inclusive), then the packet is
+   TURN Channel.  If the value is in between 128 and 191 (inclusive),
+   then the packet is RTP (or RTCP, if both RTCP and RTP are being
+   multiplexed over the same destination port).  If the value does not
+   match any known range, then the packet <bcp14>MUST</bcp14> be dropped 
+   and an alert <bcp14>MAY</bcp14> be logged.  This process is summarized 
+   in Figure 3.</t>
+        <artwork name="" type="" align="left" alt="" pn="section-3-3.2">
+                 +----------------+
+                 |        [0..3] -+--&gt; forward to STUN
+                 |                |
+                 |      [16..19] -+--&gt; forward to ZRTP
+                 |                |
+     packet --&gt;  |      [20..63] -+--&gt; forward to DTLS
+                 |                |
+                 |      [64..79] -+--&gt; forward to TURN Channel
+                 |                |
+                 |    [128..191] -+--&gt; forward to RTP/RTCP
+                 +----------------+
+
+Figure 3: The DTLS-SRTP receiver's packet demultiplexing algorithm.
+
+</artwork>
+      </blockquote>
+      <t indent="0" pn="section-3-4">END OLD TEXT</t>
+      <t indent="0" pn="section-3-5">NEW TEXT </t>
+      <blockquote pn="section-3-6">
+        <t indent="0" pn="section-3-6.1">
+   The process for demultiplexing a packet is as follows.  The receiver
+   looks at the first byte of the packet.  If the value of this byte is
+   between 0 and 3 (inclusive), then the packet is STUN.  If the value
+   is between 16 and 19 (inclusive), then the packet is ZRTP.  If the
+   value is between 20 and 63 (inclusive), then the packet is DTLS. If
+   the value is between 128 and 191 (inclusive), then the packet is RTP
+   (or RTCP, if both RTCP and RTP are being multiplexed over the same
+   destination port).  If the value is between 80 and 127 (inclusive)
+   or between 192 and 255 (inclusive), then the packet is QUIC. If the
+   value is between 64 and 79 (inclusive) and the packet has a source
+   IP address and port of a responding TURN server, then the packet
+   is TURN channel; if the source IP address and port are not that of
+   a responding TURN server, then the packet is QUIC.</t>
+        <t indent="0" pn="section-3-6.2">
+   If the value does not match any known range, then the packet <bcp14>MUST</bcp14>
+   be dropped and an alert <bcp14>MAY</bcp14> be logged. This process is summarized
+   in Figure 3.</t>
+        <artwork name="" type="" align="left" alt="" pn="section-3-6.3">
+                +----------------+
+                |        [0..3] -+--&gt; forward to STUN
+                |                |
+                |       [4..15] -+--&gt; DROP
+                |                |
+                |      [16..19] -+--&gt; forward to ZRTP
+                |                |
+    packet --&gt;  |      [20..63] -+--&gt; forward to DTLS
+                |                |
+                |      [64..79] -+--&gt; forward to TURN Channel
+                |                | (if from TURN server), else QUIC
+                |     [80..127] -+--&gt; forward to QUIC
+                |                |
+                |    [128..191] -+--&gt; forward to RTP/RTCP
+                |                |
+                |    [192..255] -+--&gt; forward to QUIC
+                +----------------+
+
+     Figure 3: The receiver's packet demultiplexing algorithm.
+</artwork>
+        <t indent="0" pn="section-3-6.4">Note: Endpoints that wish to demultiplex QUIC <bcp14>MUST NOT</bcp14> send the
+   grease_quic_bit transport parameter, as described in <xref target="RFC9287" format="default" sectionFormat="of" derivedContent="RFC9287"/>.</t>
+      </blockquote>
+      <t indent="0" pn="section-3-7">END NEW TEXT</t>
+    </section>
+    <section anchor="sect-4" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-4-1">
+   The solution discussed in this document could potentially introduce
+   some additional security issues beyond those described in <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/>.
+   These additional concerns are described below.</t>
+      <t indent="0" pn="section-4-2">
+   In order to support multiplexing of QUIC, this document adds logic to
+   the scheme defined in <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/>. If misimplemented, the logic could
+   potentially misclassify packets, exposing protocol handlers to
+   unexpected input.</t>
+      <t indent="0" pn="section-4-3">
+   When QUIC is used solely for data exchange, the TLS-within-QUIC
+   exchange <xref target="RFC9001" format="default" sectionFormat="of" derivedContent="RFC9001"/> derives keys used solely to protect QUIC data
+   packets.  If properly implemented, this should not affect the
+   transport of SRTP or the derivation of SRTP keys via DTLS-SRTP.
+   However, if a future specification were to define use of the TLS-
+   within-QUIC exchange to derive SRTP keys, both transport and SRTP key
+   derivation could be adversely impacted by a vulnerability in the QUIC
+   implementation.</t>
+    </section>
+    <section anchor="sect-5" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-5-1">
+   In the "TLS ContentType" registry, IANA replaced references to <xref target="RFC7983" format="default" sectionFormat="of" derivedContent="RFC7983"/> with references to this document.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-avtcore-rtp-over-quic" to="RTP-OVER-QUIC"/>
+    <references pn="section-6">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-6.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3550" target="https://www.rfc-editor.org/info/rfc3550" quoteTitle="true" derivedAnchor="RFC3550">
+          <front>
+            <title>RTP: A Transport Protocol for Real-Time Applications</title>
+            <author fullname="H. Schulzrinne" initials="H." surname="Schulzrinne"/>
+            <author fullname="S. Casner" initials="S." surname="Casner"/>
+            <author fullname="R. Frederick" initials="R." surname="Frederick"/>
+            <author fullname="V. Jacobson" initials="V." surname="Jacobson"/>
+            <date month="July" year="2003"/>
+            <abstract>
+              <t indent="0">This memorandum describes RTP, the real-time transport protocol. RTP provides end-to-end network transport functions suitable for applications transmitting real-time data, such as audio, video or simulation data, over multicast or unicast network services. RTP does not address resource reservation and does not guarantee quality-of- service for real-time services. The data transport is augmented by a control protocol (RTCP) to allow monitoring of the data delivery in a manner scalable to large multicast networks, and to provide minimal control and identification functionality. RTP and RTCP are designed to be independent of the underlying transport and network layers. The protocol supports the use of RTP-level translators and mixers. Most of the text in this memorandum is identical to RFC 1889 which it obsoletes. There are no changes in the packet formats on the wire, only changes to the rules and algorithms governing how the protocol is used. The biggest change is an enhancement to the scalable timer algorithm for calculating when to send RTCP packets in order to minimize transmission in excess of the intended rate when many participants join a session simultaneously. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="64"/>
+          <seriesInfo name="RFC" value="3550"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3550"/>
+        </reference>
+        <reference anchor="RFC3711" target="https://www.rfc-editor.org/info/rfc3711" quoteTitle="true" derivedAnchor="RFC3711">
+          <front>
+            <title>The Secure Real-time Transport Protocol (SRTP)</title>
+            <author fullname="M. Baugher" initials="M." surname="Baugher"/>
+            <author fullname="D. McGrew" initials="D." surname="McGrew"/>
+            <author fullname="M. Naslund" initials="M." surname="Naslund"/>
+            <author fullname="E. Carrara" initials="E." surname="Carrara"/>
+            <author fullname="K. Norrman" initials="K." surname="Norrman"/>
+            <date month="March" year="2004"/>
+            <abstract>
+              <t indent="0">This document describes the Secure Real-time Transport Protocol (SRTP), a profile of the Real-time Transport Protocol (RTP), which can provide confidentiality, message authentication, and replay protection to the RTP traffic and to the control traffic for RTP, the Real-time Transport Control Protocol (RTCP). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3711"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3711"/>
+        </reference>
+        <reference anchor="RFC5764" target="https://www.rfc-editor.org/info/rfc5764" quoteTitle="true" derivedAnchor="RFC5764">
+          <front>
+            <title>Datagram Transport Layer Security (DTLS) Extension to Establish Keys for the Secure Real-time Transport Protocol (SRTP)</title>
+            <author fullname="D. McGrew" initials="D." surname="McGrew"/>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="May" year="2010"/>
+            <abstract>
+              <t indent="0">This document describes a Datagram Transport Layer Security (DTLS) extension to establish keys for Secure RTP (SRTP) and Secure RTP Control Protocol (SRTCP) flows. DTLS keying happens on the media path, independent of any out-of-band signalling channel present. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5764"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5764"/>
+        </reference>
+        <reference anchor="RFC7983" target="https://www.rfc-editor.org/info/rfc7983" quoteTitle="true" derivedAnchor="RFC7983">
+          <front>
+            <title>Multiplexing Scheme Updates for Secure Real-time Transport Protocol (SRTP) Extension for Datagram Transport Layer Security (DTLS)</title>
+            <author fullname="M. Petit-Huguenin" initials="M." surname="Petit-Huguenin"/>
+            <author fullname="G. Salgueiro" initials="G." surname="Salgueiro"/>
+            <date month="September" year="2016"/>
+            <abstract>
+              <t indent="0">This document defines how Datagram Transport Layer Security (DTLS), Real-time Transport Protocol (RTP), RTP Control Protocol (RTCP), Session Traversal Utilities for NAT (STUN), Traversal Using Relays around NAT (TURN), and ZRTP packets are multiplexed on a single receiving socket. It overrides the guidance from RFC 5764 ("SRTP Extension for DTLS"), which suffered from four issues described and fixed in this document.</t>
+              <t indent="0">This document updates RFC 5764.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7983"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7983"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8489" target="https://www.rfc-editor.org/info/rfc8489" quoteTitle="true" derivedAnchor="RFC8489">
+          <front>
+            <title>Session Traversal Utilities for NAT (STUN)</title>
+            <author fullname="M. Petit-Huguenin" initials="M." surname="Petit-Huguenin"/>
+            <author fullname="G. Salgueiro" initials="G." surname="Salgueiro"/>
+            <author fullname="J. Rosenberg" initials="J." surname="Rosenberg"/>
+            <author fullname="D. Wing" initials="D." surname="Wing"/>
+            <author fullname="R. Mahy" initials="R." surname="Mahy"/>
+            <author fullname="P. Matthews" initials="P." surname="Matthews"/>
+            <date month="February" year="2020"/>
+            <abstract>
+              <t indent="0">Session Traversal Utilities for NAT (STUN) is a protocol that serves as a tool for other protocols in dealing with NAT traversal. It can be used by an endpoint to determine the IP address and port allocated to it by a NAT. It can also be used to check connectivity between two endpoints and as a keep-alive protocol to maintain NAT bindings. STUN works with many existing NATs and does not require any special behavior from them.</t>
+              <t indent="0">STUN is not a NAT traversal solution by itself. Rather, it is a tool to be used in the context of a NAT traversal solution.</t>
+              <t indent="0">This document obsoletes RFC 5389.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8489"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8489"/>
+        </reference>
+        <reference anchor="RFC8656" target="https://www.rfc-editor.org/info/rfc8656" quoteTitle="true" derivedAnchor="RFC8656">
+          <front>
+            <title>Traversal Using Relays around NAT (TURN): Relay Extensions to Session Traversal Utilities for NAT (STUN)</title>
+            <author fullname="T. Reddy" initials="T." role="editor" surname="Reddy"/>
+            <author fullname="A. Johnston" initials="A." role="editor" surname="Johnston"/>
+            <author fullname="P. Matthews" initials="P." surname="Matthews"/>
+            <author fullname="J. Rosenberg" initials="J." surname="Rosenberg"/>
+            <date month="February" year="2020"/>
+            <abstract>
+              <t indent="0">If a host is located behind a NAT, it can be impossible for that host to communicate directly with other hosts (peers) in certain situations. In these situations, it is necessary for the host to use the services of an intermediate node that acts as a communication relay. This specification defines a protocol, called "Traversal Using Relays around NAT" (TURN), that allows the host to control the operation of the relay and to exchange packets with its peers using the relay. TURN differs from other relay control protocols in that it allows a client to communicate with multiple peers using a single relay address.</t>
+              <t indent="0">The TURN protocol was designed to be used as part of the Interactive Connectivity Establishment (ICE) approach to NAT traversal, though it can also be used without ICE.</t>
+              <t indent="0">This document obsoletes RFCs 5766 and 6156.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8656"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8656"/>
+        </reference>
+        <reference anchor="RFC9000" target="https://www.rfc-editor.org/info/rfc9000" quoteTitle="true" derivedAnchor="RFC9000">
+          <front>
+            <title>QUIC: A UDP-Based Multiplexed and Secure Transport</title>
+            <author fullname="J. Iyengar" initials="J." role="editor" surname="Iyengar"/>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document defines the core of the QUIC transport protocol. QUIC provides applications with flow-controlled streams for structured communication, low-latency connection establishment, and network path migration. QUIC includes security measures that ensure confidentiality, integrity, and availability in a range of deployment circumstances. Accompanying documents describe the integration of TLS for key negotiation, loss detection, and an exemplary congestion control algorithm.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9000"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9000"/>
+        </reference>
+        <reference anchor="RFC9001" target="https://www.rfc-editor.org/info/rfc9001" quoteTitle="true" derivedAnchor="RFC9001">
+          <front>
+            <title>Using TLS to Secure QUIC</title>
+            <author fullname="M. Thomson" initials="M." role="editor" surname="Thomson"/>
+            <author fullname="S. Turner" initials="S." role="editor" surname="Turner"/>
+            <date month="May" year="2021"/>
+            <abstract>
+              <t indent="0">This document describes how Transport Layer Security (TLS) is used to secure QUIC.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9001"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9001"/>
+        </reference>
+        <reference anchor="RFC9147" target="https://www.rfc-editor.org/info/rfc9147" quoteTitle="true" derivedAnchor="RFC9147">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="N. Modadugu" initials="N." surname="Modadugu"/>
+            <date month="April" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Datagram Transport Layer Security (DTLS) protocol. DTLS 1.3 allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">The DTLS 1.3 protocol is based on the Transport Layer Security (TLS) 1.3 protocol and provides equivalent security guarantees with the exception of order protection / non-replayability. Datagram semantics of the underlying transport are preserved by the DTLS protocol.</t>
+              <t indent="0">This document obsoletes RFC 6347.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9147"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9147"/>
+        </reference>
+        <reference anchor="RFC9287" target="https://www.rfc-editor.org/info/rfc9287" quoteTitle="true" derivedAnchor="RFC9287">
+          <front>
+            <title>Greasing the QUIC Bit</title>
+            <author fullname="M. Thomson" initials="M." surname="Thomson"/>
+            <date month="August" year="2022"/>
+            <abstract>
+              <t indent="0">This document describes a method for negotiating the ability to send an arbitrary value for the second-most significant bit in QUIC packets.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9287"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9287"/>
+        </reference>
+      </references>
+      <references pn="section-6.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="P2P-QUIC" target="https://www.w3.org/p2p-webtransport/" quoteTitle="true" derivedAnchor="P2P-QUIC">
+          <front>
+            <title>QUIC API For Peer-to-Peer Connections</title>
+            <author initials="P." surname="Thatcher" fullname="P. Thatcher">
+	</author>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+	</author>
+            <author initials="R." surname="Raymond" fullname="R. Raymond">
+	</author>
+            <date day="20" month="May" year="2023"/>
+          </front>
+          <refcontent>W3C Community Group Draft Report</refcontent>
+          <refcontent>commit 50d79c0</refcontent>
+        </reference>
+        <reference anchor="P2P-QUIC-TRIAL" target="https://developer.chrome.com/blog/rtcquictransport-api/" quoteTitle="true" derivedAnchor="P2P-QUIC-TRIAL">
+          <front>
+            <title>RTCQuicTransport Coming to an Origin Trial Near You (Chrome 73)</title>
+            <author initials="S." surname="Hampson" fullname="S. Hampson">
+	</author>
+            <date month="January" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="RFC6189" target="https://www.rfc-editor.org/info/rfc6189" quoteTitle="true" derivedAnchor="RFC6189">
+          <front>
+            <title>ZRTP: Media Path Key Agreement for Unicast Secure RTP</title>
+            <author fullname="P. Zimmermann" initials="P." surname="Zimmermann"/>
+            <author fullname="A. Johnston" initials="A." role="editor" surname="Johnston"/>
+            <author fullname="J. Callas" initials="J." surname="Callas"/>
+            <date month="April" year="2011"/>
+            <abstract>
+              <t indent="0">This document defines ZRTP, a protocol for media path Diffie-Hellman exchange to agree on a session key and parameters for establishing unicast Secure Real-time Transport Protocol (SRTP) sessions for Voice over IP (VoIP) applications. The ZRTP protocol is media path keying because it is multiplexed on the same port as RTP and does not require support in the signaling protocol. ZRTP does not assume a Public Key Infrastructure (PKI) or require the complexity of certificates in end devices. For the media session, ZRTP provides confidentiality, protection against man-in-the-middle (MiTM) attacks, and, in cases where the signaling protocol provides end-to-end integrity protection, authentication. ZRTP can utilize a Session Description Protocol (SDP) attribute to provide discovery and authentication through the signaling channel. To provide best effort SRTP, ZRTP utilizes normal RTP/AVP (Audio-Visual Profile) profiles. ZRTP secures media sessions that include a voice media stream and can also secure media sessions that do not include voice by using an optional digital signature. This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6189"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6189"/>
+        </reference>
+        <reference anchor="RFC9369" target="https://www.rfc-editor.org/info/rfc9369" quoteTitle="true" derivedAnchor="RFC9369">
+          <front>
+            <title>QUIC Version 2</title>
+            <author fullname="M. Duke" initials="M." surname="Duke"/>
+            <date month="May" year="2023"/>
+            <abstract>
+              <t indent="0">This document specifies QUIC version 2, which is identical to QUIC version 1 except for some trivial details. Its purpose is to combat various ossification vectors and exercise the version negotiation framework. It also serves as a template for the minimum changes in any future version of QUIC.</t>
+              <t indent="0">Note that "version 2" is an informal name for this proposal that indicates it is the second version of QUIC to be published as a Standards Track document. The protocol specified here uses a version number other than 2 in the wire image, in order to minimize ossification risks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9369"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9369"/>
+        </reference>
+        <reference anchor="I-D.ietf-avtcore-rtp-over-quic" target="https://datatracker.ietf.org/doc/html/draft-ietf-avtcore-rtp-over-quic-04" quoteTitle="true" derivedAnchor="RTP-OVER-QUIC">
+          <front>
+            <title>RTP over QUIC</title>
+            <author fullname="Joerg Ott" initials="J." surname="Ott">
+              <organization showOnFrontPage="true">Technical University Munich</organization>
+            </author>
+            <author fullname="Mathis Engelbart" initials="M." surname="Engelbart">
+              <organization showOnFrontPage="true">Technical University Munich</organization>
+            </author>
+            <author fullname="Spencer Dawkins" initials="S." surname="Dawkins">
+              <organization showOnFrontPage="true">Tencent America LLC</organization>
+            </author>
+            <date day="10" month="July" year="2023"/>
+            <abstract>
+              <t indent="0">This document specifies a minimal mapping for encapsulating Real-time Transport Protocol (RTP) and RTP Control Protocol (RTCP) packets within the QUIC protocol. It also discusses how to leverage state from the QUIC implementation in the endpoints, in order to reduce the need to exchange RTCP packets and how to implement congestion control and rate adaptation without relying on RTCP feedback.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-avtcore-rtp-over-quic-04"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="acknowledgments" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">
+   We would like to thank <contact fullname="Martin Thomson"/>, <contact fullname="Roni Even"/>, <contact fullname="Jonathan Lennox"/>, and
+   other participants in the IETF QUIC and AVTCORE Working Groups for
+   their discussion of the QUIC multiplexing issue, and their input
+   relating to potential solutions.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="B." surname="Aboba" fullname="Bernard Aboba">
+        <organization showOnFrontPage="true">Microsoft Corporation</organization>
+        <address>
+          <postal>
+            <street>One Microsoft Way</street>
+            <city>Redmond</city>
+            <region>WA</region>
+            <code>98052</code>
+            <country>United States of America</country>
+          </postal>
+          <email>bernard.aboba@gmail.com</email>
+        </address>
+      </author>
+      <author initials="G." surname="Salgueiro" fullname="Gonzalo Salgueiro">
+        <organization showOnFrontPage="true">Cisco Systems</organization>
+        <address>
+          <postal>
+            <street>7200-12 Kit Creek Road</street>
+            <city>Research Triangle Park</city>
+            <region>NC</region>
+            <code>27709</code>
+            <country>United States of America</country>
+          </postal>
+          <email>gsalguei@cisco.com</email>
+        </address>
+      </author>
+      <author initials="C." surname="Perkins" fullname="Colin Perkins">
+        <organization abbrev="University of Glasgow" showOnFrontPage="true">School of Computing Science</organization>
+        <address>
+          <postal>
+            <street>University of Glasgow</street>
+            <city>Glasgow</city>
+            <code>G12 8QQ</code>
+            <country>United Kingdom</country>
+          </postal>
+          <email>csp@csperkins.org</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

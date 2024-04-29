@@ -1,0 +1,1332 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" submissionType="IRTF" category="exp" consensus="true" docName="draft-irtf-nwcrg-tetrys-04" number="9407" ipr="trust200902" obsoletes="" updates="" xml:lang="en" tocInclude="true" tocDepth="3" symRefs="true" sortRefs="true" prepTime="2023-06-12T09:53:28" indexInclude="true" scripts="Common,Latin">
+  <link href="https://datatracker.ietf.org/doc/draft-irtf-nwcrg-tetrys-04" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9407" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Tetrys Network Coding Protocol">Tetrys: An On-the-Fly Network Coding Protocol</title>
+    <seriesInfo name="RFC" value="9407" stream="IRTF"/>
+    <author fullname="Jonathan Detchart" initials="J." surname="Detchart">
+      <organization showOnFrontPage="true">ISAE-SUPAERO</organization>
+      <address>
+        <postal>
+          <street>10, avenue Edouard Belin</street>
+          <extaddr>BP 54032</extaddr>
+          <city>Toulouse CEDEX 4</city>
+          <code>31055</code>
+          <country>France</country>
+        </postal>
+        <email>jonathan.detchart@isae-supaero.fr</email>
+      </address>
+    </author>
+    <author fullname="Emmanuel Lochin" initials="E." surname="Lochin">
+      <organization showOnFrontPage="true">ENAC</organization>
+      <address>
+        <postal>
+          <street>7, avenue Edouard Belin</street>
+          <city>Toulouse</city>
+          <code>31400</code>
+          <country>France</country>
+        </postal>
+        <email>emmanuel.lochin@enac.fr</email>
+      </address>
+    </author>
+    <author fullname="Jerome Lacan" initials="J." surname="Lacan">
+      <organization showOnFrontPage="true">ISAE-SUPAERO</organization>
+      <address>
+        <postal>
+          <street>10, avenue Edouard Belin</street>
+          <extaddr>BP 54032</extaddr>
+          <city>Toulouse CEDEX 4</city>
+          <code>31055</code>
+          <country>France</country>
+        </postal>
+        <email>jerome.lacan@isae-supaero.fr</email>
+      </address>
+    </author>
+    <author fullname="Vincent Roca" initials="V." surname="Roca">
+      <organization showOnFrontPage="true">INRIA</organization>
+      <address>
+        <postal>
+          <street>655, avenue de l'Europe</street>
+          <extaddr>Inovallee; Montbonnot</extaddr>
+          <city>St Ismier CEDEX</city>
+          <code>38334</code>
+          <country>France</country>
+        </postal>
+        <email>vincent.roca@inria.fr</email>
+      </address>
+    </author>
+    <date month="06" year="2023"/>
+    <workgroup>Coding for Efficient NetWork Communications</workgroup>
+    <keyword>Network Coding</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes Tetrys, which is an on-the-fly network coding protocol that can be used to transport delay-sensitive and loss-sensitive data over a lossy network. Tetrys may recover from erasures within an RTT-independent delay thanks to the transmission of coded packets.
+This document is a record of the experience gained by the authors while developing and testing the Tetrys protocol in real conditions.</t>
+      <t indent="0" pn="section-abstract-2">
+            This document is a product of the Coding for Efficient NetWork Communications Research Group (NWCRG). 
+It conforms to the NWCRG taxonomy described in RFC 8406.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This document is a product of the Internet Research
+            Task Force (IRTF).  The IRTF publishes the results of Internet-related
+            research and development activities.  These results might not be
+            suitable for deployment.  This RFC represents the consensus of the
+            Coding for Efficient NetWork Communications Research Group of the Internet Research Task Force
+            (IRTF).  Documents approved for publication by the IRSG are not
+            candidates for any level of Internet Standard; see Section 2 of RFC
+            7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9407" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-notation">Requirements Notation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions-notations-and-a">Definitions, Notations, and Abbreviations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-architecture">Architecture</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-cases">Use Cases</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview">Overview</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tetrys-basic-functions">Tetrys Basic Functions</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-encoding">Encoding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-elastic-encoding-window">The Elastic Encoding Window</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-decoding">Decoding</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-packet-format">Packet Format</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-common-header-format">Common Header Format</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.1.2">
+                  <li pn="section-toc.1-1.5.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.1.1"><xref derivedContent="5.1.1" format="counter" sectionFormat="of" target="section-5.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-header-extensions">Header Extensions</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-source-packet-format">Source Packet Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-coded-packet-format">Coded Packet Format</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.3.2">
+                  <li pn="section-toc.1-1.5.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.3.2.1.1"><xref derivedContent="5.3.1" format="counter" sectionFormat="of" target="section-5.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-encoding-vector">The Encoding Vector</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.5.2.4">
+                <t indent="0" pn="section-toc.1-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-window-update-packet-format">Window Update Packet Format</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-research-issues">Research Issues</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-with-congestion">Interaction with Congestion Control</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-adaptive-coding-rate">Adaptive Coding Rate</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-tetrys-below-the-ip-l">Using Tetrys below the IP Layer for Tunneling</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-problem-statement">Problem Statement</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-attacks-against-the-data-fl">Attacks against the Data Flow</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-attacks-against-signaling">Attacks against Signaling</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-attacks-against-the-network">Attacks against the Network</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-baseline-security-operation">Baseline Security Operation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">This document is a product of and represents the collaborative work
+	   and consensus of the Coding for Efficient NetWork Communications
+	   Research Group (NWCRG). It is not an IETF product or an IETF standard.</t>
+      <t indent="0" pn="section-1-2">This document describes Tetrys, which is an on-the-fly network coding
+            protocol that can be used to transport delay-sensitive and 
+            loss-sensitive data over a lossy network. 
+            Network codes were introduced in the early 2000s <xref target="AHL-00" format="default" sectionFormat="of" derivedContent="AHL-00"/> to address the limitations of
+            transmission over the Internet (delay, capacity, and packet
+            loss). While network codes have seen some deployment fairly
+            recently in the Internet community, the use of application-layer
+            erasure codes in the IETF has already been standardized in the RMT
+            <xref target="RFC5052" format="default" sectionFormat="of" derivedContent="RFC5052"/> <xref target="RFC5445" format="default" sectionFormat="of" derivedContent="RFC5445"/>
+            and FECFRAME
+            <xref target="RFC8680" format="default" sectionFormat="of" derivedContent="RFC8680"/>
+            Working Groups. The protocol presented here may be seen as a network-coding extension to standard unicast transport protocols (or even multicast or anycast with a few modifications).  The current proposal may be considered a combination of network erasure coding and feedback mechanisms
+            <xref target="Tetrys" format="default" sectionFormat="of" derivedContent="Tetrys"/> <xref target="Tetrys-RT" format="default" sectionFormat="of" derivedContent="Tetrys-RT"/>.
+      </t>
+      <t indent="0" pn="section-1-3">The main innovation of the Tetrys protocol is in the generation of coded packets from an elastic encoding window. This window is filled by any source packets coming from an input flow and is periodically updated with the receiver feedback. 
+These feedback messages provide to the sender information about the
+highest sequence number received or rebuilt, which can enable the flushing the
+corresponding source packets stored in the encoding window. The size of this
+window may be fixed or dynamically updated. If the window is full, incoming
+source packets replace older source packets that are dropped. As a matter of
+fact, its limit should be correctly sized.
+
+Finally, Tetrys allows dealing with losses on both the forward and return paths and is particularly resilient to acknowledgment losses. All these operations are further detailed in <xref target="tetrys_basic_functions" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+      <t indent="0" pn="section-1-4">With Tetrys, a coded packet is a linear combination over a finite field of the data source packets belonging to the coding window. 
+
+The choice of coefficients, as finite fields elements, is a trade-off between the best erasure recovery performance (finite fields of 256 elements) and the system constraints (finite fields of 16 elements are preferred) and is driven by the application.</t>
+      <t indent="0" pn="section-1-5">Thanks to the elastic encoding window, the coded packets are built on-the-fly by using a predefined method to choose the coefficients. The redundancy ratio may be dynamically adjusted and the coefficients may be generated in different ways during the transmission. Compared to Forward Error Correction (FEC) block codes, this reduces the bandwidth use and the decoding delay.</t>
+      <t indent="0" pn="section-1-6">The design description of the Tetrys protocol in this document is complemented by a record of the experience gained by the authors while developing and testing the Tetrys protocol in realistic conditions. In particular, several research issues are discussed in <xref target="research" format="default" sectionFormat="of" derivedContent="Section 6"/> following our own experience and observations.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-requirements-notation">Requirements Notation</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="terminology" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-definitions-notations-and-a">Definitions, Notations, and Abbreviations</name>
+      <t indent="0" pn="section-2-1">
+                  The notation used in this document is based on the NWCRG taxonomy
+                  <xref target="RFC8406" format="default" sectionFormat="of" derivedContent="RFC8406"/>.
+      </t>
+      <dl spacing="normal" newline="false" indent="3" pn="section-2-2">
+        <dt pn="section-2-2.1">Source Symbol:</dt>
+        <dd pn="section-2-2.2">A symbol that is transmitted between the ingress and egress of the network.</dd>
+        <dt pn="section-2-2.3">Coded Symbol:</dt>
+        <dd pn="section-2-2.4">A linear combination over a finite field of a set of source symbols.</dd>
+        <dt pn="section-2-2.5">Source Symbol ID:</dt>
+        <dd pn="section-2-2.6">A sequence number to identify the source symbols.</dd>
+        <dt pn="section-2-2.7">Coded Symbol ID:</dt>
+        <dd pn="section-2-2.8">A sequence number to identify the coded symbols.</dd>
+        <dt pn="section-2-2.9">Encoding Coefficients:</dt>
+        <dd pn="section-2-2.10">Elements of the finite field characterizing the linear combination used to generate coded symbols.</dd>
+        <dt pn="section-2-2.11">Encoding Vector:</dt>
+        <dd pn="section-2-2.12">A set of the coding coefficients and input source symbol IDs.</dd>
+        <dt pn="section-2-2.13">Source Packet:</dt>
+        <dd pn="section-2-2.14">A source packet contains a source symbol with its associated IDs.</dd>
+        <dt pn="section-2-2.15">Coded Packet:</dt>
+        <dd pn="section-2-2.16">A coded packet contains a coded symbol, the coded symbol's ID, and encoding vector.</dd>
+        <dt pn="section-2-2.17">Input Symbol:</dt>
+        <dd pn="section-2-2.18">A symbol at the input of the Tetrys encoder.</dd>
+        <dt pn="section-2-2.19">Output Symbol:</dt>
+        <dd pn="section-2-2.20">A symbol generated by the Tetrys encoder. For a non-systematic mode, all output symbols are coded symbols. For a systematic mode, output symbols <bcp14>MAY</bcp14> be the input symbols and a number of coded symbols that are linear combinations of the input symbols plus the encoding vectors.</dd>
+        <dt pn="section-2-2.21">Feedback Packet:</dt>
+        <dd pn="section-2-2.22">A feedback packet is a packet containing information about the decoded or received source symbols. It <bcp14>MAY</bcp14> also contain additional information about the Packet Error Rate or the number of various packets in the receiver decoding window.</dd>
+        <dt pn="section-2-2.23">Elastic Encoding Window:</dt>
+        <dd pn="section-2-2.24">An encoder-side buffer that stores all the unacknowledged source packets of the input flow involved in the coding process.</dd>
+        <dt pn="section-2-2.25">Coding Coefficient Generator Identifier (CCGI):</dt>
+        <dd pn="section-2-2.26">A unique identifier that
+defines a function or an algorithm allowing the generation of the encoding
+vector.</dd>
+        <dt pn="section-2-2.27">Code Rate:</dt>
+        <dd pn="section-2-2.28">Defines the rate between the number of input symbols and the number of output symbols.</dd>
+      </dl>
+    </section>
+    <section anchor="tetrys_architecture" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-architecture">Architecture</name>
+      <section anchor="use_cases" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-use-cases">Use Cases</name>
+        <t indent="0" pn="section-3.1-1">Tetrys is well suited, but not limited, to the use case where
+            there is a single flow originated by a single source with intra-stream 
+            coding at a single encoding node. Note that the input
+            stream <bcp14>MAY</bcp14> be a multiplex of several upper-layer
+            streams.  Transmission <bcp14>MAY</bcp14> be over a single path or
+            multiple paths.  
+This is the simplest use case that is quite
+            aligned with currently proposed scenarios for end-to-end
+            streaming.</t>
+      </section>
+      <section anchor="protocol_overview" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-overview">Overview</name>
+        <figure anchor="fig-archi-tetrys" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-tetrys-architecture">Tetrys Architecture</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.2-1.1">
+   +----------+                +----------+
+   |          |                |          |
+   |    App   |                |    App   |
+   |          |                |          |
+   +----------+                +----------+
+        |                           ^
+        |  Source           Source  |
+        |  Symbols          Symbols |
+        |                           |
+        v                           |
+   +----------+                +----------+
+   |          | Output Packets |          |
+   |  Tetrys  |---------------&gt;|  Tetrys  |
+   |  Encoder |Feedback Packets|  Decoder |
+   |          |&lt;---------------|          |
+   +----------+                +----------+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-3.2-2">
+               The Tetrys protocol features several key functionalities. The mandatory features include:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.2-3">
+          <li pn="section-3.2-3.1">on-the-fly encoding;</li>
+          <li pn="section-3.2-3.2">decoding;</li>
+          <li pn="section-3.2-3.3">signaling, to carry in particular the symbol IDs in the encoding window and the associated coding coefficients when meaningful;</li>
+          <li pn="section-3.2-3.4">feedback management;</li>
+          <li pn="section-3.2-3.5">elastic window management; and</li>
+          <li pn="section-3.2-3.6">Tetrys packet header creation and processing.</li>
+        </ul>
+        <t indent="0" pn="section-3.2-4">The optional features include:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.2-5">
+          <li pn="section-3.2-5.1">channel estimation;</li>
+          <li pn="section-3.2-5.2">dynamic adjustment of the code rate and flow control; and</li>
+          <li pn="section-3.2-5.3">
+                     congestion control management (if appropriate). See <xref target="transport-issue" format="default" sectionFormat="of" derivedContent="Section 6.1"/> for further
+                     details.
+                  </li>
+        </ul>
+        <t indent="0" pn="section-3.2-6">
+               Several building blocks provide the following functionalities:
+        </t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-3.2-7">
+          <dt pn="section-3.2-7.1">The Tetrys Building Block:</dt>
+          <dd pn="section-3.2-7.2">This building block embeds
+          both the Tetrys decoder and Tetrys encoder; thus, it is used during
+          encoding and decoding processes. It must be noted that Tetrys does
+          not mandate a specific building block.  Instead, any building block
+          compatible with the elastic encoding window feature of Tetrys may be
+          used.</dd>
+          <dt pn="section-3.2-7.3">The Window Management Building Block:</dt>
+          <dd pn="section-3.2-7.4">This building block
+                     is in charge of managing the encoding window at a Tetrys
+                     sender.
+                  </dd>
+        </dl>
+        <t indent="0" pn="section-3.2-8">
+               To ease the addition of future components and services, Tetrys adds a header extension mechanism that is compatible with that of Layered Coding Transport (LCT) 
+               <xref target="RFC5651" format="default" sectionFormat="of" derivedContent="RFC5651"/>, NACK-Oriented Reliable Multicast (NORM) 
+               <xref target="RFC5740" format="default" sectionFormat="of" derivedContent="RFC5740"/>, and FEC Framework (FECFRAME)
+               <xref target="RFC8680" format="default" sectionFormat="of" derivedContent="RFC8680"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="tetrys_basic_functions" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-tetrys-basic-functions">Tetrys Basic Functions</name>
+      <section anchor="encoding" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-encoding">Encoding</name>
+        <t indent="0" pn="section-4.1-1">At the beginning of a transmission, a Tetrys encoder <bcp14>MUST</bcp14> choose an initial code rate that adds redundancy as it doesn't know the packet loss rate of the channel. 
+In the steady state, the Tetrys encoder <bcp14>MAY</bcp14> generate coded symbols when it receives a source symbol from the application or some feedback from the decoding blocks depending on the code rate.</t>
+        <t indent="0" pn="section-4.1-2">When a Tetrys encoder needs to generate a coded symbol, it considers the set of source symbols stored in the elastic encoding window and generates an encoding vector with the coded symbol. These source symbols are the set of source symbols that are not yet acknowledged by the receiver. For each source symbol, a finite field coefficient is determined using a Coding Coefficient Generator. 
+This generator <bcp14>MAY</bcp14> take the source symbol IDs and the coded symbol ID as an input and <bcp14>MAY</bcp14> determine a coefficient in a deterministic way as presented in <xref target="coded-packet" format="default" sectionFormat="of" derivedContent="Section 5.3"/>. Finally, the coded symbol is the sum of the source symbols multiplied by their corresponding coefficients.</t>
+        <t indent="0" pn="section-4.1-3">A Tetrys encoder <bcp14>MUST</bcp14> set a limit to the elastic encoding window maximum size. This controls the algorithmic complexity at the encoder and decoder by limiting the size of linear combinations. It is also needed in situations where all window update packets are lost or absent.</t>
+      </section>
+      <section anchor="windowing" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-the-elastic-encoding-window">The Elastic Encoding Window</name>
+        <t indent="0" pn="section-4.2-1">When an input source symbol is passed to a Tetrys encoder, it is added to the elastic encoding window. This window <bcp14>MUST</bcp14> have a limit set by the encoding building block. 
+If the elastic encoding window has reached its limit, the window slides over the symbols. The first (oldest) symbol is removed, and the newest symbol is added. As an element of the coding window, this symbol is included in the next linear combinations created to generate the coded symbols.</t>
+        <t indent="0" pn="section-4.2-2">As explained below, the Tetrys decoder sends periodic feedback indicating the received or decoded source symbols. When the sender receives the information that a source symbol was received or decoded by the receiver, it removes this symbol from the coding window.</t>
+      </section>
+      <section anchor="decoding" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-decoding">Decoding</name>
+        <t indent="0" pn="section-4.3-1">A standard Gaussian elimination is sufficient to recover the erased source symbols when the matrix rank enables it.</t>
+      </section>
+    </section>
+    <section anchor="encapsulation-format" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-packet-format">Packet Format</name>
+      <section anchor="common-packet-header-format" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-common-header-format">Common Header Format</name>
+        <t indent="0" pn="section-5.1-1">
+               All types of Tetrys packets share the same common header format (see <xref target="fig-common-header-format" format="default" sectionFormat="of" derivedContent="Figure 2"/>).
+        </t>
+        <figure anchor="fig-common-header-format" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-common-header-format-2">Common Header Format</name>
+          <artwork name="" type="" align="left" alt="" pn="section-5.1-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   V   | C |S|     Reserved    |   HDR_LEN     |    PKT_TYPE   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Congestion Control Information (CCI, length = 32*C bits)    |
+|                          ...                                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Transport Session Identifier (TSI, length = 32*S bits)     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                Header Extensions (if applicable)              |
+|                          ...                                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-5.1-3">As noted above, this format is inspired by, and inherits from, the LCT header format <xref target="RFC5651" format="default" sectionFormat="of" derivedContent="RFC5651"/> with slight modifications.</t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-5.1-4">
+          <dt pn="section-5.1-4.1">Tetrys version number (V):</dt>
+          <dd pn="section-5.1-4.2">4 bits.
+			      Indicates the Tetrys version number.  The Tetrys version number for this specification is 1.</dd>
+          <dt pn="section-5.1-4.3">Congestion control flag (C):</dt>
+          <dd pn="section-5.1-4.4">2 bits.  C set to 0b00
+                     indicates the Congestion Control Information (CCI) field
+                     is 0 bits in length.  C set to 0b01 indicates the CCI field is 32
+                     bits in length. C set to 0b10 indicates the CCI field is 64 bits in
+                     length.  C set to 0b11 indicates the CCI field is 96 bits in
+                     length.
+                  </dd>
+          <dt pn="section-5.1-4.5">Transport Session Identifier flag (S):</dt>
+          <dd pn="section-5.1-4.6">1 bit.
+      			 This is the number of full 32-bit words in the TSI field.  The TSI field is 32*S bits in length; i.e., the length is either 0 bits or 32 bits.</dd>
+          <dt pn="section-5.1-4.7">Reserved (Resv):</dt>
+          <dd pn="section-5.1-4.8">9 bits. These bits are reserved.  In this version of the specification, they <bcp14>MUST</bcp14> be set to zero by senders and <bcp14>MUST</bcp14> be ignored by receivers.</dd>
+          <dt pn="section-5.1-4.9">Header length (HDR_LEN):</dt>
+          <dd pn="section-5.1-4.10">8 bits.  The total length of
+          the Tetrys header in units of 32-bit words. The length of the Tetrys
+          header <bcp14>MUST</bcp14> be a multiple of 32 bits.  This field may
+          be used to directly access the portion of the packet beyond the
+          Tetrys header, i.e., to the first next header if it exists, to the
+          packet payload if it exists and there is no other header, or to the
+          end of the packet if there are no other headers or packet
+          payload.</dd>
+          <dt pn="section-5.1-4.11">Tetrys packet type (PKT_TYPE):</dt>
+          <dd pn="section-5.1-4.12">8 bits.
+				There are three types of packets: the PKT_TYPE_SOURCE (0b00) defined in <xref target="source-packet" format="default" sectionFormat="of" derivedContent="Section 5.2"/>, the PKT_TYPE_CODED (0b01) defined in <xref target="coded-packet" format="default" sectionFormat="of" derivedContent="Section 5.3"/> and the PKT_TYPE_WND_UPT (0b11) for window update packets defined in <xref target="ack-packet" format="default" sectionFormat="of" derivedContent="Section 5.4"/>.</dd>
+          <dt pn="section-5.1-4.13">Congestion Control Information (CCI):</dt>
+          <dd pn="section-5.1-4.14">0, 32, 64, or 96 bits.
+			      Used to carry congestion control information.  For example, the
+			      congestion control information could include layer numbers,
+			      logical channel numbers, and sequence numbers.  This field is
+			      opaque for this specification.
+			      This field <bcp14>MUST</bcp14> be 0 bits (absent) if C is set to 0b00.
+			      This field <bcp14>MUST</bcp14> be 32 bits if C is set to 0b01.
+			      This field <bcp14>MUST</bcp14> be 64 bits if C is set to 0b10.
+			      This field <bcp14>MUST</bcp14> be 96 bits if C is set to 0b11.</dd>
+          <dt pn="section-5.1-4.15">Transport Session Identifier (TSI):</dt>
+          <dd pn="section-5.1-4.16">0 or 32 bits.
+			      The TSI uniquely identifies a session among all sessions from a
+			      particular Tetrys encoder. The TSI is scoped by the IP address of the
+			      sender; thus, the IP address of the sender and the TSI together
+			      uniquely identify the session.  
+Although a TSI always uniquely identifies a session conjointly with
+			      the IP address of the sender, whether the TSI is included in the Tetrys header depends on
+			      what is used as the TSI value.  If the underlying transport is
+			      UDP, then the 16-bit UDP source port number <bcp14>MAY</bcp14> serve as the TSI
+			      for the session.
+                     If there is
+			      no underlying TSI provided by the network, transport, or any other
+			      layer, then the TSI <bcp14>MUST</bcp14> be included in the Tetrys header.
+                  </dd>
+        </dl>
+        <section anchor="header-extension-format" numbered="true" toc="include" removeInRFC="false" pn="section-5.1.1">
+          <name slugifiedName="name-header-extensions">Header Extensions</name>
+          <t indent="0" pn="section-5.1.1-1">Header extensions are used in Tetrys to accommodate optional header fields that are not always used or have variable sizes.
+				The presence of header extensions <bcp14>MAY</bcp14> be inferred by the Tetrys header length (HDR_LEN).
+				If HDR_LEN is larger than the length of the standard header, then the remaining header space is taken by header extensions.</t>
+          <t indent="0" pn="section-5.1.1-2">If present, header extensions <bcp14>MUST</bcp14> be processed to ensure that they are recognized before performing any congestion control procedure or otherwise accepting a packet.
+				The default action for unrecognized header extensions is to ignore them.
+				This allows for the future introduction of backward-compatible enhancements to Tetrys without changing the Tetrys version number.
+				Header extensions that are not backward-compatible <bcp14>MUST NOT</bcp14> be introduced without changing the Tetrys version number.</t>
+          <t indent="0" pn="section-5.1.1-3">
+                  There are two formats for header extensions as depicted in <xref target="fig_header_extension" format="default" sectionFormat="of" derivedContent="Figure 3"/>:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.1.1-4">
+            <li pn="section-5.1.1-4.1">The first format is used for variable-length extensions with header extension type (HET) values between 0 and 127.</li>
+            <li pn="section-5.1.1-4.2">The second format is used for fixed-length (one 32-bit word) extensions using HET values from 128 to 255.</li>
+          </ul>
+          <figure anchor="fig_header_extension" align="left" suppress-title="false" pn="figure-3">
+            <name slugifiedName="name-header-extension-format">Header Extension Format</name>
+            <artwork name="" type="" align="left" alt="" pn="section-5.1.1-5.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  HET (&lt;=127)  |       HEL     |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+.                                                               .
+.              Header Extension Content (HEC)                   .
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  HET (&gt;=128)  |       Header Extension Content (HEC)          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+          </figure>
+          <dl spacing="normal" indent="3" newline="false" pn="section-5.1.1-6">
+            <dt pn="section-5.1.1-6.1">Header Extension Type (HET):</dt>
+            <dd pn="section-5.1.1-6.2">8 bits. The type of the header extension. This document defines several possible types.
+				Additional types may be defined in future versions of this specification.
+				HET values from 0 to 127 are used for variable-length header extensions.
+				HET values from 128 to 255 are used for fixed-length, 32-bit header extensions.</dd>
+            <dt pn="section-5.1.1-6.3">Header Extension Length (HEL):</dt>
+            <dd pn="section-5.1.1-6.4">8 bits. The length of the whole header extension field expressed in multiples of 32-bit words.
+				This field <bcp14>MUST</bcp14> be present for variable-length extensions (HETs between 0 and 127) and <bcp14>MUST NOT</bcp14> be present for fixed-length extensions (HETs between 128 and 255).</dd>
+            <dt pn="section-5.1.1-6.5">Header Extension Content (HEC):</dt>
+            <dd pn="section-5.1.1-6.6">Length of the variable. The content of the header extension.
+				The format of this subfield depends on the header extension type.
+				For fixed-length header extensions, the HEC is 24 bits.
+				For variable-length header extensions, the HEC field has a variable size as specified by the HEL field.
+				Note that the length of each header extension <bcp14>MUST</bcp14> be a multiple of 32 bits.
+				Additionally, the total size of the Tetrys header, including all header extensions and optional header fields, cannot exceed 255 32-bit words.</dd>
+          </dl>
+        </section>
+      </section>
+      <section anchor="source-packet" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-source-packet-format">Source Packet Format</name>
+        <t indent="0" pn="section-5.2-1">A source packet is a common packet header encapsulation, a source symbol ID, and a source symbol (payload). The source symbols <bcp14>MAY</bcp14> have variable sizes.</t>
+        <figure anchor="fig-src-pkt" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-source-packet-format-2">Source Packet Format</name>
+          <artwork name="" type="" align="left" alt="" pn="section-5.2-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+/                      Common Packet Header                     /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         Source Symbol ID                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+/                            Payload                            /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" indent="3" newline="false" pn="section-5.2-3">
+          <dt pn="section-5.2-3.1">Common Packet Header:</dt>
+          <dd pn="section-5.2-3.2">A common packet header (as common header format) where packet type is set to 0b00.</dd>
+          <dt pn="section-5.2-3.3">Source Symbol ID:</dt>
+          <dd pn="section-5.2-3.4">The sequence number to identify a source symbol.</dd>
+          <dt pn="section-5.2-3.5">Payload:</dt>
+          <dd pn="section-5.2-3.6">The payload (source symbol).</dd>
+        </dl>
+      </section>
+      <section anchor="coded-packet" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-coded-packet-format">Coded Packet Format</name>
+        <t indent="0" pn="section-5.3-1">
+               A coded packet is the encapsulation of a common packet header, a coded symbol ID, the associated encoding vector, and a coded symbol (payload). 
+               As the source symbols <bcp14>MAY</bcp14> have variable sizes, all the source symbol sizes need to be encoded. To generate this encoded payload size as a 16-bit unsigned value, the linear combination uses the same coefficients as the coded payload. The result <bcp14>MUST</bcp14> be stored in the coded packet as the encoded payload size (16 bits). As it is an optional field, the encoding vector <bcp14>MUST</bcp14> signal the use of variable source symbol sizes with the field V (see <xref target="unified-encoding-vector-format" format="default" sectionFormat="of" derivedContent="Section 5.3.1"/>).
+        </t>
+        <figure anchor="fig-rpr-pkt" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-coded-packet-format-2">Coded Packet Format</name>
+          <artwork name="" type="" align="left" alt="" pn="section-5.3-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+/                      Common Packet Header                     /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          Coded Symbol ID                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+/                         Encoding Vector                       /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Encoded Payload Size      |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+/                            Payload                            /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" indent="3" newline="false" pn="section-5.3-3">
+          <dt pn="section-5.3-3.1">Common Packet Header:</dt>
+          <dd pn="section-5.3-3.2">A common packet header (as common header format) where packet type is set to 0b01.</dd>
+          <dt pn="section-5.3-3.3">Coded Symbol ID:</dt>
+          <dd pn="section-5.3-3.4">The sequence number to identify a coded symbol.</dd>
+          <dt pn="section-5.3-3.5">Encoding Vector:</dt>
+          <dd pn="section-5.3-3.6">An encoding vector to define the linear combination used (coefficients and source symbols).</dd>
+          <dt pn="section-5.3-3.7">Encoded Payload Size:</dt>
+          <dd pn="section-5.3-3.8">The coded payload size used if the source symbols have a variable size (optional, <xref target="unified-encoding-vector-format" format="default" sectionFormat="of" derivedContent="Section 5.3.1"/>).</dd>
+          <dt pn="section-5.3-3.9">Payload:</dt>
+          <dd pn="section-5.3-3.10">The coded symbol.</dd>
+        </dl>
+        <section anchor="unified-encoding-vector-format" numbered="true" toc="include" removeInRFC="false" pn="section-5.3.1">
+          <name slugifiedName="name-the-encoding-vector">The Encoding Vector</name>
+          <t indent="0" pn="section-5.3.1-1">An encoding vector contains all the information about the linear combination used to generate a coded symbol. The information includes the source identifiers and the coefficients used for each source symbol. It <bcp14>MAY</bcp14> be stored in different ways depending on the situation.</t>
+          <figure anchor="fig-unif-enc-vec" align="left" suppress-title="false" pn="figure-6">
+            <name slugifiedName="name-encoding-vector-format">Encoding Vector Format</name>
+            <artwork name="" type="" align="left" alt="" pn="section-5.3.1-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     EV_LEN    |  CCGI | I |C|V|    NB_IDS     |   NB_COEFS    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        FIRST_SOURCE_ID                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     b_id      |                                               |
++-+-+-+-+-+-+-+-+            id_bit_vector        +-+-+-+-+-+-+-+
+|                                                 |   Padding   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                          coef_bit_vector        +-+-+-+-+-+-+-+
+|                                                 |   Padding   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+          </figure>
+          <dl indent="3" newline="false" spacing="normal" pn="section-5.3.1-3">
+            <dt pn="section-5.3.1-3.1">Encoding Vector Length (EV_LEN):</dt>
+            <dd pn="section-5.3.1-3.2">8 bits. The size in
+            units of 32-bit words.</dd>
+            <dt pn="section-5.3.1-3.3">Coding Coefficient Generator Identifier (CCGI):</dt>
+            <dd pn="section-5.3.1-3.4">
+              <t indent="0" pn="section-5.3.1-3.4.1">4-bit ID to identify the algorithm or function used to generate the coefficients. As a CCGI is included in each encoded vector, it <bcp14>MAY</bcp14> dynamically change between the generation of two coded symbols.
+                     The CCGI builds the coding coefficients used to generate the coded symbols. They <bcp14>MUST</bcp14> be known by all the Tetrys encoders or decoders.
+                     The two RLC FEC schemes specified in this document reuse the finite fields defined in <xref target="RFC5510" sectionFormat="comma" section="8.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5510#section-8.1" derivedContent="RFC5510"/>.  
+More specifically, the elements of the field GF(2<sup>(m)</sup>) are represented by polynomials with binary coefficients (i.e., over GF(2)) and with degree lower or equal to m-1. The addition between two elements is defined as the addition of binary polynomials in GF(2), which is equivalent to a bitwise XOR operation on the binary representation of these elements.
+                     With GF(2<sup>(8)</sup>), multiplication between two elements is the multiplication modulo a given irreducible polynomial of degree 8. The following irreducible polynomial is used for GF(2<sup>(8)</sup>):</t>
+              <t indent="3" pn="section-5.3.1-3.4.2">x<sup>(8)</sup> + x<sup>(4)</sup> + x<sup>(3)</sup> + x<sup>(2)</sup> + 1</t>
+              <t indent="0" pn="section-5.3.1-3.4.3">With GF(2<sup>(4)</sup>), multiplication between two elements is the multiplication modulo a given irreducible polynomial of degree 4. The following irreducible polynomial is used for GF(2<sup>(4)</sup>):</t>
+              <t indent="3" pn="section-5.3.1-3.4.4">x<sup>(4)</sup> + x + 1
+              </t>
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.3.1-3.4.5">
+                <li pn="section-5.3.1-3.4.5.1">0b00: Vandermonde-based coefficients over the finite field GF(2<sup>(4)</sup>) as defined below. Each coefficient is built as alpha<sup>( (source_symbol_id*coded-symbol_id) % 16)</sup>, with alpha the root of the primitive polynomial.</li>
+                <li pn="section-5.3.1-3.4.5.2">0b01: Vandermonde-based coefficients over the finite field GF(2<sup>(8)</sup>) as defined below. Each coefficient is built as alpha<sup>( (source_symbol_id*coded-symbol_id) % 256)</sup>, with alpha the root of the primitive polynomial.</li>
+                <li pn="section-5.3.1-3.4.5.3">Suppose we want to generate the coded symbol 2 as a linear combination of the source symbols 1, 2, and 4 using CCGI set to 0b01. The coefficients will be alpha<sup>( (1 * 1) % 256)</sup>, alpha<sup>( (1 * 2) % 256)</sup>, and alpha<sup>( (1 * 4) % 256)</sup>.</li>
+              </ul>
+            </dd>
+            <dt pn="section-5.3.1-3.5">
+                        Store the Source Symbol ID Format (I) (2 bits):
+            </dt>
+            <dd pn="section-5.3.1-3.6">
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.3.1-3.6.1">
+                <li pn="section-5.3.1-3.6.1.1">0b00 means there is no source symbol ID information.</li>
+                <li pn="section-5.3.1-3.6.1.2">0b01 means the encoding vector contains the edge blocks of the source symbol IDs without compression.</li>
+                <li pn="section-5.3.1-3.6.1.3">0b10 means the encoding vector contains the compressed list of the source symbol IDs.</li>
+                <li pn="section-5.3.1-3.6.1.4">0b11 means the encoding vector contains the compressed edge blocks of the source symbol IDs.</li>
+              </ul>
+            </dd>
+            <dt pn="section-5.3.1-3.7">Store the Encoding Coefficients (C):</dt>
+            <dd pn="section-5.3.1-3.8">1 bit to indicate if an encoding vector contains information about the coefficients used.</dd>
+            <dt pn="section-5.3.1-3.9">Having Source Symbols with Variable Size Encoding (V):</dt>
+            <dd pn="section-5.3.1-3.10">Set V to 0b01 if the combination that refers to the encoding vector is a combination of source symbols with variable sizes. In this case, the coded packets <bcp14>MUST</bcp14> have the 'Encoded Payload Size' field.</dd>
+            <dt pn="section-5.3.1-3.11">NB_IDS:</dt>
+            <dd pn="section-5.3.1-3.12">The number of source IDs stored in the encoding vector (depending on I).</dd>
+            <dt pn="section-5.3.1-3.13">Number of Coefficients (NB_COEFS):</dt>
+            <dd pn="section-5.3.1-3.14">The number of the coefficients used to generate the associated coded symbol.</dd>
+            <dt pn="section-5.3.1-3.15">The First Source Identifier (FIRST_SOURCE_ID):</dt>
+            <dd pn="section-5.3.1-3.16">The first source symbol ID used in the combination.</dd>
+            <dt pn="section-5.3.1-3.17">
+                        Number of Bits for Each Edge Block (b_id):</dt>
+            <dd pn="section-5.3.1-3.18">The number of bits needed to store the edge.
+                     </dd>
+            <dt pn="section-5.3.1-3.19">Information about the Source Symbol IDs (id_bit_vector):</dt>
+            <dd pn="section-5.3.1-3.20">If I is set to 0b01, store the edge blocks as b_id * (NB_IDS * 2 - 1). 
+If I is set to 0b10, store the edge blocks in a compressed way.</dd>
+            <dt pn="section-5.3.1-3.21">The Coefficients (coef_bit_vector):</dt>
+            <dd pn="section-5.3.1-3.22">The coefficients stored depending on the CCGI (4 or 8 bits for each coefficient).</dd>
+            <dt pn="section-5.3.1-3.23">Padding:</dt>
+            <dd pn="section-5.3.1-3.24">Padding to have an encoding vector size that is a multiple of 32 bits (for the ID and coefficient part).</dd>
+          </dl>
+          <t indent="0" pn="section-5.3.1-4">The source symbol IDs are organized as a sorted list of 32-bit unsigned integers. Depending on the feedback, the source symbol IDs in the list <bcp14>MAY</bcp14> be successive or not. If they are successive, the boundaries are stored in the encoding vector; it just needs 2*32 bits of information. If not, the full list or the edge blocks <bcp14>MAY</bcp14> be stored and a differential transform to reduce the number of bits needed to represent an identifier <bcp14>MAY</bcp14> be used.</t>
+          <t indent="0" pn="section-5.3.1-5">For the following subsections, let's take as an example the generation of an encoding vector for a coded symbol that is a linear combination of the source symbols with IDs 1, 2, 3, 5, 6, 8, 9, and 10 (or as edge blocks: [1..3], [5..6], [8..10]).</t>
+          <t indent="0" pn="section-5.3.1-6">There are several ways to store the source symbol IDs into the encoding vector:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.3.1-7">
+            <li pn="section-5.3.1-7.1">If no information about the source symbol IDs is needed, the field I  <bcp14>MUST</bcp14> be set to 0b00: no b_id and no id_bit_vector field.</li>
+            <li pn="section-5.3.1-7.2">If the edge blocks are stored without compression, the field I <bcp14>MUST</bcp14> be set to 0b01. 
+In this case, set b_id to 32 (as a Symbol ID is 32 bits), and store the list of 32-bit unsigned integers (1, 3, 4, 5, 6, 10) into id_bit_vectors.</li>
+            <li pn="section-5.3.1-7.3">If the source symbol IDs are stored as a list with compression, the field I <bcp14>MUST</bcp14> be set to 0b10. In this case, see <xref target="compressing-encoding-vector" format="default" sectionFormat="of" derivedContent="Section 5.3.1.1"/>, but rather than compressing the edge blocks, we compress the full list of the source symbol IDs.</li>
+            <li pn="section-5.3.1-7.4">If the edge blocks are stored with compression, the field I <bcp14>MUST</bcp14> be set to 0b11. In this case, see <xref target="compressing-encoding-vector" format="default" sectionFormat="of" derivedContent="Section 5.3.1.1"/>.</li>
+          </ul>
+          <section anchor="compressing-encoding-vector" numbered="true" toc="exclude" removeInRFC="false" pn="section-5.3.1.1">
+            <name slugifiedName="name-compressed-list-of-source-s">Compressed List of Source Symbol IDs</name>
+            <t indent="0" pn="section-5.3.1.1-1">Let's continue with our coded symbol defined in the previous section. The source symbol IDs used in the linear combination are: [1..3], [5..6], [8..10].</t>
+            <t indent="0" pn="section-5.3.1.1-2"> If we want to compress and store this list into the encoding vector, we <bcp14>MUST</bcp14> follow this procedure:
+            </t>
+            <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.3.1.1-3"><li pn="section-5.3.1.1-3.1" derivedCounter="1.">Keep the first element in the packet as the first_source_id: 1.</li>
+              <li pn="section-5.3.1.1-3.2" derivedCounter="2.">Apply a differential transform to the other elements
+              ([3, 5, 6, 8, 10]) that removes the element i-1 to the element i,
+              starting with the first_source_id as i0, and get the list L =
+              [2, 2, 1, 2, 2].</li>
+              <li pn="section-5.3.1.1-3.3" derivedCounter="3.">Compute b, the number of bits needed to
+              store all the elements, which is ceil(log2(max(L))), where
+              max(L) represents the maximum of the elements of the list L;
+              here, it is 2 bits.</li>
+              <li pn="section-5.3.1.1-3.4" derivedCounter="4.">Write b in the corresponding field, and write all the b * [(2 * NB blocks) - 1] elements in a bit vector here: 10, 10, 01, 10, 10.</li>
+            </ol>
+          </section>
+          <section anchor="decompressing-encoding-vector" numbered="true" toc="exclude" removeInRFC="false" pn="section-5.3.1.2">
+            <name slugifiedName="name-decompressing-the-source-sy">Decompressing the Source Symbol IDs</name>
+            <t indent="0" pn="section-5.3.1.2-1">When a Tetrys decoding block wants to reverse the operations, this algorithm is used:</t>
+            <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.3.1.2-2"><li pn="section-5.3.1.2-2.1" derivedCounter="1.">Rebuild the list of the transmitted elements by reading the bit vector and b: [10, 10, 01, 10, 10] =&gt; [2, 2, 1, 2, 2].</li>
+              <li pn="section-5.3.1.2-2.2" derivedCounter="2.">Apply the reverse transform by adding successively the elements, starting with first_source_id: [1, 1 + 2, (1 + 2) + 2, (1 + 2 + 2) + 1, ...] =&gt; [1, 3, 5, 6, 8, 10].</li>
+              <li pn="section-5.3.1.2-2.3" derivedCounter="3.">Rebuild the blocks using the list and first_source_id: [1..3], [5..6], [8..10].</li>
+            </ol>
+          </section>
+        </section>
+      </section>
+      <section anchor="ack-packet" numbered="true" toc="include" removeInRFC="false" pn="section-5.4">
+        <name slugifiedName="name-window-update-packet-format">Window Update Packet Format</name>
+        <t indent="0" pn="section-5.4-1">A Tetrys decoder <bcp14>MAY</bcp14> send window update packets back to another building block. They contain information about what the packets received, decoded, or dropped, and other information such as a packet loss rate or the size of the decoding buffers. They are used to optimize the content of the encoding window. The window update packets are <bcp14>OPTIONAL</bcp14>; hence, they could be omitted or lost in transmission without impacting the protocol behavior.</t>
+        <figure anchor="fig-ack-pkt" align="left" suppress-title="false" pn="figure-7">
+          <name slugifiedName="name-window-update-packet-format-2">Window Update Packet Format</name>
+          <artwork name="" type="" align="left" alt="" pn="section-5.4-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+/                      Common Packet Header                     /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        nb_missing_src                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                   nb_not_used_coded_symb                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         first_src_id                          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      plr      |   sack_size   |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+/                          SACK Vector                          /
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" indent="3" newline="false" pn="section-5.4-3">
+          <dt pn="section-5.4-3.1">Common Packet Header:</dt>
+          <dd pn="section-5.4-3.2">A common packet header (as common header format) where packet type is set to 0b10.</dd>
+          <dt pn="section-5.4-3.3">nb_missing_src:</dt>
+          <dd pn="section-5.4-3.4">The number of missing source symbols in the receiver since the beginning of the session.</dd>
+          <dt pn="section-5.4-3.5">nb_not_used_coded_symb:</dt>
+          <dd pn="section-5.4-3.6">The number of coded symbols at the receiver that have not already been used for decoding (e.g., the linear combinations contain at least two unknown source symbols).</dd>
+          <dt pn="section-5.4-3.7">first_src_id:</dt>
+          <dd pn="section-5.4-3.8">ID of the first source symbol to consider in the selective acknowledgment (SACK) vector.</dd>
+          <dt pn="section-5.4-3.9">plr:</dt>
+          <dd pn="section-5.4-3.10">Packet loss ratio expressed as a percentage normalized to an 8-bit unsigned integer. For example, 2.5% will be stored as floor(2.5 * 256/100) = 6. Conversely, if 6 is the stored value, the corresponding packet loss ratio expressed as a percentage is 6*100/256 = 2.34%. This value is used in the case of dynamic code rate or for a statistical purpose. The choice of calculation is left to the Tetrys decoder, depending on a window observation, but should be the PLR seen before decoding.</dd>
+          <dt pn="section-5.4-3.11">sack_size:</dt>
+          <dd pn="section-5.4-3.12">The size of the SACK vector in 32-bit words. For instance, with a value of 2, the SACK vector is 64 bits long.</dd>
+          <dt pn="section-5.4-3.13">SACK vector:</dt>
+          <dd pn="section-5.4-3.14">Bit vector indicating symbols that must be removed in the encoding window from the first source symbol ID. In most cases, these symbols were received by the receiver. The other cases concern some events with non-recoverable packets (i.e., in the case of a burst of losses) where it is better to drop and abandon some packets and remove them from the encoding window to allow the recovery of the following packets.     
+				The "First Source Symbol" is included in this bit vector.
+A bit equal to 1 at the i-th position means that this window update packet removes the source symbol of the ID equal to "First Source Symbol ID" + i from the encoding window.</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="research" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-research-issues">Research Issues</name>
+      <t indent="0" pn="section-6-1">The present document describes the baseline protocol, allowing communications between a Tetrys encoder and Tetrys decoder.  In practice, Tetrys can be used either as a standalone protocol or embedded inside an existing protocol, and either above, within, or below the transport layer.  There are different research questions related to each of these scenarios that should be investigated for future protocol improvements. We summarize them in the following subsections.</t>
+      <section anchor="transport-issue" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-interaction-with-congestion">Interaction with Congestion Control</name>
+        <t indent="0" pn="section-6.1-1">
+The Tetrys and congestion control components generate two separate channels (see <xref target="RFC9265" sectionFormat="comma" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9265#section-2.1" derivedContent="RFC9265"/>):
+</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.1-2">
+          <li pn="section-6.1-2.1">The Tetrys channel carries source and coded packets (from the sender to the receiver) and information from the receiver to the sender (e.g., signaling which symbols have been recovered, loss rate before and/or after decoding, etc.).</li>
+          <li pn="section-6.1-2.2">The congestion control channel carries packets from a sender to a receiver and packets signaling information about the network (e.g., number of packets received versus lost, Explicit Congestion Notification (ECN) marks, etc.) from the receiver to the sender. </li>
+        </ul>
+        <t indent="0" pn="section-6.1-3">
+The following topics, which are identified and discussed by <xref target="RFC9265" format="default" sectionFormat="of" derivedContent="RFC9265"/>, are adapted to the particular deployment cases of Tetrys (i.e., above, within, or below the transport layer):
+</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.1-4">
+          <li pn="section-6.1-4.1">Congestion-related losses may be hidden if Tetrys is deployed below the transport layer without any precaution (i.e., Tetrys recovering packets lost because of a congested router), which can severely impact the congestion control efficiency. An approach is suggested to avoid hiding such signals in <xref target="RFC9265" sectionFormat="comma" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9265#section-5" derivedContent="RFC9265"/>.</li>
+          <li pn="section-6.1-4.2">Tetrys and non-Tetrys flows sharing the same network links can raise fairness issues between these flows. In particular, the situation depends on whether some of these flows and not others are congestion controlled and which type of congestion control is used. The details are out of scope of this document, but may have major impacts in practice.</li>
+          <li pn="section-6.1-4.3">Coding rate adaptation within Tetrys can have major impacts on congestion control if done inappropriately. This topic is discussed more in detail in <xref target="adaptive" format="default" sectionFormat="of" derivedContent="Section 6.2"/>.</li>
+          <li pn="section-6.1-4.4">Tetrys can leverage multipath transmissions, with the Tetrys packets being sent to the same receiver through multiple paths. Since paths can largely differ, a per-path flow control and congestion control adaptation could be needed.</li>
+          <li pn="section-6.1-4.5">Protecting several application flows within a single Tetrys flow raises additional questions. This topic is discussed more in detail in <xref target="tunnel" format="default" sectionFormat="of" derivedContent="Section 6.3"/>.</li>
+        </ul>
+      </section>
+      <section anchor="adaptive" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-adaptive-coding-rate">Adaptive Coding Rate</name>
+        <t indent="0" pn="section-6.2-1">
+When the network conditions (e.g., delay and loss rate) strongly vary over time, an adaptive coding rate can be used to increase or reduce the amount of coded packets among a transmission dynamically (i.e., the added redundancy) with the help of a dedicated algorithm similar to <xref target="A-FEC" format="default" sectionFormat="of" derivedContent="A-FEC"/>. Once again, the strategy differs depending on which layer Tetrys is deployed (i.e., above, within, or below the transport layer). Basically, we can split these strategies into two distinct classes: Tetrys deployment inside the transport layer versus outside the transport layer (i.e., above or below). A deployment within the transport layer means 
+that interactions between transport protocol mechanisms such as error recovery, congestion control, and/or flow control are envisioned. Otherwise, deploying Tetrys within a transport protocol that is not congestion controlled, like UDP, would not bring out any other advantage than deploying it below or above the transport layer.
+        </t>
+        <t indent="0" pn="section-6.2-2">The impact deploying a FEC mechanism within the transport layer is further discussed in <xref target="RFC9265" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9265#section-4" derivedContent="RFC9265"/>, where considerations concerning the interactions between congestion control and coding rates, or the impact of fairness, are investigated. This adaptation may be done jointly with the congestion control mechanism of a transport layer protocol as proposed by <xref target="CTCP" format="default" sectionFormat="of" derivedContent="CTCP"/>. This allows the use of monitored congestion control metrics (e.g., RTT, congestion events, or current congestion window size) to adapt the coding rate conjointly with the computed transport sending rate. The rationale is to compute an amount of repair traffic that does not lead to congestion.  This joint optimization is mandatory to prevent flows from consuming the whole available capacity as discussed in <xref target="I-D.singh-rmcat-adaptive-fec" format="default" sectionFormat="of" derivedContent="RMCAT-ADAPTIVE-FEC"/>, where the authors point out that an increase in the repair ratio should be done conjointly with a decrease in the source sending rate.
+        </t>
+        <t indent="0" pn="section-6.2-3">
+	    Finally, adapting a coding rate can also be done outside the transport layer without considering transport-layer metrics. In particular, this adaptation may be done jointly with the network as proposed in <xref target="RED-FEC" format="default" sectionFormat="of" derivedContent="RED-FEC"/>. In this paper, the authors propose a Random Early Detection FEC mechanism in the context of video transmission over wireless networks. Briefly, the idea is to add more redundancy packets if the queue at the access point is less occupied and vice versa. A first theoretical attempt for video delivery with Tetrys has been proposed <xref target="THAI" format="default" sectionFormat="of" derivedContent="THAI"/>. This approach is interesting as it illustrates a joint collaboration between the application requirements and the network conditions and combines both signals coming from the application needs and the network state (i.e., signals below or above the transport layer).
+        </t>
+        <t indent="0" pn="section-6.2-4">
+	    To conclude, there are multiple ways to enable an adaptive coding rate. However, all of them depend on:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-5">
+          <li pn="section-6.2-5.1">the signal metrics that can be monitored and used to adapt the coding rate;</li>
+          <li pn="section-6.2-5.2">the transport layer used, whether it is congestion controlled or not; and</li>
+          <li pn="section-6.2-5.3">the objective sought (e.g., to minimize congestion or to fit application requirements).</li>
+        </ul>
+      </section>
+      <section anchor="tunnel" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-using-tetrys-below-the-ip-l">Using Tetrys below the IP Layer for Tunneling</name>
+        <t indent="0" pn="section-6.3-1">
+        The use of Tetrys to protect an aggregate of flows raises research questions when Tetrys is used to recover from IP datagram losses while tunneling.  Applying redundancy without flow differentiation may contradict the service requirements of individual flows: some flows may be penalized more by high latency and jitter than by partial reliability, while other flows may be penalized more by partial reliability.  In practice, head-of-line blocking impacts all flows in a similar manner despite their different needs, which indicates that more elaborate strategies inside Tetrys are needed.
+        </t>
+      </section>
+    </section>
+    <section anchor="security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">
+        First of all, it must be clear that the use of FEC protection on a data stream does not provide any kind of security per se. On the contrary, the use of FEC protection on a data stream raises security risks. 
+        The situation with Tetrys is mostly similar to that of other content delivery protocols making use of FEC protection; this is well described in FECFRAME <xref target="RFC6363" format="default" sectionFormat="of" derivedContent="RFC6363"/>.
+        This section builds on this reference, adding new considerations to comply with Tetrys specificities when meaningful.
+      </t>
+      <section anchor="security-problem-statement" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-problem-statement">Problem Statement</name>
+        <t indent="0" pn="section-7.1-1">
+          An attacker can either target the content, protocol, or network.
+          The consequences will largely differ reflecting various types of goals, like gaining access to confidential content, corrupting the content, compromising the Tetrys encoder and/or Tetrys decoder, or compromising the network behavior.
+          In particular, several of these attacks aim at creating a Denial-of-Service (DoS) with consequences that may be limited to a single node (e.g., the Tetrys decoder), or that may impact all the nodes attached to the targeted network (e.g., by making flows unresponsive to congestion signals).
+        </t>
+        <t indent="0" pn="section-7.1-2">
+          In the following sections, we discuss these attacks, according to the component targeted by the attacker.
+        </t>
+      </section>
+      <section anchor="security-attack-against-data-flow" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-attacks-against-the-data-fl">Attacks against the Data Flow</name>
+        <t indent="0" pn="section-7.2-1">
+          An attacker may want to access confidential content by eavesdropping the traffic between the Tetrys encoder/decoder.
+          Traffic encryption is the usual approach to mitigate this risk, and this encryption can be applied to the source flow upstream of the Tetrys encoder or to the output packets downstream of the Tetrys encoder.
+          The choice on where to apply encryption depends on various criteria,
+          in particular the attacker model (e.g., when encryption happens
+          below Tetrys, the security risk is assumed to be on the
+          interconnection network).
+        </t>
+        <t indent="0" pn="section-7.2-2">
+          An attacker may also want to corrupt the content (e.g., by injecting forged or modified source and coded packets to prevent the Tetrys decoder from recovering the original source flow).
+          Content integrity and source authentication services at the packet level are then needed to mitigate this risk.
+          Here, these services need to be provided below Tetrys in order to enable the receiver to drop undesired packets and only transfer legitimate packets to the Tetrys decoder.
+          It should be noted that forging or modifying feedback packets will not corrupt the content, although it will certainly compromise Tetrys operation (see <xref target="security-attack-against-signaling" format="default" sectionFormat="of" derivedContent="Section 7.3"/>).
+        </t>
+      </section>
+      <section anchor="security-attack-against-signaling" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-attacks-against-signaling">Attacks against Signaling</name>
+        <t indent="0" pn="section-7.3-1">
+          Attacks on signaling information (e.g., by forging or modifying feedback packets to falsify the good reception or recovery of source content) can easily prevent the Tetrys decoder from recovering the source flow, thereby creating a DoS.
+          In order to prevent this type of attack, content integrity and source authentication services at the packet level are needed for the feedback flow from the Tetrys decoder to the Tetrys encoder as well.
+          These services need to be provided below Tetrys in order to drop undesired packets and only transfer legitimate feedback packets to the Tetrys encoder.
+        </t>
+        <t indent="0" pn="section-7.3-2">
+          Conversely, an attacker in position to selectively drop feedback packets (instead of modifying them) will not severely impact the function of Tetrys since it is naturally robust when challenged with such losses.
+          However, it will have side impacts, such as the use of bigger linear systems (since the Tetrys encoder cannot remove well-received or decoded source packets from its linear system), which mechanically increases computational costs on both sides (encoder and decoder).
+        </t>
+      </section>
+      <section anchor="security-attack-against-network" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-attacks-against-the-network">Attacks against the Network</name>
+        <t indent="0" pn="section-7.4-1">
+          Tetrys can react to congestion signals (<xref target="transport-issue" format="default" sectionFormat="of" derivedContent="Section 6.1"/>) in order to provide a certain level of fairness with other flows on a shared network.
+          This ability could be exploited by an attacker to create or reinforce congestion events (e.g., by forging or modifying feedback packets) that can potentially impact a significant number of nodes attached to the network.
+          In order to mitigate the risk, content integrity and source authentication services at the packet level are needed to enable the receiver to drop undesired packets and only transfer legitimate packets to the Tetrys encoder and decoder.
+        </t>
+      </section>
+      <section anchor="security-baseline-security" numbered="true" toc="include" removeInRFC="false" pn="section-7.5">
+        <name slugifiedName="name-baseline-security-operation">Baseline Security Operation</name>
+        <t indent="0" pn="section-7.5-1">
+          Tetrys can benefit from an IPsec / Encapsulating Security Payload (IPsec/ESP) <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> that provides confidentiality, origin authentication, integrity, and anti-replay services in particular.
+  	IPsec/ESP can be used to protect the Tetrys data flows (both directions) against attackers located within the interconnection network or attackers in position to eavesdrop traffic, inject forged traffic, or replay legitimate traffic.
+        </t>
+      </section>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-8-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.singh-rmcat-adaptive-fec" to="RMCAT-ADAPTIVE-FEC"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4303" target="https://www.rfc-editor.org/info/rfc4303" quoteTitle="true" derivedAnchor="RFC4303">
+          <front>
+            <title>IP Encapsulating Security Payload (ESP)</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the Encapsulating Security Payload (ESP) protocol, which is designed to provide a mix of security services in IPv4 and IPv6.  ESP is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service (a form of partial sequence integrity), and limited traffic flow confidentiality.  This document obsoletes RFC 2406 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4303"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4303"/>
+        </reference>
+        <reference anchor="RFC5052" target="https://www.rfc-editor.org/info/rfc5052" quoteTitle="true" derivedAnchor="RFC5052">
+          <front>
+            <title>Forward Error Correction (FEC) Building Block</title>
+            <author fullname="M. Watson" initials="M." surname="Watson"/>
+            <author fullname="M. Luby" initials="M." surname="Luby"/>
+            <author fullname="L. Vicisano" initials="L." surname="Vicisano"/>
+            <date month="August" year="2007"/>
+            <abstract>
+              <t indent="0">This document describes how to use Forward Error Correction (FEC) codes to efficiently provide and/or augment reliability for bulk data transfer over IP multicast.  This document defines a framework for the definition of the information that needs to be communicated in order to use an FEC code for bulk data transfer, in addition to the encoded data itself, and for definition of formats and codes for communication of that information.  Both information communicated with the encoded data itself and information that needs to be communicated 'out-of-band' are considered.  The procedures for specifying new FEC codes, defining the information communication requirements associated with those codes and registering them with the Internet Assigned Numbers Authority (IANA) are also described.  The requirements on Content Delivery Protocols that wish to use FEC codes defined within this framework are also defined.  The companion document titled "The Use of Forward Error Correction (FEC) in Reliable Multicast" describes some applications of FEC codes for delivering content.  This document obsoletes RFC 3452. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5052"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5052"/>
+        </reference>
+        <reference anchor="RFC5445" target="https://www.rfc-editor.org/info/rfc5445" quoteTitle="true" derivedAnchor="RFC5445">
+          <front>
+            <title>Basic Forward Error Correction (FEC) Schemes</title>
+            <author fullname="M. Watson" initials="M." surname="Watson"/>
+            <date month="March" year="2009"/>
+            <abstract>
+              <t indent="0">This document provides Forward Error Correction (FEC) Scheme specifications according to the Reliable Multicast Transport (RMT) FEC building block for the Compact No-Code FEC Scheme, the Small Block, Large Block, and Expandable FEC Scheme, the Small Block Systematic FEC Scheme, and the Compact FEC Scheme.  This document obsoletes RFC 3695 and assumes responsibility for the FEC Schemes defined in RFC 3452. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5445"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5445"/>
+        </reference>
+        <reference anchor="RFC5510" target="https://www.rfc-editor.org/info/rfc5510" quoteTitle="true" derivedAnchor="RFC5510">
+          <front>
+            <title>Reed-Solomon Forward Error Correction (FEC) Schemes</title>
+            <author fullname="J. Lacan" initials="J." surname="Lacan"/>
+            <author fullname="V. Roca" initials="V." surname="Roca"/>
+            <author fullname="J. Peltotalo" initials="J." surname="Peltotalo"/>
+            <author fullname="S. Peltotalo" initials="S." surname="Peltotalo"/>
+            <date month="April" year="2009"/>
+            <abstract>
+              <t indent="0">This document describes a Fully-Specified Forward Error Correction (FEC) Scheme for the Reed-Solomon FEC codes over GF(2^^m), where m is in {2..16}, and its application to the reliable delivery of data objects on the packet erasure channel (i.e., a communication path where packets are either received without any corruption or discarded during transmission). This document also describes a Fully-Specified FEC Scheme for the special case of Reed-Solomon codes over GF(2^^8) when there is no encoding symbol group. Finally, in the context of the Under-Specified Small Block Systematic FEC Scheme (FEC Encoding ID 129), this document assigns an FEC Instance ID to the special case of Reed-Solomon codes over GF(2^^8).</t>
+              <t indent="0">Reed-Solomon codes belong to the class of Maximum Distance Separable (MDS) codes, i.e., they enable a receiver to recover the k source symbols from any set of k received symbols. The schemes described here are compatible with the implementation from Luigi Rizzo. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5510"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5510"/>
+        </reference>
+        <reference anchor="RFC5651" target="https://www.rfc-editor.org/info/rfc5651" quoteTitle="true" derivedAnchor="RFC5651">
+          <front>
+            <title>Layered Coding Transport (LCT) Building Block</title>
+            <author fullname="M. Luby" initials="M." surname="Luby"/>
+            <author fullname="M. Watson" initials="M." surname="Watson"/>
+            <author fullname="L. Vicisano" initials="L." surname="Vicisano"/>
+            <date month="October" year="2009"/>
+            <abstract>
+              <t indent="0">The Layered Coding Transport (LCT) Building Block provides transport level support for reliable content delivery and stream delivery protocols.  LCT is specifically designed to support protocols using IP multicast, but it also provides support to protocols that use unicast.  LCT is compatible with congestion control that provides multiple rate delivery to receivers and is also compatible with coding techniques that provide reliable delivery of content.  This document obsoletes RFC 3451. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5651"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5651"/>
+        </reference>
+        <reference anchor="RFC5740" target="https://www.rfc-editor.org/info/rfc5740" quoteTitle="true" derivedAnchor="RFC5740">
+          <front>
+            <title>NACK-Oriented Reliable Multicast (NORM) Transport Protocol</title>
+            <author fullname="B. Adamson" initials="B." surname="Adamson"/>
+            <author fullname="C. Bormann" initials="C." surname="Bormann"/>
+            <author fullname="M. Handley" initials="M." surname="Handley"/>
+            <author fullname="J. Macker" initials="J." surname="Macker"/>
+            <date month="November" year="2009"/>
+            <abstract>
+              <t indent="0">This document describes the messages and procedures of the Negative- ACKnowledgment (NACK) Oriented Reliable Multicast (NORM) protocol.  This protocol can provide end-to-end reliable transport of bulk data objects or streams over generic IP multicast routing and forwarding services.  NORM uses a selective, negative acknowledgment mechanism for transport reliability and offers additional protocol mechanisms to allow for operation with minimal a priori coordination among senders and receivers.  A congestion control scheme is specified to allow the NORM protocol to fairly share available network bandwidth with other transport protocols such as Transmission Control Protocol (TCP).  It is capable of operating with both reciprocal multicast routing among senders and receivers and with asymmetric connectivity (possibly a unicast return path) between the senders and receivers.  The protocol offers a number of features to allow different types of applications or possibly other higher-level transport protocols to utilize its service in different ways.  The protocol leverages the use of FEC-based (forward error correction) repair and other IETF Reliable Multicast Transport (RMT) building blocks in its design.  This document obsoletes RFC 3940. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5740"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5740"/>
+        </reference>
+        <reference anchor="RFC6363" target="https://www.rfc-editor.org/info/rfc6363" quoteTitle="true" derivedAnchor="RFC6363">
+          <front>
+            <title>Forward Error Correction (FEC) Framework</title>
+            <author fullname="M. Watson" initials="M." surname="Watson"/>
+            <author fullname="A. Begen" initials="A." surname="Begen"/>
+            <author fullname="V. Roca" initials="V." surname="Roca"/>
+            <date month="October" year="2011"/>
+            <abstract>
+              <t indent="0">This document describes a framework for using Forward Error Correction (FEC) codes with applications in public and private IP networks to provide protection against packet loss.  The framework supports applying FEC to arbitrary packet flows over unreliable transport and is primarily intended for real-time, or streaming, media.  This framework can be used to define Content Delivery Protocols that provide FEC for streaming media delivery or other packet flows.  Content Delivery Protocols defined using this framework can support any FEC scheme (and associated FEC codes) that is compliant with various requirements defined in this document.  Thus, Content Delivery Protocols can be defined that are not specific to a particular FEC scheme, and FEC schemes can be defined that are not specific to a particular Content Delivery Protocol. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6363"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6363"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8406" target="https://www.rfc-editor.org/info/rfc8406" quoteTitle="true" derivedAnchor="RFC8406">
+          <front>
+            <title>Taxonomy of Coding Techniques for Efficient Network Communications</title>
+            <author fullname="B. Adamson" initials="B." surname="Adamson"/>
+            <author fullname="C. Adjih" initials="C." surname="Adjih"/>
+            <author fullname="J. Bilbao" initials="J." surname="Bilbao"/>
+            <author fullname="V. Firoiu" initials="V." surname="Firoiu"/>
+            <author fullname="F. Fitzek" initials="F." surname="Fitzek"/>
+            <author fullname="S. Ghanem" initials="S." surname="Ghanem"/>
+            <author fullname="E. Lochin" initials="E." surname="Lochin"/>
+            <author fullname="A. Masucci" initials="A." surname="Masucci"/>
+            <author fullname="M-J. Montpetit" surname="M-J. Montpetit"/>
+            <author fullname="M. Pedersen" initials="M." surname="Pedersen"/>
+            <author fullname="G. Peralta" initials="G." surname="Peralta"/>
+            <author fullname="V. Roca" initials="V." role="editor" surname="Roca"/>
+            <author fullname="P. Saxena" initials="P." surname="Saxena"/>
+            <author fullname="S. Sivakumar" initials="S." surname="Sivakumar"/>
+            <date month="June" year="2018"/>
+            <abstract>
+              <t indent="0">This document summarizes recommended terminology for Network Coding concepts and constructs.  It provides a comprehensive set of terms in order to avoid ambiguities in future IRTF and IETF documents on Network Coding.  This document is the product of the Coding for Efficient Network Communications Research Group (NWCRG), and it is in line with the terminology used by the RFCs produced by the Reliable Multicast Transport (RMT) and FEC Framework (FECFRAME) IETF working groups.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8406"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8406"/>
+        </reference>
+        <reference anchor="RFC8680" target="https://www.rfc-editor.org/info/rfc8680" quoteTitle="true" derivedAnchor="RFC8680">
+          <front>
+            <title>Forward Error Correction (FEC) Framework Extension to Sliding Window Codes</title>
+            <author fullname="V. Roca" initials="V." surname="Roca"/>
+            <author fullname="A. Begen" initials="A." surname="Begen"/>
+            <date month="January" year="2020"/>
+            <abstract>
+              <t indent="0">RFC 6363 describes a framework for using Forward Error Correction (FEC) codes to provide protection against packet loss.  The framework supports applying FEC to arbitrary packet flows over unreliable transport and is primarily intended for real-time, or streaming, media.  However, FECFRAME as per RFC 6363 is restricted to block FEC codes.  This document updates RFC 6363 to support FEC codes based on a sliding encoding window, in addition to block FEC codes, in a backward-compatible way.  During multicast/broadcast real-time content delivery, the use of sliding window codes significantly improves robustness in harsh environments, with less repair traffic and lower FEC-related added latency.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8680"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8680"/>
+        </reference>
+        <reference anchor="RFC9265" target="https://www.rfc-editor.org/info/rfc9265" quoteTitle="true" derivedAnchor="RFC9265">
+          <front>
+            <title>Forward Erasure Correction (FEC) Coding and Congestion Control in Transport</title>
+            <author fullname="N. Kuhn" initials="N." surname="Kuhn"/>
+            <author fullname="E. Lochin" initials="E." surname="Lochin"/>
+            <author fullname="F. Michel" initials="F." surname="Michel"/>
+            <author fullname="M. Welzl" initials="M." surname="Welzl"/>
+            <date month="July" year="2022"/>
+            <abstract>
+              <t indent="0">Forward Erasure Correction (FEC) is a reliability mechanism that is distinct and separate from the retransmission logic in reliable transfer protocols such as TCP. FEC coding can help deal with losses at the end of transfers or with networks having non-congestion losses. However, FEC coding mechanisms should not hide congestion signals. This memo offers a discussion of how FEC coding and congestion control can coexist. Another objective is to encourage the research community to also consider congestion control aspects when proposing and comparing FEC coding solutions in communication systems.</t>
+              <t indent="0">This document is the product of the Coding for Efficient Network Communications Research Group (NWCRG). The scope of the document is end-to-end communications; FEC coding for tunnels is out of the scope of the document.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9265"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9265"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="A-FEC" target="https://doi.org/10.1109/INFCOM.1999.752166" quoteTitle="true" derivedAnchor="A-FEC">
+          <front>
+            <title>Adaptive FEC-based error control for Internet telephony</title>
+            <author initials="J." surname="Bolot">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Fosse-Parisis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Towsley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="1999"/>
+          </front>
+          <refcontent>IEEE INFOCOM '99, Conference on Computer Communications, New York, NY, USA, Vol. 3, pp. 1453-1460</refcontent>
+          <seriesInfo name="DOI" value="10.1109/INFCOM.1999.752166"/>
+        </reference>
+        <reference anchor="AHL-00" target="https://doi.org/10.1109/18.850663" quoteTitle="true" derivedAnchor="AHL-00">
+          <front>
+            <title>Network information flow</title>
+            <author initials="R." surname="Ahlswede">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Cai">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Li">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Yeung">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="July" year="2000"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/18.850663"/>
+          <refcontent>IEEE Transactions on Information Theory, Vol. 46, Issue 4, pp. 1204-1216</refcontent>
+        </reference>
+        <reference anchor="CTCP" target="https://arxiv.org/abs/1212.2291" quoteTitle="true" derivedAnchor="CTCP">
+          <front>
+            <title>Network Coded TCP (CTCP)</title>
+            <author initials="M." surname="Kim">
+            </author>
+            <author initials="J." surname="Cloud">
+	    </author>
+            <author initials="A." surname="ParandehGheibi">
+	    </author>
+            <author initials="L." surname="Urbina">
+	    </author>
+            <author initials="K." surname="Fouli">
+	    </author>
+            <author initials="D." surname="Leith">
+	    </author>
+            <author initials="M." surname="Medard">
+	    </author>
+            <date month="April" year="2013"/>
+          </front>
+          <seriesInfo name="arXiv" value="1212.2291v3"/>
+        </reference>
+        <reference anchor="RED-FEC" target="https://doi.org/10.1109/TBC.2008.2001713" quoteTitle="true" derivedAnchor="RED-FEC">
+          <front>
+            <title>A RED-FEC Mechanism for Video Transmission Over WLANs</title>
+            <author initials="C." surname="Lin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Shieh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Chilamkurti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Ke">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Hwang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="September" year="2008"/>
+          </front>
+          <refcontent>IEEE Transactions on Broadcasting, Vol. 54, Issue 3, pp. 517-524</refcontent>
+          <seriesInfo name="DOI" value="10.1109/TBC.2008.2001713"/>
+        </reference>
+        <reference anchor="I-D.singh-rmcat-adaptive-fec" target="https://datatracker.ietf.org/doc/html/draft-singh-rmcat-adaptive-fec-03" quoteTitle="true" derivedAnchor="RMCAT-ADAPTIVE-FEC">
+          <front>
+            <title>Congestion Control Using FEC for Conversational Media</title>
+            <author initials="V." surname="Singh" fullname="Varun Singh">
+              <organization showOnFrontPage="true">callstats.io</organization>
+            </author>
+            <author initials="M." surname="Nagy" fullname="Marcin Nagy">
+              <organization showOnFrontPage="true">Aalto University</organization>
+            </author>
+            <author initials="J." surname="Ott" fullname="Joerg Ott">
+              <organization showOnFrontPage="true">Aalto University</organization>
+            </author>
+            <author initials="L." surname="Eggert" fullname="Lars Eggert">
+              <organization showOnFrontPage="true">NetApp</organization>
+            </author>
+            <date month="March" day="20" year="2016"/>
+            <abstract>
+              <t indent="0">   This document describes a new mechanism for conversational multimedia
+   flows.  The proposed mechanism uses Forward Error Correction (FEC)
+   encoded RTP packets (redundant packets) along side the media packets
+   to probe for available network capacity.  A straightforward
+   interpretation is, the sending endpoint increases the transmission
+   rate by keeping the media rate constant but increases the amount of
+   FEC.  If no losses and discards occur, the endpoint can then increase
+   the media rate.  If losses occur, the redundant FEC packets help in
+   recovering the lost packets.  Consequently, the endpoint can vary the
+   FEC bit rate to conservatively (by a small amount) or aggressively
+   (by a large amount) probe for available network capacity.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-singh-rmcat-adaptive-fec-03"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Tetrys" target="https://doi.org/10.1109/IWSSC.2008.4656755" quoteTitle="true" derivedAnchor="Tetrys">
+          <front>
+            <title>Rethinking reliability for long-delay networks</title>
+            <author initials="J." surname="Lacan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lochin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" year="2008"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/IWSSC.2008.4656755"/>
+          <refcontent>International Workshop on Satellite and Space Communications, Toulouse, France, pp. 90-94</refcontent>
+        </reference>
+        <reference anchor="Tetrys-RT" target="http://dx.doi.org/10.1109/TMM.2011.2126564" quoteTitle="true" derivedAnchor="Tetrys-RT">
+          <front>
+            <title>On-the-Fly Erasure Coding for Real-Time Video Applications</title>
+            <author initials="P." surname="Tournoux">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lochin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Lacan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Bouabdallah">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="August" year="2011"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/TMM.2011.2126564"/>
+          <refcontent>IEEE Transactions on Multimedia, Vol. 13, Issue 4, pp. 797-812</refcontent>
+        </reference>
+        <reference anchor="THAI" target="https://doi.org/10.1016/j.image.2014.02.003" quoteTitle="true" derivedAnchor="THAI">
+          <front>
+            <title>Joint on-the-fly network coding/video quality adaptation for real-time delivery</title>
+            <author initials="T." surname="Tran Thai">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Lacan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Lochin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="April" year="2014"/>
+          </front>
+          <refcontent>Signal Processing: Image Communication, Vol. 29 Issue 4, pp. 449-461</refcontent>
+          <seriesInfo name="DOI" value="10.1016/j.image.2014.02.003"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="ack" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">First, the authors want sincerely to thank <contact fullname="Marie-Jose          Montpetit"/> for continuous help and support on Tetrys. Marie-Jo, many thanks!</t>
+      <t indent="0" pn="section-appendix.a-2">The authors also wish to thank NWCRG group members for numerous discussions on      
+on-the-fly coding that helped finalize this document.</t>
+      <t indent="0" pn="section-appendix.a-3">Finally, the authors would like to thank <contact fullname="Colin Perkins"/> for    
+providing comments and feedback on the document.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Jonathan Detchart" initials="J." surname="Detchart">
+        <organization showOnFrontPage="true">ISAE-SUPAERO</organization>
+        <address>
+          <postal>
+            <street>10, avenue Edouard Belin</street>
+            <extaddr>BP 54032</extaddr>
+            <city>Toulouse CEDEX 4</city>
+            <code>31055</code>
+            <country>France</country>
+          </postal>
+          <email>jonathan.detchart@isae-supaero.fr</email>
+        </address>
+      </author>
+      <author fullname="Emmanuel Lochin" initials="E." surname="Lochin">
+        <organization showOnFrontPage="true">ENAC</organization>
+        <address>
+          <postal>
+            <street>7, avenue Edouard Belin</street>
+            <city>Toulouse</city>
+            <code>31400</code>
+            <country>France</country>
+          </postal>
+          <email>emmanuel.lochin@enac.fr</email>
+        </address>
+      </author>
+      <author fullname="Jerome Lacan" initials="J." surname="Lacan">
+        <organization showOnFrontPage="true">ISAE-SUPAERO</organization>
+        <address>
+          <postal>
+            <street>10, avenue Edouard Belin</street>
+            <extaddr>BP 54032</extaddr>
+            <city>Toulouse CEDEX 4</city>
+            <code>31055</code>
+            <country>France</country>
+          </postal>
+          <email>jerome.lacan@isae-supaero.fr</email>
+        </address>
+      </author>
+      <author fullname="Vincent Roca" initials="V." surname="Roca">
+        <organization showOnFrontPage="true">INRIA</organization>
+        <address>
+          <postal>
+            <street>655, avenue de l'Europe</street>
+            <extaddr>Inovallee; Montbonnot</extaddr>
+            <city>St Ismier CEDEX</city>
+            <code>38334</code>
+            <country>France</country>
+          </postal>
+          <email>vincent.roca@inria.fr</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

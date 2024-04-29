@@ -1,0 +1,589 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="exp" docName="draft-crocker-email-deliveredto-10" indexInclude="true" ipr="trust200902" number="9228" prepTime="2022-04-13T22:58:01" scripts="Common,Latin" sortRefs="true" submissionType="independent" symRefs="true" tocDepth="2" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-crocker-email-deliveredto-10" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9228" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Delivered-To Header Field">Delivered-To Email Header Field</title>
+    <seriesInfo name="RFC" value="9228" stream="independent"/>
+    <author fullname="Dave Crocker" initials="D." surname="Crocker" role="editor">
+      <organization showOnFrontPage="true">Brandenburg InternetWorking</organization>
+      <address>
+        <email>dcrocker@bbiw.net</email>
+      </address>
+    </author>
+    <date month="04" year="2022"/>
+    <keyword>handling</keyword>
+    <keyword>email</keyword>
+    <keyword>mhs</keyword>
+    <keyword>recipient</keyword>
+    <keyword>transport</keyword>
+    <keyword>delivery</keyword>
+    <keyword>mda</keyword>
+    <keyword>mta</keyword>
+    <keyword>relay</keyword>
+    <keyword>header</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The address to which email is delivered might be different than any of the addresses shown in any of the
+                content header fields that were created by the email's author. For example, the address used by the
+                email transport service is provided separately, such as through SMTP's "RCPT TO" command, and might not
+                match any address in the To: or cc: fields. In addition, before final delivery, handling can entail a
+                sequence of submission/delivery events, using a sequence of different destination addresses that
+                (eventually) lead to the recipient. As well, a receiving system's delivery process can produce local
+                address transformations.</t>
+      <t indent="0" pn="section-abstract-2"> It can be helpful for a message to have a common way to record each delivery in such a sequence, noting each address used in the sequence to that recipient, such as for (1) analyzing the path a message has taken, (2) loop detection, or (3) formulating the author's address in a reply message.  This document
+                defines a header field for this information.</t>
+      <t indent="0" pn="section-abstract-3">Email handling information discloses details about the email infrastructure, as well as about a
+                particular recipient; this can raise privacy concerns.</t>
+      <t indent="0" pn="section-abstract-4">A header field such as this is not automatically assured of widespread use. Therefore, this document is being
+                published as an Experimental RFC, looking for constituency and for operational utility. This document was
+                produced through the Independent Submission Stream and was not subject to the IETF's approval process.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This is a contribution to the RFC Series,
+            independently of any other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for publication
+            by the RFC Editor are not candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9228" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-background">Background</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-framework-terminology">Framework &amp; Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-delivered-to">Delivered-To</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-multi-delivery-example">Multi-Delivery Example</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-experimental-goals">Experimental Goals</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-address">Author's Address</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The address to which email is delivered might be different than any of the addresses shown in any of the
+                content header fields <xref target="RFC5322" format="default" sectionFormat="of" derivedContent="Mail-Fmt"/>, such as the To: and cc: fields that were created by the
+                author's Message User Agent (MUA) <xref target="RFC5598" format="default" sectionFormat="of" derivedContent="Mail-Arch"/>.
+ The address used by the Message Handling
+                Service (MHS) is provided separately, in envelope information, such as through a "RCPT TO" command in
+                    <xref target="RFC5321" format="default" sectionFormat="of" derivedContent="SMTP"/>.</t>
+      <t indent="0" pn="section-1-2">As noted in <xref target="RFC5598" section="4.3.3" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5598#section-4.3.3" derivedContent="Mail-Arch"/>, 'A transfer of responsibility from the MHS to a Recipient's environment (mailbox) is called "delivery".' 
+                That is, when the destination address is fully and successfully processed, and any additional processing
+                is by an agent working on behalf of that address, the message has been delivered. Rather than placing
+                the message into a recipient inbox or otherwise completing the handling of the message, that agent
+                might create additional processing, including to one or more different addresses. 
+Each transition of
+                responsibility, from the MHS to an agent of a current addressee, constitutes a distinct delivery. Given
+                handling sequences that can include aliasing, mailing lists, and the like, the transit of a message from
+                its author to a final recipient might include a series of submission/delivery events. Also, the delivery
+                process at a receiving system can produce local (internal) address transformations. </t>
+      <t indent="0" pn="section-1-3">Header fields that provide information about handling can be used when assessing email traffic issues and
+                when diagnosing specific handling problems. To this end, it can be helpful for a message to have a
+                common way to indicate each delivery in the handling sequence and to include each address that led to
+                the final delivery.
+ This can aid in the analysis of a message's transit handling. </t>
+      <t indent="0" pn="section-1-4">An additional use can be to aid in detecting a delivery sequence loop, based on a specific address.
+                With a problematic loop, the same copy of a message is delivered to the same email address more than
+                once. This is different from having different copies delivered to the same address, such as happens when
+                a message is sent directly to an address, as well as via a mailing list. It is also different from
+                having two copies of the same message arrive at the same, ultimate destination address, having been
+                originally posted to two different addresses. Further, this is different from noting when a message
+                simply transits the same Message Transfer Agent (MTA) more than once, which might be necessary, such as when it is processed
+                through a mailing list; an MTA services many addresses. </t>
+      <t indent="0" pn="section-1-5">Delivering the same copy of a message more than once, to the same address, is almost certainly not an
+                intended activity. An example of a problematic arrangement would be to send a message to mailing list
+                List-A, where List-A contains an entry for List-B, and List-B contains an entry for List-A. The message
+                will enter an infinite loop. Loop detection for email can be a complicated affair. The Delivered-To:
+                header field provides helpful information, with a definitive indication that this copy of a message has
+                (already) been delivered to a specific address.</t>
+      <t indent="0" pn="section-1-6">When specifying new activity that is related to existing activity, there is a choice of design approach:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-7">
+        <li pn="section-1-7.1">Seeking to change (some of) the existing behavior</li>
+        <li pn="section-1-7.2">Adding to the activity without changing what is already being done</li>
+        <li pn="section-1-7.3">Calling for separate, new activity</li>
+      </ul>
+      <t indent="0" pn="section-1-8">On the average, attempting to change existing activities is the least likely to obtain adoption;
+                it can create operational confusion between old and new activities, which in turn creates resistance to
+                adoption. Seeking new activity can make sense when that activity is sufficiently different and deemed
+                sufficiently beneficial. Adding to existing activity has the selling point of building upon an installed
+                base. The current specification builds upon an existing installed base of Delivered-To: activity. It
+                calls for little technical enhancement; rather, it simply provides for a wider range of
+                application.</t>
+      <t indent="0" pn="section-1-9">Considerations: </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-10">
+        <li pn="section-1-10.1">Email handling information, such as this, provides information about the email infrastructure, as
+                        well as about the recipient. Disclosure of this information might engender privacy concerns.</li>
+        <li pn="section-1-10.2">A specification is not automatically assured of adoption or use. Therefore, this document is being published
+                        as an Experimental RFC, looking for extended constituency and for general operational utility.</li>
+        <li pn="section-1-10.3">This document was produced through the Independent RFC Stream and was not subject to the IETF's
+                        approval process.</li>
+      </ul>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-background">Background</name>
+      <t indent="0" pn="section-2-1">Ad hoc use of a Delivered-To: email header field appears to date back to the 1990s, primarily for loop
+                detection, although documentation is spotty and system specific. A listing of some implementations is
+                offered in <xref target="Prior" format="default" sectionFormat="of" derivedContent="Prior"/>.</t>
+      <t indent="0" pn="section-2-2">It appears that all uses include a string in the form of an email address, although at least one example
+                has leading text that is a comment about the address. In some cases, the string appears to be the email
+                transport destination address, such as the address used in SMTP's "RCPT TO" command.
+ In other cases, it appears to
+                be the result of some internal mapping at the receiving system, although tending to be a variant of the
+                transport address.</t>
+      <t indent="0" pn="section-2-3">Email loop detection tends to be accomplished through a variety of different methods, such as counting
+                Received: header fields. These methods are often combined to greater effect. </t>
+      <t indent="0" pn="section-2-4">The Received: header field's 'for' clause is sometimes useful for disclosing the recipient's address.
+                However, the clause is not used reliably, and its semantics are not thoroughly defined. Also, it references
+                an addressing value that is received but might be different from the value that is ultimately used (as
+                the result of a transformation).
+ That is, the value in a 'for' clause might be a sufficient indicator of
+                delivery addressing, but it might not.</t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-framework-terminology">Framework &amp; Terminology</name>
+      <t indent="0" pn="section-3-1">Unless otherwise indicated, basic architecture and terminology used in this document are taken from:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-2">
+        <li pn="section-3-2.1">
+          <xref target="RFC5598" format="default" sectionFormat="of" derivedContent="Mail-Arch"/></li>
+        <li pn="section-3-2.2">
+          <xref target="RFC5321" format="default" sectionFormat="of" derivedContent="SMTP"/></li>
+        <li pn="section-3-2.3">
+          <xref target="RFC5322" format="default" sectionFormat="of" derivedContent="Mail-Fmt"/></li>
+      </ul>
+      <t indent="0" pn="section-3-3"> and syntax is specified with: </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-4">
+        <li pn="section-3-4.1">
+          <xref target="RFC5234" format="default" sectionFormat="of" derivedContent="ABNF"/></li>
+      </ul>
+      <t indent="0" pn="section-3-5">Normative language is per <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/>: </t>
+      <t indent="3" pn="section-3-6">
+        The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+        "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+        "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+        "<bcp14>SHOULD NOT</bcp14>",
+        "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+        "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+        are to be interpreted as described in BCP 14
+        <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+        when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-delivered-to">Delivered-To</name>
+      <t indent="0" pn="section-4-1">The Delivered-To: header field annotates an email delivery event. The header field contains information
+                about the individual address used to effect that transition.</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-2">
+        <li pn="section-4-2.1">When a message is delivered, as a transition from control by the MHS to the recipient's store or
+                        their agent, a Delivered-To: header field <bcp14>SHOULD</bcp14> be added, with the <em>addr-spec</em>
+                        value containing the address that was used by the service to reach the recipient.</li>
+        <li pn="section-4-2.2">If a receiving system's delivery process applies mappings or transformations from the address
+                        used by the MHS to a local value, this new value <bcp14>SHOULD</bcp14> also be recorded into a separate
+                        Delivered-To: field when transit and processing using that address successfully complete.
+                        This ensures a detailed record of the sequence of handling addresses used for the message.</li>
+        <li pn="section-4-2.3">As with some other information, each additional Delivered-To: header field <bcp14>MUST</bcp14> be placed at the
+                        current 'top' of the message's set of header fields -- that is, as the first header field, in a
+
+                        fashion similar to the trace fields specified in <xref target="RFC5321" format="default" sectionFormat="of" derivedContent="SMTP"/> (for example, <xref target="RFC5321" section="4.1.1.4" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5321#section-4.1.1.4" derivedContent="SMTP"/>). This produces a sequence of Delivered-To: header fields that represent the sequence of
+                        deliveries, with the first being at the 'bottom' of the sequence and the final one being at the
+                        top.</li>
+        <li pn="section-4-2.4">As with other fields placed incrementally in this way, with each added at the current top, the
+                        Delivered-To: header field <bcp14>MUST NOT</bcp14> be reordered with respect to other Delivered-To: fields and
+                        those other fields. This is intended to preserve the fields as representing the message handling
+                        sequence.</li>
+      </ul>
+      <t indent="0" pn="section-4-3">The Delivered-To: header field is added at the time of delivery, when responsibility for a message
+                transitions from the Message Handling Service (MHS) to an agent of the specified individual
+                recipient address. The field can also be added as a result of internal system processing, to note
+                address transformations.</t>
+      <aside pn="section-4-4">
+        <t indent="0" pn="section-4-4.1">Note:
+        The presence of an existing Delivered-To: header field, for the same address,
+                        typically indicates a handling loop for this instance of the message.</t>
+      </aside>
+      <t indent="0" pn="section-4-5">The syntax of the header field is: </t>
+      <sourcecode type="abnf" markers="false" pn="section-4-6">"Delivered-To:" FWS addr-spec FWS CRLF ; addr-spec is from [Mail-Fmt]
+</sourcecode>
+      <t indent="0" pn="section-4-7">The field records information about a single address, for one recipient. See <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 6"/>
+                for the privacy-related concerns about divulging addresses.</t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-multi-delivery-example">Multi-Delivery Example</name>
+      <t indent="0" pn="section-5-1">The Delivered-To: header field can be used to document a sequence of deliveries of a message. Each time
+                an address is fully processed, a Delivered-To: header field is added, recording a handling sequence,
+                with the most recent one being towards the 'top' of the sequence of header fields.</t>
+      <t indent="0" pn="section-5-2">This example demonstrates a message traveling from its original posting, through a remote group mailing
+                list, on through an independent personal aliasing mechanism, and then reaching final delivery at yet
+                another independent email provider. </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5-3"><li pn="section-5-3.1" derivedCounter="1.">
+          <t indent="0" pn="section-5-3.1.1">Origination at com.example </t>
+          <t indent="3" pn="section-5-3.1.2">
+            The message, as submitted. The destination address is the same as the value in the
+                                message's To: header field.</t>
+          <artwork align="left" pn="section-5-3.1.3">From: Ann Author &lt;aauthor@com.example&gt;
+Date: Mon, 25 Jan 2021 18:29:06 -0500
+To: list@org.example
+Subject: [list] Sending through a list and alias
+Sender: Ann Author &lt;aauthor@com.example&gt;
+</artwork>
+        </li>
+        <li pn="section-5-3.2" derivedCounter="2.">
+          <t indent="0" pn="section-5-3.2.1">List processing at org.example </t>
+          <t indent="3" pn="section-5-3.2.2">As delivered, with one Delivered-To: header field, to the list processing module, which
+                                will then resubmit the message for further transport to the list member
+                                "Recipient-alumn@edu.example".</t>
+          <artwork align="left" pn="section-5-3.2.3">Delivered-To: list@org.example
+Received: by submit.org.example with SMTP id i17so17480689ljn.1
+    for &lt;list@org.example&gt; from mail.com.example; 
+    Mon, 25 Jan 2021 15:29:19 -0800 (PST)
+Received: by mail.com.example; Mon, 25 Jan 2021 15:29:00 -0800 (PST)
+From: Ann Author &lt;aauthor@com.example&gt;
+Date: Mon, 25 Jan 2021 18:29:06 -0500
+To: list@org.example
+Subject: [list] Sending through a list and alias
+Sender: Ann Author &lt;aauthor@com.example&gt;
+</artwork>
+        </li>
+        <li pn="section-5-3.3" derivedCounter="3.">
+          <t indent="0" pn="section-5-3.3.1">Alias processing at edu.example </t>
+          <t indent="3" pn="section-5-3.3.2">
+            The message, as delivered with two Delivered-To: header fields, to the alias processing
+                                module, which sends the message on to "theRecipient@example.net".</t>
+          <artwork align="left" pn="section-5-3.3.3">Delivered-To: Recipient-alumn@edu.example
+Received: from mail.org.example
+    by relay.edu.example; Mon, 25 Jan 2021 23:29:24 +0000 (UTC)
+Received: by submit.org.example; 
+    Mon, 25 Jan 2021 23:29:21 +0000 (UTC)
+Delivered-To: list@org.example
+Received: by submit.org.example with SMTP id i17so17480689ljn.1
+    for &lt;list@org.example&gt; from mail.com.example; 
+    Mon, 25 Jan 2021 15:29:19 -0800 (PST)
+Received: by mail.com.example; Mon, 25 Jan 2021 15:29:00 -0800 (PST)
+From: Ann Author &lt;aauthor@com.example&gt;
+Date: Mon, 25 Jan 2021 18:29:06 -0500
+To: list@org.example
+Subject: [list] Sending through a list and alias
+Sender: list-bounces@org.example
+</artwork>
+        </li>
+        <li pn="section-5-3.4" derivedCounter="4.">
+          <t indent="0" pn="section-5-3.4.1">Final delivery to the recipient at example.net </t>
+          <t indent="3" pn="section-5-3.4.2">
+            The message, as finally delivered with three Delivered-To: header fields, to the
+                                recipient at "theRecipient@example.net".</t>
+          <artwork align="left" pn="section-5-3.4.3">Delivered-To: theRecipient@example.net
+Received: from mail.edu.example (mail.edu.example [4.31.198.45])
+    by relay.example.net; Mon, 25 Jan 2021 23:29:24 +0000 (UTC)
+Delivered-To: Recipient-alumn@edu.example
+Received: from mail.org.example
+    by relay.edu.example; Mon, 25 Jan 2021 23:29:24 +0000 (UTC)
+Received: by submit.org.example; 
+    Mon, 25 Jan 2021 23:29:21 +0000 (UTC)
+Delivered-To: list@org.example
+Received: by submit.org.example with SMTP id i17so17480689ljn.1
+    for &lt;list@org.example&gt; from mail.com.example; 
+    Mon, 25 Jan 2021 15:29:19 -0800 (PST)
+Received: by mail.com.example; Mon, 25 Jan 2021 15:29:00 -0800 (PST)
+From: Ann Author &lt;aauthor@com.example&gt;
+Date: Mon, 25 Jan 2021 18:29:06 -0500
+To: list@org.example
+Subject: [list] Sending through a list and alias
+Sender: list-bounces@org.example
+</artwork>
+        </li>
+      </ol>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">As with Received: header fields, the presence of a Delivered-To: header field discloses handling
+                information and, possibly, personal information.</t>
+      <t indent="0" pn="section-6-2">Security and privacy are essential, if challenging, topics for email in general and for the handling of
+                metadata in particular. The purpose of this section is to note points of potential concern, rather than
+                to provide details for mitigation. The basic mechanism described here has a long history of use, with no
+                history of being problematic. However, the expanded use described here might create new scenarios that
+                are problematic.</t>
+      <t indent="0" pn="section-6-3">An issue specific to this mechanism is disclosure of a sequence of addresses, applied to the same
+                recipient, if a message goes through a series of recipient address replacements. This document calls for
+                each of these addresses to be recorded in a separate Delivered-To: field. This does not disclose
+                addresses of other recipients, but it does disclose an address-transformation handling path for the
+                recipient.</t>
+      <t indent="0" pn="section-6-4">This disclosure is most likely to be a concern when a recipient manually forwards a message and
+                includes all of the original header fields. This will expose, to a later recipient, any intermediate
+                addresses used for getting the original message to the original recipient. Such a disclosure is likely
+                to be unintended and might be (highly) problematic. Note that a basic version of this unintended
+                disclosure has long existed, by virtue of a later recipient's seeing Received: header fields, but
+                especially any with a 'for' clause. However, a Delivered-To: header field sequence can disclose
+                significantly more recipient-specific handling detail.</t>
+      <t indent="0" pn="section-6-5">An issue that is entirely implementation specific -- and therefore out of scope for this document -- is
+                that in some systems, a message that is for multiple (local) recipients is stored as a single, shared
+                version. Supporting Delivered-To:, while maintaining recipient privacy, creates a challenge in this
+                case, since exposing different recipient addresses to other recipients can be problematic.</t>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">IANA has registered the Delivered-To: header field as below, per <xref target="RFC3864" format="default" sectionFormat="of" derivedContent="RFC3864"/> in the "Provisional Message Header Field Names" registry: </t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-7-2">
+        <dt pn="section-7-2.1">Header Field Name:</dt>
+        <dd pn="section-7-2.2"> Delivered-To</dd>
+        <dt pn="section-7-2.3">Protocol:</dt>
+        <dd pn="section-7-2.4"> mail</dd>
+        <dt pn="section-7-2.5">Status:</dt>
+        <dd pn="section-7-2.6">Provisional</dd>
+        <dt pn="section-7-2.7">Author/Change controller:</dt>
+        <dd pn="section-7-2.8">Dave Crocker</dd>
+        <dt pn="section-7-2.9">Specification document(s):</dt>
+        <dd pn="section-7-2.10"> *** This document ***</dd>
+        <dt pn="section-7-2.11">Related information:</dt>
+        <dd pn="section-7-2.12">None.</dd>
+      </dl>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-experimental-goals">Experimental Goals</name>
+      <t indent="0" pn="section-8-1">Specific feedback is sought concerning:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-2">
+        <li pn="section-8-2.1">Technical issues in recording the Delivered-To: field into a message, through its entire
+                        submission/delivery sequence</li>
+        <li pn="section-8-2.2">Market interest in the uses described here</li>
+        <li pn="section-8-2.3">Utility for the purposes described here, or for other uses</li>
+      </ul>
+      <t indent="0" pn="section-8-3"> So the questions to answer for this Experimental RFC are:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-4">
+        <li pn="section-8-4.1">Is there demonstrated interest by MSA/MTA/MDA (Message Submission Agent / Message Transfer Agent / Message Delivery Agent) developers?</li>
+        <li pn="section-8-4.2">If the capability is implemented and the header field generated, is it used by operators or
+                        MUAs?</li>
+        <li pn="section-8-4.3">Does the presence of the header field create any operational problems?</li>
+        <li pn="section-8-4.4">Does the presence of the header field demonstrate additional security issues?</li>
+        <li pn="section-8-4.5">What specific changes to the document are needed?</li>
+        <li pn="section-8-4.6">What other comments will aid in use of this mechanism?</li>
+      </ul>
+      <t indent="0" pn="section-8-5">Please send comments to ietf-smtp@ietf.org.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC5234" to="ABNF"/>
+    <displayreference target="RFC5598" to="Mail-Arch"/>
+    <displayreference target="RFC5322" to="Mail-Fmt"/>
+    <displayreference target="RFC5321" to="SMTP"/>
+    <references pn="section-9">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-9.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC5234" target="https://www.rfc-editor.org/info/rfc5234" quoteTitle="true" derivedAnchor="ABNF">
+          <front>
+            <title>Augmented BNF for Syntax Specifications: ABNF</title>
+            <author initials="D." surname="Crocker" fullname="D. Crocker" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Overell" fullname="P. Overell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="January"/>
+            <abstract>
+              <t indent="0">Internet technical specifications often need to define a formal syntax.  Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications.  The current specification documents ABNF. It balances compactness and simplicity with reasonable representational power.  The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges.  This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="68"/>
+          <seriesInfo name="RFC" value="5234"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5234"/>
+        </reference>
+        <reference anchor="RFC5598" target="https://www.rfc-editor.org/info/rfc5598" quoteTitle="true" derivedAnchor="Mail-Arch">
+          <front>
+            <title>Internet Mail Architecture</title>
+            <author initials="D." surname="Crocker" fullname="D. Crocker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="July"/>
+            <abstract>
+              <t indent="0">Over its thirty-five-year history, Internet Mail has changed significantly in scale and complexity, as it has become a global infrastructure service.  These changes have been evolutionary, rather than revolutionary, reflecting a strong desire to preserve both its installed base and its usefulness.  To collaborate productively on this large and complex system, all participants need to work from a common view of it and use a common language to describe its components and the interactions among them.  But the many differences in perspective currently make it difficult to know exactly what another participant means.  To serve as the necessary common frame of reference, this document describes the enhanced Internet Mail architecture, reflecting the current service.  This memo provides  information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5598"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5598"/>
+        </reference>
+        <reference anchor="RFC5322" target="https://www.rfc-editor.org/info/rfc5322" quoteTitle="true" derivedAnchor="Mail-Fmt">
+          <front>
+            <title>Internet Message Format</title>
+            <author initials="P." surname="Resnick" fullname="P. Resnick" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="October"/>
+            <abstract>
+              <t indent="0">This document specifies the Internet Message Format (IMF), a syntax for text messages that are sent between computer users, within the framework of "electronic mail" messages.  This specification is a revision of Request For Comments (RFC) 2822, which itself superseded Request For Comments (RFC) 822, "Standard for the Format of ARPA Internet Text Messages", updating it to reflect current practice and incorporating incremental changes that were specified in other RFCs.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5322"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5322"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3864" target="https://www.rfc-editor.org/info/rfc3864" quoteTitle="true" derivedAnchor="RFC3864">
+          <front>
+            <title>Registration Procedures for Message Header Fields</title>
+            <author initials="G." surname="Klyne" fullname="G. Klyne">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Nottingham" fullname="M. Nottingham">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mogul" fullname="J. Mogul">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="September"/>
+            <abstract>
+              <t indent="0">This specification defines registration procedures for the message header fields used by Internet mail, HTTP, Netnews and other applications.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="90"/>
+          <seriesInfo name="RFC" value="3864"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3864"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC5321" target="https://www.rfc-editor.org/info/rfc5321" quoteTitle="true" derivedAnchor="SMTP">
+          <front>
+            <title>Simple Mail Transfer Protocol</title>
+            <author initials="J." surname="Klensin" fullname="J. Klensin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="October"/>
+            <abstract>
+              <t indent="0">This document is a specification of the basic protocol for Internet electronic mail transport.  It consolidates, updates, and clarifies several previous documents, making all or parts of most of them obsolete.  It covers the SMTP extension mechanisms and best practices for the contemporary Internet, but does not provide details about particular extensions.  Although SMTP was designed as a mail transport and delivery protocol, this specification also contains information that is important to its use as a "mail submission" protocol for "split-UA" (User Agent) mail reading systems and mobile environments.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5321"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5321"/>
+        </reference>
+      </references>
+      <references pn="section-9.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="Prior" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-duklev-deliveredto-01" derivedAnchor="Prior">
+          <front>
+            <title>The Delivered-To Message Header Field</title>
+            <author fullname="Viktor Dukhovni">
+              <organization showOnFrontPage="true">Bloomberg LP</organization>
+            </author>
+            <author fullname="John Levine">
+              <organization showOnFrontPage="true">Standcore LLC</organization>
+            </author>
+            <date month="February" day="6" year="2022"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-duklev-deliveredto-01"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">Even a simple, narrow specification can elicit a remarkable range and intensity of debate. In spite of
+                the current document's being a case of that challenge, useful discussion has taken place, first in the
+                IETF's emailcore working group mailing list, and then on the long-standing ietf-smtp mailing list.</t>
+      <t indent="0" pn="section-appendix.a-2">Helpful information and suggestions were provided by Anonymous,
+<contact fullname="Stéphane Bortzmeyer"/>,
+<contact fullname="Richard Clayton"/>, <contact fullname="Viktor Dukhovni"/>, <contact fullname="Adrian Farrel"/>, <contact fullname="Ned Freed"/>, <contact fullname="John Klensin"/>, <contact fullname="Barry Leiba"/>, <contact fullname="Brandon Long"/>, <contact fullname="George Michaelson"/>, <contact fullname="Michael Peddemors"/>, <contact fullname="Phil Pennock"/>, <contact fullname="Pete Resnick"/>, <contact fullname="Sam Varshavchik"/>, <contact fullname="Alessandro Vesely"/>, and <contact fullname="Tim Wicinski"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-address">Author's Address</name>
+      <author fullname="Dave Crocker" initials="D." surname="Crocker" role="editor">
+        <organization showOnFrontPage="true">Brandenburg InternetWorking</organization>
+        <address>
+          <email>dcrocker@bbiw.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

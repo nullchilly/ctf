@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  web:
+    container_name: ${APP_NAME}-django
+    build:
+      context: ./build
+      dockerfile: Dockerfile-python
+    restart: unless-stopped
+    entrypoint: dockerize -wait tcp://${APP_NAME}-db:5432 -timeout 30s
+    command: ./start.sh
+    volumes:
+      - ./app/:/app
+    ports:
+      - "8044:8044"
+    environment:
+      TZ: "Asia/Seoul"
+      HOST: ${HOST}
+      APP_NAME: ${APP_NAME}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      RUNNING: ${RUNNING}
+      SECRET_KEY: ${SECRET_KEY}
+      FLAG: ${FLAG}
+    networks:
+      - default
+      # - traefik-pub
+  db:
+    container_name: ${APP_NAME}-db
+    build:
+      context: ./build
+      dockerfile: Dockerfile-postgres
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      TZ: "Asia/Seoul"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    networks:
+      - default
+# networks:
+#   traefik-pub:
+#     external: true

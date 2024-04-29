@@ -1,0 +1,1040 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-tls-subcerts-15" number="9345" category="std" consensus="true" submissionType="IETF" tocInclude="true" sortRefs="true" symRefs="true" prepTime="2023-07-13T15:07:14" indexInclude="true" scripts="Common,Han,Latin" tocDepth="3">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-subcerts-15" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9345" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Delegated Credentials for TLS and DTLS</title>
+    <seriesInfo name="RFC" value="9345" stream="IETF"/>
+    <author initials="R." surname="Barnes" fullname="Richard Barnes">
+      <organization showOnFrontPage="true">Cisco</organization>
+      <address>
+        <email>rlb@ipv.sx</email>
+      </address>
+    </author>
+    <author initials="S." surname="Iyengar" fullname="Subodh Iyengar">
+      <organization showOnFrontPage="true">Facebook</organization>
+      <address>
+        <email>subodh@fb.com</email>
+      </address>
+    </author>
+    <author initials="N." surname="Sullivan" fullname="Nick Sullivan">
+      <organization showOnFrontPage="true">Cloudflare</organization>
+      <address>
+        <email>nick@cloudflare.com</email>
+      </address>
+    </author>
+    <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+      <organization showOnFrontPage="true">Windy Hill Systems, LLC</organization>
+      <address>
+        <email>ekr@rtfm.com</email>
+      </address>
+    </author>
+    <date month="07" year="2023"/>
+    <area>Security</area>
+    <workgroup>tls</workgroup>
+    <keyword>certificate</keyword>
+    <keyword>authentication</keyword>
+    <keyword>TLS 1.3</keyword>
+    <keyword>signature scheme</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The organizational separation between operators of TLS and DTLS
+endpoints and the certification authority can create limitations.  For
+example, the lifetime of certificates, how they may be used, and the
+algorithms they support are ultimately determined by the
+Certification Authority (CA).  This document describes a mechanism
+to overcome some of these limitations by enabling operators to
+delegate their own credentials for use in TLS and DTLS without breaking
+compatibility with peers that do not support this specification.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9345" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-terminology">Conventions and Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-solution-overview">Solution Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rationale">Rationale</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-related-work">Related Work</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-delegated-credentials">Delegated Credentials</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-and-server-behavior">Client and Server Behavior</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.1.2">
+                  <li pn="section-toc.1-1.4.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.1.1"><xref derivedContent="4.1.1" format="counter" sectionFormat="of" target="section-4.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-authentication">Server Authentication</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.2.1"><xref derivedContent="4.1.2" format="counter" sectionFormat="of" target="section-4.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-authentication">Client Authentication</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.3.1"><xref derivedContent="4.1.3" format="counter" sectionFormat="of" target="section-4.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-validating-a-delegated-cred">Validating a Delegated Credential</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate-requirements">Certificate Requirements</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-considerations">Operational Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-clock-skew">Client Clock Skew</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-of-delegated-crede">Security of Delegated Credential's Private Key</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-re-use-of-delegated-credent">Re-use of Delegated Credentials in Multiple Contexts</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-revocation-of-delegated-cre">Revocation of Delegated Credentials</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interactions-with-session-r">Interactions with Session Resumption</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.6">
+                <t indent="0" pn="section-toc.1-1.7.2.6.1"><xref derivedContent="7.6" format="counter" sectionFormat="of" target="section-7.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-impact-of-signature-for">The Impact of Signature Forgery Attacks</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-asn1-module">ASN.1 Module</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-certificate">Example Certificate</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">Server operators often deploy (D)TLS termination to act as the server for
+inbound TLS connections.  These termination services can be in locations such
+as remote data centers or Content Delivery Networks (CDNs) where it may
+be difficult to detect compromises of private key material corresponding
+to TLS certificates.  Short-lived certificates may be
+used to limit the exposure of keys in these cases.</t>
+      <t indent="0" pn="section-1-2">However, short-lived certificates need to be renewed more frequently than
+long-lived certificates.  If an external Certification Authority (CA) is unable to issue a certificate in
+time to replace a deployed certificate, the server would no longer be able to
+present a valid certificate to clients.  With short-lived certificates, there is
+a smaller window of time to renew a certificate and therefore a higher risk that
+an outage at a CA will negatively affect the uptime of the TLS-fronted service.</t>
+      <t indent="0" pn="section-1-3">Typically, a (D)TLS server uses a certificate provided by some entity other than
+the operator of the server (a CA) <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>
+        <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>.  This organizational separation makes the (D)TLS server operator
+dependent on the CA for some aspects of its operations. For example:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-4">
+        <li pn="section-1-4.1">Whenever the server operator wants to deploy a new certificate, it has to
+interact with the CA.</li>
+        <li pn="section-1-4.2">The CA might only issue credentials containing certain types of public keys,
+which can limit the set of (D)TLS signature schemes usable by the server
+operator.</li>
+      </ul>
+      <t indent="0" pn="section-1-5">To reduce the dependency on external CAs, this document specifies a limited delegation
+mechanism that allows a (D)TLS peer to issue its own credentials within
+the scope of a certificate issued by an external CA.  These credentials only enable the
+recipient of the delegation to terminate connections for names that the CA has authorized.  Furthermore,
+this mechanism allows the server to use modern signature algorithms such as
+Ed25519 <xref target="RFC8032" format="default" sectionFormat="of" derivedContent="RFC8032"/> even if their CA does not support them.</t>
+      <t indent="0" pn="section-1-6">This document refers to the certificate issued by the CA as a "certificate",
+or "delegation certificate", and the one issued by the operator as a "delegated
+credential" or "DC".</t>
+    </section>
+    <section anchor="conventions-and-terminology" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-conventions-and-terminology">Conventions and Terminology</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+"<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they
+appear in all capitals, as shown here.</t>
+    </section>
+    <section anchor="solution-overview" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-solution-overview">Solution Overview</name>
+      <t indent="0" pn="section-3-1">A delegated credential (DC) is a digitally signed data structure with two semantic
+fields: a validity interval and a public key (along with its associated
+signature algorithm).  The signature on the delegated credential indicates a delegation
+from the certificate that is issued to the peer.  The private key
+used to sign a credential corresponds to the public key of the peer's
+X.509 end-entity certificate <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>. <xref target="fig1" format="default" sectionFormat="of" derivedContent="Figure 1"/> shows the intended deployment architecture.</t>
+      <figure anchor="fig1" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-delegated-credentials-deplo">Delegated Credentials Deployment Architecture</name>
+        <artwork align="left" pn="section-3-2.1">
+Client            Front-End            Back-End
+  |                   |&lt;--DC distribution-&gt;|
+  |----ClientHello---&gt;|                    |
+  |&lt;---ServerHello----|                    |
+  |&lt;---Certificate----|                    |
+  |&lt;---CertVerify-----|                    |
+  |        ...        |                    |
+
+Legend:
+Client: (D)TLS client
+Front-End: (D)TLS server (could be a TLS-termination service like a CDN)
+Back-End: Service with access to a private key
+</artwork>
+      </figure>
+      <t indent="0" pn="section-3-3">A (D)TLS handshake that uses delegated credentials differs from a standard handshake
+in a few important ways:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-4">
+        <li pn="section-3-4.1">The initiating peer provides an extension in its ClientHello or CertificateRequest
+that indicates support for this mechanism.</li>
+        <li pn="section-3-4.2">The peer sending the Certificate message provides both the certificate
+chain terminating in its certificate and the delegated credential.</li>
+        <li pn="section-3-4.3">The initiator uses information from the peer's certificate
+to verify the delegated credential and that the peer is asserting an
+expected identity, determining an authentication result for the peer.</li>
+        <li pn="section-3-4.4">Peers accepting the delegated credential use it as the certificate
+key for the (D)TLS handshake.</li>
+      </ul>
+      <t indent="0" pn="section-3-5">As detailed in <xref target="delegated-credentials" format="default" sectionFormat="of" derivedContent="Section 4"/>, the delegated credential is
+cryptographically bound to the end-entity certificate with which the
+credential may be used.  This document specifies the use of delegated
+credentials in (D)TLS 1.3 or later; their use in prior versions of the
+protocol is not allowed.</t>
+      <t indent="0" pn="section-3-6">Delegated credentials allow a peer to terminate (D)TLS connections on behalf of
+the certificate owner.  If a credential is stolen, there is no mechanism for
+revoking it without revoking the certificate itself.  To limit exposure in case
+of the compromise of a delegated credential's private key, delegated credentials
+have a maximum validity period.  In the absence of an application profile standard
+specifying otherwise, the maximum validity period is set to 7 days.  Peers <bcp14>MUST NOT</bcp14> issue credentials with a validity period longer than the maximum validity period or that extends beyond the validity period of the delegation certificate.
+This mechanism is described in detail in <xref target="client-and-server-behavior" format="default" sectionFormat="of" derivedContent="Section 4.1"/>.</t>
+      <t indent="0" pn="section-3-7">It was noted in <xref target="XPROT" format="default" sectionFormat="of" derivedContent="XPROT"/> that certificates in use by servers that
+support outdated protocols such as SSLv2 can be used to forge
+signatures for certificates that contain the keyEncipherment KeyUsage
+(<xref section="4.2.1.3" sectionFormat="comma" target="RFC5280" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4.2.1.3" derivedContent="RFC5280"/>).  In order to reduce the risk of cross-
+protocol attacks on certificates that are not intended to be used
+with DC-capable TLS stacks, we define a new DelegationUsage
+extension to X.509 that permits use of delegated credentials.  (See <xref target="certificate-requirements" format="default" sectionFormat="of" derivedContent="Section 4.2"/>.)</t>
+      <section anchor="rationale" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-rationale">Rationale</name>
+        <t indent="0" pn="section-3.1-1">Delegated credentials present a better alternative than other delegation
+mechanisms like proxy certificates <xref target="RFC3820" format="default" sectionFormat="of" derivedContent="RFC3820"/> for several reasons:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.1-2">
+          <li pn="section-3.1-2.1">There is no change needed to certificate validation at the PKI layer.</li>
+          <li pn="section-3.1-2.2">X.509 semantics are very rich.  This can cause unintended
+consequences if a service owner creates a proxy certificate where
+the properties differ from the leaf certificate.  Proxy certificates can
+be useful in controlled environments, but remain a risk in scenarios
+where the additional flexibility they provide is not necessary.  For
+this reason,  delegated credentials have very restricted semantics
+that should not conflict with X.509 semantics.</li>
+          <li pn="section-3.1-2.3">Proxy certificates rely on the certificate path building process to establish
+a binding between the proxy certificate and the end-entity certificate.  Since
+the certificate path building process is not cryptographically protected, it is
+possible that a proxy certificate could be bound to another certificate with
+the same public key, with different X.509 parameters.  Delegated credentials,
+which rely on a cryptographic binding between the entire certificate and the
+delegated credential, cannot.</li>
+          <li pn="section-3.1-2.4">Each delegated credential is bound to a specific signature algorithm for use
+in the (D)TLS handshake (<xref section="4.2.3" sectionFormat="comma" target="RFC8446" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.2.3" derivedContent="RFC8446"/>).  This prevents
+them from being used with other, perhaps unintended, signature algorithms.
+The signature algorithm bound to the delegated credential can be chosen
+independently of the set of signature algorithms supported by the end-entity
+certificate.</li>
+        </ul>
+      </section>
+      <section anchor="related-work" numbered="true" removeInRFC="false" toc="include" pn="section-3.2">
+        <name slugifiedName="name-related-work">Related Work</name>
+        <t indent="0" pn="section-3.2-1">Many of the use cases for delegated credentials can also be addressed using
+purely server-side mechanisms that do not require changes to client behavior
+(e.g., a PKCS#11 interface or a remote signing mechanism, <xref target="KEYLESS" format="default" sectionFormat="of" derivedContent="KEYLESS"/> being one
+example).  These
+mechanisms, however, incur per-transaction latency, since the front-end
+server has to interact with a back-end server that holds a private key.  The
+mechanism proposed in this document allows the delegation to be done
+offline, with no per-transaction latency.  The figure below compares the
+message flows for these two mechanisms
+with (D)TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>.</t>
+        <artwork align="left" pn="section-3.2-2">
+Remote key signing:
+
+Client            Front-End            Back-End
+  |----ClientHello---&gt;|                    |
+  |&lt;---ServerHello----|                    |
+  |&lt;---Certificate----|                    |
+  |                   |&lt;---remote sign----&gt;|
+  |&lt;---CertVerify-----|                    |
+  |        ...        |                    |
+
+
+Delegated Credential:
+
+Client            Front-End            Back-End
+  |                   |&lt;--DC distribution-&gt;|
+  |----ClientHello---&gt;|                    |
+  |&lt;---ServerHello----|                    |
+  |&lt;---Certificate----|                    |
+  |&lt;---CertVerify-----|                    |
+  |        ...        |                    |
+
+Legend:
+Client: (D)TLS client
+Front-End: (D)TLS server (could be a TLS-termination service like a CDN)
+Back-End: Service with access to a private key
+</artwork>
+        <t indent="0" pn="section-3.2-3">These two mechanisms can be complementary.  A server could use
+delegated credentials for clients that support them, while using a
+server-side mechanism to support legacy clients.  Both mechanisms
+require a trusted relationship between the front-end and back-end --
+the delegated credential can be used in place of a certificate
+private key.</t>
+        <t indent="0" pn="section-3.2-4">The use of short-lived certificates with automated certificate issuance,
+e.g., with the Automated Certificate Management Environment (ACME) <xref target="RFC8555" format="default" sectionFormat="of" derivedContent="RFC8555"/>,
+reduces the risk of key compromise but has several limitations.
+Specifically, it introduces an operationally critical dependency on an
+external party (the CA).  It also
+limits the types of algorithms supported for (D)TLS authentication to those
+the CA is willing to issue a certificate for.  Nonetheless, existing
+automated issuance APIs like ACME may be useful for provisioning delegated credentials.</t>
+      </section>
+    </section>
+    <section anchor="delegated-credentials" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-delegated-credentials">Delegated Credentials</name>
+      <t indent="0" pn="section-4-1">While X.509 forbids end-entity certificates from being used as issuers for
+other certificates, it is valid to use them to issue other signed
+objects as long as the certificate contains the digitalSignature KeyUsage
+(<xref section="4.2.1.3" sectionFormat="comma" target="RFC5280" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4.2.1.3" derivedContent="RFC5280"/>).  (All certificates compatible with TLS 1.3 are
+required to contain the digitalSignature KeyUsage.)  This document defines a new signed
+object format that encodes only the semantics that are needed for this
+application.  The Credential has the following structure:</t>
+      <artwork align="left" pn="section-4-2">
+   struct {
+     uint32 valid_time;
+     SignatureScheme dc_cert_verify_algorithm;
+     opaque ASN1_subjectPublicKeyInfo&lt;1..2^24-1&gt;;
+   } Credential;
+</artwork>
+      <dl indent="3" newline="false" spacing="normal" pn="section-4-3">
+        <dt pn="section-4-3.1">valid_time:</dt>
+        <dd pn="section-4-3.2">
+          <t indent="0" pn="section-4-3.2.1">Time, in seconds relative to the delegation certificate's
+notBefore value, after which the delegated credential is no longer valid.
+By default, unless set to an alternative value by an application profile (see
+<xref target="solution-overview" format="default" sectionFormat="of" derivedContent="Section 3"/>), endpoints will reject delegated credentials that expire more than 7
+days from the current time (as described in <xref target="validating-a-delegated-credential" format="default" sectionFormat="of" derivedContent="Section 4.1.3"/>).</t>
+        </dd>
+        <dt pn="section-4-3.3">dc_cert_verify_algorithm:</dt>
+        <dd pn="section-4-3.4">
+          <t indent="0" pn="section-4-3.4.1">The signature algorithm of the Credential key pair, where the type
+SignatureScheme is as defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>. This is expected to be
+the same as the sender's CertificateVerify.algorithm (as described in <xref target="validating-a-delegated-credential" format="default" sectionFormat="of" derivedContent="Section 4.1.3"/>).<br/>
+When
+using RSA, the public key <bcp14>MUST NOT</bcp14> use the rsaEncryption OID.  As a result,
+the following algorithms are not allowed for use with delegated credentials:
+rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, and rsa_pss_rsae_sha512.</t>
+        </dd>
+        <dt pn="section-4-3.5">ASN1_subjectPublicKeyInfo:</dt>
+        <dd pn="section-4-3.6">
+          <t indent="0" pn="section-4-3.6.1">The Credential's public key, a DER-encoded <xref target="X.690" format="default" sectionFormat="of" derivedContent="X.690"/> SubjectPublicKeyInfo as defined in
+<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-4-4">The DelegatedCredential has the following structure:</t>
+      <artwork align="left" pn="section-4-5">
+   struct {
+     Credential cred;
+     SignatureScheme algorithm;
+     opaque signature&lt;1..2^16-1&gt;;
+   } DelegatedCredential;
+</artwork>
+      <dl indent="3" newline="false" spacing="normal" pn="section-4-6">
+        <dt pn="section-4-6.1">cred:</dt>
+        <dd pn="section-4-6.2">
+          <t indent="0" pn="section-4-6.2.1">The Credential structure as previously defined.</t>
+        </dd>
+        <dt pn="section-4-6.3">algorithm:</dt>
+        <dd pn="section-4-6.4">
+          <t indent="0" pn="section-4-6.4.1">The signature algorithm used to create DelegatedCredential.signature.</t>
+        </dd>
+        <dt pn="section-4-6.5">signature:</dt>
+        <dd pn="section-4-6.6">
+          <t indent="0" pn="section-4-6.6.1">The delegation, a signature that binds the credential to the end-entity
+certificate's public key as specified below. The signature scheme is specified
+by DelegatedCredential.algorithm.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-4-7">The signature of the DelegatedCredential is computed over the concatenation of:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4-8"><li pn="section-4-8.1" derivedCounter="1.">An octet stream that consists of octet 32 (0x20) repeated 64 times.</li>
+        <li pn="section-4-8.2" derivedCounter="2.">The non-null terminated context string "TLS, server delegated credentials" for server authentication and "TLS, client delegated credentials" for client authentication.</li>
+        <li pn="section-4-8.3" derivedCounter="3.">A single octet 0x00, which serves as the separator.</li>
+        <li pn="section-4-8.4" derivedCounter="4.">The DER-encoded X.509 end-entity certificate used to sign the
+DelegatedCredential.</li>
+        <li pn="section-4-8.5" derivedCounter="5.">DelegatedCredential.cred.</li>
+        <li pn="section-4-8.6" derivedCounter="6.">DelegatedCredential.algorithm.</li>
+      </ol>
+      <t indent="0" pn="section-4-9">The signature is computed by using the private key of the peer's end-entity
+certificate, with the algorithm indicated by DelegatedCredential.algorithm.</t>
+      <t indent="0" pn="section-4-10">The signature effectively binds the credential to the parameters of the
+handshake in which it is used.  In particular, it ensures that credentials are
+only used with the certificate and signature algorithm chosen by the
+delegator.</t>
+      <t indent="0" pn="section-4-11">The code changes required in order to create and verify delegated credentials,
+and the implementation complexity this entails, are localized to the (D)TLS
+stack.  This has the advantage of avoiding changes to the often-delicate
+security-critical PKI code.</t>
+      <section anchor="client-and-server-behavior" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-client-and-server-behavior">Client and Server Behavior</name>
+        <t indent="0" pn="section-4.1-1">This document defines the following (D)TLS extension code point.</t>
+        <artwork align="left" pn="section-4.1-2">
+   enum {
+     ...
+     delegated_credential(34),
+     (65535)
+   } ExtensionType;
+</artwork>
+        <section anchor="server-authentication" numbered="true" removeInRFC="false" toc="include" pn="section-4.1.1">
+          <name slugifiedName="name-server-authentication">Server Authentication</name>
+          <t indent="0" pn="section-4.1.1-1">A client that is willing to use delegated credentials in a connection <bcp14>SHALL</bcp14> send a
+"delegated_credential" extension in its ClientHello. The body of the extension
+consists of a SignatureSchemeList (defined in <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>):</t>
+          <artwork align="left" pn="section-4.1.1-2">
+   struct {
+     SignatureScheme supported_signature_algorithms&lt;2..2^16-2&gt;;
+   } SignatureSchemeList;
+</artwork>
+          <t indent="0" pn="section-4.1.1-3">If the client receives a delegated credential without having indicated support
+in its ClientHello,
+then the client <bcp14>MUST</bcp14> abort the handshake with an "unexpected_message" alert.</t>
+          <t indent="0" pn="section-4.1.1-4">If the extension is present, the server <bcp14>MAY</bcp14> send a delegated credential; if the
+extension is not present, the server <bcp14>MUST NOT</bcp14> send a delegated credential.
+When a (D)TLS version negotiated is less than 1.3, the server <bcp14>MUST</bcp14> ignore this extension.
+An example of when a server could choose not to send a delegated
+credential is when the SignatureSchemes listed only contain signature schemes
+for which a corresponding delegated credential does not exist or are
+otherwise unsuitable for the connection.</t>
+          <t indent="0" pn="section-4.1.1-5">The server <bcp14>MUST</bcp14> send the delegated credential as an extension in the
+CertificateEntry of its end-entity certificate; the client <bcp14>MUST NOT</bcp14> use
+delegated credentials sent as extensions to any other certificate, and <bcp14>SHOULD</bcp14> ignore them, but <bcp14>MAY</bcp14> abort the handshake with
+an "illegal_parameter" alert.  If the server sends multiple delegated
+credentials extensions in a single CertificateEntry, the client <bcp14>MUST</bcp14>
+abort the handshake with an "illegal_parameter" alert.</t>
+          <t indent="0" pn="section-4.1.1-6">The algorithm field <bcp14>MUST</bcp14> be of a type advertised by the client in the
+"signature_algorithms" extension of the ClientHello message, and
+the dc_cert_verify_algorithm field <bcp14>MUST</bcp14> be of a
+type advertised by the client in the SignatureSchemeList; otherwise, the credential is
+considered not valid.  Clients that receive non-valid delegated
+credentials <bcp14>MUST</bcp14> terminate the connection with an "illegal_parameter"
+alert.</t>
+        </section>
+        <section anchor="client-authentication" numbered="true" removeInRFC="false" toc="include" pn="section-4.1.2">
+          <name slugifiedName="name-client-authentication">Client Authentication</name>
+          <t indent="0" pn="section-4.1.2-1">A server that supports this specification <bcp14>SHALL</bcp14> send a
+"delegated_credential" extension in the CertificateRequest message
+when requesting client authentication. The body of the
+extension consists of a SignatureSchemeList. If the server receives a
+delegated credential without having indicated support in its
+CertificateRequest, then the server <bcp14>MUST</bcp14> abort with an
+"unexpected_message" alert.</t>
+          <t indent="0" pn="section-4.1.2-2">If the extension is present, the client <bcp14>MAY</bcp14> send a delegated credential; if the
+extension is not present, the client <bcp14>MUST NOT</bcp14> send a delegated credential.
+When a (D)TLS version negotiated is less than 1.3, the client <bcp14>MUST</bcp14> ignore this extension.</t>
+          <t indent="0" pn="section-4.1.2-3">The client <bcp14>MUST</bcp14> send the delegated credential as an extension in the CertificateEntry of its end-entity certificate; the server
+<bcp14>MUST NOT</bcp14> use delegated credentials sent as extensions to any other certificate, and <bcp14>SHOULD</bcp14> ignore them, but <bcp14>MAY</bcp14> abort the handshake with an "illegal_parameter" alert.  If the client sends multiple delegated credentials extensions in a single CertificateEntry, the server <bcp14>MUST</bcp14> abort the handshake with an "illegal_parameter" alert.</t>
+          <t indent="0" pn="section-4.1.2-4">The algorithm field <bcp14>MUST</bcp14> be of a type advertised by the server
+in the "signature_algorithms" extension of the CertificateRequest message,
+and the dc_cert_verify_algorithm field <bcp14>MUST</bcp14> be of a type
+advertised by the server in the SignatureSchemeList; otherwise, the credential is
+considered not valid. Servers that receive non-valid
+delegated credentials <bcp14>MUST</bcp14> terminate the connection with an
+"illegal_parameter" alert.</t>
+        </section>
+        <section anchor="validating-a-delegated-credential" numbered="true" removeInRFC="false" toc="include" pn="section-4.1.3">
+          <name slugifiedName="name-validating-a-delegated-cred">Validating a Delegated Credential</name>
+          <t indent="0" pn="section-4.1.3-1">On receiving a delegated credential and certificate chain, the peer validates
+the certificate chain and matches the end-entity certificate to the peer's
+expected identity in the same way that it is done when delegated credentials are
+not in use. It then performs the following checks with expiry time set to the
+delegation certificate's notBefore value plus DelegatedCredential.cred.valid_time:</t>
+          <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4.1.3-2"><li pn="section-4.1.3-2.1" derivedCounter="1.">Verify that the current time is within the validity interval of the
+credential. This is done by asserting that the current time does not exceed
+the expiry time.  (The start time of the credential is implicitly validated
+as part of certificate validation.)</li>
+            <li pn="section-4.1.3-2.2" derivedCounter="2.">Verify that the delegated credential's remaining validity period is no more
+than the maximum validity period. This is done by asserting that the expiry
+time does not exceed the current time plus the maximum validity period (7
+days by default) and that the expiry time is less than the certificate's expiry_time.</li>
+            <li pn="section-4.1.3-2.3" derivedCounter="3.">Verify that dc_cert_verify_algorithm matches
+the scheme indicated in the peer's CertificateVerify message and that the
+algorithm is allowed for use with delegated credentials.</li>
+            <li pn="section-4.1.3-2.4" derivedCounter="4.">Verify that the end-entity certificate satisfies the conditions described in
+<xref target="certificate-requirements" format="default" sectionFormat="of" derivedContent="Section 4.2"/>.</li>
+            <li pn="section-4.1.3-2.5" derivedCounter="5.">Use the public key in the peer's end-entity certificate to verify the
+signature of the credential using the algorithm indicated by
+DelegatedCredential.algorithm.</li>
+          </ol>
+          <t indent="0" pn="section-4.1.3-3">If one or more of these checks fail, then the delegated credential is deemed
+not valid.  Clients and servers that receive non-valid delegated credentials <bcp14>MUST</bcp14> terminate the
+connection with an "illegal_parameter" alert.</t>
+          <t indent="0" pn="section-4.1.3-4">If successful, the participant receiving the Certificate message uses the public
+key in DelegatedCredential.cred to verify the signature in the peer's
+CertificateVerify message.</t>
+        </section>
+      </section>
+      <section anchor="certificate-requirements" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-certificate-requirements">Certificate Requirements</name>
+        <t indent="0" pn="section-4.2-1">This document defines a new X.509 extension, DelegationUsage, to be used in the certificate
+when the certificate permits the usage of delegated credentials.  What follows
+is the ASN.1 <xref target="X.680" format="default" sectionFormat="of" derivedContent="X.680"/> for the DelegationUsage certificate extension.</t>
+        <artwork align="left" pn="section-4.2-2">
+    ext-delegationUsage EXTENSION  ::= {
+        SYNTAX DelegationUsage IDENTIFIED BY id-pe-delegationUsage
+    }
+
+    DelegationUsage ::= NULL
+
+    id-pe-delegationUsage OBJECT IDENTIFIER ::=
+        { iso(1) identified-organization(3) dod(6) internet(1)
+          private(4) enterprise(1) id-cloudflare(44363) 44 }
+</artwork>
+        <t indent="0" pn="section-4.2-3">The extension <bcp14>MUST</bcp14> be marked non-critical.  (See <xref section="4.2" sectionFormat="of" target="RFC5280" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4.2" derivedContent="RFC5280"/>.)
+An endpoint <bcp14>MUST NOT</bcp14> accept a delegated credential unless the peer's end-entity
+certificate satisfies the following criteria:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.2-4">
+          <li pn="section-4.2-4.1">It has the DelegationUsage extension.</li>
+          <li pn="section-4.2-4.2">It has the digitalSignature KeyUsage (see the KeyUsage extension defined in
+<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>).</li>
+        </ul>
+        <t indent="0" pn="section-4.2-5">A new extension was chosen instead of adding a new Extended Key Usage
+(EKU) to be compatible with deployed (D)TLS and PKI software stacks
+without requiring CAs to issue new intermediate certificates.</t>
+      </section>
+    </section>
+    <section anchor="operational-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-operational-considerations">Operational Considerations</name>
+      <t indent="0" pn="section-5-1">The operational considerations documented in this section should be
+taken into consideration when using delegated credentials.</t>
+      <section anchor="client-clock-skew" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-client-clock-skew">Client Clock Skew</name>
+        <t indent="0" pn="section-5.1-1">One of the risks of deploying a short-lived credential system based
+on absolute time is client clock skew.  If a client's clock is sufficiently
+ahead of or behind the server's clock, then clients will reject delegated credentials
+that are valid from the server's perspective.  Clock
+skew also affects the validity of the original certificates.  The lifetime
+of the delegated credential should be set taking clock skew into account.
+Clock skew may affect a delegated credential at the beginning and end of
+its validity periods, which should also be taken into account.</t>
+      </section>
+    </section>
+    <section anchor="iana-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-6-1">This document registers the "delegated_credential" extension in the
+"TLS ExtensionType Values" registry.  The "delegated_credential"
+extension has been assigned the ExtensionType value 34.  The IANA registry
+lists this extension as "Recommended" (i.e., "Y") and indicates that
+it may appear in the ClientHello (CH), CertificateRequest (CR),
+or Certificate (CT) messages in (D)TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>.
+Additionally, the "DTLS-Only" column is assigned the value "N".</t>
+      <t indent="0" pn="section-6-2">This document also defines an ASN.1 module for the DelegationUsage
+certificate extension in <xref target="module" format="default" sectionFormat="of" derivedContent="Appendix A"/>.  IANA has registered value 95 for
+"id-mod-delegated-credential-extn" in the "SMI Security for PKIX Module
+Identifier" (1.3.6.1.5.5.7.0) registry.  An OID for the DelegationUsage certificate extension
+is not needed, as it is already assigned to the extension from
+Cloudflare's IANA Private Enterprise Number (PEN) arc.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-7-1">The security considerations documented in this section should be
+taken into consideration when using delegated credentials.</t>
+      <section anchor="security-of-delegated-credentials-private-key" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-security-of-delegated-crede">Security of Delegated Credential's Private Key</name>
+        <t indent="0" pn="section-7.1-1">Delegated credentials limit the exposure of the private key used in
+a (D)TLS connection by limiting its validity period.  An attacker who
+compromises the private key of a delegated credential
+cannot create new delegated credentials, but they can
+impersonate the compromised party in new TLS connections until the
+delegated credential expires.</t>
+        <t indent="0" pn="section-7.1-2">Thus, delegated credentials should not be used to send a delegation to an untrusted party. Rather, they
+are meant to be used between parties that have some trust relationship with each
+other.  The secrecy of the delegated credential's private key is thus important, and
+access control mechanisms <bcp14>SHOULD</bcp14> be used to protect it, including file system
+controls, physical security, or hardware security modules.</t>
+      </section>
+      <section anchor="re-use-of-delegated-credentials-in-multiple-contexts" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-re-use-of-delegated-credent">Re-use of Delegated Credentials in Multiple Contexts</name>
+        <t indent="0" pn="section-7.2-1">It is not possible to use the same delegated credential for both client and server
+authentication because issuing parties compute the corresponding signature using a context string unique to the intended role (client or server).</t>
+      </section>
+      <section anchor="revocation-of-delegated-credentials" numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-revocation-of-delegated-cre">Revocation of Delegated Credentials</name>
+        <t indent="0" pn="section-7.3-1">Delegated credentials do not provide any additional form of early revocation.
+Since it is short-lived, the expiry of the delegated credential revokes
+the credential.  Revocation of the long-term private key that signs the
+delegated credential (from the end-entity certificate) also implicitly revokes
+the delegated credential.</t>
+      </section>
+      <section anchor="interactions-with-session-resumption" numbered="true" removeInRFC="false" toc="include" pn="section-7.4">
+        <name slugifiedName="name-interactions-with-session-r">Interactions with Session Resumption</name>
+        <t indent="0" pn="section-7.4-1">If a peer decides to cache the certificate chain and re-validate it
+when resuming a connection, they <bcp14>SHOULD</bcp14> also cache the
+associated delegated credential and re-validate it.  Failing to do so
+may result in resuming connections for which the delegated credential has expired.</t>
+      </section>
+      <section anchor="privacy-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-7.5">
+        <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+        <t indent="0" pn="section-7.5-1">Delegated credentials can be valid for 7 days (by default), and it is much easier for a service to create delegated credentials than a certificate signed by a CA. A service could determine the client time and clock skew by creating several delegated credentials with different expiry timestamps and observing which credentials the client accepts. Since client time can be unique to a particular client, privacy-sensitive clients who do not trust the service, such as browsers in incognito mode, might not want to advertise support for delegated credentials, or might limit the number of probes that a server can perform.</t>
+      </section>
+      <section anchor="the-impact-of-signature-forgery-attacks" numbered="true" removeInRFC="false" toc="include" pn="section-7.6">
+        <name slugifiedName="name-the-impact-of-signature-for">The Impact of Signature Forgery Attacks</name>
+        <t indent="0" pn="section-7.6-1">Delegated credentials are only used in (D)TLS 1.3 connections. However, the certificate
+that signs a delegated credential may be used in other contexts such as (D)TLS 1.2.
+Using a certificate in multiple contexts opens up a potential cross-protocol
+attack against delegated credentials in (D)TLS 1.3.</t>
+        <t indent="0" pn="section-7.6-2">When (D)TLS 1.2 servers support RSA key exchange, they may be vulnerable to attacks
+that allow forging an RSA signature over an arbitrary message <xref target="BLEI" format="default" sectionFormat="of" derivedContent="BLEI"/>.
+The TLS 1.2 specification describes a strategy for preventing these attacks
+ that requires careful implementation of timing-resistant countermeasures.
+(See <xref section="7.4.7.1" sectionFormat="of" target="RFC5246" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5246#section-7.4.7.1" derivedContent="RFC5246"/>.)</t>
+        <t indent="0" pn="section-7.6-3">Experience shows that, in practice, server implementations may fail to fully
+stop these attacks due to the complexity of this mitigation <xref target="ROBOT" format="default" sectionFormat="of" derivedContent="ROBOT"/>.
+For (D)TLS 1.2 servers that support RSA key exchange using a DC-enabled end-entity
+certificate, a hypothetical signature forgery attack would allow forging a
+signature over a delegated credential.
+The forged delegated credential could then be used by the attacker as the equivalent of an
+on-path attacker, valid for a maximum of 7 days (if the default
+valid_time is used).</t>
+        <t indent="0" pn="section-7.6-4">Server operators should therefore minimize the risk of using DC-enabled
+end-entity certificates where a signature forgery oracle may be present.
+If possible, server operators may choose to use DC-enabled certificates only for signing
+credentials and not for serving non-DC (D)TLS traffic.
+Furthermore, server operators may use elliptic curve certificates for DC-enabled
+traffic, while using RSA certificates without the DelegationUsage certificate
+extension for non-DC traffic; this completely prevents such attacks.</t>
+        <t indent="0" pn="section-7.6-5">Note that if a signature can be forged over an arbitrary credential, the
+attacker can choose any value for the valid_time field.  Repeated signature
+forgeries therefore allow the attacker to create multiple delegated
+credentials that can cover the entire validity period of the
+certificate.  Temporary exposure of the key or a signing oracle may
+allow the attacker to impersonate a server for the lifetime of the certificate.</t>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5280" target="https://www.rfc-editor.org/info/rfc5280" quoteTitle="true" derivedAnchor="RFC5280">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+            <author fullname="D. Cooper" initials="D." surname="Cooper"/>
+            <author fullname="S. Santesson" initials="S." surname="Santesson"/>
+            <author fullname="S. Farrell" initials="S." surname="Farrell"/>
+            <author fullname="S. Boeyen" initials="S." surname="Boeyen"/>
+            <author fullname="R. Housley" initials="R." surname="Housley"/>
+            <author fullname="W. Polk" initials="W." surname="Polk"/>
+            <date month="May" year="2008"/>
+            <abstract>
+              <t indent="0">This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet. An overview of this approach and model is provided as an introduction. The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms. Standard certificate extensions are described and two Internet-specific extensions are defined. A set of required certificate extensions is specified. The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions. An algorithm for X.509 certification path validation is described. An ASN.1 module and examples are provided in the appendices. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5280"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5280"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2018"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol. TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961. This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC9147" target="https://www.rfc-editor.org/info/rfc9147" quoteTitle="true" derivedAnchor="RFC9147">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="N. Modadugu" initials="N." surname="Modadugu"/>
+            <date month="April" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Datagram Transport Layer Security (DTLS) protocol. DTLS 1.3 allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">The DTLS 1.3 protocol is based on the Transport Layer Security (TLS) 1.3 protocol and provides equivalent security guarantees with the exception of order protection / non-replayability. Datagram semantics of the underlying transport are preserved by the DTLS protocol.</t>
+              <t indent="0">This document obsoletes RFC 6347.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9147"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9147"/>
+        </reference>
+        <reference anchor="X.680" target="https://www.itu.int/rec/T-REC-X.680" quoteTitle="true" derivedAnchor="X.680">
+          <front>
+            <title>Information technology - Abstract Syntax Notation One (ASN.1): Specification of basic notation</title>
+            <author>
+              <organization showOnFrontPage="true">ITU-T</organization>
+            </author>
+            <date year="2021" month="February"/>
+          </front>
+          <seriesInfo name="ISO/IEC" value="8824-1:2021"/>
+        </reference>
+        <reference anchor="X.690" target="https://www.itu.int/rec/T-REC-X.690" quoteTitle="true" derivedAnchor="X.690">
+          <front>
+            <title>Information technology - ASN.1 encoding Rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)</title>
+            <author>
+              <organization showOnFrontPage="true">ITU-T</organization>
+            </author>
+            <date year="2021" month="February"/>
+          </front>
+          <seriesInfo name="ISO/IEC" value="8825-1:2021"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="BLEI" target="https://link.springer.com/chapter/10.1007/BFb0055716" quoteTitle="true" derivedAnchor="BLEI">
+          <front>
+            <title>Chosen Ciphertext Attacks against Protocols Based on RSA Encryption Standard PKCS #1</title>
+            <author initials="D." surname="Bleichenbacher">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998"/>
+          </front>
+          <refcontent>Advances in Cryptology -- CRYPTO'98, LNCS vol. 1462, pages: 1-12</refcontent>
+        </reference>
+        <reference anchor="KEYLESS" target="https://ieeexplore.ieee.org/document/7345293" quoteTitle="true" derivedAnchor="KEYLESS">
+          <front>
+            <title>An Analysis of TLS Handshake Proxying</title>
+            <author initials="D." surname="Stebila">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sullivan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015"/>
+          </front>
+          <refcontent>IEEE Trustcom/BigDataSE/ISPA 2015</refcontent>
+        </reference>
+        <reference anchor="RFC3820" target="https://www.rfc-editor.org/info/rfc3820" quoteTitle="true" derivedAnchor="RFC3820">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure (PKI) Proxy Certificate Profile</title>
+            <author fullname="S. Tuecke" initials="S." surname="Tuecke"/>
+            <author fullname="V. Welch" initials="V." surname="Welch"/>
+            <author fullname="D. Engert" initials="D." surname="Engert"/>
+            <author fullname="L. Pearlman" initials="L." surname="Pearlman"/>
+            <author fullname="M. Thompson" initials="M." surname="Thompson"/>
+            <date month="June" year="2004"/>
+            <abstract>
+              <t indent="0">This document forms a certificate profile for Proxy Certificates, based on X.509 Public Key Infrastructure (PKI) certificates as defined in RFC 3280, for use in the Internet. The term Proxy Certificate is used to describe a certificate that is derived from, and signed by, a normal X.509 Public Key End Entity Certificate or by another Proxy Certificate for the purpose of providing restricted proxying and delegation within a PKI based authentication system. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3820"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3820"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author fullname="T. Dierks" initials="T." surname="Dierks"/>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2008"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol. The TLS protocol provides communications security over the Internet. The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC5912" target="https://www.rfc-editor.org/info/rfc5912" quoteTitle="true" derivedAnchor="RFC5912">
+          <front>
+            <title>New ASN.1 Modules for the Public Key Infrastructure Using X.509 (PKIX)</title>
+            <author fullname="P. Hoffman" initials="P." surname="Hoffman"/>
+            <author fullname="J. Schaad" initials="J." surname="Schaad"/>
+            <date month="June" year="2010"/>
+            <abstract>
+              <t indent="0">The Public Key Infrastructure using X.509 (PKIX) certificate format, and many associated formats, are expressed using ASN.1. The current ASN.1 modules conform to the 1988 version of ASN.1. This document updates those ASN.1 modules to conform to the 2002 version of ASN.1. There are no bits-on-the-wire changes to any of the formats; this is simply a change to the syntax. This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5912"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5912"/>
+        </reference>
+        <reference anchor="RFC8032" target="https://www.rfc-editor.org/info/rfc8032" quoteTitle="true" derivedAnchor="RFC8032">
+          <front>
+            <title>Edwards-Curve Digital Signature Algorithm (EdDSA)</title>
+            <author fullname="S. Josefsson" initials="S." surname="Josefsson"/>
+            <author fullname="I. Liusvaara" initials="I." surname="Liusvaara"/>
+            <date month="January" year="2017"/>
+            <abstract>
+              <t indent="0">This document describes elliptic curve signature scheme Edwards-curve Digital Signature Algorithm (EdDSA). The algorithm is instantiated with recommended parameters for the edwards25519 and edwards448 curves. An example implementation and test vectors are provided.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8032"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8032"/>
+        </reference>
+        <reference anchor="RFC8555" target="https://www.rfc-editor.org/info/rfc8555" quoteTitle="true" derivedAnchor="RFC8555">
+          <front>
+            <title>Automatic Certificate Management Environment (ACME)</title>
+            <author fullname="R. Barnes" initials="R." surname="Barnes"/>
+            <author fullname="J. Hoffman-Andrews" initials="J." surname="Hoffman-Andrews"/>
+            <author fullname="D. McCarney" initials="D." surname="McCarney"/>
+            <author fullname="J. Kasten" initials="J." surname="Kasten"/>
+            <date month="March" year="2019"/>
+            <abstract>
+              <t indent="0">Public Key Infrastructure using X.509 (PKIX) certificates are used for a number of purposes, the most significant of which is the authentication of domain names. Thus, certification authorities (CAs) in the Web PKI are trusted to verify that an applicant for a certificate legitimately represents the domain name(s) in the certificate. As of this writing, this verification is done through a collection of ad hoc mechanisms. This document describes a protocol that a CA and an applicant can use to automate the process of verification and certificate issuance. The protocol also provides facilities for other certificate management functions, such as certificate revocation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8555"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8555"/>
+        </reference>
+        <reference anchor="ROBOT" target="https://www.usenix.org/conference/usenixsecurity18/presentation/bock" quoteTitle="true" derivedAnchor="ROBOT">
+          <front>
+            <title>Return Of Bleichenbacher's Oracle Threat (ROBOT)</title>
+            <author initials="H." surname="Boeck">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Somorovsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Young">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018"/>
+          </front>
+          <refcontent>27th USENIX Security Symposium</refcontent>
+        </reference>
+        <reference anchor="XPROT" target="https://dl.acm.org/doi/10.1145/2810103.2813657" quoteTitle="true" derivedAnchor="XPROT">
+          <front>
+            <title>On the Security of TLS 1.3 and QUIC Against Weaknesses in PKCS#1 v1.5 Encryption</title>
+            <author initials="T." surname="Jager">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Schwenk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Somorovsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015"/>
+          </front>
+          <refcontent>Proceedings of the 22nd ACM SIGSAC Conference on Computer and Communications Security</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="module" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-asn1-module">ASN.1 Module</name>
+      <t indent="0" pn="section-appendix.a-1">The following ASN.1 module provides the complete definition of the
+DelegationUsage certificate extension.  The ASN.1 module makes imports
+from <xref target="RFC5912" format="default" sectionFormat="of" derivedContent="RFC5912"/>.</t>
+      <artwork align="left" pn="section-appendix.a-2">
+DelegatedCredentialExtn
+  { iso(1) identified-organization(3) dod(6) internet(1)
+    security(5) mechanisms(5) pkix(7) id-mod(0)
+    id-mod-delegated-credential-extn(95) }
+
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- EXPORT ALL
+
+IMPORTS
+
+EXTENSION
+  FROM PKIX-CommonTypes-2009 -- From RFC 5912
+  { iso(1) identified-organization(3) dod(6) internet(1)
+    security(5) mechanisms(5) pkix(7) id-mod(0)
+    id-mod-pkixCommon-02(57) } ;
+
+-- OID
+
+id-cloudflare OBJECT IDENTIFIER ::=
+  { iso(1) identified-organization(3) dod(6) internet(1) private(4)
+    enterprise(1) 44363 }
+
+-- EXTENSION
+
+ext-delegationUsage EXTENSION ::=
+  { SYNTAX DelegationUsage
+    IDENTIFIED BY id-pe-delegationUsage }
+
+id-pe-delegationUsage OBJECT IDENTIFIER ::= { id-cloudflare 44 }
+
+DelegationUsage ::= NULL
+
+END
+</artwork>
+    </section>
+    <section anchor="example-certificate" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-example-certificate">Example Certificate</name>
+      <t indent="0" pn="section-appendix.b-1">The following is an example of a delegation certificate that satisfies the
+requirements described in <xref target="certificate-requirements" format="default" sectionFormat="of" derivedContent="Section 4.2"/> (i.e., uses the DelegationUsage extension
+and has the digitalSignature KeyUsage).</t>
+      <artwork align="left" pn="section-appendix.b-2">
+-----BEGIN CERTIFICATE-----
+MIIFRjCCBMugAwIBAgIQDGevB+lY0o/OecHFSJ6YnTAKBggqhkjOPQQDAzBMMQsw
+CQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMSYwJAYDVQQDEx1EaWdp
+Q2VydCBFQ0MgU2VjdXJlIFNlcnZlciBDQTAeFw0xOTAzMjYwMDAwMDBaFw0yMTAz
+MzAxMjAwMDBaMGoxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYw
+FAYDVQQHEw1TYW4gRnJhbmNpc2NvMRkwFwYDVQQKExBDbG91ZGZsYXJlLCBJbmMu
+MRMwEQYDVQQDEwprYzJrZG0uY29tMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+d4azI83Bw0fcPgfoeiZpZZnwGuxjBjv++wzE0zAj8vNiUkKxOWSQiGNLn+xlWUpL
+lw9djRN1rLmVmn2gb9GgdKOCA28wggNrMB8GA1UdIwQYMBaAFKOd5h/52jlPwG7o
+kcuVpdox4gqfMB0GA1UdDgQWBBSfcb7fS3fUFAyB91fRcwoDPtgtJjAjBgNVHREE
+HDAaggprYzJrZG0uY29tggwqLmtjMmtkbS5jb20wDgYDVR0PAQH/BAQDAgeAMB0G
+A1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBpBgNVHR8EYjBgMC6gLKAqhiho
+dHRwOi8vY3JsMy5kaWdpY2VydC5jb20vc3NjYS1lY2MtZzEuY3JsMC6gLKAqhiho
+dHRwOi8vY3JsNC5kaWdpY2VydC5jb20vc3NjYS1lY2MtZzEuY3JsMEwGA1UdIARF
+MEMwNwYJYIZIAYb9bAEBMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8vd3d3LmRpZ2lj
+ZXJ0LmNvbS9DUFMwCAYGZ4EMAQICMHsGCCsGAQUFBwEBBG8wbTAkBggrBgEFBQcw
+AYYYaHR0cDovL29jc3AuZGlnaWNlcnQuY29tMEUGCCsGAQUFBzAChjlodHRwOi8v
+Y2FjZXJ0cy5kaWdpY2VydC5jb20vRGlnaUNlcnRFQ0NTZWN1cmVTZXJ2ZXJDQS5j
+cnQwDAYDVR0TAQH/BAIwADAPBgkrBgEEAYLaSywEAgUAMIIBfgYKKwYBBAHWeQIE
+AgSCAW4EggFqAWgAdgC72d+8H4pxtZOUI5eqkntHOFeVCqtS6BqQlmQ2jh7RhQAA
+AWm5hYJ5AAAEAwBHMEUCICiGfq+hSThRL2m8H0awoDR8OpnEHNkF0nI6nL5yYL/j
+AiEAxwebGs/T6Es0YarPzoQJrVZqk+sHH/t+jrSrKd5TDjcAdgCHdb/nWXz4jEOZ
+X73zbv9WjUdWNv9KtWDBtOr/XqCDDwAAAWm5hYNgAAAEAwBHMEUCIQD9OWA8KGL6
+bxDKfgIleHJWB0iWieRs88VgJyfAg/aFDgIgQ/OsdSF9XOy1foqge0DTDM2FExuw
+0JR0AGZWXoNtJzMAdgBElGUusO7Or8RAB9io/ijA2uaCvtjLMbU/0zOWtbaBqAAA
+AWm5hYHgAAAEAwBHMEUCIQC4vua1n3BqthEqpA/VBTcsNwMtAwpCuac2IhJ9wx6X
+/AIgb+o00k28JQo9TMpP4vzJ3BD3HXWSNc2Zizbq7mkUQYMwCgYIKoZIzj0EAwMD
+aQAwZgIxAJsX7d0SuA8ddf/m7IWfNfs3MQfJyGkEezMJX1t6sRso5z50SS12LpXe
+muGa1FE2ZgIxAL+CDUF5pz7mhrAEIjQ1MqlpF9tH40dJGvYZZQ3W23cMzSkDfvlt
+y5S4RfWHIIPjbw==
+-----END CERTIFICATE-----
+</artwork>
+    </section>
+    <section anchor="acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.c-1">Thanks to David Benjamin, Christopher Patton, Kyle Nekritz, Anirudh Ramachandran, Benjamin
+Kaduk, 奥 一穂 (Kazuho Oku), Daniel Kahn Gillmor, Watson Ladd, Robert Merget, Juraj
+Somorovsky, and Nimrod Aviram for their discussions, ideas,
+and bugs they have found.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="R." surname="Barnes" fullname="Richard Barnes">
+        <organization showOnFrontPage="true">Cisco</organization>
+        <address>
+          <email>rlb@ipv.sx</email>
+        </address>
+      </author>
+      <author initials="S." surname="Iyengar" fullname="Subodh Iyengar">
+        <organization showOnFrontPage="true">Facebook</organization>
+        <address>
+          <email>subodh@fb.com</email>
+        </address>
+      </author>
+      <author initials="N." surname="Sullivan" fullname="Nick Sullivan">
+        <organization showOnFrontPage="true">Cloudflare</organization>
+        <address>
+          <email>nick@cloudflare.com</email>
+        </address>
+      </author>
+      <author initials="E." surname="Rescorla" fullname="Eric Rescorla">
+        <organization showOnFrontPage="true">Windy Hill Systems, LLC</organization>
+        <address>
+          <email>ekr@rtfm.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

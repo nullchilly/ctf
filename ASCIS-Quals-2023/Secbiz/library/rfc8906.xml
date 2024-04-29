@@ -1,0 +1,1863 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="bcp" consensus="true" docName="draft-ietf-dnsop-no-response-issue-23" indexInclude="true" ipr="trust200902" number="8906" prepTime="2020-09-22T10:42:14" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-dnsop-no-response-issue-23" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8906" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Failure to Communicate">A Common Operational Problem in DNS Servers: Failure to Communicate</title>
+    <seriesInfo name="RFC" value="8906" stream="IETF"/>
+    <seriesInfo name="BCP" value="231" stream="IETF"/>
+    <author initials="M." surname="Andrews" fullname="M. Andrews">
+      <organization abbrev="ISC" showOnFrontPage="true">Internet Systems Consortium</organization>
+      <address>
+        <postal>
+          <street>PO Box 360</street>
+          <city>Newmarket</city>
+          <region>NH</region>
+          <code>03857</code>
+          <country>United States of America</country>
+        </postal>
+        <email>marka@isc.org</email>
+      </address>
+    </author>
+    <author initials="R." surname="Bellis" fullname="Ray Bellis">
+      <organization abbrev="ISC" showOnFrontPage="true">Internet Systems Consortium</organization>
+      <address>
+        <postal>
+          <street>PO Box 360</street>
+          <city>Newmarket</city>
+          <region>NH</region>
+          <code>03857</code>
+          <country>United States of America</country>
+        </postal>
+        <email>ray@isc.org</email>
+      </address>
+    </author>
+    <date month="09" year="2020"/>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+        The DNS is a query/response protocol.  Failing to respond
+        to queries, or responding incorrectly, causes both immediate
+        operational problems and long-term problems with protocol
+        development.
+      </t>
+      <t indent="0" pn="section-abstract-2">
+        This document identifies a number of common kinds of queries
+        to which some servers either fail to respond or respond
+        incorrectly.  This document also suggests procedures for
+        zone operators to apply to identify and remediate the problem.
+      </t>
+      <t indent="0" pn="section-abstract-3">
+        The document does not look at the DNS data itself, just the
+        structure of the responses.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This memo documents an Internet Best Current Practice.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further information
+            on BCPs is available in Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8906" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-consequences">Consequences</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-common-kinds-of-queries-tha">Common Kinds of Queries That Result in No or Bad Responses</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-basic-dns-queries">Basic DNS Queries</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-zone-existence">Zone Existence</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.2.1"><xref derivedContent="3.1.2" format="counter" sectionFormat="of" target="section-3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-unknown-unsupported-type-qu">Unknown/Unsupported Type Queries</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.3.1"><xref derivedContent="3.1.3" format="counter" sectionFormat="of" target="section-3.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dns-flags">DNS Flags</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.4">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.4.1"><xref derivedContent="3.1.4" format="counter" sectionFormat="of" target="section-3.1.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-unknown-dns-opcodes">Unknown DNS Opcodes</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.5">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.5.1"><xref derivedContent="3.1.5" format="counter" sectionFormat="of" target="section-3.1.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-queries">TCP Queries</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-queries">EDNS Queries</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.2.2">
+                  <li pn="section-toc.1-1.3.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.1.1"><xref derivedContent="3.2.1" format="counter" sectionFormat="of" target="section-3.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-queries-version-indepe">EDNS Queries: Version Independent</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.2.1"><xref derivedContent="3.2.2" format="counter" sectionFormat="of" target="section-3.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-queries-version-specif">EDNS Queries: Version Specific</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.3.1"><xref derivedContent="3.2.3" format="counter" sectionFormat="of" target="section-3.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-options">EDNS Options</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.4">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.4.1"><xref derivedContent="3.2.4" format="counter" sectionFormat="of" target="section-3.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-flags">EDNS Flags</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.5">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.5.1"><xref derivedContent="3.2.5" format="counter" sectionFormat="of" target="section-3.2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-truncated-edns-responses">Truncated EDNS Responses</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.6">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.6.1"><xref derivedContent="3.2.6" format="counter" sectionFormat="of" target="section-3.2.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-do1-handling">DO=1 Handling</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.7">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.7.1"><xref derivedContent="3.2.7" format="counter" sectionFormat="of" target="section-3.2.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-edns-over-tcp">EDNS over TCP</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-firewalls-and-load-balancer">Firewalls and Load Balancers</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-packet-scrubbing-services">Packet Scrubbing Services</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-whole-answer-caches">Whole Answer Caches</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-response-code-selection">Response Code Selection</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing">Testing</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-basic-dns">Testing: Basic DNS</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2.1.2">
+                  <li pn="section-toc.1-1.8.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.8.2.1.2.1.1"><xref derivedContent="8.1.1" format="counter" sectionFormat="of" target="section-8.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-is-the-server-configured-fo">Is the server configured for the zone?</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.8.2.1.2.2.1"><xref derivedContent="8.1.2" format="counter" sectionFormat="of" target="section-8.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-unknown-types">Testing Unknown Types</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.8.2.1.2.3.1"><xref derivedContent="8.1.3" format="counter" sectionFormat="of" target="section-8.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-header-bits">Testing Header Bits</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.1.2.4">
+                    <t indent="0" pn="section-toc.1-1.8.2.1.2.4.1"><xref derivedContent="8.1.4" format="counter" sectionFormat="of" target="section-8.1.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-unknown-opcodes">Testing Unknown Opcodes</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.1.2.5">
+                    <t indent="0" pn="section-toc.1-1.8.2.1.2.5.1"><xref derivedContent="8.1.5" format="counter" sectionFormat="of" target="section-8.1.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-tcp">Testing TCP</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-extended-dns">Testing: Extended DNS</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2.2.2">
+                  <li pn="section-toc.1-1.8.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.1.1"><xref derivedContent="8.2.1" format="counter" sectionFormat="of" target="section-8.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-minimal-edns">Testing Minimal EDNS</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.2.1"><xref derivedContent="8.2.2" format="counter" sectionFormat="of" target="section-8.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-edns-version-negoti">Testing EDNS Version Negotiation</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.3.1"><xref derivedContent="8.2.3" format="counter" sectionFormat="of" target="section-8.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-unknown-edns-option">Testing Unknown EDNS Options</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.4">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.4.1"><xref derivedContent="8.2.4" format="counter" sectionFormat="of" target="section-8.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-unknown-edns-flags">Testing Unknown EDNS Flags</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.5">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.5.1"><xref derivedContent="8.2.5" format="counter" sectionFormat="of" target="section-8.2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-edns-version-negotia">Testing EDNS Version Negotiation with Unknown EDNS Flags</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.6">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.6.1"><xref derivedContent="8.2.6" format="counter" sectionFormat="of" target="section-8.2.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-edns-version-negotiat">Testing EDNS Version Negotiation with Unknown EDNS Options</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.7">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.7.1"><xref derivedContent="8.2.7" format="counter" sectionFormat="of" target="section-8.2.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-truncated-responses">Testing Truncated Responses</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.8">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.8.1"><xref derivedContent="8.2.8" format="counter" sectionFormat="of" target="section-8.2.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-do1-handling">Testing DO=1 Handling</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.9">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.9.1"><xref derivedContent="8.2.9" format="counter" sectionFormat="of" target="section-8.2.9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-edns-version-negotiati">Testing EDNS Version Negotiation with DO=1</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.8.2.2.2.10">
+                    <t indent="0" pn="section-toc.1-1.8.2.2.2.10.1"><xref derivedContent="8.2.10" format="counter" sectionFormat="of" target="section-8.2.10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-testing-with-multiple-defin">Testing with Multiple Defined EDNS Options</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="8.3" format="counter" sectionFormat="of" target="section-8.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-when-edns-is-not-supported">When EDNS Is Not Supported</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-remediation">Remediation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The DNS <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/> <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/> is a query/response protocol.
+      Failing to respond to queries or responding incorrectly causes both
+      immediate operational problems and long-term problems with protocol
+      development.</t>
+      <t indent="0" pn="section-1-2">
+        Failure to respond to a query is indistinguishable from
+        packet loss without doing an analysis of query-response
+        patterns.  Additionally, failure to respond results in
+        unnecessary queries being made by DNS clients and
+        introduces delays to the resolution process.
+      </t>
+      <t indent="0" pn="section-1-3">
+        Due to the inability to distinguish between packet loss and
+        nameservers or middleboxes dropping Extension Mechanisms for DNS
+	(EDNS) <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/> 
+        queries, packet loss is sometimes misclassified as lack of EDNS
+        support, which can lead to DNSSEC validation failures.
+      </t>
+      <t indent="0" pn="section-1-4">
+        The existence of servers that fail to respond to queries
+        results in developers being hesitant to deploy new standards.
+        Such servers need to be identified and remediated.
+      </t>
+      <t indent="0" pn="section-1-5">
+        The DNS has response codes that cover almost any conceivable
+        query response.  A nameserver should be able to respond to
+        any conceivable query using them.  There should be no need
+        to drop queries because a nameserver does not understand
+        them.
+      </t>
+      <t indent="0" pn="section-1-6">
+        Unless a nameserver is under attack, it should respond to
+        all DNS requests directed to it.  When a nameserver is under
+        attack, it may wish to drop packets.  A common attack is to
+        use a nameserver as an amplifier by sending spoofed packets.
+        This is done because response packets are bigger than the
+        queries and large amplification factors are available, especially
+        if EDNS is supported.  Limiting the rate of responses is
+        reasonable when this is occurring, and the client should
+        retry.  However, this only works if legitimate clients are
+        not being forced to guess whether or not EDNS queries are accepted.  As long as there is still a pool of servers that don't
+        respond to EDNS requests, clients have no way to know if
+        the lack of response is due to packet loss, EDNS packets
+        not being supported, or rate limiting due to the server being
+        under attack.  Misclassification of server behaviour is
+        unavoidable when rate limiting is used until the population
+        of servers that fail to respond to well-formed queries
+        drops to near zero.
+      </t>
+      <t indent="0" pn="section-1-7">
+        Nameservers should respond to queries even if the queried
+        name is not for any name the server is configured to answer
+        for.  Misconfigured nameservers are a common occurrence in the
+        DNS, and receiving queries for zones that the server is not
+        configured for is not necessarily an indication that the
+        server is under attack.  Parent zone operators are advised
+        to regularly check that the delegating NS records are
+        consistent with those of the delegated zone and to correct
+        them when they are not (<xref target="RFC1034" sectionFormat="of" section="4.2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1034#section-4.2.2" derivedContent="RFC1034"/>,
+        Paragraph 3).
+	Doing this regularly should reduce the instances
+        of broken delegations.
+      </t>
+      <t indent="0" pn="section-1-8">
+        This document does not try to identify all possible errors
+        nor does it supply an exhaustive list of tests.
+      </t>
+    </section>
+    <section anchor="consequences" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-consequences">Consequences</name>
+      <t indent="0" pn="section-2-1">
+        Failure to follow the guidance in relevant DNS RFCs has multiple adverse
+        consequences.  Some are caused directly by the non-compliant
+        behaviour and others as a result of workarounds forced on
+        recursive servers.  Addressing known issues now will reduce
+        future interoperability issues as the DNS protocol continues
+        to evolve and clients make use of newly introduced DNS
+        features.  In particular, the base DNS specification
+        <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/> <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/> and the
+        EDNS specification <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>, when implemented,
+        need to be followed.
+      </t>
+      <t indent="0" pn="section-2-2">
+        Some examples of known consequences include the following:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-3">
+        <li pn="section-2-3.1">
+            The AD (Authenticated Data) bit in a response
+            cannot be trusted to mean anything, as some servers
+            incorrectly copy the flag bit from the request to the
+            response <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/> <xref target="RFC4035" format="default" sectionFormat="of" derivedContent="RFC4035"/>. 
+            The use of the AD bit in requests is defined in
+            <xref target="RFC6840" format="default" sectionFormat="of" derivedContent="RFC6840"/>.
+          </li>
+        <li pn="section-2-3.2">
+            Widespread non-response to EDNS queries has led to
+            recursive servers having to assume that EDNS is not
+            supported and that fallback to plain DNS is required,
+            potentially causing DNSSEC validation failures.
+          </li>
+        <li pn="section-2-3.3">
+            Widespread non-response to EDNS options requires
+            recursive servers to decide whether to probe
+            to see if it is the specific EDNS option or the use of
+            EDNS in general that is causing the non-response.  In
+            the limited amount of time required to resolve a query
+            before the client times out, this is not possible.
+          </li>
+        <li pn="section-2-3.4">
+            Incorrectly returning FORMERR to an EDNS option being
+            present leads to the recursive server not being able
+            to determine if the server is just broken in the handling
+            of the EDNS option or if it doesn't support EDNS at all.
+          </li>
+        <li pn="section-2-3.5">
+            Mishandling of unknown query types has contributed
+            to the abandonment of the transition of the SPF type.
+          </li>
+        <li pn="section-2-3.6">
+            Mishandling of unknown query types has slowed up the
+            development of DNS-Based Authentication of Named Entities (DANE)
+	    and resulted in additional rules 
+            being specified to reduce the probability of interacting
+            with a broken server when making TLSA queries.
+          </li>
+      </ul>
+      <t indent="0" pn="section-2-4">
+        The consequences of servers not following the RFCs will
+        only grow if measures are not put in place to remove non-compliant
+	servers from the ecosystem.  Working around issues 
+        due to non-compliance with RFCs is not sustainable.
+      </t>
+      <t indent="0" pn="section-2-5">
+        Most (if not all) of these consequences could have been
+        avoided if action had been taken to remove non-compliant
+        servers as soon as people were aware of them, i.e., to actively
+        seek out broken implementations and servers and inform their
+        developers and operators that they need to fix their servers.
+      </t>
+    </section>
+    <section anchor="query-kinds" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-common-kinds-of-queries-tha">Common Kinds of Queries That Result in No or Bad Responses</name>
+      <t indent="0" pn="section-3-1">
+        This section is broken down into Basic DNS requests and EDNS requests.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-basic-dns-queries">Basic DNS Queries</name>
+        <section anchor="existence" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.1">
+          <name slugifiedName="name-zone-existence">Zone Existence</name>
+          <t indent="0" pn="section-3.1.1-1">
+            If a zone is delegated to a server, that server should
+            respond to a SOA query for that zone with an SOA record.
+            Failing to respond at all is always incorrect, regardless
+            of the configuration of the server.  Responding with
+            anything other than an SOA record in the answer section
+            indicates a bad delegation.
+          </t>
+        </section>
+        <section anchor="unknown" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.2">
+          <name slugifiedName="name-unknown-unsupported-type-qu">Unknown/Unsupported Type Queries</name>
+          <t indent="0" pn="section-3.1.2-1">
+            Some servers fail to respond to unknown or unsupported
+            types.  If a server receives a query for a type that
+            it doesn't recognise, or doesn't implement, it is
+            expected to return the appropriate response as if it
+            did recognise the type but does not have any data for
+            that type, i.e., either NOERROR or NXDOMAIN.  The exceptions
+            to this are queries for Meta-RR types, which may return
+            NOTIMP.
+          </t>
+        </section>
+        <section anchor="dns-flags" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.3">
+          <name slugifiedName="name-dns-flags">DNS Flags</name>
+          <t indent="0" pn="section-3.1.3-1">
+            Some servers fail to respond to DNS queries with various
+            DNS flags set, regardless of whether they are defined or
+            still reserved.  At the time of writing, there are servers
+            that fail to respond to queries with the AD flag set to 1
+            and servers that fail to respond to queries with the last
+            reserved flag set.
+          </t>
+          <t indent="0" pn="section-3.1.3-2">Servers should respond to such queries.  If the server does not
+	  know the meaning of a flag, it must not copy it to the response
+	  (<xref target="RFC1035" sectionFormat="of" section="4.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-4.1.1" derivedContent="RFC1035"/>). If
+	  the server does not understand the meaning of a request, it should
+	  reply with a FORMERR response with unknown flags set to zero.</t>
+          <section anchor="recursion" numbered="true" toc="exclude" removeInRFC="false" pn="section-3.1.3.1">
+            <name slugifiedName="name-recursive-queries">Recursive Queries</name>
+            <t indent="0" pn="section-3.1.3.1-1">
+              A non-recursive server is supposed to respond to recursive
+              queries as if the Recursion Desired (RD) bit is not set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>. 
+            </t>
+          </section>
+        </section>
+        <section anchor="opcode" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.4">
+          <name slugifiedName="name-unknown-dns-opcodes">Unknown DNS Opcodes</name>
+          <t indent="0" pn="section-3.1.4-1">
+            The use of previously undefined opcodes is to be expected.
+            Since the DNS was first defined, two new opcodes have been
+            added, UPDATE and NOTIFY.
+          </t>
+          <t indent="0" pn="section-3.1.4-2">
+            NOTIMP is the expected rcode to an unknown or unimplemented
+            opcode.
+          </t>
+          <aside pn="section-3.1.4-3">
+            <t indent="0" pn="section-3.1.4-3.1">
+            NOTE: while new opcodes will most probably use the current
+            layout structure for the rest of the message, there is no
+            requirement that anything other than the DNS header match.
+            </t>
+          </aside>
+        </section>
+        <section anchor="tcp" numbered="true" toc="include" removeInRFC="false" pn="section-3.1.5">
+          <name slugifiedName="name-tcp-queries">TCP Queries</name>
+          <t indent="0" pn="section-3.1.5-1">
+            All DNS servers are supposed to respond to queries over
+            TCP <xref target="RFC7766" format="default" sectionFormat="of" derivedContent="RFC7766"/>.  While firewalls should not
+            block TCP connection attempts, those that do should
+            cleanly terminate the connection by sending TCP RESET
+            or sending ICMP/ICMPv6 Administratively Prohibited
+            messages. Dropping TCP connections introduces excessive
+            delays to the resolution process.
+          </t>
+        </section>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-edns-queries">EDNS Queries</name>
+        <t indent="0" pn="section-3.2-1">
+           EDNS queries are specified in <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+        </t>
+        <section anchor="edns-independent" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.1">
+          <name slugifiedName="name-edns-queries-version-indepe">EDNS Queries: Version Independent</name>
+          <t indent="0" pn="section-3.2.1-1">
+            Identifying servers that fail to respond to EDNS queries
+            can be done by first confirming that the server responds
+            to regular DNS queries, followed by a series of otherwise
+            identical queries using EDNS, then making the original
+            query again.  A series of EDNS queries is needed, as at
+            least one DNS implementation responds to the first EDNS
+            query with FORMERR but fails to respond to subsequent
+            queries from the same address for a period until a
+            regular DNS query is made.  The EDNS query should specify
+            a UDP buffer size of 512 bytes to avoid false classification
+            of not supporting EDNS due to response packet size.
+          </t>
+          <t indent="0" pn="section-3.2.1-2">
+            If the server responds to the first and last queries
+            but fails to respond to most or all of the EDNS queries,
+            it is probably faulty.  The test should be repeated a
+            number of times to eliminate the likelihood of a false
+            positive due to packet loss.
+          </t>
+          <t indent="0" pn="section-3.2.1-3">
+            Firewalls may also block larger EDNS responses, but there
+            is no easy way to check authoritative servers to see
+            if the firewall is misconfigured.
+          </t>
+        </section>
+        <section anchor="edns-specific" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.2">
+          <name slugifiedName="name-edns-queries-version-specif">EDNS Queries: Version Specific</name>
+          <t indent="0" pn="section-3.2.2-1">
+            Some servers respond correctly to EDNS version 0 queries
+            but fail to respond to EDNS queries with version numbers
+            that are higher than zero.  Servers should respond with
+            BADVERS to EDNS queries with version numbers that they
+            do not support.
+          </t>
+          <t indent="0" pn="section-3.2.2-2">
+            Some servers respond correctly to EDNS version 0 queries
+            but fail to set QR=1 when responding to EDNS versions
+            they do not support.  Such responses may be discarded
+            as invalid (as QR is not 1) or treated as requests (when the
+            source port of the original request was port 53).
+          </t>
+        </section>
+        <section anchor="edns-options" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.3">
+          <name slugifiedName="name-edns-options">EDNS Options</name>
+          <t indent="0" pn="section-3.2.3-1">
+            Some servers fail to respond to EDNS queries with EDNS
+            options set.  The original EDNS specification left this
+            behaviour undefined <xref target="RFC2671" format="default" sectionFormat="of" derivedContent="RFC2671"/>, but the
+            correct behaviour was clarified in <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+            Unknown EDNS options are supposed to be ignored by the server.
+          </t>
+        </section>
+        <section anchor="edns-flags" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.4">
+          <name slugifiedName="name-edns-flags">EDNS Flags</name>
+          <t indent="0" pn="section-3.2.4-1">
+            Some servers fail to respond to EDNS queries with EDNS
+            flags set.  Servers should ignore EDNS flags they do not
+            understand and must not add them to the response <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+        </section>
+        <section anchor="truncated-edns" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.5">
+          <name slugifiedName="name-truncated-edns-responses">Truncated EDNS Responses</name>
+          <t indent="0" pn="section-3.2.5-1">
+            Some EDNS-aware servers fail to include an OPT record when a
+            truncated response is sent.  An OPT record is supposed to be
+            included in a truncated response <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t indent="0" pn="section-3.2.5-2">
+            Some EDNS-aware servers fail to honour the advertised EDNS
+            UDP buffer size and send oversized responses
+            <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.  Servers must send UDP responses
+            no larger than the advertised EDNS UDP buffer size.
+          </t>
+        </section>
+        <section anchor="dobit" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.6">
+          <name slugifiedName="name-do1-handling">DO=1 Handling</name>
+          <t indent="0" pn="section-3.2.6-1">
+            Some nameservers incorrectly only return an EDNS response
+            when the DNSSEC OK (DO) bit <xref target="RFC3225" format="default" sectionFormat="of" derivedContent="RFC3225"/> is 1 in the
+            query.  Servers that support EDNS should always respond to
+            EDNS requests with EDNS responses.
+          </t>
+          <t indent="0" pn="section-3.2.6-2">
+            Some nameservers fail to copy the DO bit to the response
+            despite clearly supporting DNSSEC by returning an RRSIG
+            records to EDNS queries with DO=1.  Nameservers that support
+            DNSSEC are expected to copy the DO bit from the request to
+            the response.
+          </t>
+        </section>
+        <section anchor="tcp-edns" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.7">
+          <name slugifiedName="name-edns-over-tcp">EDNS over TCP</name>
+          <t indent="0" pn="section-3.2.7-1">
+            Some EDNS-aware servers incorrectly limit the TCP response
+            sizes to the advertised UDP response size.  This breaks DNS
+            resolution to clients where the response sizes exceed the
+            advertised UDP response size despite the server and the client
+            being capable of sending and receiving larger TCP responses,
+            respectively.  It effectively defeats setting TC=1 in UDP
+            responses.
+          </t>
+        </section>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-firewalls-and-load-balancer">Firewalls and Load Balancers</name>
+      <t indent="0" pn="section-4-1">
+        Firewalls and load balancers can affect the externally
+        visible behaviour of a nameserver.  Tests for conformance
+        should to be done from outside of any firewall so that the
+        system is tested as a whole.
+      </t>
+      <t indent="0" pn="section-4-2">
+        Firewalls and load balancers should not drop DNS packets
+        that they don't understand.  They should either pass
+        the packets or generate an appropriate error response.
+      </t>
+      <t indent="0" pn="section-4-3">
+        Requests for unknown query types are normal client behaviour
+        and should not be construed as an attack.  Nameservers have
+        always been expected to be able to handle such queries.
+      </t>
+      <t indent="0" pn="section-4-4">
+        Requests for unknown query classes are normal client behaviour
+        and should not be construed as an attack.  Nameservers have
+        always been expected to be able to handle such queries.
+      </t>
+      <t indent="0" pn="section-4-5">
+        Requests with unknown opcodes are normal client behaviour
+        and should not be construed as an attack.  Nameservers have
+        always been expected to be able to handle such queries.
+      </t>
+      <t indent="0" pn="section-4-6">Requests with unassigned flags set (DNS or EDNS) are expected client
+      behaviour and should not be construed as an attack. The behaviour for
+      unassigned flags is to ignore them in the request and to not set them in
+      the response.  Dropping DNS/EDNS packets with unassigned flags makes it
+      difficult to deploy extensions that make use of them due to the need to
+      reconfigure and update firewalls.</t>
+      <t indent="0" pn="section-4-7">
+        Requests with unknown EDNS options are expected client
+        behaviour and should not be construed as an attack.  The
+        correct behaviour for unknown EDNS options is to ignore
+        their presence when constructing a reply.
+      </t>
+      <t indent="0" pn="section-4-8">
+        Requests with unknown EDNS versions are expected client
+        behaviour and should not be construed as an attack.  The
+        correct behaviour for unknown EDNS versions is to return
+        BADVERS along with the highest EDNS version the server
+        supports.  Dropping EDNS packets breaks EDNS version
+        negotiation.
+      </t>
+      <t indent="0" pn="section-4-9">
+        Firewalls should not assume that there will only be a single
+        response message to a request.  There have been proposals
+        to use EDNS to signal that multiple DNS messages be returned
+        rather than a single UDP message that is fragmented at the
+        IP layer.
+      </t>
+      <t indent="0" pn="section-4-10">
+        DNS, and EDNS in particular, are designed to allow clients to
+        be able to use new features against older servers without
+        having to validate every option.  Indiscriminate blocking
+        of messages breaks that design.
+      </t>
+      <t indent="0" pn="section-4-11">
+        However, there may be times when a nameserver mishandles
+        messages with a particular flag, EDNS option, EDNS version
+        field, opcode, type or class field, or combination thereof
+        to the point where the integrity of the nameserver is
+        compromised.  Firewalls should offer the ability to selectively
+        reject messages using an appropriately constructed response
+        based on all these fields while awaiting a fix from the
+        nameserver vendor.  Returning FORMERR or REFUSED are two
+        potential error codes to return.
+      </t>
+    </section>
+    <section anchor="scrubbing" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-packet-scrubbing-services">Packet Scrubbing Services</name>
+      <t indent="0" pn="section-5-1">
+        Packet scrubbing services are used to filter out undesired traffic,
+        including but not limited to denial-of-service traffic.  This is
+        often done using heuristic analysis of the traffic.
+      </t>
+      <t indent="0" pn="section-5-2">
+        Packet scrubbing services can affect the externally visible behaviour
+        of a nameserver in a similar way to firewalls.  If an operator
+        uses a packet scrubbing service, they should check that legitimate
+        queries are not being blocked.
+      </t>
+      <t indent="0" pn="section-5-3">
+        Packet scrubbing services, unlike firewalls, are also turned on
+        and off in response to denial-of-service attacks.  One needs
+        to take care when choosing a scrubbing service.
+      </t>
+      <t indent="0" pn="section-5-4">
+        Ideally, operators should run these tests against a packet scrubbing
+        service to ensure that these tests are not seen as attack
+        vectors.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-whole-answer-caches">Whole Answer Caches</name>
+      <t indent="0" pn="section-6-1">
+        Whole answer caches take a previously constructed answer
+        and return it to a subsequent query for the same question.
+        However, they can return the wrong response if they do not
+        take all of the relevant attributes of the query into account.
+      </t>
+      <t indent="0" pn="section-6-2">
+        In addition to the standard tuple of &lt;qname,qtype,qclass&gt;,
+        a non-exhaustive set of attributes that must be considered
+        include: RD, AD, CD, OPT record, DO, EDNS buffer size, EDNS
+        version, EDNS options, and transport.
+      </t>
+    </section>
+    <section anchor="response" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-response-code-selection">Response Code Selection</name>
+      <t indent="0" pn="section-7-1">
+        Choosing the correct response code when responding to DNS
+        queries is important.  Response codes should be chosen
+        considering how clients will handle them.
+      </t>
+      <t indent="0" pn="section-7-2">
+        For unimplemented opcodes, NOTIMP is the expected response code.
+        Note: newly implemented opcodes may change the message format by
+        extending the header, changing the structure of the records,
+        etc.  Servers are not expected to be able to parse these
+        and should respond with a response code of NOTIMP rather
+        than FORMERR (which would be expected if there was a parse error
+        with a known opcode).
+      </t>
+      <t indent="0" pn="section-7-3">
+        For unimplemented type codes, and in the absence of other
+        errors, the only valid response is NOERROR if the qname
+        exists and NXDOMAIN otherwise.  
+
+	For Meta-RRs, NOTIMP may be returned instead.
+      </t>
+      <t indent="0" pn="section-7-4">If a zone cannot be loaded because it contains unimplemented type
+      codes that are not encoded as unknown record types according to <xref target="RFC3597" format="default" sectionFormat="of" derivedContent="RFC3597"/>, then the expected response is
+      SERVFAIL, as the whole zone should be rejected (<xref target="RFC1035" sectionFormat="of" section="5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-5.2" derivedContent="RFC1035"/>).  If a zone loads, then <xref target="RFC1034" sectionFormat="of" section="4.3.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1034#section-4.3.2" derivedContent="RFC1034"/> applies.</t>
+      <t indent="0" pn="section-7-5">
+        If the server supports EDNS and receives a query with an
+        unsupported EDNS version, the correct response is BADVERS
+        <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+      </t>
+      <t indent="0" pn="section-7-6">
+        If the server does not support EDNS at all, FORMERR is
+        the expected error code.  That said, a minimal EDNS
+        server implementation requires parsing the OPT records
+        and responding with an empty OPT record in the additional
+        section in most cases.  There is no need to interpret any
+        EDNS options present in the request, as unsupported EDNS
+        options are expected to be ignored <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+        Additionally, EDNS flags can be ignored.  The only part of the
+        OPT record that needs to be examined is the version field
+        to determine if BADVERS needs to be sent or not.
+      </t>
+    </section>
+    <section anchor="testing" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-testing">Testing</name>
+      <t indent="0" pn="section-8-1">
+        Testing is divided into two sections:  "Basic DNS", which all
+        servers should meet, and "Extended DNS", which should be met
+        by all servers that support EDNS (a server is deemed to
+        support EDNS if it gives a valid EDNS response to any EDNS
+        query).  If a server does not support EDNS, it should still
+        respond to all the tests, albeit with error responses.
+      </t>
+      <t indent="0" pn="section-8-2">
+        These tests query for records at the apex of a zone that the
+        server is nominally configured to serve.  All tests should
+        use the same zone.
+      </t>
+      <t indent="0" pn="section-8-3">
+        It is advisable to run all of the tests below in parallel
+        so as to minimise the delays due to multiple timeouts when
+        the servers do not respond.  There are 16 queries directed
+        to each nameserver (assuming no packet loss) testing different
+        aspects of Basic DNS and Extended DNS.
+      </t>
+      <t indent="0" pn="section-8-4">
+        The tests below use dig from BIND 9.11.0 <xref target="ISC" format="default" sectionFormat="of" derivedContent="ISC"/>.
+        Replace $zone with the name of the zone being used for testing.
+        Replace $server with the name or address of the server being tested.
+      </t>
+      <t indent="0" pn="section-8-5">
+        When testing, recursive servers set RD=1 and choose a zone
+        name that is known to exist and is not being served by the
+        recursive server.  The root zone (".") is often a good
+        candidate, as it is DNSSEC signed.  RD=1, rather than RD=0,
+        should be present in the responses for all test involving 
+        the opcode QUERY.  Non-authoritative answers (AA=0) are
+        expected when talking to a recursive server.  AD=1 is only
+        expected if the server is validating responses and
+        one or both AD=1 or DO=1 is set in the request, otherwise
+        AD=0 is expected.
+      </t>
+      <section anchor="testing-basic" numbered="true" toc="include" removeInRFC="false" pn="section-8.1">
+        <name slugifiedName="name-testing-basic-dns">Testing: Basic DNS</name>
+        <t indent="0" pn="section-8.1-1">
+          This first set of tests cover Basic DNS server behaviour
+          and all servers should pass these tests.
+        </t>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.1.1">
+          <name slugifiedName="name-is-the-server-configured-fo">Is the server configured for the zone?</name>
+          <t indent="0" pn="section-8.1.1-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set and without
+            EDNS.
+          </t>
+          <t indent="0" pn="section-8.1.1-2">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the Authoritative Answer (AA) and Query/Response (QR) bits to be
+	    set in the header; the Recursion Available (RA) bits may also be
+	    set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We 
+	    do not expect an OPT record to be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.</t>
+          <t keepWithNext="true" indent="0" pn="section-8.1.1-3">
+                Verify the server is configured for the zone:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.1.1-4">
+dig +noedns +noad +norec soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.1.2">
+          <name slugifiedName="name-testing-unknown-types">Testing Unknown Types</name>
+          <t indent="0" pn="section-8.1.2-1">
+
+	    
+            Identifying servers that fail to respond to unknown or
+            unsupported types can be done by making an initial DNS
+            query for an A record, making a number of queries for an
+            unallocated type, then making a query for an A record
+            again.  IANA maintains a registry of allocated types <xref target="IANA-DNS" format="default" sectionFormat="of" derivedContent="IANA-DNS"/>.
+          </t>
+          <t indent="0" pn="section-8.1.2-2">
+            If the server responds to the first and last queries but
+            fails to respond to the queries for the unallocated type,
+            it is probably faulty.  The test should be repeated a
+            number of times to eliminate the likelihood of a false
+            positive due to packet loss.
+          </t>
+          <t indent="0" pn="section-8.1.2-3">
+            Ask for the TYPE1000 RRset at the configured zone's
+            name.  This query is made with no DNS flag bits set and
+            without EDNS.  TYPE1000 has been chosen for this purpose,
+            as IANA is unlikely to allocate this type in the near
+            future and it is not in a range reserved for private
+            use <xref target="RFC6895" format="default" sectionFormat="of" derivedContent="RFC6895"/>.  Any unallocated type code
+            could be chosen for this test.
+          </t>
+          <t indent="0" pn="section-8.1.2-4">
+            We expect no records to be returned in the answer
+            section, the rcode to be set to NOERROR, and the AA and
+            QR bits to be set in the header; RA may also be set
+            <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We do not expect an OPT record
+            to be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.1.2-5">
+                Check that queries for an unknown type work:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.1.2-6">
+dig +noedns +noad +norec type1000 $zone @$server
+
+expect: status: NOERROR
+expect: an empty answer section.
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.1.3">
+          <name slugifiedName="name-testing-header-bits">Testing Header Bits</name>
+          <section numbered="true" toc="exclude" removeInRFC="false" pn="section-8.1.3.1">
+            <name slugifiedName="name-testing-cd1-queries">Testing CD=1 Queries</name>
+            <t indent="0" pn="section-8.1.3.1-1">
+              Ask for the SOA record of the configured zone.
+              This query is made with only the CD DNS flag bit set,
+              with all other DNS bits clear, and without EDNS.
+            </t>
+            <t indent="0" pn="section-8.1.3.1-2">
+              We expect the SOA record for the zone to be returned
+              in the answer section, the rcode to be set to NOERROR,
+              and the AA and QR bits to be set in the header.  We
+              do not expect an OPT record to be returned.
+            </t>
+            <t indent="0" pn="section-8.1.3.1-3">
+              If the server supports DNSSEC, CD should be set in
+              the response <xref target="RFC4035" format="default" sectionFormat="of" derivedContent="RFC4035"/>; otherwise, CD
+              should be clear <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.
+            </t>
+            <t keepWithNext="true" indent="0" pn="section-8.1.3.1-4">
+                  Check that queries with CD=1 work:
+            </t>
+            <sourcecode name="" type="" markers="false" pn="section-8.1.3.1-5">
+dig +noedns +noad +norec +cd soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+          </section>
+          <section numbered="true" toc="exclude" removeInRFC="false" pn="section-8.1.3.2">
+            <name slugifiedName="name-testing-ad1-queries">Testing AD=1 Queries</name>
+            <t indent="0" pn="section-8.1.3.2-1">Ask for the SOA record of the configured zone.  This query is
+	    made with only the AD DNS flag bit set, with all other DNS bits clear,
+	    and without EDNS.</t>
+            <t indent="0" pn="section-8.1.3.2-2">
+              We expect the SOA record for the zone to be returned
+              in the answer section, the rcode to be set to NOERROR,
+              and the AA and QR bits to be set in the header.  We
+              do not expect an OPT record to be returned.  The
+              purpose of this query is to detect blocking of queries
+              with the AD bit present, not the specific value of
+              AD in the response.
+            </t>
+            <t keepWithNext="true" indent="0" pn="section-8.1.3.2-3">
+                  Check that queries with AD=1 work:
+            </t>
+            <sourcecode name="" type="" markers="false" pn="section-8.1.3.2-4">
+dig +noedns +norec +ad soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+            <t keepWithPrevious="true" indent="0" pn="section-8.1.3.2-5">
+                  AD use in queries is defined in <xref target="RFC6840" format="default" sectionFormat="of" derivedContent="RFC6840"/>.
+            </t>
+          </section>
+          <section numbered="true" toc="exclude" removeInRFC="false" pn="section-8.1.3.3">
+            <name slugifiedName="name-testing-reserved-bit">Testing Reserved Bit</name>
+            <t indent="0" pn="section-8.1.3.3-1">
+              Ask for the SOA record of the configured zone.  This
+              query is made with only the final reserved DNS flag
+              bit set, with all other DNS bits clear, and without EDNS.
+            </t>
+            <t indent="0" pn="section-8.1.3.3-2">
+              We expect the SOA record for the zone to be returned
+              in the answer section, the rcode to be set to NOERROR,
+              and the AA and QR bits to be set in the header; RA
+              may be set.  The final reserved bit must not be set
+              <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We do not expect an OPT
+              record to be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+            </t>
+            <t keepWithNext="true" indent="0" pn="section-8.1.3.3-3">
+                  Check that queries with the last unassigned DNS
+                  header flag work and that the flag bit is not
+                  copied to the response:
+            </t>
+            <sourcecode name="" type="" markers="false" pn="section-8.1.3.3-4">
+dig +noedns +noad +norec +zflag soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: MBZ to NOT be in the response (see below)
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+            <t keepWithPrevious="true" indent="0" pn="section-8.1.3.3-5"> MBZ (Must Be Zero) is a dig-specific
+	    indication that the flag bit has been incorrectly copied.  See
+	    <xref target="RFC1035" sectionFormat="of" section="4.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-4.1.1" derivedContent="RFC1035"/>:</t>
+            <dl newline="false" indent="3" spacing="normal" pn="section-8.1.3.3-6">
+              <dt pn="section-8.1.3.3-6.1">"Z</dt>
+              <dd pn="section-8.1.3.3-6.2">Reserved for future use.  Must be zero in all queries and responses."</dd>
+            </dl>
+          </section>
+          <section numbered="true" toc="exclude" removeInRFC="false" pn="section-8.1.3.4">
+            <name slugifiedName="name-testing-recursive-queries">Testing Recursive Queries</name>
+            <t indent="0" pn="section-8.1.3.4-1">
+              Ask for the SOA record of the configured zone.  This
+              query is made with only the RD DNS flag bit set and
+              without EDNS.
+            </t>
+            <t indent="0" pn="section-8.1.3.4-2">
+              We expect the SOA record for the zone to be returned
+              in the answer section, the rcode to be set to NOERROR, and
+              the AA, QR and RD bits to be set in the header; RA
+              may also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We do not
+              expect an OPT record to be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+            </t>
+            <t keepWithNext="true" indent="0" pn="section-8.1.3.4-3">
+                  Check that recursive queries work:
+            </t>
+            <sourcecode name="" type="" markers="false" pn="section-8.1.3.4-4">
+dig +noedns +noad +rec soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: flag: aa to be present
+expect: flag: rd to be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+          </section>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.1.4">
+          <name slugifiedName="name-testing-unknown-opcodes">Testing Unknown Opcodes</name>
+          <t indent="0" pn="section-8.1.4-1">
+            Construct a DNS message that consists of only a DNS
+            header with opcode set to 15 (currently not allocated),
+            no DNS header bits set, and empty question, answer,
+            authority, and additional sections. </t>
+          <t keepWithNext="true" indent="0" pn="section-8.1.4-2">
+                Check that new opcodes are handled:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.1.4-3">
+dig +noedns +noad +opcode=15 +norec +header-only @$server
+
+expect: status: NOTIMP
+expect: opcode: 15
+expect: all sections to be empty
+expect: flag: aa to NOT be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.1.5">
+          <name slugifiedName="name-testing-tcp">Testing TCP</name>
+          <t indent="0" pn="section-8.1.5-1">
+            Whether a server accepts TCP connections can be tested
+            by first checking that it responds to UDP queries to
+            confirm that it is up and operating, then attempting the
+            same query over TCP.  An additional query should be made
+            over UDP if the TCP connection attempt fails to confirm
+            that the server under test is still operating.
+          </t>
+          <t indent="0" pn="section-8.1.5-2">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set and without
+            EDNS.  This query is to be sent using TCP.
+          </t>
+          <t indent="0" pn="section-8.1.5-3">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the AA and QR bits to be set in the header; RA may
+            also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We do not expect
+            an OPT record to be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.1.5-4">
+                Check that TCP queries work:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.1.5-5">
+dig +noedns +noad +norec +tcp soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: flag: aa to be present
+expect: flag: rd to NOT be present
+expect: flag: ad to NOT be present
+expect: the OPT record to NOT be present
+</sourcecode>
+          <t keepWithPrevious="true" indent="0" pn="section-8.1.5-6">
+                The requirement that TCP be supported is defined
+                in <xref target="RFC7766" format="default" sectionFormat="of" derivedContent="RFC7766"/>.
+          </t>
+        </section>
+      </section>
+      <section anchor="testing-edns" numbered="true" toc="include" removeInRFC="false" pn="section-8.2">
+        <name slugifiedName="name-testing-extended-dns">Testing: Extended DNS</name>
+        <t indent="0" pn="section-8.2-1">
+          The next set of tests cover various aspects of EDNS
+          behaviour.  If any of these tests succeed (indicating
+          at least some EDNS support), then all of them should
+          succeed.  There are servers that support EDNS but fail
+          to handle plain EDNS queries correctly, so a plain EDNS
+          query is not a good indicator of lack of EDNS support.
+        </t>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.1">
+          <name slugifiedName="name-testing-minimal-edns">Testing Minimal EDNS</name>
+          <t indent="0" pn="section-8.2.1-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set.  EDNS version
+            0 is used without any EDNS options or EDNS flags set.
+          </t>
+          <t indent="0" pn="section-8.2.1-2">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the AA and QR bits to be set in the header; RA may
+            also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response.  The EDNS version field
+            should be 0, and there should be no EDNS options present
+            <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.1-3">
+                Check that plain EDNS queries work:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.1-4">
+dig +nocookie +edns=0 +noad +norec soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: EDNS Version 0 in response
+expect: flag: aa to be present
+expect: flag: ad to NOT be present
+</sourcecode>
+          <t keepWithPrevious="true" indent="0" pn="section-8.2.1-5">
+                +nocookie disables sending an EDNS COOKIE option, which
+                is otherwise enabled by default in BIND 9.11.0 (and
+                later).
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.2">
+          <name slugifiedName="name-testing-edns-version-negoti">Testing EDNS Version Negotiation</name>
+          <t indent="0" pn="section-8.2.2-1">
+            Ask for the SOA record of a zone the server is nominally
+            configured to serve.  This query is made with no DNS flag
+            bits set.  EDNS version 1 is used without any EDNS options
+            or EDNS flags set.
+          </t>
+          <t indent="0" pn="section-8.2.2-2">
+            We expect the SOA record for the zone to NOT be returned
+            in the answer section with the extended rcode set to
+            BADVERS and the QR bit to be set in the header; RA
+            may also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response.  The EDNS version field
+            should be 0 in the response, as no other EDNS version
+            has as yet been specified <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.2-3">
+                Check that EDNS version 1 queries work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.2-4">
+dig +nocookie +edns=1 +noednsneg +noad +norec soa $zone @$server
+
+expect: status: BADVERS
+expect: the SOA record to NOT be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: EDNS Version 0 in response
+expect: flag: aa to NOT be present
+expect: flag: ad to NOT be present
+</sourcecode>
+          <t keepWithPrevious="true" indent="0" pn="section-8.2.2-5">
+                +noednsneg has been set, as dig supports EDNS version
+                negotiation, and we want to see only the response to the
+                initial EDNS version 1 query.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.3">
+          <name slugifiedName="name-testing-unknown-edns-option">Testing Unknown EDNS Options</name>
+          <t indent="0" pn="section-8.2.3-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set.  EDNS version
+            0 is used without any EDNS flags.  An EDNS option is
+            present with a value that has not yet been assigned by
+            IANA.  We have picked an unassigned code of 100 for
+            the example below.  Any unassigned EDNS option code
+            could have been chosen for this test.
+          </t>
+          <t indent="0" pn="section-8.2.3-2">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the AA and QR bits to be set in the header; RA may
+            also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response.  The EDNS version field
+            should be 0, as EDNS versions other than 0 are yet to
+            be specified, and there should be no EDNS options present,
+            as unknown EDNS options are supposed to be ignored by the
+            server (<xref target="RFC6891" sectionFormat="of" section="6.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6891#section-6.1.1" derivedContent="RFC6891"/>).
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.3-3">
+                Check that EDNS queries with an unknown option work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.3-4">
+dig +nocookie +edns=0 +noad +norec +ednsopt=100 soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: OPT=100 to NOT be present
+expect: EDNS Version 0 in response
+expect: flag: aa to be present
+expect: flag: ad to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.4">
+          <name slugifiedName="name-testing-unknown-edns-flags">Testing Unknown EDNS Flags</name>
+          <t indent="0" pn="section-8.2.4-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set.  EDNS version
+            0 is used without any EDNS options.  An unassigned EDNS
+            flag bit is set (0x40 in this case).
+          </t>
+          <t indent="0" pn="section-8.2.4-2">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the AA and QR bits to be set in the header; RA may
+            also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response, as unknown EDNS flags are
+            supposed to be ignored.  The EDNS version field
+            should be 0, and there should be no EDNS options present
+            <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.4-3">
+                Check that EDNS queries with unknown flags work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.4-4">
+dig +nocookie +edns=0 +noad +norec +ednsflags=0x40 soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: MBZ not to be present
+expect: EDNS Version 0 in response
+expect: flag: aa to be present
+expect: flag: ad to NOT be present
+</sourcecode>
+          <t keepWithPrevious="true" indent="0" pn="section-8.2.4-5">
+                MBZ (Must Be Zero) is a dig-specific indication that
+                a flag bit has been incorrectly copied, as per
+                <xref target="RFC6891" sectionFormat="of" section="6.1.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6891#section-6.1.4" derivedContent="RFC6891"/>.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.5">
+          <name slugifiedName="name-testing-edns-version-negotia">Testing EDNS Version Negotiation with Unknown EDNS Flags</name>
+          <t indent="0" pn="section-8.2.5-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set.  EDNS version
+            1 is used without any EDNS options.  An unassigned EDNS
+            flag bit is set (0x40 in this case).
+          </t>
+          <t indent="0" pn="section-8.2.5-2">
+            We expect the SOA record for the zone to NOT be returned
+            in the answer section with the extended rcode set to
+            BADVERS and the QR bit to be set in the header; RA
+            may also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response, as unknown EDNS flags are
+            supposed to be ignored.  The EDNS version field should
+            be 0, as EDNS versions other than 0 are yet to be
+            specified, and there should be no EDNS options present
+            <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.5-3">
+                Check that EDNS version 1 queries with unknown flags work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.5-4">
+dig +nocookie +edns=1 +noednsneg +noad +norec +ednsflags=0x40 soa \
+    $zone @$server
+
+expect: status: BADVERS
+expect: SOA record to NOT be present
+expect: an OPT record to be present in the additional section
+expect: MBZ not to be present
+expect: EDNS Version 0 in response
+expect: flag: aa to NOT be present
+expect: flag: ad to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.6">
+          <name slugifiedName="name-testing-edns-version-negotiat">Testing EDNS Version Negotiation with Unknown EDNS Options</name>
+          <t indent="0" pn="section-8.2.6-1">
+            Ask for the SOA record of the configured zone.  This
+            query is made with no DNS flag bits set.  EDNS version
+            1 is used.  An unknown EDNS option is present.  We have
+            picked an unassigned code of 100 for the example below.
+            Any unassigned EDNS option code could have been chosen for
+            this test.
+          </t>
+          <t indent="0" pn="section-8.2.6-2">
+            We expect the SOA record for the zone to NOT be returned
+            in the answer section with the extended rcode set to
+            BADVERS and the QR bit to be set in the header; RA
+            may also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect
+            an OPT record to be returned.  There should be no EDNS
+            flags present in the response.  The EDNS version field
+            should be 0, as EDNS versions other than 0 are yet
+            to be specified, and there should be no EDNS options
+            present <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.6-3">
+                Check that EDNS version 1 queries with unknown options work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.6-4">
+dig +nocookie +edns=1 +noednsneg +noad +norec +ednsopt=100 soa \
+    $zone @$server
+
+expect: status: BADVERS
+expect: SOA record to NOT be present
+expect: an OPT record to be present in the additional section
+expect: OPT=100 to NOT be present
+expect: EDNS Version 0 in response
+expect: flag: aa to NOT be present
+expect: flag: ad to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.7">
+          <name slugifiedName="name-testing-truncated-responses">Testing Truncated Responses</name>
+          <t indent="0" pn="section-8.2.7-1">
+            Ask for the DNSKEY records of the configured zone, which
+            must be a DNSSEC signed zone.  This query is made with
+            no DNS flag bits set.  EDNS version 0 is used without
+            any EDNS options.  The only EDNS flag set is DO.  The
+            EDNS UDP buffer size is set to 512.  The intention of
+            this query is to elicit a truncated response from the
+            server.  Most signed DNSKEY responses are bigger than
+            512 bytes.  This test will not give a valid result if
+            the zone is not signed.
+          </t>
+          <t indent="0" pn="section-8.2.7-2">We expect a response, the rcode to be set to NOERROR, and the AA
+	  and QR bits to be set. AD may be set in the response if the server
+	  supports DNSSEC; otherwise it should be clear; TC and RA may also be
+	  set <xref target="RFC1035" format="default" sectionFormat="of" derivedContent="RFC1035"/> <xref target="RFC4035" format="default" sectionFormat="of" derivedContent="RFC4035"/>.  We expect an OPT record to be present in the
+	  response.  There should be no EDNS flags other than DO present in
+	  the response.  The EDNS version field should be 0, and there should
+	  be no EDNS options present <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.</t>
+          <t indent="0" pn="section-8.2.7-3">
+            If TC is not set, it is not possible to confirm that the
+            server correctly adds the OPT record to the truncated
+            responses or not.
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.7-4">
+dig +norec +dnssec +bufsize=512 +ignore dnskey $zone @$server
+expect: NOERROR
+expect: OPT record with version set to 0
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.8">
+          <name slugifiedName="name-testing-do1-handling">Testing DO=1 Handling</name>
+          <t indent="0" pn="section-8.2.8-1">
+            Ask for the SOA record of the configured zone, which
+            does not need to be DNSSEC signed.  This query is made
+            with no DNS flag bits set.  EDNS version 0 is used
+            without any EDNS options.  The only EDNS flag set is
+            DO.
+          </t>
+          <t indent="0" pn="section-8.2.8-2">We expect the SOA record for the zone to be returned in the
+	  answer section, the rcode to be set to NOERROR, and the AA and QR
+	  bits to be set in the response. AD may be set in the response if the
+	  server supports DNSSEC, otherwise it should be clear; RA may also be
+	  set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect an OPT
+	  record to be returned.  There should be no EDNS flags other than DO
+	  present in the response, which should be present if the server
+	  supports DNSSEC.  The EDNS version field should be 0, and there
+	  should be no EDNS options present <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.</t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.8-3">
+                Check that DO=1 queries work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.8-4">
+dig +nocookie +edns=0 +noad +norec +dnssec soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: DO=1 to be present if an RRSIG is in the response
+expect: EDNS Version 0 in response
+expect: flag: aa to be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.9">
+          <name slugifiedName="name-testing-edns-version-negotiati">Testing EDNS Version Negotiation with DO=1</name>
+          <t indent="0" pn="section-8.2.9-1">
+            Ask for the SOA record of the configured zone, which does
+            not need to be DNSSEC signed.  This query is made with no
+            DNS flag bits set.  EDNS version 1 is used without any EDNS
+            options.  The only EDNS flag set is DO.
+          </t>
+          <t indent="0" pn="section-8.2.9-2">We expect the SOA record for the zone NOT to be returned in the answer
+section, the extended rcode to be set to BADVERS, and the QR bit to be set in
+the header; RA may also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  
+	  
+	  We expect an OPT record to be returned.  There
+	  should be no EDNS flags other than DO present in the response, which
+	  should be there if the server supports DNSSEC.  The EDNS version
+	  field should be 0, and there should be no EDNS options present <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.</t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.9-3">
+                Check that EDNS version 1, DO=1 queries work (EDNS supported):
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.9-4">
+dig +nocookie +edns=1 +noednsneg +noad +norec +dnssec soa \
+    $zone @$server
+
+expect: status: BADVERS
+expect: SOA record to NOT be present
+expect: an OPT record to be present in the additional section
+expect: DO=1 to be present if the EDNS version 0 DNSSEC query test
+        returned DO=1
+expect: EDNS Version 0 in response
+expect: flag: aa to NOT be present
+</sourcecode>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-8.2.10">
+          <name slugifiedName="name-testing-with-multiple-defin">Testing with Multiple Defined EDNS Options</name>
+          <t indent="0" pn="section-8.2.10-1">Ask for the SOA record of the configured zone.  This query is
+	  made with no DNS flag bits set.  EDNS version 0 is used.  A number
+	  of defined EDNS options are present (NSID <xref target="RFC5001" format="default" sectionFormat="of" derivedContent="RFC5001"/>, DNS COOKIE <xref target="RFC7873" format="default" sectionFormat="of" derivedContent="RFC7873"/>, EDNS Client Subnet <xref target="RFC7871" format="default" sectionFormat="of" derivedContent="RFC7871"/>, and EDNS Expire <xref target="RFC7314" format="default" sectionFormat="of" derivedContent="RFC7314"/>).</t>
+          <t indent="0" pn="section-8.2.10-2">
+            We expect the SOA record for the zone to be returned
+            in the answer section, the rcode to be set to NOERROR, and
+            the AA and QR bits to be set in the header; RA may
+            also be set <xref target="RFC1034" format="default" sectionFormat="of" derivedContent="RFC1034"/>.  We expect an OPT
+            record to be returned.  There should be no EDNS flags
+            present in the response.  The EDNS version field should
+            be 0.  Any of the requested EDNS options supported
+            by the server and permitted server configuration may
+            be returned <xref target="RFC6891" format="default" sectionFormat="of" derivedContent="RFC6891"/>.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-8.2.10-3">
+                Check that EDNS queries with multiple defined EDNS options work:
+          </t>
+          <sourcecode name="" type="" markers="false" pn="section-8.2.10-4">
+dig +edns=0 +noad +norec +cookie +nsid +expire +subnet=0.0.0.0/0 \
+    soa $zone @$server
+
+expect: status: NOERROR
+expect: the SOA record to be present in the answer section
+expect: an OPT record to be present in the additional section
+expect: EDNS Version 0 in response
+expect: flag: aa to be present
+expect: flag: ad to NOT be present
+</sourcecode>
+        </section>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-8.3">
+        <name slugifiedName="name-when-edns-is-not-supported">When EDNS Is Not Supported</name>
+        <t indent="0" pn="section-8.3-1">
+          If EDNS is not supported by the nameserver, we expect a
+          response to each of the above queries.  That response may
+          be a FORMERR error response, or the OPT record may just
+          be ignored.
+        </t>
+        <t indent="0" pn="section-8.3-2">
+          Some nameservers only return an EDNS response when a
+          particular EDNS option or flag (e.g., DO=1) is present in
+          the request. This behaviour is not compliant behaviour
+          and may hide other incorrect behaviour from the above
+          tests.  Retesting with the triggering option/flag
+          present will expose this misbehaviour.
+        </t>
+      </section>
+    </section>
+    <section anchor="remediation" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-remediation">Remediation</name>
+      <t indent="0" pn="section-9-1">
+        Nameserver operators are generally expected to test their
+        own infrastructure for compliance to standards. The above
+        tests should be run when new systems are brought online
+        and should be repeated periodically to ensure continued
+        interoperability.
+      </t>
+      <t indent="0" pn="section-9-2">
+        Domain registrants who do not maintain their own DNS
+        infrastructure are entitled to a DNS service that conforms
+        to standards and interoperates well.  Registrants who become
+        aware that their DNS operator does not have a well-maintained
+        or compliant infrastructure should insist that their service
+        provider correct issues and switch providers if they do
+        not.
+      </t>
+      <t indent="0" pn="section-9-3">
+        In the event that an operator experiences problems due to
+        the behaviour of nameservers outside their control, the
+        above tests will help in narrowing down the precise issue(s),
+        which can then be reported to the relevant party.
+      </t>
+      <t indent="0" pn="section-9-4">
+        If contact information for the operator of a misbehaving
+        nameserver is not already known, the following methods of
+        communication could be considered:
+
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-9-5">
+        <li pn="section-9-5.1">
+            the RNAME of the zone authoritative for the name of the
+            misbehaving server
+          </li>
+        <li pn="section-9-5.2">
+            the RNAME of zones for which the offending server is
+            authoritative
+          </li>
+        <li pn="section-9-5.3">
+            administrative or technical contacts listed in the
+            registration information for the parent domain of the
+            name of the misbehaving server or for zones for which
+            the nameserver is authoritative
+          </li>
+        <li pn="section-9-5.4">
+            the registrar or registry for such zones
+          </li>
+        <li pn="section-9-5.5">
+            DNS-specific, operational fora (e.g., mailing lists)
+          </li>
+      </ul>
+      <t indent="0" pn="section-9-6">
+        Operators of parent zones may wish to regularly test the
+        authoritative nameservers of their child zones.  However,
+        parent operators can have widely varying capabilities in
+        terms of notification or remediation depending on whether
+        they have a direct relationship with the child operator.
+        Many Top-Level Domain (TLD) registries, for example, cannot directly contact
+        their registrants and may instead need to communicate through
+        the relevant registrar.  In such cases, it may be most
+        efficient for registrars to take on the responsibility for
+        testing the nameservers of their registrants, since they
+        have a direct relationship.
+      </t>
+      <t indent="0" pn="section-9-7">
+        When notification is not effective at correcting problems
+        with a misbehaving nameserver, parent operators can choose
+        to remove NS record sets (and glue records below) that refer
+        to the faulty server until the servers are fixed.  This should
+        only be done as a last resort and with due consideration, as
+        removal of a delegation can have unanticipated side effects.
+        For example, other parts of the DNS tree may depend on names
+        below the removed zone cut, and the parent operator may find
+        themselves responsible for causing new DNS failures to occur.
+      </t>
+    </section>
+    <section anchor="seccon" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1">
+        Testing protocol compliance can potentially result in false
+        reports of attempts to attack services from Intrusion Detection
+        Services and firewalls.  All of the tests are well-formed
+        (though not necessarily common) DNS queries.  None of the tests
+        listed above should cause any harm to a protocol-compliant
+        server.
+      </t>
+      <t indent="0" pn="section-10-2">
+        Relaxing firewall settings to ensure EDNS compliance could
+        potentially expose a critical implementation flaw in the
+        nameserver.  Nameservers should be tested for conformance
+        before relaxing firewall settings.
+      </t>
+      <t indent="0" pn="section-10-3">
+        When removing delegations for non-compliant servers, there
+        can be a knock-on effect on other zones that require these
+        zones to be operational for the nameservers addresses to be
+        resolved.
+      </t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-11-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-12">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-12.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+          <front>
+            <title>Domain names - concepts and facilities</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised basic definition of The Domain Name System.  It obsoletes RFC-882.  This memo describes the domain style names and their used for host address look up and electronic mail forwarding.  It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+        </reference>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC3225" target="https://www.rfc-editor.org/info/rfc3225" quoteTitle="true" derivedAnchor="RFC3225">
+          <front>
+            <title>Indicating Resolver Support of DNSSEC</title>
+            <author initials="D." surname="Conrad" fullname="D. Conrad">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="December"/>
+            <abstract>
+              <t indent="0">In order to deploy DNSSEC (Domain Name System Security Extensions) operationally, DNSSEC aware servers should only perform automatic inclusion of DNSSEC RRs when there is an explicit indication that the resolver can understand those RRs.  This document proposes the use of a bit in the EDNS0 header to provide that explicit indication and describes the necessary protocol changes to implement that notification. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3225"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3225"/>
+        </reference>
+        <reference anchor="RFC4035" target="https://www.rfc-editor.org/info/rfc4035" quoteTitle="true" derivedAnchor="RFC4035">
+          <front>
+            <title>Protocol Modifications for the DNS Security Extensions</title>
+            <author initials="R." surname="Arends" fullname="R. Arends">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Larson" fullname="M. Larson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Massey" fullname="D. Massey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Rose" fullname="S. Rose">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="March"/>
+            <abstract>
+              <t indent="0">This document is part of a family of documents that describe the DNS Security Extensions (DNSSEC).  The DNS Security Extensions are a collection of new resource records and protocol modifications that add data origin authentication and data integrity to the DNS.  This document describes the DNSSEC protocol modifications.  This document defines the concept of a signed zone, along with the requirements for serving and resolving by using DNSSEC.  These techniques allow a security-aware resolver to authenticate both DNS resource records and authoritative DNS error indications. </t>
+              <t indent="0"> This document obsoletes RFC 2535 and incorporates changes from all updates to RFC 2535.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4035"/>
+        </reference>
+        <reference anchor="RFC6840" target="https://www.rfc-editor.org/info/rfc6840" quoteTitle="true" derivedAnchor="RFC6840">
+          <front>
+            <title>Clarifications and Implementation Notes for DNS Security (DNSSEC)</title>
+            <author initials="S." surname="Weiler" fullname="S. Weiler" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Blacka" fullname="D. Blacka" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="February"/>
+            <abstract>
+              <t indent="0">This document is a collection of technical clarifications to the DNS Security (DNSSEC) document set.  It is meant to serve as a resource to implementors as well as a collection of DNSSEC errata that existed at the time of writing.</t>
+              <t indent="0">This document updates the core DNSSEC documents (RFC 4033, RFC 4034, and RFC 4035) as well as the NSEC3 specification (RFC 5155).  It also defines NSEC3 and SHA-2 (RFC 4509 and RFC 5702) as core parts of the DNSSEC specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6840"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6840"/>
+        </reference>
+        <reference anchor="RFC6891" target="https://www.rfc-editor.org/info/rfc6891" quoteTitle="true" derivedAnchor="RFC6891">
+          <front>
+            <title>Extension Mechanisms for DNS (EDNS(0))</title>
+            <author initials="J." surname="Damas" fullname="J. Damas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Graff" fullname="M. Graff">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="April"/>
+            <abstract>
+              <t indent="0">The Domain Name System's wire protocol includes a number of fixed fields whose range has been or soon will be exhausted and does not allow requestors to advertise their capabilities to responders.  This document describes backward-compatible mechanisms for allowing the protocol to grow.</t>
+              <t indent="0">This document updates the Extension Mechanisms for DNS (EDNS(0)) specification (and obsoletes RFC 2671) based on feedback from deployment experience in several implementations.  It also obsoletes RFC 2673 ("Binary Labels in the Domain Name System") and adds considerations on the use of extended labels in the DNS.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="75"/>
+          <seriesInfo name="RFC" value="6891"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6891"/>
+        </reference>
+        <reference anchor="RFC6895" target="https://www.rfc-editor.org/info/rfc6895" quoteTitle="true" derivedAnchor="RFC6895">
+          <front>
+            <title>Domain Name System (DNS) IANA Considerations</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="April"/>
+            <abstract>
+              <t indent="0">This document specifies Internet Assigned Numbers Authority (IANA) parameter assignment considerations for the allocation of Domain Name System (DNS) resource record types, CLASSes, operation codes, error codes, DNS protocol message header bits, and AFSDB resource record subtypes.  It obsoletes RFC 6195 and updates RFCs 1183, 2845, 2930, and 3597.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="42"/>
+          <seriesInfo name="RFC" value="6895"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6895"/>
+        </reference>
+        <reference anchor="RFC7766" target="https://www.rfc-editor.org/info/rfc7766" quoteTitle="true" derivedAnchor="RFC7766">
+          <front>
+            <title>DNS Transport over TCP - Implementation Requirements</title>
+            <author initials="J." surname="Dickinson" fullname="J. Dickinson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Dickinson" fullname="S. Dickinson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bellis" fullname="R. Bellis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Mankin" fullname="A. Mankin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Wessels" fullname="D. Wessels">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t indent="0">This document specifies the requirement for support of TCP as a transport protocol for DNS implementations and provides guidelines towards DNS-over-TCP performance on par with that of DNS-over-UDP. This document obsoletes RFC 5966 and therefore updates RFC 1035 and RFC 1123.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7766"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7766"/>
+        </reference>
+      </references>
+      <references pn="section-12.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="IANA-DNS" target="https://www.iana.org/assignments/dns-parameters/" quoteTitle="true" derivedAnchor="IANA-DNS">
+          <front>
+            <title>Domain Name System (DNS) Parameters</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="ISC" target="https://www.isc.org/" quoteTitle="true" derivedAnchor="ISC">
+          <front>
+            <title>Internet Systems Consortuim</title>
+            <author/>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="RFC2671" target="https://www.rfc-editor.org/info/rfc2671" quoteTitle="true" derivedAnchor="RFC2671">
+          <front>
+            <title>Extension Mechanisms for DNS (EDNS0)</title>
+            <author initials="P." surname="Vixie" fullname="P. Vixie">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1999" month="August"/>
+            <abstract>
+              <t indent="0">The Domain Name System's wire protocol includes a number of fixed fields whose range has been or soon will be exhausted and does not allow clients to advertise their capabilities to servers.  This document describes backward compatible mechanisms for allowing the protocol to grow.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2671"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2671"/>
+        </reference>
+        <reference anchor="RFC3597" target="https://www.rfc-editor.org/info/rfc3597" quoteTitle="true" derivedAnchor="RFC3597">
+          <front>
+            <title>Handling of Unknown DNS Resource Record (RR) Types</title>
+            <author initials="A." surname="Gustafsson" fullname="A. Gustafsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="September"/>
+            <abstract>
+              <t indent="0">Extending the Domain Name System (DNS) with new Resource Record (RR) types currently requires changes to name server software.  This document specifies the changes necessary to allow future DNS implementations to handle new RR types transparently.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3597"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3597"/>
+        </reference>
+        <reference anchor="RFC5001" target="https://www.rfc-editor.org/info/rfc5001" quoteTitle="true" derivedAnchor="RFC5001">
+          <front>
+            <title>DNS Name Server Identifier (NSID) Option</title>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="August"/>
+            <abstract>
+              <t indent="0">With the increased use of DNS anycast, load balancing, and other mechanisms allowing more than one DNS name server to share a single IP address, it is sometimes difficult to tell which of a pool of name servers has answered a particular query.  While existing ad-hoc mechanisms allow an operator to send follow-up queries when it is necessary to debug such a configuration, the only completely reliable way to obtain the identity of the name server that responded is to have the name server include this information in the response itself. This note defines a protocol extension to support this functionality.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5001"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5001"/>
+        </reference>
+        <reference anchor="RFC7314" target="https://www.rfc-editor.org/info/rfc7314" quoteTitle="true" derivedAnchor="RFC7314">
+          <front>
+            <title>Extension Mechanisms for DNS (EDNS) EXPIRE Option</title>
+            <author initials="M." surname="Andrews" fullname="M. Andrews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="July"/>
+            <abstract>
+              <t indent="0">This document specifies a method for secondary DNS servers to honour the SOA EXPIRE field as if they were always transferring from the primary, even when using other secondaries to perform indirect transfers and refresh queries.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7314"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7314"/>
+        </reference>
+        <reference anchor="RFC7871" target="https://www.rfc-editor.org/info/rfc7871" quoteTitle="true" derivedAnchor="RFC7871">
+          <front>
+            <title>Client Subnet in DNS Queries</title>
+            <author initials="C." surname="Contavalli" fullname="C. Contavalli">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="van der Gaast" fullname="W. van der Gaast">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Lawrence" fullname="D. Lawrence">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Kumari" fullname="W. Kumari">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="May"/>
+            <abstract>
+              <t indent="0">This document describes an Extension Mechanisms for DNS (EDNS0) option that is in active use to carry information about the network that originated a DNS query and the network for which the subsequent response can be cached.  Since it has some known operational and privacy shortcomings, a revision will be worked through the IETF for improvement.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7871"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7871"/>
+        </reference>
+        <reference anchor="RFC7873" target="https://www.rfc-editor.org/info/rfc7873" quoteTitle="true" derivedAnchor="RFC7873">
+          <front>
+            <title>Domain Name System (DNS) Cookies</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Andrews" fullname="M. Andrews">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="May"/>
+            <abstract>
+              <t indent="0">DNS Cookies are a lightweight DNS transaction security mechanism that provides limited protection to DNS servers and clients against a variety of increasingly common denial-of-service and amplification/ forgery or cache poisoning attacks by off-path attackers.  DNS Cookies are tolerant of NAT, NAT-PT (Network Address Translation - Protocol Translation), and anycast and can be incrementally deployed. (Since DNS Cookies are only returned to the IP address from which they were originally received, they cannot be used to generally track Internet users.)</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7873"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7873"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">The contributions of <contact fullname="Matthew Pounsett"/> and
+      <contact fullname="Tim Wicinski"/> are gratefully acknowledged.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="M." surname="Andrews" fullname="M. Andrews">
+        <organization abbrev="ISC" showOnFrontPage="true">Internet Systems Consortium</organization>
+        <address>
+          <postal>
+            <street>PO Box 360</street>
+            <city>Newmarket</city>
+            <region>NH</region>
+            <code>03857</code>
+            <country>United States of America</country>
+          </postal>
+          <email>marka@isc.org</email>
+        </address>
+      </author>
+      <author initials="R." surname="Bellis" fullname="Ray Bellis">
+        <organization abbrev="ISC" showOnFrontPage="true">Internet Systems Consortium</organization>
+        <address>
+          <postal>
+            <street>PO Box 360</street>
+            <city>Newmarket</city>
+            <region>NH</region>
+            <code>03857</code>
+            <country>United States of America</country>
+          </postal>
+          <email>ray@isc.org</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

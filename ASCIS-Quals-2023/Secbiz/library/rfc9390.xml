@@ -1,0 +1,1557 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-dime-group-signaling-14" indexInclude="true" ipr="trust200902" number="9390" prepTime="2023-04-25T23:17:18" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-dime-group-signaling-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9390" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title>Diameter Group Signaling</title>
+    <seriesInfo name="RFC" value="9390" stream="IETF"/>
+    <author initials="M." surname="Jones" fullname="Mark Jones">
+      <organization showOnFrontPage="true">Individual</organization>
+      <address>
+        <email>mark@azu.ca</email>
+      </address>
+    </author>
+    <author initials="M." surname="Liebsch" fullname="Marco Liebsch">
+      <organization abbrev="NEC" showOnFrontPage="true">NEC Laboratories Europe GmbH</organization>
+      <address>
+        <postal>
+          <street>Kurfuersten-Anlage 36</street>
+          <city>Heidelberg</city>
+          <code>D-69115</code>
+          <country>Germany</country>
+        </postal>
+        <email>marco.liebsch@neclab.eu</email>
+      </address>
+    </author>
+    <author initials="L." surname="Morand" fullname="Lionel Morand">
+      <organization abbrev="Orange" showOnFrontPage="true">Orange Labs</organization>
+      <address>
+        <postal>
+          <street>38/40 rue du General Leclerc</street>
+          <city>Issy-Les-Moulineaux Cedex 9</city>
+          <code>92794</code>
+          <country>France</country>
+        </postal>
+        <email>lionel.morand@orange.com</email>
+      </address>
+    </author>
+    <date month="04" year="2023"/>
+    <area>ops</area>
+    <workgroup>dime</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+   In large network deployments, a single Diameter node can support over
+   a million concurrent Diameter sessions.  In some use cases, Diameter
+   nodes need to apply the same operation to a large group of Diameter
+   sessions concurrently.  The Diameter base protocol commands operate
+   on a single session so these use cases can result in many thousands
+   of command exchanges enforcing the same operation on each session in
+   the group.  In order to reduce signaling, it is desirable to
+   enable bulk operations on all (or part of) the sessions managed by a
+   Diameter node using a single or a few command exchanges.  This
+   document specifies the Diameter protocol extensions to achieve this
+   signaling optimization.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9390" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-overview">Protocol Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-building-and-modifying-sess">Building and Modifying Session Groups</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-issuing-group-commands">Issuing Group Commands</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-permission-considerations">Permission Considerations</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-description">Protocol Description</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-grouping-capability">Session Grouping Capability Discovery</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.1.2">
+                  <li pn="section-toc.1-1.4.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.1.1"><xref derivedContent="4.1.1" format="counter" sectionFormat="of" target="section-4.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-capability-discovery-based-">Capability Discovery Based on the Application Id</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.2.1"><xref derivedContent="4.1.2" format="counter" sectionFormat="of" target="section-4.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-capability-discovery-based-o">Capability Discovery Based on AVP Presence</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-grouping">Session Grouping</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.2.2">
+                  <li pn="section-toc.1-1.4.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.1.1"><xref derivedContent="4.2.1" format="counter" sectionFormat="of" target="section-4.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-group-assignment-at-session">Group Assignment at Session Initiation</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.2.1"><xref derivedContent="4.2.2" format="counter" sectionFormat="of" target="section-4.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-removing-a-session-from-a-s">Removing a Session from a Session Group</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.3.1"><xref derivedContent="4.2.3" format="counter" sectionFormat="of" target="section-4.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mid-session-group-assignmen">Mid-session Group Assignment Modifications</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deleting-a-session-group">Deleting a Session Group</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-performing-group-operations">Performing Group Operations</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.4.2">
+                  <li pn="section-toc.1-1.4.2.4.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.1.1"><xref derivedContent="4.4.1" format="counter" sectionFormat="of" target="section-4.4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sending-group-commands">Sending Group Commands</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.4.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.2.1"><xref derivedContent="4.4.2" format="counter" sectionFormat="of" target="section-4.4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-receiving-group-commands">Receiving Group Commands</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.4.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.3.1"><xref derivedContent="4.4.3" format="counter" sectionFormat="of" target="section-4.4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-error-handling-for-group-co">Error Handling for Group Commands</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.4.2.4">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.4.1"><xref derivedContent="4.4.4" format="counter" sectionFormat="of" target="section-4.4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-single-session-fallback">Single-Session Fallback</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operation-with-proxy-agents">Operation with Proxy Agents</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-commands-formatting">Commands Formatting</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-formatting-example-group-re">Formatting Example: Group Re-Auth-Request</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-attribute-value-pairs-avps">Attribute-Value Pairs (AVPs)</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-group-info-avp">Session-Group-Info AVP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-group-control-vecto">Session-Group-Control-Vector AVP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-group-id-avp">Session-Group-Id AVP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-group-response-action-avp">Group-Response-Action AVP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-group-capability-ve">Session-Group-Capability-Vector AVP</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-result-code-avp-values">Result-Code AVP Values</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-avp-codes">AVP Codes</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-registries">New Registries</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-session-management-exemplar">Session Management -- Exemplary Session State Machine</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-appendix.a.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-of-groups-for-the-autho">Use of Groups for the Authorization Session State Machine</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sect-1" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+   In large network deployments, a single Diameter node can support over
+   a million concurrent Diameter sessions.  In some use cases, Diameter
+   nodes need to apply the same operation to a large group of Diameter
+   sessions concurrently.  For example, a policy decision point may need
+   to modify the authorized quality of service for all active users
+   having the same type of subscription.  The Diameter base protocol
+   commands operate on a single session so these use cases can result
+   in many thousands of command exchanges enforcing the same operation
+   on each session in the group.  In order to reduce signaling, it is
+   desirable to enable bulk operations on all (or part of) the
+   sessions managed by a Diameter node using a single or a few command
+   exchanges.</t>
+      <t indent="0" pn="section-1-2">
+   This document describes mechanisms for grouping Diameter sessions and
+   applying Diameter commands, such as performing re-authentication,
+   re-authorization, termination, and abortion of sessions to a group of
+   sessions.  This document does not define a new Diameter application.
+   Instead, it defines mechanisms, commands, and Attribute-Value Pairs (AVPs) that may be used by any
+   Diameter application that requires management of groups of sessions.</t>
+      <t indent="0" pn="section-1-3">
+   These mechanisms take the following design goals and features into
+   account:
+
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-4">
+        <li pn="section-1-4.1">minimal impact to existing applications</li>
+        <li pn="section-1-4.2">extension of existing commands' Command Code Format (CCF) with
+     optional AVPs to enable grouping and group operations</li>
+        <li pn="section-1-4.3">fallback to single-session operation</li>
+        <li pn="section-1-4.4">implicit discovery of capability to support grouping and group
+     operations in case no external mechanism is available to discover a
+     Diameter peer's capability to support session grouping and session group
+     operations</li>
+      </ul>
+    </section>
+    <section anchor="sect-2" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">
+   The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+   "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", "<bcp14>MAY</bcp14>", and
+   "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as described in BCP
+   14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all
+   capitals, as shown here.</t>
+      <t indent="0" pn="section-2-2">
+   This document uses terminology defined in <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>.</t>
+    </section>
+    <section anchor="sect-3" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-protocol-overview">Protocol Overview</name>
+      <section anchor="sect-3.1" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-building-and-modifying-sess">Building and Modifying Session Groups</name>
+        <t indent="0" pn="section-3.1-1">
+   In order to accommodate bulk operations on Diameter sessions, the
+   concept of session groups is introduced.  Once sessions are added to
+   a group, a command acting on the group will affect all the member
+   sessions.</t>
+        <t indent="0" pn="section-3.1-2">
+   The client and the server can assign a new Diameter session to a group, e.g.,
+   in case the subscription profile of the associated user has similar
+   characteristics as the profile of other users whose Diameter session
+   has been assigned to one or multiple groups.  A single command can be
+   issued and applied to all sessions associated with one or more such groups,
+   e.g., to adjust common profile or policy settings.</t>
+        <t indent="0" pn="section-3.1-3">
+   The assignment of a Diameter session to a group can be changed during
+   an ongoing session (mid-session).  For example, if a user's
+   subscription profile changes mid-session, a Diameter server may
+   remove a session from an existing group and assign this session to a
+   different group that is more appropriate for the new subscription
+   profile.</t>
+        <t indent="0" pn="section-3.1-4">
+   In the case of mobile users, the user's session may get transferred
+   mid-session to a new Diameter client during handover and assigned to
+   a different group, which is maintained at the new Diameter client.</t>
+        <t indent="0" pn="section-3.1-5">
+   It may be required to delete a session group, e.g., at the expiry of a
+   promotional period that applied to multiple subscriber profiles.
+   Deletion of such group requires subsequent individual treatment of
+   each of the assigned sessions.  A node may decide to assign some of
+   these sessions to any other existing or new group.</t>
+      </section>
+      <section anchor="sect-3.2" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-issuing-group-commands">Issuing Group Commands</name>
+        <t indent="0" pn="section-3.2-1">
+   Changes in the network condition may result in the Diameter server's
+   decision to close all sessions in a given group.  For example, the
+   server issues a single Session Termination Request (STR) command,
+   including the identifier of the group of sessions that are to be
+   terminated.  The Diameter client treats the STR as a group command and
+   initiates the termination of all sessions associated with the
+   identified group.  Subsequently, the client confirms the successful
+   termination of these sessions to the server by sending a single
+   Session Termination Answer (STA) command, which includes the
+   identifier of the group.</t>
+      </section>
+      <section anchor="sect-3.3" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-permission-considerations">Permission Considerations</name>
+        <t indent="0" pn="section-3.3-1">
+   Permission considerations in the context of this document apply to the
+   permission of Diameter nodes to build new session groups, to assign/remove
+   a session to/from a session group, and to delete an existing
+   session group.</t>
+        <t indent="0" pn="section-3.3-2">
+   When a client or server decides to create a new session group,
+   e.g., to group all sessions that share certain characteristics, this
+   node builds a session group identifier according to the rules
+   described in <xref target="sect-7.3" format="default" sectionFormat="of" derivedContent="Section 7.3"/> and becomes the owner of the group.</t>
+        <t indent="0" pn="section-3.3-3">
+   After the creation of a session group, a session can be added to this
+   session group by either the client or the server.  However, a session
+   can only be removed from a session group by the Diameter node (client
+   or server) that has assigned this session to the session group.</t>
+        <t indent="0" pn="section-3.3-4">
+   A session group can only be deleted by the owner of the session
+   group, resulting in individual treatment of the sessions that were
+   assigned to this session group.</t>
+        <t indent="0" pn="section-3.3-5">
+   Diameter applications with implicit support for session groups <bcp14>MAY</bcp14>
+   define a more constrained permission model.  For example, a more
+   constrained model could require that a client not remove a
+   session from a group that is owned by the server.  Details about
+   enforcing a more constrained permission model are out of scope of
+   this specification.</t>
+      </section>
+    </section>
+    <section anchor="sect-4" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-protocol-description">Protocol Description</name>
+      <section anchor="sect-4.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-session-grouping-capability">Session Grouping Capability Discovery</name>
+        <t indent="0" pn="section-4.1-1">
+   Diameter nodes <bcp14>SHOULD NOT</bcp14> perform group operations with peer nodes
+   unless the node has advertised support for session grouping and group
+   operations.</t>
+        <section anchor="sect-4.1.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.1.1">
+          <name slugifiedName="name-capability-discovery-based-">Capability Discovery Based on the Application Id</name>
+          <t indent="0" pn="section-4.1.1-1">
+   Newly defined Diameter applications may intrinsically support Diameter
+   session grouping and group operations. In these cases, there is no need 
+  of a specific discovery mechanism for the support of session grouping 
+  capability besides the discovery of the Application Id assigned to the 
+  application advertised during the capability exchange phase described in <xref target="RFC6733" section="5.3" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-5.3" derivedContent="RFC6733"/>.</t>
+          <t indent="0" pn="section-4.1.1-2">
+   System-specific and deployment-specific means, as well as out-of-band
+   mechanisms for capability discovery, can be used to announce nodes'
+   support for session grouping and session group operations.  In such
+   case, the optional Session-Group-Capability-Vector AVP, as described
+   in <xref target="sect-4.1.2" format="default" sectionFormat="of" derivedContent="Section 4.1.2"/>, can be omitted in Diameter messages being exchanged
+   between nodes.</t>
+        </section>
+        <section anchor="sect-4.1.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.1.2">
+          <name slugifiedName="name-capability-discovery-based-o">Capability Discovery Based on AVP Presence</name>
+          <t indent="0" pn="section-4.1.2-1">
+   If no other mechanism for capability discovery is deployed to enable
+   Diameter nodes to learn about nodes' capability to support session grouping
+   and group commands for a given application, a Diameter node <bcp14>SHOULD</bcp14> append
+   the Session-Group-Capability-Vector AVP to any Diameter application
+   messages exchanged with the other Diameter nodes to announce its capability
+   to support session grouping and session group operations for the advertised
+   application.  Implementations following the specification as per this
+   document <bcp14>MUST</bcp14> set the BASE_SESSION_GROUP_CAPABILITY flag of the
+   Session-Group-Capability-Vector AVP.</t>
+          <t indent="0" pn="section-4.1.2-2">
+   When a Diameter node receives at least one Session-Group-Capability-Vector
+   AVP from a node with the BASE_SESSION_GROUP_CAPABILITY flag set, the
+   receiving Diameter node discovers the supported session grouping capability
+   of the sending Diameter node for the advertised application and <bcp14>MUST</bcp14> cache
+   this information for the lifetime of the routing table entry associated
+   with the peer identity / Application Id pair (see <xref target="RFC6733" section="2.7" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-2.7" derivedContent="RFC6733"/>).</t>
+        </section>
+      </section>
+      <section anchor="sect-4.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-session-grouping">Session Grouping</name>
+        <t indent="0" pn="section-4.2-1">
+   This specification does not limit the number of session groups to
+   which a single session is assigned.  It is left to the implementation
+   of an application to determine such limitations.  If an application
+   facilitates a session to belong to multiple session groups, the
+   application <bcp14>MUST</bcp14> maintain consistency of associated application
+   session states for these multiple session groups.</t>
+        <t indent="0" pn="section-4.2-2">
+   Either Diameter node (client or server) can initiate the assignment
+   of a session to a single or multiple session groups.  Modification of
+   a group by removing or adding a single or multiple user sessions can
+   be initiated and performed mid-session by either Diameter node
+   responsible for the session assignment to this group.  Although 
+   Diameter is a peer-to-peer protocol, Diameter Authentication, Authorization, and Accounting (AAA) applications
+   typically assign the role of a "Diameter client" to the Diameter node
+   initiating the Diameter session and the role of "Diameter server" to
+   the node authorizing the Diameter session.  This specification does
+   not restrict group creation, assignment, or deletion actions to a
+   specific role.  In the following sections, "Diameter node" is used to
+   refer to either role.  <xref target="sect-5" format="default" sectionFormat="of" derivedContent="Section 5"/> describes particularities about
+   session grouping and performing group commands when relay agents or
+   proxies are deployed.</t>
+        <t indent="0" pn="section-4.2-3">
+   Any Diameter node that has advertised support of session grouping and
+   group operations <bcp14>MUST</bcp14> store and maintain the group assignment as part
+   of the session's state.  A list of all known session groups is
+   locally maintained on each node, with each group pointing to individual
+   sessions being assigned to the group.  Each Diameter node <bcp14>MUST</bcp14> also
+   keep a record about sessions that it has assigned to a session group.</t>
+        <section anchor="sect-4.2.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.1">
+          <name slugifiedName="name-group-assignment-at-session">Group Assignment at Session Initiation</name>
+          <t indent="0" pn="section-4.2.1-1">
+   To assign a session to a group at session initiation, a Diameter
+   client sends a service-specific request, e.g., Network Access Server Requirements (NASREQ) AA-Request
+   <xref target="RFC7155" format="default" sectionFormat="of" derivedContent="RFC7155"/>, containing one or more session group identifiers.  Each of
+   these groups <bcp14>MUST</bcp14> be identified by a unique Session-Group-Id
+   contained in a separate Session-Group-Info AVP, as specified in
+   <xref target="sect-7" format="default" sectionFormat="of" derivedContent="Section 7"/>.</t>
+          <t indent="0" pn="section-4.2.1-2">
+   The client may choose one or multiple session groups from a list of
+   existing session groups.  Alternatively, the client may decide to
+   create a new group to which the session is assigned and identify
+   itself in the &lt;DiameterIdentity&gt; portion of the Session-Group-Id AVP,
+   as per <xref target="sect-7.3" format="default" sectionFormat="of" derivedContent="Section 7.3"/>.  For all assignments of a session to an active
+   session group made by the client or the server, the
+   SESSION_GROUP_STATUS flag in the Session-Group-Info AVP, which
+   identifies the session group, <bcp14>MUST</bcp14> be set.  A set
+   SESSION_GROUP_STATUS flag indicates that the identified session group
+   has just been created or is still active.</t>
+          <t indent="0" pn="section-4.2.1-3">
+   The client <bcp14>MUST</bcp14> set the SESSION_GROUP_ALLOCATION_ACTION flag of the
+   Session-Group-Control-Vector AVP in each appended Session-Group-Info
+   AVP to indicate that the session contained in the request should be
+   assigned to the identified session group.</t>
+          <t indent="0" pn="section-4.2.1-4">
+   The client may also indicate in the request that it supports
+   assignment of the session to one or more groups by the server.  In
+   such case, the client <bcp14>MUST</bcp14> include the Session-Group-Info AVP in
+   the request, including the Session-Group-Control-Vector AVP with the
+   SESSION_GROUP_ALLOCATION_ACTION flag set but no Session-Group-Id AVP.</t>
+          <t indent="0" pn="section-4.2.1-5">
+   If the Diameter server receives a command request from a Diameter client
+   and the command includes at least one Session-Group-Info AVP with the
+   SESSION_GROUP_ALLOCATION_ACTION flag in the Session-Group-Control-Vector
+   AVP set, the server can accept or reject the request for group assignment.
+   Reasons for rejection may be, e.g., lack of resources for managing
+   additional groups.  When rejected, the session <bcp14>MUST NOT</bcp14> be assigned to any
+	  session group.</t>
+          <t indent="0" pn="section-4.2.1-6">
+   If the Diameter server accepts the client's request for a group
+   assignment, the server <bcp14>MUST</bcp14> assign the new session to each (one or more)
+   of the identified session groups when present in the Session-
+   Group-Info AVP. If
+   one or multiple identified session groups are not already stored by the
+   server, the server <bcp14>MUST</bcp14> store the one or more newly identified groups to its local
+   list of known session groups.
+   When sending the response to the client,
+   e.g., a service-specific authorization response, as per NASREQ AA-Answer <xref target="RFC7155" format="default" sectionFormat="of" derivedContent="RFC7155"/>,
+   the server <bcp14>MUST</bcp14> include all Session-Group-Info AVPs received in the
+   client's request.</t>
+          <t indent="0" pn="section-4.2.1-7">
+   In addition to the one or multiple session groups identified in the
+   client's request, the server may decide to assign the new session to
+   one or multiple additional groups.  In such case, the server <bcp14>MUST</bcp14>
+   add to the response the additional Session-Group-Info AVPs, each
+   identifying a session group to which the new session is assigned by
+   the server.  Each of the Session-Group-Info AVPs added by the server
+   <bcp14>MUST</bcp14> have the SESSION_GROUP_ALLOCATION_ACTION flag set in the
+   Session-Group-Control-Vector AVP.</t>
+          <t indent="0" pn="section-4.2.1-8">
+   If the Diameter server rejects the client's request for a group
+   assignment, the server sends the response to the client, e.g., a
+   service-specific authorization response, as per NASREQ AA-Answer <xref target="RFC7155" format="default" sectionFormat="of" derivedContent="RFC7155"/>, and
+   <bcp14>MUST</bcp14> include all Session-Group-Info AVPs received in the client's
+   request (if any) while clearing the SESSION_GROUP_ALLOCATION_ACTION
+   flag of the Session-Group-Control-Vector AVP.  The server <bcp14>MAY</bcp14> still
+   accept the client's request for the identified session to proceed
+   despite rejecting the group assignment.  The response sent to the
+   client will then indicate success in the result code.  In this case,
+   the session is treated as a single session without assignment to any
+   session group by the Diameter nodes.</t>
+          <t indent="0" pn="section-4.2.1-9">
+   If the assignment of the session to one or some of the multiple identified
+   session groups fails, the session group assignment is treated as a failure.
+   In such case, the session is treated as a single session without assignment to
+   any session group by the Diameter nodes.  The server sends the response to
+   the client and <bcp14>MAY</bcp14> include those Session-Group-Info AVPs for which the
+   group assignment failed.  The SESSION_GROUP_ALLOCATION_ACTION flag of
+   included Session-Group-Info AVPs <bcp14>MUST</bcp14> be cleared.</t>
+          <t indent="0" pn="section-4.2.1-10">
+   If the Diameter server receives a command request from a Diameter client
+   and the command includes a Session-Group-Info AVP that does not include a
+   Session-Group-Id AVP, the server <bcp14>MAY</bcp14> decide to assign the session to one or
+   multiple session groups.  For each session group to which the server
+   assigns the new session, the server includes a Session-Group-Info AVP with
+   the Session-Group-Id AVP, identifying a session group in the response sent
+   to the client.  Each of the Session-Group-Info AVPs included by the server
+   <bcp14>MUST</bcp14> have the SESSION_GROUP_ALLOCATION_ACTION flag of the
+   Session-Group-Control-Vector AVP set.</t>
+          <t indent="0" pn="section-4.2.1-11">
+   If the Diameter server receives a command request from a Diameter
+   client and the command does not contain any Session-Group-Info AVPs,
+   the server <bcp14>MUST NOT</bcp14> assign the new session to any session group but
+   treat the request the same as for a single session.  The server <bcp14>MUST NOT</bcp14>
+   return any Session-Group-Info AVP in the command response.</t>
+          <t indent="0" pn="section-4.2.1-12">
+   If the Diameter client receives a response to its previously issued
+   request from the server and the response includes at least one
+   Session-Group-Info AVP with the SESSION_GROUP_ALLOCATION_ACTION
+   flag of the associated Session-Group-Control-Vector AVP set, the
+   client <bcp14>MUST</bcp14> add the new session to all session groups as identified
+   in one or multiple Session-Group-Info AVPs.  If the Diameter
+   client fails to add the session to one or more session groups as
+   identified in one or multiple Session-Group-Info AVPs, the client
+   <bcp14>MUST</bcp14> terminate the session.  The client <bcp14>MAY</bcp14> send a subsequent request
+   for session initiation to the server without requesting the
+   assignment of the session to a session group.</t>
+          <t indent="0" pn="section-4.2.1-13">
+   If the Diameter client receives a response to its previously issued
+   request from the server and one or more Session-Group-Info AVPs
+   have the SESSION_GROUP_ALLOCATION_ACTION flag of the associated
+   Session-Group-Control-Vector AVP cleared, the client <bcp14>MUST</bcp14> terminate
+   the assignment of the session to one or multiple groups.  If the
+   response from the server indicates success in the result code but
+   only the assignment of the session to a session group has been
+   rejected by the server, the client treats the session as a single
+   session without group assignment.</t>
+          <t indent="0" pn="section-4.2.1-14">
+   If a Diameter client sends a request for session initiation
+   containing one or more Session-Group-Info AVPs but the response from
+   the Diameter server does not contain a Session-Group-Info AVP, the
+   Diameter client <bcp14>MUST</bcp14> proceed as if the request was processed without
+   group assignments.  The Diameter client <bcp14>MUST NOT</bcp14> retry to request
+   group assignment for this session but <bcp14>MAY</bcp14> try to request group
+   assignment for other new sessions.</t>
+        </section>
+        <section anchor="sect-4.2.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.2">
+          <name slugifiedName="name-removing-a-session-from-a-s">Removing a Session from a Session Group</name>
+          <t indent="0" pn="section-4.2.2-1">
+   When a Diameter client decides to remove a session from a particular
+   session group, the client sends a service-specific re-authorization request
+   to the server and adds one Session-Group-Info AVP to the request for each
+   session group from which the client wants to remove the session.  The
+   session that is to be removed from a group is identified in the Session-Id
+   AVP of the command request.  The SESSION_GROUP_ALLOCATION_ACTION flag of
+   the Session-Group-Control-Vector AVP in each Session-Group-Info AVP <bcp14>MUST</bcp14> be
+   cleared to indicate removal of the session from the session group
+   identified in the associated Session-Group-Id AVP.</t>
+          <t indent="0" pn="section-4.2.2-2">
+   When a Diameter client decides to remove a session from all session
+   groups to which the session has been previously assigned, the client
+   sends a service-specific re-authorization request to the server and
+   adds a single Session-Group-Info AVP to the request that has the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared and the Session-Group-Id
+   AVP omitted.  The Session-Id AVP in the re-authorization request
+   identifies the session that is to be removed from all groups to which
+   it had been previously assigned.</t>
+          <t indent="0" pn="section-4.2.2-3">
+   If the Diameter server receives a request from the client that has at
+   least one Session-Group-Info AVP appended with the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared, the server <bcp14>MUST</bcp14> remove the
+   session from the session group identified in the associated
+   Session-Group-Id AVP.  If the request includes at least one
+   Session-Group-Info AVP with the SESSION_GROUP_ALLOCATION_ACTION flag
+   cleared and no Session-Id AVP present, the server <bcp14>MUST</bcp14> remove the session
+   from all session groups to which the session has been previously assigned.
+   The server <bcp14>MUST</bcp14> include in its response to the requesting client all
+   Session-Group-Id AVPs received in the request.</t>
+          <t indent="0" pn="section-4.2.2-4">
+     When the Diameter server decides to remove a session from one or
+     multiple particular session groups or from all session groups to
+     which the session has been assigned beforehand, the server sends a
+     Re-Auth-Request (RAR) or a service-specific server-initiated
+     request to the client, indicating the session in the Session-Id AVP
+     of the request. The client sends a Re-Auth-Answer (RAA) or
+     a service-specific answer to respond to the server's request.  The
+   client subsequently sends a service-specific re-authorization request
+   containing one or multiple Session-Group-Info AVPs, each indicating a
+   session group to which the session had been previously assigned.  To
+   indicate removal of the indicated session from one or multiple
+   session groups, the server sends a service-specific authorization response to
+   the client, containing a list of Session-Group-Info AVPs with the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared and the Session-Group-Id
+   AVP identifying the session group from which the session should be
+   removed.  The server <bcp14>MAY</bcp14> include with the service-specific authorization
+   response a list of Session-Group-Info AVPs with the
+   SESSION_GROUP_ALLOCATION_ACTION flag set and the Session-Group-Id AVP
+   identifying session groups to which the session remains subscribed.
+   If the server decides to remove the identified session from all
+   session groups to which the session has been previously assigned,
+   the server includes in the service-specific authorization response at least
+   one Session-Group-Info AVP with the SESSION_GROUP_ALLOCATION_ACTION
+   flag cleared and Session-Group-Id AVP absent.</t>
+        </section>
+        <section anchor="sect-4.2.3" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.3">
+          <name slugifiedName="name-mid-session-group-assignmen">Mid-session Group Assignment Modifications</name>
+          <t indent="0" pn="section-4.2.3-1">
+   Either Diameter node (client or server) can modify the group
+   membership of an active Diameter session according to the specified
+   permission considerations.</t>
+          <t indent="0" pn="section-4.2.3-2">
+   To update an assigned group mid-session, a Diameter client sends a
+   service-specific re-authorization request to the server, containing one or
+   multiple Session-Group-Info AVPs with the SESSION_GROUP_ALLOCATION_ACTION
+   flag set and the Session-Group-Id AVP present, identifying the session
+   group to which the session should be assigned.  With the same message, the
+   client <bcp14>MAY</bcp14> send one or multiple Session-Group-Info AVPs with the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared and the Session-Group-Id AVP
+   identifying the session group from which the identified session is to be
+   removed.  To remove the session from all previously assigned session
+   groups, the client includes at least one Session-Group-Info AVP with the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared and no Session-Group-Id AVP
+   present.  When the server received the service-specific re-authorization
+   request, it <bcp14>MUST</bcp14> update its locally maintained view of the session groups
+   for the identified session according to the appended Session-Group-Info
+   AVPs.  The server sends a service-specific authorization response to the client
+   containing one or multiple Session-Group-Info AVPs with the
+   SESSION_GROUP_ALLOCATION_ACTION flag set and the Session-Group-Id AVP
+   identifying the new session group to which the identified session has been
+   assigned.</t>
+          <t indent="0" pn="section-4.2.3-3">
+     When a Diameter server decides to update assigned groups mid-session, it
+     sends a Re-Auth-Request (RAR) message or a service-specific
+     request to the client identifying the session for which the session group
+     lists are to be updated. The client responds with a Re-Auth-Answer (RAA)
+     message or a service-specific answer.  The client subsequently
+   sends a service-specific re-authorization request containing one or
+   multiple Session-Group-Info AVPs with the SESSION_GROUP_ALLOCATION_ACTION
+   flag set and the Session-Group-Id AVP identifying the session group to
+   which the session had been previously assigned.  The server responds with a
+   service-specific authorization response and includes one or multiple
+   Session-Group-Info AVPs with the SESSION_GROUP_ALLOCATION_ACTION flag set
+   and the Session-Group-Id AVP identifying the session group to which the
+   identified session is to be assigned.  With the same response message, the
+   server <bcp14>MAY</bcp14> send one or multiple Session-Group-Info AVPs with the
+   SESSION_GROUP_ALLOCATION_ACTION flag cleared and the Session-Group-Id AVP
+   identifying the session groups from which the identified session is to be
+   removed.  When a server wants to remove the session from all previously
+   assigned session groups, it sends at least one Session- Group-Info AVP with
+   the response having the SESSION_GROUP_ALLOCATION_ACTION flag cleared and no
+   Session-Group-Id AVP present.</t>
+        </section>
+      </section>
+      <section anchor="sect-4.3" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-deleting-a-session-group">Deleting a Session Group</name>
+        <t indent="0" pn="section-4.3-1">
+   To explicitly delete a session group and release the associated
+   Session-Group-Id value, the owner of a session group appends a single
+   Session-Group-Info AVP with the SESSION_GROUP_STATUS flag cleared
+   and the Session-Group-Id AVP identifying the session group that is
+   to be deleted.  The SESSION_GROUP_ALLOCATION_ACTION flag of the
+   associated Session-Group-Control-Vector AVP <bcp14>MUST</bcp14> be cleared.</t>
+        <t indent="0" pn="section-4.3-2">
+   A session group is implicitly deleted and its identifier is released
+   after the last session has been removed from this session group.</t>
+      </section>
+      <section anchor="sect-4.4" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-performing-group-operations">Performing Group Operations</name>
+        <section anchor="sect-4.4.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.4.1">
+          <name slugifiedName="name-sending-group-commands">Sending Group Commands</name>
+          <t indent="0" pn="section-4.4.1-1">
+   Either Diameter node (client or server) can request the recipient of a
+   request to process an associated command for all sessions assigned to one
+   or multiple groups by identifying these groups in the request.  The sender
+   of the request appends for each group to which the command applies a
+   Session-Group-Info AVP including the Session-Group-Id AVP to identify the
+   associated session group.  Both the SESSION_GROUP_ALLOCATION_ACTION flag
+   and the SESSION_GROUP_STATUS flag <bcp14>MUST</bcp14> be set.</t>
+          <t indent="0" pn="section-4.4.1-2">
+   If the Command Code Format (CCF) of the request mandates a Session-Id
+   AVP, the Session-Id AVP <bcp14>MUST</bcp14> identify one of the single sessions
+   that is assigned to at least one of the groups being identified in
+   the appended Session-Group-Id AVPs.</t>
+          <t indent="0" pn="section-4.4.1-3">
+   The sender of the request <bcp14>MUST</bcp14> indicate to the receiver how multiple
+   resulting transactions associated with a group command are to be treated by
+   appending a single instance of a Group-Response-Action AVP.
+   For example, when a server sends a Re-Auth-Request (RAR) or a service-specific
+   server-initiated request to the client, it indicates to the client to
+   follow the request according to one of three possible procedures.  When the
+   server sets the Group-Response-Action AVP to ALL_GROUPS (1), the client
+   sends a single RAR message for all identified groups.  When the server sets
+   the Group-Response-Action AVP to PER_GROUP (2), the client sends a single
+   RAR message for each identified group individually.  When the server sets
+   the Group-Response-Action AVP to PER_SESSION (3), the client follows up
+   with a single RAR message per impacted session.  If a session is included
+   in more than one of the identified session groups, the client sends only
+   one RAR message for that session.</t>
+          <t indent="0" pn="section-4.4.1-4">
+   If the sender sends a request including the Group-Response-Action AVP set
+   to ALL_GROUPS (1) or PER_GROUP (2), it has to expect some delay before
+   receiving one or more corresponding answers, as the answers will only be sent
+   back when the request is processed for all the sessions or all the sessions
+   of a session group.  If the processing of the request is delay sensitive,
+   the sender <bcp14>SHOULD NOT</bcp14> set the Group-Response-Action AVP to ALL_GROUPS (1)
+   or PER_GROUP (2).  If the answer can be sent before the complete process of
+   the request for all the sessions or if the request timeout timer is high
+   enough, the sender <bcp14>MAY</bcp14> set the Group-Response-Action AVP to ALL_GROUPS (1)
+   or PER_GROUP (2).</t>
+          <t indent="0" pn="section-4.4.1-5">
+   If the sender wants the receiver of the request to process the
+   associated command for a single session, the sender does not
+   append any group identifier; it identifies only the relevant session in
+   the Session-Id AVP.</t>
+        </section>
+        <section anchor="sect-4.4.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.4.2">
+          <name slugifiedName="name-receiving-group-commands">Receiving Group Commands</name>
+          <t indent="0" pn="section-4.4.2-1">
+   A Diameter node receiving a request to process a command for a group
+   of sessions identifies the relevant groups according to the included
+   Session-Group-Id AVP in the Session-Group-Info AVP and processes the
+   group command according to the included Group-Response-Action AVP.
+   If the received request identifies multiple groups in multiple,
+   included Session-Group-Id AVPs, the receiver <bcp14>SHOULD</bcp14> process the
+   associated command for each of these groups.  If a session has been
+   assigned to more than one of the identified groups, the receiver <bcp14>MUST</bcp14>
+   process the associated command only once per session.</t>
+        </section>
+        <section anchor="sect-4.4.3" numbered="true" toc="include" removeInRFC="false" pn="section-4.4.3">
+          <name slugifiedName="name-error-handling-for-group-co">Error Handling for Group Commands</name>
+          <t indent="0" pn="section-4.4.3-1">
+   When a Diameter node receives a request to process a command for one
+   or more session groups and the result of processing the command is an
+   error that applies to all sessions in the identified groups, an
+   associated protocol error <bcp14>MUST</bcp14> be returned to the source of the
+   request.  In such case, the sender of the request <bcp14>MUST</bcp14> fall back to
+   single-session processing and the session groups, which have been
+   identified in the group command, <bcp14>MUST</bcp14> be deleted according to the
+   procedure described in <xref target="sect-4.3" format="default" sectionFormat="of" derivedContent="Section 4.3"/>.</t>
+          <t indent="0" pn="section-4.4.3-2">
+   When a Diameter node receives a request to process a command for one
+   or more session groups and the result of processing the command
+   succeeds for some sessions identified in one or multiple session
+   groups but fails for one or more sessions, the Result-Code AVP in
+   the response message <bcp14>SHOULD</bcp14> indicate DIAMETER_LIMITED_SUCCESS, as per
+   <xref target="RFC6733" section="7.1.2" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-7.1.2" derivedContent="RFC6733"/>.</t>
+          <t indent="0" pn="section-4.4.3-3">
+   In the case of limited success, the sessions for which the
+   processing of the group command failed <bcp14>MUST</bcp14> be identified by
+   including their Session-Id AVP in the Failed-AVP AVP, as per
+   <xref target="RFC6733" section="7.5" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-7.5" derivedContent="RFC6733"/>.  The sender of the request <bcp14>MUST</bcp14> fall back
+   to single-session operation for each of the identified sessions for
+   which the group command failed.  In addition, each of these sessions
+   <bcp14>MUST</bcp14> be removed from all session groups to which the group command
+   applied.  To remove sessions from a session group, the Diameter
+   client performs the procedure described in <xref target="sect-4.2.2" format="default" sectionFormat="of" derivedContent="Section 4.2.2"/>.</t>
+        </section>
+        <section anchor="sect-4.4.4" numbered="true" toc="include" removeInRFC="false" pn="section-4.4.4">
+          <name slugifiedName="name-single-session-fallback">Single-Session Fallback</name>
+          <t indent="0" pn="section-4.4.4-1">
+   Either Diameter node can fall back to single-session operation by
+   ignoring and omitting the optional group-session-specific AVPs.
+   Fallback to single-session operation is performed by processing the
+   Diameter command solely for the session identified in the mandatory
+   Session-Id AVP.  In such case, the response to the group command <bcp14>MUST NOT</bcp14>
+    include any group identifier but only the Session-Id identifying the session for
+   which the command has been processed.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="sect-5" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-operation-with-proxy-agents">Operation with Proxy Agents</name>
+      <t indent="0" pn="section-5-1">
+   In the case of a present stateful Proxy Agent between a Diameter
+   client and a Diameter server, the Proxy Agent <bcp14>MUST</bcp14> perform the same
+   mechanisms per this specification to advertise session grouping and
+   group operation capabilities towards the client and the server,
+   respectively.  The Proxy Agent <bcp14>MUST</bcp14> update and maintain consistency of its
+   local session states as per the result of the group commands that
+   are operated between a Diameter client and a server.  In such case,
+   the Proxy Agent <bcp14>MUST</bcp14> act as a Diameter server in front of the
+   Diameter client and <bcp14>MUST</bcp14> act as a Diameter client in front of the
+   Diameter server.  Therefore, the client and the server behavior described
+   in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/> applies respectively to the stateful Proxy Agent.</t>
+      <t indent="0" pn="section-5-2">
+   If a stateful Proxy Agent manipulates session groups, it <bcp14>MUST</bcp14>
+   maintain consistency of session groups between a client and a server.
+   This applies to a deployment where the Proxy Agent utilizes session
+   grouping and performs group operations with, for example, a Diameter
+   server, whereas the Diameter client is not aware of session groups.
+   In such case, the Proxy Agent must reflect the states associated with
+   the session groups as individual session operations towards the
+   client and ensure the client has a consistent view of each session.
+   The same applies to a deployment where all nodes, the Diameter client
+   and server, as well as the Proxy Agent are group aware, but the Proxy
+   Agent manipulates groups, e.g., to adopt different administrative
+   policies that apply to the client's domain and the server's domain.</t>
+      <t indent="0" pn="section-5-3">
+   Stateless Proxy Agents do not maintain any session states (only transaction
+   states are maintained).  Consequently, the notion of a session group is
+   transparent for any stateless Proxy Agent present between a Diameter client
+   and a Diameter server handling session groups.  Session-group-related AVPs
+   being defined as an optional AVP are ignored by stateless Proxy Agents and
+   should not be removed from the Diameter commands.  If they are removed by
+   the Proxy Agent for any reason, the Diameter client and Diameter server
+   will discover the absence of the session-group-related AVPs and will fall back
+   to single-session processing, as described in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+    </section>
+    <section anchor="sect-6" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-commands-formatting">Commands Formatting</name>
+      <t indent="0" pn="section-6-1">
+   This document does not specify new Diameter commands to enable group
+   operations but relies on command extensibility and capability provided
+   by the Diameter Base protocol.  This section provides the guidelines
+   to extend the CCF of existing Diameter commands with optional AVPs to
+   enable the recipient of the command to apply the command to all
+   sessions associated with the identified group or groups.</t>
+      <section anchor="sect-6.1" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-formatting-example-group-re">Formatting Example: Group Re-Auth-Request</name>
+        <t indent="0" pn="section-6.1-1">
+   A request for re-authentication of one or more groups of users is issued by
+   appending one or multiple Session-Group-Id AVPs, as well as appending a single
+   instance of a Group-Response-Action AVP to the Re-Auth-Request (RAR).
+   One or multiple Session-Group-Id AVPs identify one or more associated groups
+   for which group re-authentication has been requested.  The
+   Group-Response-Action AVP identifies the expected means to perform and
+   respond to the group command.  The recipient of the group command initiates
+   re-authentication for all users associated with the identified group or groups.
+   Furthermore, the sender of the group re-authentication request appends a
+   Group-Response-Action AVP to provide more information to the receiver of
+   the command about how to accomplish the group operation.</t>
+        <t indent="0" pn="section-6.1-2">
+   The value of the mandatory Session-Id AVP <bcp14>MUST</bcp14> identify a session
+   associated with a single user, which is assigned to at least one of
+	the groups being identified in the appended Session-Group-Id AVPs.</t>
+        <artwork name="" type="" align="left" alt="" pn="section-6.1-3">
+      &lt;RAR&gt;  ::= &lt; Diameter Header: 258, REQ, PXY &gt;
+                 &lt; Session-Id &gt;
+                 { Origin-Host }
+                 { Origin-Realm }
+                 { Destination-Realm }
+                 { Destination-Host }
+                 { Auth-Application-Id }
+                 { Re-Auth-Request-Type }
+                 [ User-Name ]
+                 [ Origin-State-Id ]
+               * [ Proxy-Info ]
+               * [ Route-Record ]
+                 [ Session-Group-Capability-Vector ]
+               * [ Session-Group-Info ]
+                 [ Group-Response-Action ]
+               * [ AVP ]
+</artwork>
+      </section>
+    </section>
+    <section anchor="sect-7" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-attribute-value-pairs-avps">Attribute-Value Pairs (AVPs)</name>
+      <table align="center" pn="table-1">
+        <name slugifiedName="name-avps-for-the-diameter-group">AVPs for the Diameter Group Signaling</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Attribute Name</th>
+            <th rowspan="2" colspan="1" align="left">AVP Code Value Type</th>
+            <th rowspan="1" colspan="4" align="left">AVP Flag rules</th>
+          </tr>
+          <tr>
+            <th align="left" colspan="1" rowspan="1"/>
+            <th align="left" colspan="1" rowspan="1">
+              <bcp14>MUST</bcp14></th>
+            <th align="left" colspan="1" rowspan="1">
+              <bcp14>MAY</bcp14></th>
+            <th align="left" colspan="1" rowspan="1">
+              <bcp14>SHOULD NOT</bcp14></th>
+            <th align="left" colspan="1" rowspan="1">
+              <bcp14>MUST NOT</bcp14></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Session-Group-Info</td>
+            <td align="left" colspan="1" rowspan="1">671 Grouped</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">V</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Session-Group-Control-Vector</td>
+            <td align="left" colspan="1" rowspan="1">672 Unsigned32</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">V</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Session-Group-Id</td>
+            <td align="left" colspan="1" rowspan="1">673 UTF8String</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">V</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Group-Response-Action</td>
+            <td align="left" colspan="1" rowspan="1">674 Unsigned32</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">V</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">Session-Group-Capability-Vector</td>
+            <td align="left" colspan="1" rowspan="1">675 Unsigned32</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">P</td>
+            <td align="left" colspan="1" rowspan="1"/>
+            <td align="left" colspan="1" rowspan="1">V</td>
+          </tr>
+        </tbody>
+      </table>
+      <section anchor="sect-7.1" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-session-group-info-avp">Session-Group-Info AVP</name>
+        <t indent="0" pn="section-7.1-1">
+   The Session-Group-Info AVP (AVP Code 671) is of type Grouped.  It
+   contains the identifier of the session group, as well as an indication
+   of the node responsible for session group identifier assignment.</t>
+        <artwork name="" type="" align="left" alt="" pn="section-7.1-2">
+   Session-Group-Info ::= &lt; AVP Header: 671 &gt;
+                          &lt; Session-Group-Control-Vector &gt;
+                          [ Session-Group-Id ]
+                        * [ AVP ]
+</artwork>
+      </section>
+      <section anchor="sect-7.2" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-session-group-control-vecto">Session-Group-Control-Vector AVP</name>
+        <t indent="0" pn="section-7.2-1">
+   The Session-Group-Control-Vector AVP (AVP Code 672) is of type
+   Unsigned32 and contains a 32-bit flag field to control the group
+   assignment at session-group-aware nodes.  For defined flags, only
+   numeric values that are 2<sup>x</sup> (power of two, where 0&lt;=x&lt;32) are allowed.</t>
+        <t indent="0" pn="section-7.2-2">
+   The following control flags are defined in this document:</t>
+        <t indent="0" pn="section-7.2-3">SESSION_GROUP_ALLOCATION_ACTION (0x00000001)
+
+        </t>
+        <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-7.2-4">
+          <li pn="section-7.2-4.1">
+	This flag indicates the action to be performed for the identified
+      session.  When this flag is set, it indicates that the identified
+      Diameter session is to be assigned to the session group
+      identified by the Session-Group-Id AVP or the session's assignment
+      to the session group identified in the Session-Group-Id AVP is
+      still valid.  When the flag is cleared, the identified Diameter
+      session is to be removed from at least one session group.  When
+      the flag is cleared and the Session-Group-Info AVP identifies a
+      particular session group in the associated Session-Group-Id AVP,
+      the session is to be removed solely from the identified session
+      group.  When the flag is cleared and the Session-Group-Info AVP
+      does not identify a particular session group (Session-Group-Id AVP
+      is absent), the identified Diameter session is to be removed from
+      all session groups to which it has been previously assigned.
+	</li>
+        </ul>
+        <t indent="0" pn="section-7.2-5">SESSION_GROUP_STATUS (0x00000010)
+
+        </t>
+        <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-7.2-6">
+          <li pn="section-7.2-6.1">
+	This flag indicates the status of the session group identified in the
+      associated Session-Group-Id AVP.  The flag is set when the identified
+      session group has just been created or is still active.  If the flag is
+      cleared, the identified session group is deleted and the associated
+      Session-Group-Id is released.  If the Session-Group-Info AVP does not
+      include a Session-Group-Id AVP, this flag is meaningless and <bcp14>MUST</bcp14> be
+      ignored by the receiver.
+	</li>
+        </ul>
+      </section>
+      <section anchor="sect-7.3" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-session-group-id-avp">Session-Group-Id AVP</name>
+        <t indent="0" pn="section-7.3-1">
+   The Session-Group-Id AVP (AVP Code 673) is of type UTF8String and
+   identifies a group of Diameter sessions.</t>
+        <t indent="0" pn="section-7.3-2">
+   The Session-Group-Id <bcp14>MUST</bcp14> be globally unique.  The Session-Group-Id
+   includes a mandatory portion and an implementation-defined portion
+   delimited by the ";" character.  The Session-Group-Id <bcp14>MUST</bcp14> begin with
+   the identity of the Diameter node that owns the session group.  The
+   remainder of the Session-Group-Id is implementation defined and <bcp14>MAY</bcp14>
+   follow the format recommended for the implementation-defined portion
+   of the Session-Id AVP in <xref target="RFC6733" section="8.8" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-8.8" derivedContent="RFC6733"/>.</t>
+      </section>
+      <section anchor="sect-7.4" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-group-response-action-avp">Group-Response-Action AVP</name>
+        <t indent="0" pn="section-7.4-1">
+   The Group-Response-Action AVP (AVP Code 674) is of type Unsigned32
+   and contains a 32-bit address space representing values indicating
+   how the node <bcp14>SHOULD</bcp14> issue follow-up exchanges in response to a
+   command that impacts multiple sessions.  The following values are
+	defined by this document:</t>
+        <dl newline="true" indent="3" spacing="normal" pn="section-7.4-2">
+          <dt pn="section-7.4-2.1">ALL_GROUPS (1)</dt>
+          <dd pn="section-7.4-2.2">Follow-up message exchanges associated with a group command should
+      be performed with a single message exchange for all impacted
+      groups.</dd>
+          <dt pn="section-7.4-2.3">PER_GROUP (2)</dt>
+          <dd pn="section-7.4-2.4">Follow-up message exchanges associated with a group command should
+      be performed with a separate message exchange for each impacted
+      group.</dd>
+          <dt pn="section-7.4-2.5">PER_SESSION (3)</dt>
+          <dd pn="section-7.4-2.6">Follow-up message exchanges associated with a group command should
+      be performed with a separate message exchange for each impacted
+      session.</dd>
+        </dl>
+      </section>
+      <section anchor="sect-7.5" numbered="true" toc="include" removeInRFC="false" pn="section-7.5">
+        <name slugifiedName="name-session-group-capability-ve">Session-Group-Capability-Vector AVP</name>
+        <t indent="0" pn="section-7.5-1">
+   The Session-Group-Capability-Vector AVP (AVP Code 675) is of type
+   Unsigned32 and contains a 32-bit flag field to indicate capabilities
+   in the context of session-group assignment and group operations.  For
+   defined flags, only numeric values that are 2<sup>x</sup> (power of two, where
+   0&lt;=x&lt;32) are allowed.  The value of (0) is reserved.</t>
+        <t indent="0" pn="section-7.5-2">
+   The following capability is defined in this document:</t>
+        <t indent="0" pn="section-7.5-3">BASE_SESSION_GROUP_CAPABILITY (0x00000001)
+        </t>
+        <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-7.5-4">
+          <li pn="section-7.5-4.1">This flag indicates the capability to support session grouping and
+      session group operations according to this specification.	</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="sect-8" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-result-code-avp-values">Result-Code AVP Values</name>
+      <t indent="0" pn="section-8-1">
+   This document does not define new Result-Code <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/> values for
+   existing applications, which are extended to support group commands.
+   Documents specifying new applications, which will have
+   intrinsic support for group commands, may specify new Result-Codes.</t>
+    </section>
+    <section anchor="sect-9" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">
+   This section contains the namespaces that have either been created in
+   this specification or had their values assigned to existing
+   namespaces managed by IANA.</t>
+      <section anchor="sect-9.1" numbered="true" toc="include" removeInRFC="false" pn="section-9.1">
+        <name slugifiedName="name-avp-codes">AVP Codes</name>
+        <t indent="0" pn="section-9.1-1">
+   IANA has registered the following new AVPs
+   from the "AVP Codes" registry defined in <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>.    The AVPs are defined in <xref target="sect-7" format="default" sectionFormat="of" derivedContent="Section 7"/>.</t>
+        <ul bare="false" empty="false" indent="3" spacing="normal" pn="section-9.1-2">
+          <li pn="section-9.1-2.1">Session-Group-Info</li>
+          <li pn="section-9.1-2.2">Session-Group-Control-Vector</li>
+          <li pn="section-9.1-2.3">Session-Group-Id</li>
+          <li pn="section-9.1-2.4">Group-Response-Action</li>
+          <li pn="section-9.1-2.5">Session-Group-Capability-Vector</li>
+        </ul>
+      </section>
+      <section anchor="sect-9.2" numbered="true" toc="include" removeInRFC="false" pn="section-9.2">
+        <name slugifiedName="name-new-registries">New Registries</name>
+        <t indent="0" pn="section-9.2-1">
+   IANA has created the following two new registries.</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-9.2-2">
+          <li pn="section-9.2-2.1">The "Session-Group-Control-Vector AVP Values (code 672)" registry for control bits. Two initial assignments are described in <xref target="sect-7.2" format="default" sectionFormat="of" derivedContent="Section 7.2"/>.  The registration assignment policy is 
+      Specification Required.</li>
+          <li pn="section-9.2-2.2">The "Session-Group-Capability-Vector AVP Values (code 675)" registry. One initial assignment is described in <xref target="sect-7.5" format="default" sectionFormat="of" derivedContent="Section 7.5"/>.  The registration
+      assignment policy is Standards Action.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="sect-10" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1">
+   The security considerations of the Diameter protocol itself are discussed
+   in <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>.  Use of the AVPs defined in this document <bcp14>MUST</bcp14> take into
+   consideration the security issues and requirements of the Diameter base
+   protocol.  In particular, the Session-Group-Info AVP (including the
+   Session-Group-Control-Vector and the Session-Group-Id AVPs) should be
+   considered as a security-sensitive AVP in the same manner as the
+   Session-Id AVP in the Diameter base protocol <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>.</t>
+      <t indent="0" pn="section-10-2">
+   The management of session groups relies upon the existing trust
+   relationship between the Diameter client and the Diameter server
+   managing the groups of sessions.  This document defines a mechanism
+   that allows a client or a server to act on multiple sessions at the
+   same time using only one command.  If the Diameter client or server
+   is compromised, an attacker could launch DoS attacks by terminating
+   or applying change operations to a large number of sessions with a
+   limited set of commands using the session group management concept.</t>
+      <t indent="0" pn="section-10-3">
+   According to the Diameter base protocol <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>, transport
+   connections between Diameter peers are protected by TLS/TCP, DTLS / 
+   Stream Control Transmission Protocol (SCTP), or alternative security mechanisms that are independent of
+   Diameter, such as IPsec.  However, the lack of end-to-end security
+   features makes it difficult to establish trust in the session-group-related
+   information received from non-adjacent nodes.  Any Diameter
+   agent in the message path can potentially modify the content of the
+   message and therefore the information sent by the Diameter client or
+   the server.  There is ongoing work on the specification of end-to-end
+   security features for Diameter.  Such features would enable the
+   establishment of a trust relationship between non-adjacent nodes, and
+   the security required for session group management would normally
+   rely on this end-to-end security.  However, there is no assumption in
+   this document that such end-to-end security mechanism will be
+   available.  It is only assumed that the solution defined on this
+   document relies on the security framework provided by the Diameter-based protocol.</t>
+      <t indent="0" pn="section-10-4">
+   In some cases, a Diameter Proxy Agent can act on behalf of a client
+   or a server.  In such case, the security requirements that normally
+   apply to a client (or a server) apply equally to the Proxy Agent.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-11">
+      <name slugifiedName="name-normative-references">Normative References</name>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+          <date month="March" year="1997"/>
+          <abstract>
+            <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      <reference anchor="RFC6733" target="https://www.rfc-editor.org/info/rfc6733" quoteTitle="true" derivedAnchor="RFC6733">
+        <front>
+          <title>Diameter Base Protocol</title>
+          <author fullname="V. Fajardo" initials="V." role="editor" surname="Fajardo"/>
+          <author fullname="J. Arkko" initials="J." surname="Arkko"/>
+          <author fullname="J. Loughney" initials="J." surname="Loughney"/>
+          <author fullname="G. Zorn" initials="G." role="editor" surname="Zorn"/>
+          <date month="October" year="2012"/>
+          <abstract>
+            <t indent="0">The Diameter base protocol is intended to provide an Authentication, Authorization, and Accounting (AAA) framework for applications such as network access or IP mobility in both local and roaming situations.  This document specifies the message format, transport, error reporting, accounting, and security services used by all Diameter applications.  The Diameter base protocol as defined in this document obsoletes RFC 3588 and RFC 5719, and it must be supported by all new Diameter implementations. [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="6733"/>
+        <seriesInfo name="DOI" value="10.17487/RFC6733"/>
+      </reference>
+      <reference anchor="RFC7155" target="https://www.rfc-editor.org/info/rfc7155" quoteTitle="true" derivedAnchor="RFC7155">
+        <front>
+          <title>Diameter Network Access Server Application</title>
+          <author fullname="G. Zorn" initials="G." role="editor" surname="Zorn"/>
+          <date month="April" year="2014"/>
+          <abstract>
+            <t indent="0">This document describes the Diameter protocol application used for Authentication, Authorization, and Accounting services in the Network Access Server (NAS) environment; it obsoletes RFC 4005.  When combined with the Diameter Base protocol, Transport Profile, and Extensible Authentication Protocol specifications, this application specification satisfies typical network access services requirements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7155"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7155"/>
+      </reference>
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+          <date month="May" year="2017"/>
+          <abstract>
+            <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+    </references>
+    <section anchor="sect-a" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-session-management-exemplar">Session Management -- Exemplary Session State Machine</name>
+      <section anchor="sect-a.1" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a.1">
+        <name slugifiedName="name-use-of-groups-for-the-autho">Use of Groups for the Authorization Session State Machine</name>
+        <t indent="0" pn="section-appendix.a.1-1">
+   <xref target="RFC6733" sectionFormat="of" section="8.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6733#section-8.1" derivedContent="RFC6733"/> defines a set of finite state machines that
+   represent the life cycle of Diameter sessions, which must be
+   observed by all Diameter implementations that make use of the
+   authentication and/or authorization portion of a Diameter
+   application.  This section defines, for example, additional state
+   transitions related to the processing of the group commands that may
+   impact multiple sessions.</t>
+        <t indent="0" pn="section-appendix.a.1-2">
+   The group membership is a session state, and therefore only those state
+   machines from <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/> in which the server is maintaining session
+   state are relevant in this document.
+   As in <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>, the term
+   'service-specific' below refers to a message defined in a Diameter
+   application (e.g., Mobile IPv4 or NASREQ).</t>
+        <t indent="0" pn="section-appendix.a.1-3">
+   The following state machine is observed by a client when the state is
+   maintained on the server.  State transitions that are unmodified
+   from <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/> are not repeated here.</t>
+        <t indent="0" pn="section-appendix.a.1-4">
+   The Diameter group command in the following tables is differentiated
+   from a single-session-related command by a preceding 'G' (Group).  A
+   Group Re-Auth Request, which applies to one or multiple session
+   groups, has been exemplarily described in <xref target="sect-6.1" format="default" sectionFormat="of" derivedContent="Section 6.1"/>.  Such Group
+   RAR command is denoted as 'GRAR' in the following table.  The same
+	notation applies to other commands, as per <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/>.</t>
+        <t indent="0" pn="section-appendix.a.1-5">Additionally, the following acronyms are used in the tables below.</t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-appendix.a.1-6">
+          <dt pn="section-appendix.a.1-6.1">GASR:</dt>
+          <dd pn="section-appendix.a.1-6.2">Group-Abort-Session-Request</dd>
+          <dt pn="section-appendix.a.1-6.3">GASA:</dt>
+          <dd pn="section-appendix.a.1-6.4">Group-Abort-Session-Answer</dd>
+          <dt pn="section-appendix.a.1-6.5">GSTA:</dt>
+          <dd pn="section-appendix.a.1-6.6">Group-Session-Termination-Answer</dd>
+          <dt pn="section-appendix.a.1-6.7">GSTR:</dt>
+          <dd pn="section-appendix.a.1-6.8">Group-Session-Termination-Request </dd>
+        </dl>
+        <table align="center" pn="table-2">
+          <name slugifiedName="name-group-authorization-session">Group Authorization Session State Machine for Stateful Client</name>
+          <thead>
+            <tr>
+              <th colspan="4" align="left" rowspan="1">CLIENT, STATEFUL</th>
+            </tr>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">State</th>
+              <th align="left" colspan="1" rowspan="1">Event</th>
+              <th align="left" colspan="1" rowspan="1">Action</th>
+              <th align="left" colspan="1" rowspan="1">New State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+              <td align="left" colspan="1" rowspan="1">Client or Device Requests access</td>
+              <td align="left" colspan="1" rowspan="1"> Send         
+service-specific
+authorization req
+optionally
+including
+groups</td>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GASR received with             
+Group-Response-Action         
+= ALL_GROUPS,                  
+session is assigned to        
+received group(s) and         
+client will comply with
+request to end the session</td>
+              <td align="left" colspan="1" rowspan="1">Send GASA    
+Result-Code
+= SUCCESS,
+Send GSTR</td>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GASR received with                
+Group-Response-Action          
+= PER_GROUPS,                  
+session is assigned to         
+received group(s) and          
+client will comply with        
+request to end the session</td>
+              <td align="left" colspan="1" rowspan="1">Send GASA 
+with 
+Result-Code
+= SUCCESS,
+Send GSTR
+per group</td>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1"> GASR received with               
+Group-Response-Action          
+= PER_SESSION,                 
+session is assigned to         
+received group(s) and          
+client will comply with        
+request to end the session</td>
+              <td align="left" colspan="1" rowspan="1">Send GASA
+with
+Result-Code
+= SUCCESS,
+Send STR
+per session</td>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GASR received,                     
+ client will not comply with               
+ request to end all sessions
+ in received group(s)</td>
+              <td align="left" colspan="1" rowspan="1">Send GASA
+with
+Result-Code
+!= SUCCESS</td>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+              <td align="left" colspan="1" rowspan="1">GSTA received</td>
+              <td align="left" colspan="1" rowspan="1">Discon.
+user/device</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GRAR received with                
+Group-Response-Action          
+= ALL_GROUPS,                  
+session is assigned to         
+received group(s) and          
+client will perform            
+subsequent re-auth</td>
+              <td align="left" colspan="1" rowspan="1">Send GRAA,
+Send
+service-specific
+group
+re-auth req</td>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GRAR received with                
+Group-Response-Action          
+= PER_GROUP,                   
+session is assigned to         
+received group(s) and          
+client will perform            
+subsequent re-auth </td>
+              <td align="left" colspan="1" rowspan="1">Send GRAA,
+Send
+service-specific
+group
+re-auth req
+per group</td>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GRAR received with                
+Group-Response-Action          
+= PER_SESSION,                 
+session is assigned to         
+received group(s) and          
+client will perform            
+subsequent re-auth</td>
+              <td align="left" colspan="1" rowspan="1">Send GRAA,
+Send
+service-specific
+re-auth req
+per session</td>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">GRAR received and client will            
+not perform subsequent                     
+re-auth</td>
+              <td align="left" colspan="1" rowspan="1">Send GRAA  
+with  
+Result-Code
+!= SUCCESS,
+Discon.
+user/device</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+              <td align="left" colspan="1" rowspan="1">Successful service-specific         
+group re-authorization answer  
+received</td>
+              <td align="left" colspan="1" rowspan="1">Provide
+service</td>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+              <td align="left" colspan="1" rowspan="1">Failed service-specific              
+group re-authorization answer  
+received</td>
+              <td align="left" colspan="1" rowspan="1">Discon.
+user/device</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-appendix.a.1-8">
+   The following state machine is observed by a server when it is
+   maintaining the state for the session.  State transitions that are
+   unmodified from <xref target="RFC6733" format="default" sectionFormat="of" derivedContent="RFC6733"/> are not repeated here.</t>
+        <table align="center" pn="table-3">
+          <name slugifiedName="name-group-authorization-session-">Group Authorization Session State Machine for Stateful Server</name>
+          <thead>
+            <tr>
+              <th colspan="4" align="left" rowspan="1">SERVER, STATEFUL</th>
+            </tr>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">State</th>
+              <th align="left" colspan="1" rowspan="1">Event</th>
+              <th align="left" colspan="1" rowspan="1">Action</th>
+              <th align="left" colspan="1" rowspan="1">New State</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+              <td align="left" colspan="1" rowspan="1">Service-specific authorization                    
+request received, and user                  
+is authorized</td>
+              <td align="left" colspan="1" rowspan="1">Send
+successful 
+service-specific
+answer
+optionally
+including
+groups</td>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">Server wants to terminate                          
+group(s)</td>
+              <td align="left" colspan="1" rowspan="1">Send GASR</td>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Discon</td>
+              <td align="left" colspan="1" rowspan="1">GASA received</td>
+              <td align="left" colspan="1" rowspan="1">Cleanup</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Any</td>
+              <td align="left" colspan="1" rowspan="1">GSTR received</td>
+              <td align="left" colspan="1" rowspan="1">Send GSTA, Cleanup</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">Server wants to reauth             
+group(s)</td>
+              <td align="left" colspan="1" rowspan="1">Send GRAR</td>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+              <td align="left" colspan="1" rowspan="1">GRAA received with Result-Code        
+= SUCCESS</td>
+              <td align="left" colspan="1" rowspan="1">Update session(s)</td>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Pending</td>
+              <td align="left" colspan="1" rowspan="1">GRAA received with Result-Code      
+!= SUCCESS</td>
+              <td align="left" colspan="1" rowspan="1">Cleanup session(s)</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">Service-specific group                              
+re-authorization request                 
+received and user is                    
+authorized</td>
+              <td align="left" colspan="1" rowspan="1">Send
+successful
+service-specific  
+group                                          
+re-auth                                            
+answer</td>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">Open</td>
+              <td align="left" colspan="1" rowspan="1">Service-specific group                   
+re-authorization request             
+received and user is                 
+not authorized</td>
+              <td align="left" colspan="1" rowspan="1">Send
+failed 
+service-specific
+group                                       
+re-auth
+answer, 
+Cleanup</td>
+              <td align="left" colspan="1" rowspan="1">Idle</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+    <section anchor="sect-11" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">
+   The authors of this document want to thank <contact fullname="Ben Campbell"/> and <contact fullname="Eric    McMurry"/> for their valuable comments to early draft versions of this document.
+   Furthermore, the authors thank <contact fullname="Steve Donovan"/> and <contact fullname="Mark Bales"/> for the
+   thorough review and comments on advanced versions of the WG document,
+   which helped a lot to improve this specification.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="M." surname="Jones" fullname="Mark Jones">
+        <organization showOnFrontPage="true">Individual</organization>
+        <address>
+          <email>mark@azu.ca</email>
+        </address>
+      </author>
+      <author initials="M." surname="Liebsch" fullname="Marco Liebsch">
+        <organization abbrev="NEC" showOnFrontPage="true">NEC Laboratories Europe GmbH</organization>
+        <address>
+          <postal>
+            <street>Kurfuersten-Anlage 36</street>
+            <city>Heidelberg</city>
+            <code>D-69115</code>
+            <country>Germany</country>
+          </postal>
+          <email>marco.liebsch@neclab.eu</email>
+        </address>
+      </author>
+      <author initials="L." surname="Morand" fullname="Lionel Morand">
+        <organization abbrev="Orange" showOnFrontPage="true">Orange Labs</organization>
+        <address>
+          <postal>
+            <street>38/40 rue du General Leclerc</street>
+            <city>Issy-Les-Moulineaux Cedex 9</city>
+            <code>92794</code>
+            <country>France</country>
+          </postal>
+          <email>lionel.morand@orange.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

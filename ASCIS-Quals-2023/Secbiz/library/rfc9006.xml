@@ -1,0 +1,2248 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-lwig-tcp-constrained-node-networks-13" indexInclude="true" ipr="trust200902" number="9006" prepTime="2021-03-27T16:40:00" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-lwig-tcp-constrained-node-networks-13" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9006" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="TCP in IoT">TCP Usage Guidance in the Internet of Things (IoT)</title>
+    <seriesInfo name="RFC" value="9006" stream="IETF"/>
+    <author fullname="Carles Gomez" initials="C." surname="Gomez">
+      <organization showOnFrontPage="true">UPC</organization>
+      <address>
+        <postal>
+          <street>C/Esteve Terradas, 7</street>
+          <city>Castelldefels</city>
+          <region/>
+          <code>08860</code>
+          <country>Spain</country>
+        </postal>
+        <phone/>
+        <email>carlesgo@entel.upc.edu</email>
+        <uri/>
+      </address>
+    </author>
+    <author fullname="Jon Crowcroft" initials="J." surname="Crowcroft">
+      <organization showOnFrontPage="true">University of Cambridge</organization>
+      <address>
+        <postal>
+          <street>JJ Thomson Avenue</street>
+          <city>Cambridge</city>
+          <code>CB3 0FD</code>
+          <country>United Kingdom</country>
+        </postal>
+        <phone/>
+        <email>jon.crowcroft@cl.cam.ac.uk</email>
+        <uri/>
+      </address>
+    </author>
+    <author fullname="Michael Scharf" initials="M." surname="Scharf">
+      <organization showOnFrontPage="true">Hochschule Esslingen</organization>
+      <address>
+        <postal>
+          <street>University of Applied Sciences</street>
+          <street>Flandernstr. 101</street>
+          <city>Esslingen am Neckar</city>
+          <region/>
+          <code>73732</code>
+          <country>Germany</country>
+        </postal>
+        <phone/>
+        <email>michael.scharf@hs-esslingen.de</email>
+        <uri/>
+      </address>
+    </author>
+    <date month="03" year="2021"/>
+    <area>APP</area>
+    <workgroup>LWIG Working Group</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1"> This document provides guidance on how to implement and use the Transmission Control Protocol (TCP) in Constrained-Node Networks (CNNs), which are a characteristic of the Internet of Things (IoT). Such environments require a lightweight TCP implementation and may not make use of optional functionality. This document explains a number of known and deployed techniques to simplify a TCP stack as well as corresponding trade-offs. The objective is to help embedded developers with decisions on which TCP features to use.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9006" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-characteristics-of-cnns-rel">Characteristics of CNNs Relevant for TCP</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-network-and-link-properties">Network and Link Properties</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-usage-scenarios">Usage Scenarios</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-communication-and-traffic-p">Communication and Traffic Patterns</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-implementation-and-conf">TCP Implementation and Configuration in CNNs</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-addressing-path-properties">Addressing Path Properties</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-maximum-segment-size-mss">Maximum Segment Size (MSS)</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.2.1"><xref derivedContent="3.1.2" format="counter" sectionFormat="of" target="section-3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-explicit-congestion-notific">Explicit Congestion Notification (ECN)</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.3.1"><xref derivedContent="3.1.3" format="counter" sectionFormat="of" target="section-3.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-explicit-loss-notifications">Explicit Loss Notifications</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-guidance-for-single-mss">TCP Guidance for Single-MSS Stacks</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.2.2">
+                  <li pn="section-toc.1-1.3.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.1.1"><xref derivedContent="3.2.1" format="counter" sectionFormat="of" target="section-3.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-single-mss-stacks-benefits-">Single-MSS Stacks -- Benefits and Issues</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.2.1"><xref derivedContent="3.2.2" format="counter" sectionFormat="of" target="section-3.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-options-for-single-mss-">TCP Options for Single-MSS Stacks</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.3.1"><xref derivedContent="3.2.3" format="counter" sectionFormat="of" target="section-3.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-delayed-acknowledgments-for">Delayed Acknowledgments for Single-MSS Stacks</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.4">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.4.1"><xref derivedContent="3.2.4" format="counter" sectionFormat="of" target="section-3.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rto-calculation-for-single-">RTO Calculation for Single-MSS Stacks</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-general-recommendations-for">General Recommendations for TCP in CNNs</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.3.2">
+                  <li pn="section-toc.1-1.3.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.3.2.1.1"><xref derivedContent="3.3.1" format="counter" sectionFormat="of" target="section-3.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-loss-recovery-and-congestio">Loss Recovery and Congestion/Flow Control</xref></t>
+                    <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.3.2.1.2">
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.1">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.1.1"><xref derivedContent="3.3.1.1" format="counter" sectionFormat="of" target="section-3.3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-selective-acknowledgments-s">Selective Acknowledgments (SACKs)</xref></t>
+                      </li>
+                    </ul>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.3.2.2.1"><xref derivedContent="3.3.2" format="counter" sectionFormat="of" target="section-3.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-delayed-acknowledgments">Delayed Acknowledgments</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.3">
+                    <t indent="0" pn="section-toc.1-1.3.2.3.2.3.1"><xref derivedContent="3.3.3" format="counter" sectionFormat="of" target="section-3.3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-initial-window">Initial Window</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-usage-recommendations-i">TCP Usage Recommendations in CNNs</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-connection-initiation">TCP Connection Initiation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-number-of-concurrent-connec">Number of Concurrent Connections</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-connection-lifetime">TCP Connection Lifetime</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tcp-implementations-for-con">TCP Implementations for Constrained Devices</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-a.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-uip">uIP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="A.2" format="counter" sectionFormat="of" target="section-a.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-lwip">lwIP</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="A.3" format="counter" sectionFormat="of" target="section-a.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-riot">RIOT</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.4">
+                <t indent="0" pn="section-toc.1-1.8.2.4.1"><xref derivedContent="A.4" format="counter" sectionFormat="of" target="section-a.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tinyos">TinyOS</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.5">
+                <t indent="0" pn="section-toc.1-1.8.2.5.1"><xref derivedContent="A.5" format="counter" sectionFormat="of" target="section-a.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-freertos">FreeRTOS</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.6">
+                <t indent="0" pn="section-toc.1-1.8.2.6.1"><xref derivedContent="A.6" format="counter" sectionFormat="of" target="section-a.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-uc-os">uC/OS</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.7">
+                <t indent="0" pn="section-toc.1-1.8.2.7.1"><xref derivedContent="A.7" format="counter" sectionFormat="of" target="section-a.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-summary">Summary</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Internet Protocol suite is being used for connecting Constrained-Node Networks (CNNs) to the Internet, enabling the so-called Internet of Things (IoT) <xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/>. In order to meet the requirements that stem from CNNs, the IETF has produced a suite of new protocols specifically designed for such environments (see, e.g., <xref target="RFC8352" format="default" sectionFormat="of" derivedContent="RFC8352"/>).
+         New IETF protocol stack components include the IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs) adaptation layer 
+         <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/><xref target="RFC6282" format="default" sectionFormat="of" derivedContent="RFC6282"/><xref target="RFC6775" format="default" sectionFormat="of" derivedContent="RFC6775"/>, the IPv6 Routing Protocol for Low-Power and Lossy Networks (RPL)
+         <xref target="RFC6550" format="default" sectionFormat="of" derivedContent="RFC6550"/>, and the Constrained Application Protocol (CoAP) <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>.</t>
+      <t indent="0" pn="section-1-2">As of this writing, the main transport-layer protocols in IP-based IoT scenarios are UDP and TCP.  TCP has been
+   criticized, often unfairly, as a protocol that is unsuitable for the IoT.  It is true that some TCP features, such as relatively long header size, 
+   unsuitability for multicast, and always-confirmed data delivery, are not optimal for IoT scenarios. However, 
+         many typical claims on TCP unsuitability for IoT (e.g., a high complexity, connection-oriented approach incompatibility with radio duty-cycling and spurious congestion control activation
+         in wireless links) are not valid, can be solved, or are also found in well-accepted IoT end-to-end reliability mechanisms (see a detailed analysis in <xref target="IntComp" format="default" sectionFormat="of" derivedContent="IntComp"/>).
+      </t>
+      <t indent="0" pn="section-1-3">At the application layer, CoAP was developed over UDP <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>.  However, the integration of some
+   CoAP deployments with existing infrastructure is being challenged by
+   middleboxes such as firewalls, which may limit and even block UDP-based
+   communications.  This is the main reason why a CoAP over TCP
+      specification has been developed  <xref target="RFC8323" format="default" sectionFormat="of" derivedContent="RFC8323"/>.</t>
+      <t indent="0" pn="section-1-4">Other application-layer protocols not specifically
+   designed for CNNs are also being considered for the IoT space.  Some
+   examples include HTTP/2 and even HTTP/1.1, both of which run over TCP
+   by default  <xref target="RFC7230" format="default" sectionFormat="of" derivedContent="RFC7230"/> <xref target="RFC7540" format="default" sectionFormat="of" derivedContent="RFC7540"/>, and the Extensible Messaging and Presence Protocol (XMPP) <xref target="RFC6120" format="default" sectionFormat="of" derivedContent="RFC6120"/>.  TCP is also used by non-IETF
+   application-layer protocols in the IoT space such as the Message Queuing Telemetry Transport (MQTT) <xref target="MQTT" format="default" sectionFormat="of" derivedContent="MQTT"/> and its
+      lightweight variants.</t>
+      <t indent="0" pn="section-1-5">TCP is a sophisticated transport protocol that includes optional
+   functionality (e.g., TCP options) that may improve performance in some environments. However, many
+   optional TCP extensions require complex logic inside the TCP stack
+   and increase the code size and the memory requirements.  Many
+   TCP extensions are not required for interoperability with other
+   standard-compliant TCP endpoints.  Given
+   the limited resources on constrained devices, careful selection of optional TCP features can make an implementation more lightweight.
+      </t>
+      <t indent="0" pn="section-1-6">This document provides guidance on how to implement and configure TCP
+ and guidance on how applications should use TCP in CNNs. The overarching goal is to offer simple measures to allow for lightweight TCP implementation and suitable operation in such environments. A TCP implementation following the guidance in this document is intended to be compatible with a TCP endpoint that is compliant to the TCP standards, albeit possibly with a lower performance. This implies that such a TCP client would always be able to connect with a standard-compliant TCP server, and a corresponding TCP server would always be able to connect with a standard-compliant TCP client.</t>
+      <t indent="0" pn="section-1-7">This document assumes that the reader is familiar with TCP. A comprehensive survey of the TCP standards can be found in RFC 7414 <xref target="RFC7414" format="default" sectionFormat="of" derivedContent="RFC7414"/>. Similar guidance regarding the use of TCP in special environments has been published before, e.g., for cellular wireless networks <xref target="RFC3481" format="default" sectionFormat="of" derivedContent="RFC3481"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-characteristics-of-cnns-rel">Characteristics of CNNs Relevant for TCP</name>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-network-and-link-properties">Network and Link Properties</name>
+        <t indent="0" pn="section-2.1-1">CNNs are defined in <xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/> as networks whose characteristics are influenced by being composed of a significant portion of constrained nodes. 
+         The latter are characterized by significant limitations on processing, memory, and energy resources, among others <xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/>. 
+         The first two dimensions pose constraints on the complexity and memory footprint of the protocols that constrained nodes can support. The latter requires techniques to save energy, such as radio duty-cycling in wireless devices <xref target="RFC8352" format="default" sectionFormat="of" derivedContent="RFC8352"/> and the minimization of the number of messages transmitted/received (and their size).</t>
+        <t indent="0" pn="section-2.1-2"><xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/> lists typical network constraints in CNNs, including low achievable bitrate/throughput, high packet loss and high variability of packet loss, highly asymmetric link characteristics, severe penalties for using larger packets, limits on reachability over time, etc. CNNs may use wireless or wired technologies (e.g., Power Line Communication), and the transmission rates are typically low (e.g., below 1 Mbps).</t>
+        <t indent="0" pn="section-2.1-3">For use of TCP, one challenge is that not all technologies in a CNN may be aligned with typical Internet subnetwork design principles <xref target="RFC3819" format="default" sectionFormat="of" derivedContent="RFC3819"/>. For instance, constrained nodes often use physical- / link-layer technologies that
+   have been characterized as 'lossy', i.e., exhibit a relatively high bit error rate. Dealing with corruption loss is one of the open issues in the Internet <xref target="RFC6077" format="default" sectionFormat="of" derivedContent="RFC6077"/>.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-usage-scenarios">Usage Scenarios</name>
+        <t indent="0" pn="section-2.2-1">There are different deployment and usage scenarios for CNNs. Some CNNs follow the star topology, whereby one or several hosts are linked to a central
+         device that acts as a router connecting the CNN to the Internet. Alternatively, CNNs may also follow the multihop topology <xref target="RFC6606" format="default" sectionFormat="of" derivedContent="RFC6606"/>. 
+        </t>
+        <t indent="0" pn="section-2.2-2">In constrained environments, there can be different types of devices <xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/>.
+      For example, there can be devices with a single combined send/receive buffer, a separate send and receive buffer, or a pool 
+      of multiple send/receive buffers. In the latter case, it is possible that buffers are also shared for other protocols.</t>
+        <t indent="0" pn="section-2.2-3">
+      One key use case for TCP in CNNs is a model where
+   constrained devices connect to unconstrained servers in the Internet.
+   But it is also possible that both TCP endpoints run on constrained
+   devices.
+   In the first case, 
+   communication will possibly traverse a middlebox (e.g., a firewall,
+   NAT, etc.).  Figure 1 illustrates such a scenario.  Note that the
+   scenario is asymmetric, as the unconstrained device will typically
+   not suffer the severe constraints of the constrained device.  The
+   unconstrained device is expected to be mains-powered, have a high
+   amount of memory and processing power, and be connected to a
+   resource-rich network.
+        </t>
+        <t indent="0" pn="section-2.2-4">
+   Assuming that a majority of constrained devices will correspond to 
+   sensor nodes, the amount of data traffic sent by constrained devices 
+   (e.g., sensor node measurements) is expected to be higher than the 
+   amount of data traffic in the opposite direction. Nevertheless, 
+   constrained devices may receive requests (to which they may 
+   respond), commands (for configuration purposes and for constrained 
+   devices including actuators), and relatively infrequent 
+   firmware/software updates.
+
+        </t>
+        <figure anchor="fig_scenario" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-tcp-communication-between-a">TCP Communication between a Constrained Device and an Unconstrained Device, Traversing a Middlebox</name>
+          <artwork name="" type="" align="left" alt="" pn="section-2.2-5.1">    
+                                                   +---------------+
+        o     o &lt;-------- TCP communication -----&gt; |               |
+       o     o                                     |               |
+          o     o                                  | Unconstrained |
+    o        o              +-----------+          |    device     |
+        o     o   o  ------ | Middlebox |  ------- |               |
+         o   o              +-----------+          | (e.g., cloud) |
+       o    o  o                                   |               |
+                                                   +---------------+ 
+   Constrained devices
+        </artwork>
+        </figure>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-communication-and-traffic-p">Communication and Traffic Patterns</name>
+        <t indent="0" pn="section-2.3-1">IoT applications are characterized by a number of different communication patterns. The following non-comprehensive list explains some typical examples:</t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-2.3-2">
+          <dt pn="section-2.3-2.1">Unidirectional transfers:</dt>
+          <dd pn="section-2.3-2.2">An IoT device (e.g., a sensor) can (repeatedly) send updates to the other endpoint. There is not always a need for an application response back to the IoT device. </dd>
+          <dt pn="section-2.3-2.3">Request-response patterns:</dt>
+          <dd pn="section-2.3-2.4">An IoT device receiving a request from the other endpoint, which triggers a response from the IoT device.</dd>
+          <dt pn="section-2.3-2.5">Bulk data transfers:</dt>
+          <dd pn="section-2.3-2.6">A typical example for a long file transfer would be an IoT device firmware update.</dd>
+        </dl>
+        <t indent="0" pn="section-2.3-3">A typical communication pattern is that a constrained device communicates with an unconstrained device (cf. <xref target="fig_scenario" format="default" sectionFormat="of" derivedContent="Figure 1"/>). But it is also possible that constrained devices communicate amongst themselves.</t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-tcp-implementation-and-conf">TCP Implementation and Configuration in CNNs</name>
+      <t indent="0" pn="section-3-1">This section explains how a TCP stack can deal with typical constraints in CNN. The guidance in this section relates to the TCP implementation and its configuration.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-addressing-path-properties">Addressing Path Properties</name>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1.1">
+          <name slugifiedName="name-maximum-segment-size-mss">Maximum Segment Size (MSS)</name>
+          <t indent="0" pn="section-3.1.1-1">Assuming that IPv6 is used, and for the sake of lightweight implementation and operation, unless applications
+          require handling large data units (i.e., leading to an IPv6 datagram
+          size greater than 1280 bytes), it may be desirable to limit the IP datagram size to 
+          1280 bytes in order to avoid the need to support Path MTU Discovery <xref target="RFC8201" format="default" sectionFormat="of" derivedContent="RFC8201"/>.
+          In addition, an IP datagram size of 1280 bytes avoids incurring IPv6-layer fragmentation <xref target="RFC8900" format="default" sectionFormat="of" derivedContent="RFC8900"/>. 
+          </t>
+          <t indent="0" pn="section-3.1.1-2">An IPv6 datagram size exceeding 1280 bytes can be avoided by setting the TCP MSS to 1220 bytes or less.  Note that
+   it is already a requirement for TCP implementations to consume payload space instead of increasing datagram size when including IP or TCP options
+   in an IP packet to be sent <xref target="RFC6691" format="default" sectionFormat="of" derivedContent="RFC6691"/>.  Therefore, it is not required to advertise an MSS smaller than 1220 bytes in order to accommodate TCP options.
+          </t>
+          <t indent="0" pn="section-3.1.1-3">Note that setting the MTU to 1280 bytes is possible for link-layer technologies in the CNN space, even if some of them are characterized by a short data unit payload size, e.g., up to a few tens or hundreds of bytes. 
+          For example, the maximum frame size in IEEE 802.15.4 is 127 bytes.
+          6LoWPAN defined an adaptation layer to support IPv6 over IEEE 802.15.4 networks. The adaptation layer includes a fragmentation mechanism, 
+          since IPv6 requires the layer below to support an MTU of 1280 bytes <xref target="RFC8200" format="default" sectionFormat="of" derivedContent="RFC8200"/>, while IEEE 802.15.4 lacks fragmentation mechanisms. 
+          6LoWPAN defines an IEEE 802.15.4 link MTU of 1280 bytes <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/>. Other technologies, such as Bluetooth low energy <xref target="RFC7668" format="default" sectionFormat="of" derivedContent="RFC7668"/>, 
+          ITU-T G.9959 <xref target="RFC7428" format="default" sectionFormat="of" derivedContent="RFC7428"/>, or Digital Enhanced Cordless
+            Telecommunications (DECT) Ultra Low Energy (ULE) <xref target="RFC8105" format="default" sectionFormat="of" derivedContent="RFC8105"/>, also use 6LoWPAN-based adaptation layers in order to enable 
+          IPv6 support. These technologies do support link-layer fragmentation.  By exploiting this 
+          functionality, the adaptation layers that enable IPv6 over such technologies also define an MTU of 1280 bytes.
+          </t>
+          <t indent="0" pn="section-3.1.1-4">On the other hand, there exist technologies also used in the CNN space, such as Master Slave (MS) / Token Passing (TP) <xref target="RFC8163" format="default" sectionFormat="of" derivedContent="RFC8163"/>, 
+             Narrowband IoT (NB-IoT) <xref target="RFC8376" format="default" sectionFormat="of" derivedContent="RFC8376"/>, or IEEE 802.11ah <xref target="I-D.delcarpio-6lo-wlanah" format="default" sectionFormat="of" derivedContent="6LO-WLANAH"/>, 
+             that do not suffer the same degree of frame size limitations as the technologies mentioned above.
+	     It is recommended that the MTU for MS/TP be 1500 bytes <xref target="RFC8163" format="default" sectionFormat="of" derivedContent="RFC8163"/>;
+             the MTU in NB-IoT is 1600 bytes, and the maximum frame payload size for IEEE 802.11ah is 7991 bytes.
+          </t>
+          <t indent="0" pn="section-3.1.1-5"> Using a larger MSS (to a suitable extent) may be beneficial in some scenarios, 
+              especially when transferring large payloads, as it reduces the number of packets (and packet headers)
+              required for a given payload.  However, the characteristics of the constrained network need to be considered. 
+              In particular, in a lossy network where unreliable fragment delivery is used, the amount of data that TCP unnecessarily
+              retransmits due to fragment loss increases (and throughput decreases) quickly with the MSS. This happens because the loss of a fragment leads to the
+              loss of the whole fragmented packet being transmitted. Unnecessary data retransmission is particularly
+              harmful in CNNs due to the resource constraints of such environments.
+
+	      Note that, while the original 6LoWPAN fragmentation 
+              mechanism <xref target="RFC4944" format="default" sectionFormat="of" derivedContent="RFC4944"/> does not offer reliable fragment delivery, fragment recovery functionality for 6LoWPAN or 6Lo environments
+              has been standardized <xref target="RFC8931" format="default" sectionFormat="of" derivedContent="RFC8931"/>.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1.2">
+          <name slugifiedName="name-explicit-congestion-notific">Explicit Congestion Notification (ECN)</name>
+          <t indent="0" pn="section-3.1.2-1">ECN <xref target="RFC3168" format="default" sectionFormat="of" derivedContent="RFC3168"/> allows a router to signal
+             in the IP header of a packet that congestion is rising, for example,
+             when a queue size reaches a certain threshold.  An ECN-enabled TCP
+             receiver will echo back the congestion signal to the TCP sender by
+             setting a flag in its next TCP Acknowledgment (ACK).  The sender triggers congestion
+             control measures as if a packet loss had happened.
+          </t>
+          <t indent="0" pn="section-3.1.2-2">RFC 8087 <xref target="RFC8087" format="default" sectionFormat="of" derivedContent="RFC8087"/> outlines the principal gains in terms of increased throughput,
+             reduced delay, and other benefits when ECN is used over a network path that includes equipment that supports Congestion Experienced
+             (CE) marking.  In the context of CNNs, a remarkable feature of ECN is that congestion can be signaled without incurring packet drops (which will lead to retransmissions and consumption of limited resources such as energy and bandwidth).
+          </t>
+          <t indent="0" pn="section-3.1.2-3">ECN can further reduce packet losses since congestion control
+   measures can be applied earlier <xref target="RFC2884" format="default" sectionFormat="of" derivedContent="RFC2884"/>.  Fewer lost packets implies
+   that the number of retransmitted segments decreases, which is
+   particularly beneficial in CNNs, where energy and bandwidth resources
+   are typically limited.  Also, it makes sense to try to avoid packet
+   drops for transactional workloads with small data sizes, which are
+   typical for CNNs.  In such traffic patterns, it is more difficult and often impossible to
+   detect packet loss without retransmission timeouts (e.g., as there
+   may not be three duplicate ACKs).  Any retransmission timeout slows
+   down the data transfer significantly.  In addition, if the
+   constrained device uses power-saving techniques, a retransmission
+   timeout will incur a wake-up action, in contrast to ACK
+   clock-triggered sending.  When the congestion window of a TCP sender has a
+  size of one segment and a TCP ACK with an ECN signal (ECN-Echo (ECE) flag) arrives
+  at the TCP sender, the TCP sender resets the retransmit timer, and
+  the sender will only be able to send a new packet when the retransmit
+  timer expires. Effectively, at that moment, the TCP sender reduces its
+  sending rate from 1 segment per Round-Trip Time (RTT) to 1
+  segment per Retransmission Timeout (RTO) and reduces the sending rate further on each ECN signal
+  received in subsequent TCP ACKs. Otherwise, if an ECN signal is not
+  present in a subsequent TCP ACK, the TCP sender resumes the normal
+  ACK-clocked transmission of segments <xref target="RFC3168" format="default" sectionFormat="of" derivedContent="RFC3168"/>.
+          </t>
+          <t indent="0" pn="section-3.1.2-4">ECN can be
+   incrementally deployed in the Internet.  Guidance on configuration and usage of ECN is provided in RFC 7567 <xref target="RFC7567" format="default" sectionFormat="of" derivedContent="RFC7567"/>.
+   Given the benefits, more and more TCP stacks in the Internet support ECN, and it makes sense to specifically leverage ECN in controlled
+   environments such as CNNs. As of this writing, there is ongoing work to extend the types of TCP packets that are ECN capable, including pure ACKs <xref target="I-D.ietf-tcpm-generalized-ecn" format="default" sectionFormat="of" derivedContent="TCPM-ECN"/>. 
+   Such a feature may further increase the benefits of ECN in CNN environments. Note, however, that supporting ECN increases implementation complexity.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1.3">
+          <name slugifiedName="name-explicit-loss-notifications">Explicit Loss Notifications</name>
+          <t indent="0" pn="section-3.1.3-1">There has been a significant body of research on solutions capable of explicitly indicating whether a TCP segment loss is due to corruption, in order to avoid activation of congestion control mechanisms <xref target="ETEN" format="default" sectionFormat="of" derivedContent="ETEN"/> <xref target="RFC2757" format="default" sectionFormat="of" derivedContent="RFC2757"/>. While such solutions may provide significant improvement, they have not been widely deployed and remain as experimental work. In fact, as of today, the IETF has not standardized any such solution.
+          </t>
+        </section>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-tcp-guidance-for-single-mss">TCP Guidance for Single-MSS Stacks</name>
+        <t indent="0" pn="section-3.2-1">This section discusses TCP stacks that allow transferring a single MSS. More general guidance is provided in <xref target="Beyond1MSS" format="default" sectionFormat="of" derivedContent="Section 3.3"/>.
+        </t>
+        <section numbered="true" toc="include" anchor="single_MSS_stacks_benefits" removeInRFC="false" pn="section-3.2.1">
+          <name slugifiedName="name-single-mss-stacks-benefits-">Single-MSS Stacks -- Benefits and Issues</name>
+          <t indent="0" pn="section-3.2.1-1">   A TCP stack can reduce the memory requirements by advertising a TCP window size of 1 MSS and also transmit, at most, 1 MSS of
+                unacknowledged data.  In that case, both congestion and flow control implementation are quite simple.  Such a small receive and send window
+                may be sufficient for simple message exchanges in the CNN space. However, only using a window of 1 MSS can significantly affect
+                performance.  A stop-and-wait operation results in low throughput for transfers that exceed the length of 1 MSS, e.g., a firmware
+                download.  Furthermore, a single-MSS solution relies solely on timer-based loss recovery, therefore missing the performance gain of Fast
+                Retransmit and Fast Recovery (which requires a larger window size; see <xref target="loss_recovery_flow" format="default" sectionFormat="of" derivedContent="Section 3.3.1"/>).
+          </t>
+          <t indent="0" pn="section-3.2.1-2">If CoAP is used over TCP with the default setting for NSTART in RFC 7252 <xref target="RFC7252" format="default" sectionFormat="of" derivedContent="RFC7252"/>, a CoAP endpoint is not allowed to send 
+             a new message to a destination until a response for the previous message sent to that destination has been received. This is equivalent to an
+             application-layer window size of 1 data unit.  For this use of CoAP, a maximum TCP window of 1 MSS may be sufficient, as long as the 
+             CoAP message size does not exceed 1 MSS. An exception in CoAP over TCP, though, is the Capabilities and Settings Message (CSM) that must be sent at the
+             start of the TCP connection. The first application message carrying user data is allowed to be sent immediately after the CSM message.
+             If the sum of the CSM size plus the application message size exceeds the MSS, a sender using a single-MSS stack will need to wait for the ACK confirming 
+             the CSM before sending the application message. 
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2.2">
+          <name slugifiedName="name-tcp-options-for-single-mss-">TCP Options for Single-MSS Stacks</name>
+          <t indent="0" pn="section-3.2.2-1">A TCP implementation needs to support, at a minimum, TCP options 2, 1, and 0. These are, respectively, the MSS option,
+             the No-Operation option, and the End Of Option List marker <xref target="RFC0793" format="default" sectionFormat="of" derivedContent="RFC0793"/>. None of these are a substantial burden to support. 
+             These options are sufficient for interoperability with a standard-compliant TCP endpoint, albeit many TCP stacks support additional options
+             and can negotiate their use. A TCP implementation is permitted to silently ignore all other TCP options.
+          </t>
+          <t indent="0" pn="section-3.2.2-2">A TCP implementation for a constrained device that uses a single-MSS TCP receive or transmit window size may not benefit from supporting the following TCP options: Window Scale <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/>, TCP Timestamps <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/>, Selective Acknowledgment (SACK) <xref target="RFC2018" format="default" sectionFormat="of" derivedContent="RFC2018"/>, and SACK-Permitted <xref target="RFC2018" format="default" sectionFormat="of" derivedContent="RFC2018"/>. Also, other TCP options may not be required on a constrained device with a very lightweight implementation. With regard to 
+             the Window Scale option, note that it is only useful if a window size greater than 64 kB is needed.
+          </t>
+          <t indent="0" pn="section-3.2.2-3">
+	     Note that a TCP sender can benefit from the TCP Timestamps option <xref target="RFC7323" format="default" sectionFormat="of" derivedContent="RFC7323"/> in detecting spurious RTOs. The latter are quite likely to occur
+             in CNN scenarios due to a number of reasons (e.g., route changes in a multihop scenario, link-layer retries, etc.). The header overhead incurred 
+             by the Timestamps option (of up to 12 bytes) needs to be taken into account.
+          </t>
+        </section>
+        <section anchor="DelAck" numbered="true" toc="include" removeInRFC="false" pn="section-3.2.3">
+          <name slugifiedName="name-delayed-acknowledgments-for">Delayed Acknowledgments for Single-MSS Stacks</name>
+          <t indent="0" pn="section-3.2.3-1">TCP Delayed Acknowledgments are meant to reduce the number of ACKs sent within a TCP connection, thus reducing network overhead, but
+             they may increase the time until a sender may receive an ACK.  In general, usefulness of Delayed ACKs depends heavily on the usage
+             scenario (see <xref target="delayed_ACKs" format="default" sectionFormat="of" derivedContent="Section 3.3.2"/>).  There can be interactions with single-MSS stacks.
+          </t>
+          <t indent="0" pn="section-3.2.3-2">When traffic is unidirectional, if the sender can send at most 1 MSS of data or the receiver advertises a receive window not greater than the MSS, Delayed ACKs may unnecessarily contribute delay (up to 500 ms) to the RTT <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>, which limits the throughput and can increase data delivery time. Note that, in some cases, it may not be possible to disable Delayed ACKs.    One known workaround is to split the
+             data to be sent into two segments of smaller size.  A standard-compliant TCP receiver may immediately acknowledge the second MSS of data, which
+             can improve throughput. However, this "split hack" may not always work since a TCP receiver is required to acknowledge every second full-sized segment, but not two consecutive small segments. The overhead of sending two IP
+             packets instead of one is another downside of the "split hack".
+          </t>
+          <t indent="0" pn="section-3.2.3-3">Similar issues may happen when the sender uses the Nagle algorithm, since the sender may need to wait for an unnecessarily Delayed ACK
+             to send a new segment. Disabling the algorithm will not have impact if the sender can only handle stop-and-wait operation
+             at the TCP level. 
+          </t>
+          <t indent="0" pn="section-3.2.3-4">For request-response traffic, when the receiver uses Delayed ACKs, a response to a data message can piggyback an ACK, as long as the latter is sent before the Delayed ACK timer expires, thus avoiding unnecessary ACKs without payload. 
+             Disabling Delayed ACKs at the request sender allows an immediate ACK for the data segment carrying the response.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2.4">
+          <name slugifiedName="name-rto-calculation-for-single-">RTO Calculation for Single-MSS Stacks</name>
+          <t indent="0" pn="section-3.2.4-1">The RTO calculation is one of the fundamental TCP algorithms <xref target="RFC6298" format="default" sectionFormat="of" derivedContent="RFC6298"/>. There is a fundamental trade-off: 
+             a short, aggressive RTO behavior reduces wait time before retransmissions, but it also increases the probability of spurious timeouts. 
+             The latter leads to unnecessary waste of potentially scarce resources in CNNs such as energy and bandwidth. In contrast, 
+             a conservative timeout can result in long error recovery times and, thus, needlessly delay data delivery.
+          </t>
+          <t indent="0" pn="section-3.2.4-2">If a TCP sender uses a very small window size, and it cannot benefit from Fast Retransmit and Fast Recovery or SACK, the RTO algorithm has a
+            large impact on performance. In that case, RTO algorithm tuning may be considered, although careful
+            assessment of possible drawbacks is recommended <xref target="RFC8961" format="default" sectionFormat="of" derivedContent="RFC8961"/>. 
+          </t>
+          <t indent="0" pn="section-3.2.4-3">As an example, adaptive RTO algorithms defined for CoAP over UDP have been found to perform well in CNN scenarios <xref target="Commag" format="default" sectionFormat="of" derivedContent="Commag"/>
+            <xref target="I-D.ietf-core-fasor" format="default" sectionFormat="of" derivedContent="CORE-FASOR"/>.
+          </t>
+        </section>
+      </section>
+      <section anchor="Beyond1MSS" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-general-recommendations-for">General Recommendations for TCP in CNNs</name>
+        <t indent="0" pn="section-3.3-1">This section summarizes some widely used techniques to improve TCP, with a focus on their use in CNNs. The TCP extensions discussed here are useful in a wide range of network scenarios, including CNNs. This section is not comprehensive. A comprehensive survey of TCP extensions is published in RFC 7414 <xref target="RFC7414" format="default" sectionFormat="of" derivedContent="RFC7414"/>.</t>
+        <section numbered="true" toc="include" anchor="loss_recovery_flow" removeInRFC="false" pn="section-3.3.1">
+          <name slugifiedName="name-loss-recovery-and-congestio">Loss Recovery and Congestion/Flow Control</name>
+          <t indent="0" pn="section-3.3.1-1">Devices that have enough memory to allow a larger (i.e., more than 3 MSS of data) TCP window size can leverage a more efficient loss recovery 
+             than the timer-based approach used for a smaller TCP window size (see <xref target="single_MSS_stacks_benefits" format="default" sectionFormat="of" derivedContent="Section 3.2.1"/>) by 
+             using Fast Retransmit and Fast Recovery <xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/>, at the expense of slightly greater complexity and Transmission Control Block (TCB) size. 
+             Assuming that Delayed ACKs are used by the receiver, a window size of up to 5 MSS is required for Fast Retransmit and Fast Recovery 
+             to work efficiently: in a given TCP transmission of full-sized segments 1, 2, 3, 4, and 5, if segment 2 gets lost, and the ACK for segment 1 
+             is held by the Delayed ACK timer, then the sender should get an ACK for segment 1 when 3 arrives and duplicate ACKs when segments 4, 5, and 6
+             arrive.  It will retransmit segment 2 when the third duplicate ACK arrives.  In order to have segments 2, 3, 4, 5, and 6 sent, the window
+             has to be of at least 5 MSS.  With an MSS of 1220 bytes, a buffer of a size of 5 MSS would require 6100 bytes.
+          </t>
+          <t indent="0" pn="section-3.3.1-2">The example in the previous paragraph did not use a further TCP improvement such as Limited Transmit <xref target="RFC3042" format="default" sectionFormat="of" derivedContent="RFC3042"/>. The latter
+             may also be useful for any transfer that has more than one segment in flight. Small transfers tend
+             to benefit more from Limited Transmit, because they are more likely to not receive enough duplicate ACKs. Assuming the example 
+             in the previous paragraph, Limited Transmit allows sending 5 MSS with a congestion window (cwnd) of three segments, plus two additional 
+             segments for the first two duplicate ACKs. With Limited Transmit, even a cwnd of two segments allows sending 5 MSS, at the expense of 
+             additional delay contributed by the Delayed ACK timer for the ACK that confirms segment 1.              
+          </t>
+          <t indent="0" pn="section-3.3.1-3">When a multiple-segment window is used, the receiver will need to manage the reception of possible out-of-order received segments, 
+             requiring sufficient buffer space. Note that even when a window of 1 MSS is used, out-of-order arrival should also be managed, as the sender may send multiple sub-MSS packets that fit in the window. (On the other hand, the receiver is free to simply drop out-of-order segments, thus forcing retransmissions.)
+          </t>
+          <section numbered="true" toc="include" removeInRFC="false" pn="section-3.3.1.1">
+            <name slugifiedName="name-selective-acknowledgments-s">Selective Acknowledgments (SACKs)</name>
+            <t indent="0" pn="section-3.3.1.1-1">
+   If a device with less severe memory and processing constraints can
+   afford advertising a TCP window size of several MSSs, it makes sense
+   to support the SACK option to improve performance.  SACK allows a
+   data receiver to inform the data sender of non-contiguous data blocks
+   received, thus a sender (having previously sent the SACK-Permitted
+   option) can avoid performing unnecessary retransmissions, saving
+   energy and bandwidth, as well as reducing latency. In addition, SACK often allows for faster loss recovery when there is more than one lost segment in a window of data, since SACK recovery may complete with less RTTs. SACK is
+   particularly useful for bulk data transfers.  A receiver supporting SACK will need to keep track of the data blocks that need to be received. The sender will also need to keep track of which data segments need to be resent after learning which data blocks are missing at the receiver. SACK adds
+   8*n+2 bytes to the TCP header, where n denotes the number of data
+   blocks received, up to four blocks.  For a low number of out-of-order
+   segments, the header overhead penalty of SACK is compensated by
+   avoiding unnecessary retransmissions. When the sender discovers the data blocks that have already been received, it needs to also 
+   store the necessary state to avoid unnecessary retransmission of data segments that have already been received.
+            </t>
+          </section>
+        </section>
+        <section numbered="true" toc="include" anchor="delayed_ACKs" removeInRFC="false" pn="section-3.3.2">
+          <name slugifiedName="name-delayed-acknowledgments">Delayed Acknowledgments</name>
+          <t indent="0" pn="section-3.3.2-1">For certain traffic patterns, Delayed ACKs may have a detrimental effect, as already noted in <xref target="DelAck" format="default" sectionFormat="of" derivedContent="Section 3.2.3"/>. Advanced TCP stacks may use heuristics to determine the maximum delay for an ACK. For CNNs, the recommendation depends on the expected communication patterns.
+          </t>
+          <t indent="0" pn="section-3.3.2-2">When traffic over a CNN is expected mostly to be unidirectional messages with a size typically up to 1 MSS, and the time between two 
+             consecutive message transmissions is greater than the Delayed ACK timeout, it may make sense to use a smaller timeout or disable Delayed ACKs
+             at the receiver. This avoids incurring additional delay, as well as the energy consumption of the sender (which might, e.g., keep its radio 
+             interface in receive mode) during that time. Note that disabling Delayed ACKs may only be possible if the peer device is administered 
+             by the same entity managing the constrained device. For request-response traffic, enabling Delayed ACKs is recommended at
+             the server end, in order to allow combining a response with the ACK into a single segment, thus increasing efficiency.  In addition, if
+             a client issues requests infrequently, disabling Delayed ACKs at the client allows an immediate ACK for the data segment
+             carrying the response.
+          </t>
+          <t indent="0" pn="section-3.3.2-3">In contrast, Delayed ACKs allow for a reduced number of ACKs in bulk transfer types of traffic, e.g., for firmware/software updates or for transferring larger data units containing a batch of sensor readings.  
+          </t>
+          <t indent="0" pn="section-3.3.2-4">Note that, in many scenarios, the peer that a constrained device communicates with will be a general purpose system that communicates with both constrained and unconstrained devices. Since Delayed ACKs are often configured through system-wide parameters, the behavior of Delayed ACKs at the peer will be the same regardless of the nature of the endpoints it talks to. Such a peer will typically have Delayed ACKs enabled.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-3.3.3">
+          <name slugifiedName="name-initial-window">Initial Window</name>
+          <t indent="0" pn="section-3.3.3-1"><xref target="RFC5681" format="default" sectionFormat="of" derivedContent="RFC5681"/> specifies a TCP Initial Window (IW) of roughly 4 kB. Subsequently, RFC 6928 <xref target="RFC6928" format="default" sectionFormat="of" derivedContent="RFC6928"/> defines an experimental new value for the IW,
+             which in practice will result in an IW of 10 MSS. Nowadays, the latter is used in many TCP implementations. 
+          </t>
+          <t indent="0" pn="section-3.3.3-2">Note that a 10-MSS IW was recommended for resource-rich environments (e.g., broadband environments), which are significantly different from CNNs.
+             In CNNs, many application-layer data units are relatively small (e.g., below 1 MSS). However, larger objects (e.g., large files containing 
+             sensor readings, firmware updates, etc.) may also need to be transferred in CNNs. If such a large object is transferred in CNNs, with an IW 
+             setting of 10 MSS, there is significant buffer overflow risk, since many CNN devices support network or radio buffers of a size smaller than 10 MSS.
+             In order to avoid such a problem, the IW needs to be carefully set in CNNs, based
+             on device and network resource constraints. In many cases, a safe IW setting will be smaller than 10 MSS.
+          </t>
+        </section>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-tcp-usage-recommendations-i">TCP Usage Recommendations in CNNs</name>
+      <t indent="0" pn="section-4-1">This section discusses how TCP can be used by applications that are developed for CNN scenarios. These remarks are by and large independent of how TCP is exactly implemented.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-tcp-connection-initiation">TCP Connection Initiation</name>
+        <t indent="0" pn="section-4.1-1">In the scenario of a constrained device to an unconstrained device illustrated 
+        above, a TCP connection is typically initiated by the constrained 
+        device, in order for the device to support possible sleep periods to 
+        save energy.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-number-of-concurrent-connec">Number of Concurrent Connections</name>
+        <t indent="0" pn="section-4.2-1">TCP endpoints with a small amount of memory may only support a small
+   number of connections.  Each TCP connection requires storing a number
+   of variables in the TCB.  Depending on
+   the internal TCP implementation, each connection may result in
+   further memory overhead, and connections may compete for scarce resources (e.g., further memory overhead for send and receive buffers, etc.).
+        </t>
+        <t indent="0" pn="section-4.2-2">A careful application design may try to keep the number of concurrent connections as small as possible. A client can, for instance, limit the number of simultaneous open connections that it maintains to a given server. Multiple connections could, for instance, be used to avoid the "head-of-line blocking" problem in an application transfer. However, in addition to consuming resources, using multiple connections can also cause undesirable side effects in congested networks. 
+           For example, the HTTP/1.1 specification encourages clients to be conservative when opening multiple connections <xref target="RFC7230" format="default" sectionFormat="of" derivedContent="RFC7230"/>.
+           Furthermore, each new connection will start with a three-way handshake, therefore increasing message overhead.
+        </t>
+        <t indent="0" pn="section-4.2-3">Being conservative when opening multiple TCP connections is of particular importance in Constrained-Node Networks.</t>
+      </section>
+      <section anchor="short_connections" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-tcp-connection-lifetime">TCP Connection Lifetime</name>
+        <t indent="0" pn="section-4.3-1">In order to minimize message overhead, it makes sense to keep a TCP connection
+        open as long as the two TCP endpoints have more data to send. If applications
+        exchange data rather infrequently, i.e., if TCP connections would stay idle for a long time,
+        the idle time can result in problems. For instance, certain middleboxes
+        such as firewalls or NAT devices are known to delete state records after an inactivity interval.
+
+         RFC 5382 <xref target="RFC5382" format="default" sectionFormat="of" derivedContent="RFC5382"/> specifies a minimum value for such an interval of 124 minutes. Measurement studies have reported that TCP NAT binding timeouts are highly 
+        variable across devices, 
+        with the median being around 60 minutes, the shortest timeout being around 2 minutes, and more than 50% of the devices with a timeout shorter than the 
+        aforementioned minimum timeout of 124 minutes <xref target="HomeGateway" format="default" sectionFormat="of" derivedContent="HomeGateway"/>. The timeout duration used by a
+        middlebox implementation may not be known to the TCP endpoints.</t>
+        <t indent="0" pn="section-4.3-2">In CNNs, such middleboxes may, e.g., be present at the boundary between the CNN and other networks.
+        If the middlebox can be optimized for CNN use cases, it makes sense to increase the initial value
+        for filter state inactivity timers to avoid problems with idle connections. Apart from that,
+        this problem can be dealt with by different connection-handling strategies, each having pros and cons.</t>
+        <t indent="0" pn="section-4.3-3">One approach for infrequent data transfer is to use short-lived TCP connections.
+        Instead of trying to maintain a TCP connection for a long time, it is possible that short-lived 
+        connections can be opened between two endpoints, which are closed if no more data needs
+        to be exchanged. For use cases that can cope with the additional messages and the latency
+        resulting from starting new connections, it is recommended to use a sequence of short-lived connections instead of maintaining a single long-lived connection.</t>
+        <t indent="0" pn="section-4.3-4">
+        The message and latency overhead that stems from using a sequence of short-lived connections could be reduced by TCP Fast Open (TFO) <xref target="RFC7413" format="default" sectionFormat="of" derivedContent="RFC7413"/>,
+        which is an experimental TCP extension, at the expense of increased implementation complexity and increased TCB size.  TFO allows data to be
+        carried in SYN (and SYN-ACK) segments and to be consumed immediately
+        by the receiving endpoint.  This reduces the message and latency overhead compared to
+        the traditional three-way handshake to establish a TCP connection.
+        For security reasons, the connection initiator has to request a TFO
+        cookie from the other endpoint.  The cookie, with a size of 4 or 16
+        bytes, is then included in SYN packets of subsequent connections.
+        The cookie needs to be refreshed (and obtained by the client) after a
+        certain amount of time.  While a given cookie is used for multiple connections between the same two endpoints,
+        the latter may become vulnerable to privacy threats. In addition, a valid cookie may be stolen from a compromised host
+        and may be used to perform SYN flood attacks, as well as amplified reflection attacks to victim hosts (see <xref target="RFC7413" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7413#section-5" derivedContent="RFC7413"/>). 
+        Nevertheless, TFO is more efficient than
+        frequently opening new TCP connections with the traditional three-way
+        handshake, as long as the cookie can be reused in subsequent
+        connections. However, as stated in <xref target="RFC7413" format="default" sectionFormat="of" derivedContent="RFC7413"/>, TFO deviates from the standard TCP semantics, since the data in the SYN could be replayed
+        to an application in some rare circumstances. Applications should not use TFO unless they can tolerate this issue, e.g., by using 
+        TLS <xref target="RFC7413" format="default" sectionFormat="of" derivedContent="RFC7413"/>. A comprehensive discussion on TFO can be found in RFC 7413 <xref target="RFC7413" format="default" sectionFormat="of" derivedContent="RFC7413"/>.
+        </t>
+        <t indent="0" pn="section-4.3-5">Another approach is to use long-lived TCP connections with
+          application-layer heartbeat messages.  Various application protocols
+          support such heartbeat messages (e.g., CoAP over TCP <xref target="RFC8323" format="default" sectionFormat="of" derivedContent="RFC8323"/>).   
+          Periodic application-layer heartbeats can prevent early filter state record deletion in middleboxes. 
+          If the TCP binding timeout for a middlebox to be traversed by a given connection is known, middlebox filter
+          state deletion will be avoided if the heartbeat period is lower than the middlebox TCP binding timeout. 
+          Otherwise, the implementer needs to take into account that middlebox TCP binding timeouts fall in a wide range 
+          of possible values <xref target="HomeGateway" format="default" sectionFormat="of" derivedContent="HomeGateway"/>, and it may be hard to find a proper heartbeat period for application-layer heartbeat messages.
+        </t>
+        <t indent="0" pn="section-4.3-6">
+          One specific advantage of heartbeat messages is that they also allow liveness checks at the
+          application level.  In general, it makes sense to realize
+          liveness checks at the highest protocol layer possible that is
+          meaningful to the application, in order to maximize the depth of the
+          liveness check.  In addition, timely detection of a dead peer may
+          allow savings in terms of TCB memory use. However, the transmission of 
+          heartbeat messages consumes resources. This aspect needs to be assessed carefully, considering the characteristics of each specific CNN.
+        </t>
+        <t indent="0" pn="section-4.3-7">A TCP implementation may also be able to send "keep-alive" segments to test a TCP connection.
+        According to <xref target="RFC1122" format="default" sectionFormat="of" derivedContent="RFC1122"/>, keep-alives are an optional TCP mechanism that is
+        turned off by default, i.e., an application must explicitly enable it for a TCP connection.
+        The interval between keep-alive messages must be configurable, and it must default to no less
+        than two hours. With this large timeout, TCP keep-alive messages might not always be useful to avoid deletion of 
+        filter state records in some middleboxes.  However, sending TCP keep-alive probes more frequently risks draining power on energy-
+        constrained devices.
+        </t>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-5-1">Best current practices for securing TCP and TCP-based communication also applies to CNN. As an example, use of TLS <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> is strongly recommended if it is applicable.
+         However, note that TLS protects only the contents of the data segments.
+      </t>
+      <t indent="0" pn="section-5-2">There are TCP options that can actually protect the transport layer.  One example is the TCP Authentication Option (TCP-AO) <xref target="RFC5925" format="default" sectionFormat="of" derivedContent="RFC5925"/>. 
+         However, this option adds overhead and complexity. TCP-AO typically has a size of 16-20 bytes.
+         An implementer needs to asses the trade-off between security and performance when using TCP-AO, considering the characteristics (in terms of energy, bandwidth, and computational power)
+         of the environment where TCP will be used.
+      </t>
+      <t indent="0" pn="section-5-3">For the mechanisms discussed in this document, the corresponding considerations apply. For instance, if TFO is used, the security considerations of  RFC 7413 <xref target="RFC7413" format="default" sectionFormat="of" derivedContent="RFC7413"/> apply.</t>
+      <t indent="0" pn="section-5-4">Constrained devices are expected to support smaller TCP window sizes than less-limited devices. In such conditions, segment retransmission
+         triggered by RTO expiration is expected to be relatively frequent, due to lack of (enough) duplicate ACKs, especially when a constrained device
+         uses a single-MSS implementation. For this reason, constrained devices running TCP may appear as particularly appealing victims of the so-called
+         "shrew" Denial-of-Service (DoS) attack <xref target="SHREW" format="default" sectionFormat="of" derivedContent="SHREW"/>, whereby one or more sources generate a packet spike targeted to coincide with consecutive 
+         RTO-expiration-triggered retry attempts of a victim node. Note that the attack may be performed by Internet-connected devices,
+         including constrained devices in the same CNN as the victim, as well as remote ones. Mitigation techniques include RTO randomization and attack blocking by routers able to detect
+         shrew attacks based on their traffic pattern. </t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-6-1">This document has no IANA actions.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-core-fasor" to="CORE-FASOR"/>
+    <displayreference target="I-D.delcarpio-6lo-wlanah" to="6LO-WLANAH"/>
+    <displayreference target="I-D.ietf-tcpm-generalized-ecn" to="TCPM-ECN"/>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC0793" target="https://www.rfc-editor.org/info/rfc793" quoteTitle="true" derivedAnchor="RFC0793">
+          <front>
+            <title>Transmission Control Protocol</title>
+            <author initials="J." surname="Postel" fullname="J. Postel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1981" month="September"/>
+          </front>
+          <seriesInfo name="STD" value="7"/>
+          <seriesInfo name="RFC" value="793"/>
+          <seriesInfo name="DOI" value="10.17487/RFC0793"/>
+        </reference>
+        <reference anchor="RFC1122" target="https://www.rfc-editor.org/info/rfc1122" quoteTitle="true" derivedAnchor="RFC1122">
+          <front>
+            <title>Requirements for Internet Hosts - Communication Layers</title>
+            <author initials="R." surname="Braden" fullname="R. Braden" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1989" month="October"/>
+            <abstract>
+              <t indent="0">This RFC is an official specification for the Internet community.  It incorporates by reference, amends, corrects, and supplements the primary protocol standards documents relating to hosts.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="3"/>
+          <seriesInfo name="RFC" value="1122"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1122"/>
+        </reference>
+        <reference anchor="RFC2018" target="https://www.rfc-editor.org/info/rfc2018" quoteTitle="true" derivedAnchor="RFC2018">
+          <front>
+            <title>TCP Selective Acknowledgment Options</title>
+            <author initials="M." surname="Mathis" fullname="M. Mathis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mahdavi" fullname="J. Mahdavi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Romanow" fullname="A. Romanow">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1996" month="October"/>
+            <abstract>
+              <t indent="0">This memo proposes an implementation of SACK and discusses its performance and related issues.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2018"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2018"/>
+        </reference>
+        <reference anchor="RFC3042" target="https://www.rfc-editor.org/info/rfc3042" quoteTitle="true" derivedAnchor="RFC3042">
+          <front>
+            <title>Enhancing TCP's Loss Recovery Using Limited Transmit</title>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Balakrishnan" fullname="H. Balakrishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="January"/>
+            <abstract>
+              <t indent="0">This document proposes a new Transmission Control Protocol (TCP) mechanism that can be used to more effectively recover lost segments when a connection's congestion window is small, or when a large number of segments are lost in a single transmission window.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3042"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3042"/>
+        </reference>
+        <reference anchor="RFC3168" target="https://www.rfc-editor.org/info/rfc3168" quoteTitle="true" derivedAnchor="RFC3168">
+          <front>
+            <title>The Addition of Explicit Congestion Notification (ECN) to IP</title>
+            <author initials="K." surname="Ramakrishnan" fullname="K. Ramakrishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Floyd" fullname="S. Floyd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Black" fullname="D. Black">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2001" month="September"/>
+            <abstract>
+              <t indent="0">This memo specifies the incorporation of ECN (Explicit Congestion Notification) to TCP and IP, including ECN's use of two bits in the IP header.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3168"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3168"/>
+        </reference>
+        <reference anchor="RFC5681" target="https://www.rfc-editor.org/info/rfc5681" quoteTitle="true" derivedAnchor="RFC5681">
+          <front>
+            <title>TCP Congestion Control</title>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Paxson" fullname="V. Paxson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Blanton" fullname="E. Blanton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="September"/>
+            <abstract>
+              <t indent="0">This document defines TCP's four intertwined congestion control algorithms: slow start, congestion avoidance, fast retransmit, and fast recovery.  In addition, the document specifies how TCP should begin transmission after a relatively long idle period, as well as discussing various acknowledgment generation methods.  This document obsoletes RFC 2581.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5681"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5681"/>
+        </reference>
+        <reference anchor="RFC6298" target="https://www.rfc-editor.org/info/rfc6298" quoteTitle="true" derivedAnchor="RFC6298">
+          <front>
+            <title>Computing TCP's Retransmission Timer</title>
+            <author initials="V." surname="Paxson" fullname="V. Paxson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Chu" fullname="J. Chu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Sargent" fullname="M. Sargent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="June"/>
+            <abstract>
+              <t indent="0">This document defines the standard algorithm that Transmission Control Protocol (TCP) senders are required to use to compute and manage their retransmission timer.  It expands on the discussion in Section 4.2.3.1 of RFC 1122 and upgrades the requirement of supporting the algorithm from a SHOULD to a MUST.  This document obsoletes RFC 2988.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6298"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6298"/>
+        </reference>
+        <reference anchor="RFC6691" target="https://www.rfc-editor.org/info/rfc6691" quoteTitle="true" derivedAnchor="RFC6691">
+          <front>
+            <title>TCP Options and Maximum Segment Size (MSS)</title>
+            <author initials="D." surname="Borman" fullname="D. Borman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="July"/>
+            <abstract>
+              <t indent="0">This memo discusses what value to use with the TCP Maximum Segment Size (MSS) option, and updates RFC 879 and RFC 2385.  This document  is not an Internet Standards Track specification; it is published for  informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6691"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6691"/>
+        </reference>
+        <reference anchor="RFC6928" target="https://www.rfc-editor.org/info/rfc6928" quoteTitle="true" derivedAnchor="RFC6928">
+          <front>
+            <title>Increasing TCP's Initial Window</title>
+            <author initials="J." surname="Chu" fullname="J. Chu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Dukkipati" fullname="N. Dukkipati">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Cheng" fullname="Y. Cheng">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Mathis" fullname="M. Mathis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="April"/>
+            <abstract>
+              <t indent="0">This document proposes an experiment to increase the permitted TCP initial window (IW) from between 2 and 4 segments, as specified in RFC 3390, to 10 segments with a fallback to the existing recommendation when performance issues are detected.  It discusses the motivation behind the increase, the advantages and disadvantages of the higher initial window, and presents results from several large-scale experiments showing that the higher initial window improves the overall performance of many web services without resulting in a congestion collapse.  The document closes with a discussion of usage and deployment for further experimental purposes recommended by the IETF TCP Maintenance and Minor Extensions (TCPM) working group.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6928"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6928"/>
+        </reference>
+        <reference anchor="RFC7228" target="https://www.rfc-editor.org/info/rfc7228" quoteTitle="true" derivedAnchor="RFC7228">
+          <front>
+            <title>Terminology for Constrained-Node Networks</title>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Ersue" fullname="M. Ersue">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Keranen" fullname="A. Keranen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="May"/>
+            <abstract>
+              <t indent="0">The Internet Protocol Suite is increasingly used on small devices with severe constraints on power, memory, and processing resources, creating constrained-node networks.  This document provides a number of basic terms that have been useful in the standardization work for constrained-node networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7228"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7228"/>
+        </reference>
+        <reference anchor="RFC7323" target="https://www.rfc-editor.org/info/rfc7323" quoteTitle="true" derivedAnchor="RFC7323">
+          <front>
+            <title>TCP Extensions for High Performance</title>
+            <author initials="D." surname="Borman" fullname="D. Borman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Braden" fullname="B. Braden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Jacobson" fullname="V. Jacobson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Scheffenegger" fullname="R. Scheffenegger" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="September"/>
+            <abstract>
+              <t indent="0">This document specifies a set of TCP extensions to improve performance over paths with a large bandwidth * delay product and to provide reliable operation over very high-speed paths.  It defines the TCP Window Scale (WS) option and the TCP Timestamps (TS) option and their semantics.  The Window Scale option is used to support larger receive windows, while the Timestamps option can be used for at least two distinct mechanisms, Protection Against Wrapped Sequences (PAWS) and Round-Trip Time Measurement (RTTM), that are also described herein.</t>
+              <t indent="0">This document obsoletes RFC 1323 and describes changes from it.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7323"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7323"/>
+        </reference>
+        <reference anchor="RFC7413" target="https://www.rfc-editor.org/info/rfc7413" quoteTitle="true" derivedAnchor="RFC7413">
+          <front>
+            <title>TCP Fast Open</title>
+            <author initials="Y." surname="Cheng" fullname="Y. Cheng">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Chu" fullname="J. Chu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Radhakrishnan" fullname="S. Radhakrishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Jain" fullname="A. Jain">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="December"/>
+            <abstract>
+              <t indent="0">This document describes an experimental TCP mechanism called TCP Fast Open (TFO).  TFO allows data to be carried in the SYN and SYN-ACK packets and consumed by the receiving end during the initial connection handshake, and saves up to one full round-trip time (RTT) compared to the standard TCP, which requires a three-way handshake (3WHS) to complete before data can be exchanged.  However, TFO deviates from the standard TCP semantics, since the data in the SYN could be replayed to an application in some rare circumstances.  Applications should not use TFO unless they can tolerate this issue, as detailed in the Applicability section.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7413"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7413"/>
+        </reference>
+        <reference anchor="RFC7567" target="https://www.rfc-editor.org/info/rfc7567" quoteTitle="true" derivedAnchor="RFC7567">
+          <front>
+            <title>IETF Recommendations Regarding Active Queue Management</title>
+            <author initials="F." surname="Baker" fullname="F. Baker" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Fairhurst" fullname="G. Fairhurst" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="July"/>
+            <abstract>
+              <t indent="0">This memo presents recommendations to the Internet community concerning measures to improve and preserve Internet performance.  It presents a strong recommendation for testing, standardization, and widespread deployment of active queue management (AQM) in network devices to improve the performance of today's Internet.  It also urges a concerted effort of research, measurement, and ultimate deployment of AQM mechanisms to protect the Internet from flows that are not sufficiently responsive to congestion notification.</t>
+              <t indent="0">Based on 15 years of experience and new research, this document replaces the recommendations of RFC 2309.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="197"/>
+          <seriesInfo name="RFC" value="7567"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7567"/>
+        </reference>
+        <reference anchor="RFC8200" target="https://www.rfc-editor.org/info/rfc8200" quoteTitle="true" derivedAnchor="RFC8200">
+          <front>
+            <title>Internet Protocol, Version 6 (IPv6) Specification</title>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hinden" fullname="R. Hinden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="July"/>
+            <abstract>
+              <t indent="0">This document specifies version 6 of the Internet Protocol (IPv6). It obsoletes RFC 2460.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="86"/>
+          <seriesInfo name="RFC" value="8200"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8200"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.delcarpio-6lo-wlanah" quoteTitle="true" target="https://tools.ietf.org/html/draft-delcarpio-6lo-wlanah-01" derivedAnchor="6LO-WLANAH">
+          <front>
+            <title>IPv6 over 802.11ah</title>
+            <author initials="L" surname="Del Carpio Vega" fullname="Luis Felipe Del Carpio Vega">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Robles" fullname="Maria Ines Robles">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R" surname="Morabito" fullname="Roberto Morabito">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" day="19" year="2015"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-delcarpio-6lo-wlanah-01"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Commag" quoteTitle="true" target="https://doi.org/10.1109/MCOM.2016.7509394" derivedAnchor="Commag">
+          <front>
+            <title>CoAP Congestion Control for the Internet of Things</title>
+            <author initials="A." surname="Betzler" fullname="August Betzler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gomez" fullname="Carles Gomez">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Demirkol" fullname="Ilker Demirkol">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Paradells" fullname="Josep Paradelis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="July"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/MCOM.2016.7509394"/>
+          <refcontent>IEEE Communications Magazine, Vol. 54, Issue 7, pp. 154-160</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-core-fasor" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-core-fasor-01" derivedAnchor="CORE-FASOR">
+          <front>
+            <title>Fast-Slow Retransmission Timeout and Congestion Control Algorithm for CoAP</title>
+            <author fullname="Ilpo Jarvinen">
+              <organization showOnFrontPage="true">University of Helsinki</organization>
+            </author>
+            <author fullname="Markku Kojo">
+              <organization showOnFrontPage="true">University of Helsinki</organization>
+            </author>
+            <author fullname="Iivo Raitahila">
+              <organization showOnFrontPage="true">University of Helsinki</organization>
+            </author>
+            <author fullname="Zhen Cao">
+              <organization showOnFrontPage="true">Huawei</organization>
+            </author>
+            <date month="October" day="19" year="2020"/>
+            <abstract>
+              <t indent="0">   This document specifies an alternative retransmission timeout and
+   congestion control back off algorithm for the CoAP protocol, called
+   Fast-Slow RTO (FASOR).
+
+   The algorithm specified in this document employs an appropriate and
+   large enough back off of Retransmission Timeout (RTO) as the major
+   congestion control mechanism to allow acquiring unambiguous RTT
+   samples with high probability and to prevent building a persistent
+   queue when retransmitting.  The algorithm also aims to retransmit
+   quickly using an accurately managed retransmission timeout when link-
+   errors are occuring, basing RTO calculation on unambiguous round-trip
+   time (RTT) samples.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-core-fasor-01"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-core-fasor-01.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="Dunk" quoteTitle="true" target="https://doi.org/10.1145/1066116.106611" derivedAnchor="Dunk">
+          <front>
+            <title>Full TCP/IP for 8-Bit Architectures</title>
+            <author initials="A." surname="Dunkels" fullname="Adam Dunkels">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="May"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1145/1066116.106611"/>
+          <refcontent>MobiSys '03, pp. 85-98</refcontent>
+        </reference>
+        <reference anchor="ETEN" quoteTitle="true" target="https://doi.org/10.1016/j.comnet.2004.06.012" derivedAnchor="ETEN">
+          <front>
+            <title>Explicit transport error notification (ETEN) for error-prone wireless and satellite networks</title>
+            <author initials="R." surname="Krishnan" fullname="Rajesh Krishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Sterbenz" fullname="James Sterbenz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Eddy" fullname="Wesley Eddy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Partridge" fullname="C. Partridge">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="June"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1016/j.comnet.2004.06.012"/>
+          <refcontent>Computer Networks</refcontent>
+        </reference>
+        <reference anchor="GNRC" quoteTitle="true" derivedAnchor="GNRC">
+          <front>
+            <title>Connecting the World of Embedded Mobiles: The RIOT Approach to Ubiquitous Networking for the IoT</title>
+            <author initials="M." surname="Lenders" fullname="Martine Lenders">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Kietzmann" fullname="Kietzmann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Hahm" fullname="Oliver Hahm">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Petersen" fullname="Hauke Petersen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gündoğa" fullname="Cenk Gündoğa">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Baccelli" fullname="Emmanuel Baccelli">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Schleiser" fullname="Schleiser">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Schmidt" fullname="Thomas Schmidt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Wählisch" fullname="Matthias Wählisch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="January"/>
+          </front>
+          <refcontent>arXiv:1801.02833v1 [cs.NI]</refcontent>
+        </reference>
+        <reference anchor="HomeGateway" quoteTitle="true" target="https://doi.org/10.1145/1879141.1879174" derivedAnchor="HomeGateway">
+          <front>
+            <title>An Experimental Study of Home Gateway Characteristics</title>
+            <author initials="S." surname="Haetoenen" fullname="Seppo Haetoenen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Nyrhinen" fullname="Aki Nyrhinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Eggert" fullname="Lars Eggert">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Strowes" fullname="S. Strowes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Sarolahti" fullname="Pasi Sarolahti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kojo" fullname="Markku Kojo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="November"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1145/1879141.1879174"/>
+          <refcontent>Proceedings of the 10th ACM SIGCOMM conference on Internet measurement, pp. 260-266</refcontent>
+        </reference>
+        <reference anchor="IntComp" quoteTitle="true" target="https://doi.org/10.1109/MIC.2018.112102200" derivedAnchor="IntComp">
+          <front>
+            <title>TCP in the Internet of Things: from Ostracism to Prominence</title>
+            <author initials="C." surname="Gomez" fullname="Carles Gomez">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Arcia-Moret" fullname="Andres Arcia-Moret">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Crowcroft" fullname="Jon Crowcroft">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="January"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/MIC.2018.112102200"/>
+          <refcontent>IEEE Internet Computing, Vol. 22, Issue 1, pp. 29-41</refcontent>
+        </reference>
+        <reference anchor="MQTT" quoteTitle="true" derivedAnchor="MQTT">
+          <front>
+            <title>Information technology -- Message Queuing Telemetry Transport (MQTT) v3.1.1</title>
+            <author>
+              <organization showOnFrontPage="true">ISO/IEC</organization>
+            </author>
+            <date year="2016" month="June"/>
+          </front>
+          <refcontent>ISO/IEC 20922:2016</refcontent>
+        </reference>
+        <reference anchor="RFC2757" target="https://www.rfc-editor.org/info/rfc2757" quoteTitle="true" derivedAnchor="RFC2757">
+          <front>
+            <title>Long Thin Networks</title>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Dawkins" fullname="S. Dawkins">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kojo" fullname="M. Kojo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Magret" fullname="V. Magret">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Vaidya" fullname="N. Vaidya">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="January"/>
+            <abstract>
+              <t indent="0">Our goal is to identify a TCP that works for all users, including users of long thin networks.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2757"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2757"/>
+        </reference>
+        <reference anchor="RFC2884" target="https://www.rfc-editor.org/info/rfc2884" quoteTitle="true" derivedAnchor="RFC2884">
+          <front>
+            <title>Performance Evaluation of Explicit Congestion Notification (ECN) in IP Networks</title>
+            <author initials="J." surname="Hadi Salim" fullname="J. Hadi Salim">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="U." surname="Ahmed" fullname="U. Ahmed">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="July"/>
+            <abstract>
+              <t indent="0">This memo presents a performance study of the Explicit Congestion Notification (ECN) mechanism in the TCP/IP protocol using our implementation on the Linux Operating System.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2884"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2884"/>
+        </reference>
+        <reference anchor="RFC3481" target="https://www.rfc-editor.org/info/rfc3481" quoteTitle="true" derivedAnchor="RFC3481">
+          <front>
+            <title>TCP over Second (2.5G) and Third (3G) Generation Wireless Networks</title>
+            <author initials="H." surname="Inamura" fullname="H. Inamura" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Ludwig" fullname="R. Ludwig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Gurtov" fullname="A. Gurtov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Khafizov" fullname="F. Khafizov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="February"/>
+            <abstract>
+              <t indent="0">This document describes a profile for optimizing TCP to adapt so that it handles paths including second (2.5G) and third (3G) generation wireless networks.  It describes the relevant characteristics of 2.5G and 3G networks, and specific features of example deployments of such networks. It then recommends TCP algorithm choices for nodes known to be starting or ending on such paths, and it also discusses open issues.  The configuration options recommended in this document are commonly found in modern TCP stacks, and are widely available standards-track mechanisms that the community considers safe for use on the general Internet.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="71"/>
+          <seriesInfo name="RFC" value="3481"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3481"/>
+        </reference>
+        <reference anchor="RFC3819" target="https://www.rfc-editor.org/info/rfc3819" quoteTitle="true" derivedAnchor="RFC3819">
+          <front>
+            <title>Advice for Internet Subnetwork Designers</title>
+            <author initials="P." surname="Karn" fullname="P. Karn" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Fairhurst" fullname="G. Fairhurst">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Grossman" fullname="D. Grossman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Ludwig" fullname="R. Ludwig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mahdavi" fullname="J. Mahdavi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Touch" fullname="J. Touch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Wood" fullname="L. Wood">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="July"/>
+            <abstract>
+              <t indent="0">This document provides advice to the designers of digital communication equipment, link-layer protocols, and packet-switched local networks (collectively referred to as subnetworks), who wish to support the Internet protocols but may be unfamiliar with the Internet architecture and the implications of their design choices on the performance and efficiency of the Internet.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="89"/>
+          <seriesInfo name="RFC" value="3819"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3819"/>
+        </reference>
+        <reference anchor="RFC4944" target="https://www.rfc-editor.org/info/rfc4944" quoteTitle="true" derivedAnchor="RFC4944">
+          <front>
+            <title>Transmission of IPv6 Packets over IEEE 802.15.4 Networks</title>
+            <author initials="G." surname="Montenegro" fullname="G. Montenegro">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Kushalnagar" fullname="N. Kushalnagar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hui" fullname="J. Hui">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Culler" fullname="D. Culler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document describes the frame format for transmission of IPv6 packets and the method of forming IPv6 link-local addresses and statelessly autoconfigured addresses on IEEE 802.15.4 networks. Additional specifications include a simple header compression scheme using shared context and provisions for packet delivery in IEEE 802.15.4 meshes.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4944"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4944"/>
+        </reference>
+        <reference anchor="RFC5382" target="https://www.rfc-editor.org/info/rfc5382" quoteTitle="true" derivedAnchor="RFC5382">
+          <front>
+            <title>NAT Behavioral Requirements for TCP</title>
+            <author initials="S." surname="Guha" fullname="S. Guha" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Biswas" fullname="K. Biswas">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Ford" fullname="B. Ford">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Sivakumar" fullname="S. Sivakumar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Srisuresh" fullname="P. Srisuresh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="October"/>
+            <abstract>
+              <t indent="0">This document defines a set of requirements for NATs that handle TCP that would allow many applications, such as peer-to-peer applications and online games to work consistently.  Developing NATs that meet this set of requirements will greatly increase the likelihood that these applications will function properly.  This document specifies  an Internet Best Current Practices for the Internet Community,  and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="142"/>
+          <seriesInfo name="RFC" value="5382"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5382"/>
+        </reference>
+        <reference anchor="RFC5925" target="https://www.rfc-editor.org/info/rfc5925" quoteTitle="true" derivedAnchor="RFC5925">
+          <front>
+            <title>The TCP Authentication Option</title>
+            <author initials="J." surname="Touch" fullname="J. Touch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Mankin" fullname="A. Mankin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bonica" fullname="R. Bonica">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="June"/>
+            <abstract>
+              <t indent="0">This document specifies the TCP Authentication Option (TCP-AO), which obsoletes the TCP MD5 Signature option of RFC 2385 (TCP MD5).  TCP-AO specifies the use of stronger Message Authentication Codes (MACs), protects against replays even for long-lived TCP connections, and provides more details on the association of security with TCP connections than TCP MD5.  TCP-AO is compatible with either a static Master Key Tuple (MKT) configuration or an external, out-of-band MKT management mechanism; in either case, TCP-AO also protects connections when using the same MKT across repeated instances of a connection, using traffic keys derived from the MKT, and coordinates MKT changes between endpoints.  The result is intended to support current infrastructure uses of TCP MD5, such as to protect long-lived connections (as used, e.g., in BGP and LDP), and to support a larger set of MACs with minimal other system and operational changes.  TCP-AO uses a different option identifier than TCP MD5, even though TCP-AO and TCP MD5 are never permitted to be used simultaneously.  TCP-AO supports IPv6, and is fully compatible with the proposed requirements for the replacement of TCP MD5.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5925"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5925"/>
+        </reference>
+        <reference anchor="RFC6077" target="https://www.rfc-editor.org/info/rfc6077" quoteTitle="true" derivedAnchor="RFC6077">
+          <front>
+            <title>Open Research Issues in Internet Congestion Control</title>
+            <author initials="D." surname="Papadimitriou" fullname="D. Papadimitriou" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Welzl" fullname="M. Welzl">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Scharf" fullname="M. Scharf">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Briscoe" fullname="B. Briscoe">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="February"/>
+            <abstract>
+              <t indent="0">This document describes some of the open problems in Internet congestion control that are known today.  This includes several new challenges that are becoming important as the network grows, as well as some issues that have been known for many years.  These challenges are generally considered to be open research topics that may require more study or application of innovative techniques before Internet-scale solutions can be confidently engineered and deployed.   This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6077"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6077"/>
+        </reference>
+        <reference anchor="RFC6120" target="https://www.rfc-editor.org/info/rfc6120" quoteTitle="true" derivedAnchor="RFC6120">
+          <front>
+            <title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="March"/>
+            <abstract>
+              <t indent="0">The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language (XML) that enables the near-real-time exchange of structured yet extensible data between any two or more network entities.  This document defines XMPP's core protocol methods: setup and teardown of XML streams, channel encryption, authentication, error handling, and communication primitives for messaging, network availability ("presence"), and request-response interactions.  This document obsoletes RFC 3920.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6120"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6120"/>
+        </reference>
+        <reference anchor="RFC6282" target="https://www.rfc-editor.org/info/rfc6282" quoteTitle="true" derivedAnchor="RFC6282">
+          <front>
+            <title>Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks</title>
+            <author initials="J." surname="Hui" fullname="J. Hui" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Thubert" fullname="P. Thubert">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="September"/>
+            <abstract>
+              <t indent="0">This document updates RFC 4944, "Transmission of IPv6 Packets over IEEE 802.15.4 Networks".  This document specifies an IPv6 header compression format for IPv6 packet delivery in Low Power Wireless Personal Area Networks (6LoWPANs).  The compression format relies on shared context to allow compression of arbitrary prefixes.  How the information is maintained in that shared context is out of scope. This document specifies compression of multicast addresses and a framework for compressing next headers.  UDP header compression is specified within this framework.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6282"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6282"/>
+        </reference>
+        <reference anchor="RFC6550" target="https://www.rfc-editor.org/info/rfc6550" quoteTitle="true" derivedAnchor="RFC6550">
+          <front>
+            <title>RPL: IPv6 Routing Protocol for Low-Power and Lossy Networks</title>
+            <author initials="T." surname="Winter" fullname="T. Winter" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Thubert" fullname="P. Thubert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Brandt" fullname="A. Brandt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hui" fullname="J. Hui">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Kelsey" fullname="R. Kelsey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Levis" fullname="P. Levis">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Pister" fullname="K. Pister">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Struik" fullname="R. Struik">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="JP." surname="Vasseur" fullname="JP. Vasseur">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Alexander" fullname="R. Alexander">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="March"/>
+            <abstract>
+              <t indent="0">Low-Power and Lossy Networks (LLNs) are a class of network in which both the routers and their interconnect are constrained.  LLN routers typically operate with constraints on processing power, memory, and energy (battery power).  Their interconnects are characterized by high loss rates, low data rates, and instability.  LLNs are comprised of anything from a few dozen to thousands of routers.  Supported traffic flows include point-to-point (between devices inside the LLN), point-to-multipoint (from a central control point to a subset of devices inside the LLN), and multipoint-to-point (from devices inside the LLN towards a central control point).  This document specifies the IPv6 Routing Protocol for Low-Power and Lossy Networks (RPL), which provides a mechanism whereby multipoint-to-point traffic from devices inside the LLN towards a central control point as well as point-to-multipoint traffic from the central control point to the devices inside the LLN are supported.  Support for point-to-point traffic is also available.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6550"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6550"/>
+        </reference>
+        <reference anchor="RFC6606" target="https://www.rfc-editor.org/info/rfc6606" quoteTitle="true" derivedAnchor="RFC6606">
+          <front>
+            <title>Problem Statement and Requirements for IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) Routing</title>
+            <author initials="E." surname="Kim" fullname="E. Kim">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Kaspar" fullname="D. Kaspar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gomez" fullname="C. Gomez">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="May"/>
+            <abstract>
+              <t indent="0">IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs) are formed by devices that are compatible with the IEEE 802.15.4 standard.  However, neither the IEEE 802.15.4 standard nor the 6LoWPAN format specification defines how mesh topologies could be obtained and maintained.  Thus, it should be considered how 6LoWPAN formation and multi-hop routing could be supported.</t>
+              <t indent="0">This document provides the problem statement and design space for 6LoWPAN routing.  It defines the routing requirements for 6LoWPANs, considering the low-power and other particular characteristics of the devices and links.  The purpose of this document is not to recommend specific solutions but to provide general, layer-agnostic guidelines about the design of 6LoWPAN routing that can lead to further analysis and protocol design.  This document is intended as input to groups working on routing protocols relevant to 6LoWPANs, such as the IETF ROLL WG.  This document is not an Internet Standards Track specification;  it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6606"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6606"/>
+        </reference>
+        <reference anchor="RFC6775" target="https://www.rfc-editor.org/info/rfc6775" quoteTitle="true" derivedAnchor="RFC6775">
+          <front>
+            <title>Neighbor Discovery Optimization for IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs)</title>
+            <author initials="Z." surname="Shelby" fullname="Z. Shelby" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Chakrabarti" fullname="S. Chakrabarti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Nordmark" fullname="E. Nordmark">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="November"/>
+            <abstract>
+              <t indent="0">The IETF work in IPv6 over Low-power Wireless Personal Area Network (6LoWPAN) defines 6LoWPANs such as IEEE 802.15.4.  This and other similar link technologies have limited or no usage of multicast signaling due to energy conservation.  In addition, the wireless network may not strictly follow the traditional concept of IP subnets and IP links.  IPv6 Neighbor Discovery was not designed for non- transitive wireless links, as its reliance on the traditional IPv6 link concept and its heavy use of multicast make it inefficient and sometimes impractical in a low-power and lossy network.  This document describes simple optimizations to IPv6 Neighbor Discovery, its addressing mechanisms, and duplicate address detection for Low- power Wireless Personal Area Networks and similar networks.  The document thus updates RFC 4944 to specify the use of the optimizations defined here.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6775"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6775"/>
+        </reference>
+        <reference anchor="RFC7230" target="https://www.rfc-editor.org/info/rfc7230" quoteTitle="true" derivedAnchor="RFC7230">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems.  This document provides an overview of HTTP architecture and its associated terminology, defines the "http" and "https" Uniform Resource Identifier (URI) schemes, defines the HTTP/1.1 message syntax and parsing requirements, and describes related security concerns for implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7230"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7230"/>
+        </reference>
+        <reference anchor="RFC7252" target="https://www.rfc-editor.org/info/rfc7252" quoteTitle="true" derivedAnchor="RFC7252">
+          <front>
+            <title>The Constrained Application Protocol (CoAP)</title>
+            <author initials="Z." surname="Shelby" fullname="Z. Shelby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Hartke" fullname="K. Hartke">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Constrained Application Protocol (CoAP) is a specialized web transfer protocol for use with constrained nodes and constrained (e.g., low-power, lossy) networks.  The nodes often have 8-bit microcontrollers with small amounts of ROM and RAM, while constrained networks such as IPv6 over Low-Power Wireless Personal Area Networks (6LoWPANs) often have high packet error rates and a typical throughput of 10s of kbit/s.  The protocol is designed for machine- to-machine (M2M) applications such as smart energy and building automation.</t>
+              <t indent="0">CoAP provides a request/response interaction model between application endpoints, supports built-in discovery of services and resources, and includes key concepts of the Web such as URIs and Internet media types.  CoAP is designed to easily interface with HTTP for integration with the Web while meeting specialized requirements such as multicast support, very low overhead, and simplicity for constrained environments.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7252"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7252"/>
+        </reference>
+        <reference anchor="RFC7414" target="https://www.rfc-editor.org/info/rfc7414" quoteTitle="true" derivedAnchor="RFC7414">
+          <front>
+            <title>A Roadmap for Transmission Control Protocol (TCP) Specification Documents</title>
+            <author initials="M." surname="Duke" fullname="M. Duke">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Braden" fullname="R. Braden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Eddy" fullname="W. Eddy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Blanton" fullname="E. Blanton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Zimmermann" fullname="A. Zimmermann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="February"/>
+            <abstract>
+              <t indent="0">This document contains a roadmap to the Request for Comments (RFC) documents relating to the Internet's Transmission Control Protocol (TCP).  This roadmap provides a brief summary of the documents defining TCP and various TCP extensions that have accumulated in the RFC series.  This serves as a guide and quick reference for both TCP implementers and other parties who desire information contained in the TCP-related RFCs.</t>
+              <t indent="0">This document obsoletes RFC 4614.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7414"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7414"/>
+        </reference>
+        <reference anchor="RFC7428" target="https://www.rfc-editor.org/info/rfc7428" quoteTitle="true" derivedAnchor="RFC7428">
+          <front>
+            <title>Transmission of IPv6 Packets over ITU-T G.9959 Networks</title>
+            <author initials="A." surname="Brandt" fullname="A. Brandt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Buron" fullname="J. Buron">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="February"/>
+            <abstract>
+              <t indent="0">This document describes the frame format for transmission of IPv6 packets as well as a method of forming IPv6 link-local addresses and statelessly autoconfigured IPv6 addresses on ITU-T G.9959 networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7428"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7428"/>
+        </reference>
+        <reference anchor="RFC7540" target="https://www.rfc-editor.org/info/rfc7540" quoteTitle="true" derivedAnchor="RFC7540">
+          <front>
+            <title>Hypertext Transfer Protocol Version 2 (HTTP/2)</title>
+            <author initials="M." surname="Belshe" fullname="M. Belshe">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Peon" fullname="R. Peon">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Thomson" fullname="M. Thomson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2).  HTTP/2 enables a more efficient use of network resources and a reduced perception of latency by introducing header field compression and allowing multiple concurrent exchanges on the same connection.  It also introduces unsolicited push of representations from servers to clients.</t>
+              <t indent="0">This specification is an alternative to, but does not obsolete, the HTTP/1.1 message syntax.  HTTP's existing semantics remain unchanged.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7540"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7540"/>
+        </reference>
+        <reference anchor="RFC7668" target="https://www.rfc-editor.org/info/rfc7668" quoteTitle="true" derivedAnchor="RFC7668">
+          <front>
+            <title>IPv6 over BLUETOOTH(R) Low Energy</title>
+            <author initials="J." surname="Nieminen" fullname="J. Nieminen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Savolainen" fullname="T. Savolainen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Isomaki" fullname="M. Isomaki">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Patil" fullname="B. Patil">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Z." surname="Shelby" fullname="Z. Shelby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gomez" fullname="C. Gomez">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="October"/>
+            <abstract>
+              <t indent="0">Bluetooth Smart is the brand name for the Bluetooth low energy feature in the Bluetooth specification defined by the Bluetooth Special Interest Group.  The standard Bluetooth radio has been widely implemented and available in mobile phones, notebook computers, audio headsets, and many other devices.  The low-power version of Bluetooth is a specification that enables the use of this air interface with devices such as sensors, smart meters, appliances, etc.  The low-power variant of Bluetooth has been standardized since revision 4.0 of the Bluetooth specifications, although version 4.1 or newer is required for IPv6.  This document describes how IPv6 is transported over Bluetooth low energy using IPv6 over Low-power Wireless Personal Area Network (6LoWPAN) techniques.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7668"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7668"/>
+        </reference>
+        <reference anchor="RFC8087" target="https://www.rfc-editor.org/info/rfc8087" quoteTitle="true" derivedAnchor="RFC8087">
+          <front>
+            <title>The Benefits of Using Explicit Congestion Notification (ECN)</title>
+            <author initials="G." surname="Fairhurst" fullname="G. Fairhurst">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Welzl" fullname="M. Welzl">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="March"/>
+            <abstract>
+              <t indent="0">The goal of this document is to describe the potential benefits of applications using a transport that enables Explicit Congestion Notification (ECN).  The document outlines the principal gains in terms of increased throughput, reduced delay, and other benefits when ECN is used over a network path that includes equipment that supports Congestion Experienced (CE) marking.  It also discusses challenges for successful deployment of ECN.  It does not propose new algorithms to use ECN nor does it describe the details of implementation of ECN in endpoint devices (Internet hosts), routers, or other network devices.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8087"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8087"/>
+        </reference>
+        <reference anchor="RFC8105" target="https://www.rfc-editor.org/info/rfc8105" quoteTitle="true" derivedAnchor="RFC8105">
+          <front>
+            <title>Transmission of IPv6 Packets over Digital Enhanced Cordless Telecommunications (DECT) Ultra Low Energy (ULE)</title>
+            <author initials="P." surname="Mariager" fullname="P. Mariager">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Petersen" fullname="J. Petersen" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Z." surname="Shelby" fullname="Z. Shelby">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Van de Logt" fullname="M. Van de Logt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Barthel" fullname="D. Barthel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">Digital Enhanced Cordless Telecommunications (DECT) Ultra Low Energy (ULE) is a low-power air interface technology that is proposed by the DECT Forum and is defined and specified by ETSI.</t>
+              <t indent="0">The DECT air interface technology has been used worldwide in communication devices for more than 20 years.  It has primarily been used to carry voice for cordless telephony but has also been deployed for data-centric services.</t>
+              <t indent="0">DECT ULE is a recent addition to the DECT interface primarily intended for low-bandwidth, low-power applications such as sensor devices, smart meters, home automation, etc.  As the DECT ULE interface inherits many of the capabilities from DECT, it benefits from operation that is long-range and interference-free, worldwide- reserved frequency band, low silicon prices, and maturity.  There is an added value in the ability to communicate with IPv6 over DECT ULE, such as for Internet of Things applications.</t>
+              <t indent="0">This document describes how IPv6 is transported over DECT ULE using IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) techniques.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8105"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8105"/>
+        </reference>
+        <reference anchor="RFC8163" target="https://www.rfc-editor.org/info/rfc8163" quoteTitle="true" derivedAnchor="RFC8163">
+          <front>
+            <title>Transmission of IPv6 over Master-Slave/Token-Passing (MS/TP) Networks</title>
+            <author initials="K." surname="Lynn" fullname="K. Lynn" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Martocci" fullname="J. Martocci">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Neilson" fullname="C. Neilson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Donaldson" fullname="S. Donaldson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">Master-Slave/Token-Passing (MS/TP) is a medium access control method for the RS-485 physical layer and is used primarily in building automation networks.  This specification defines the frame format for transmission of IPv6 packets and the method of forming link-local and statelessly autoconfigured IPv6 addresses on MS/TP networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8163"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8163"/>
+        </reference>
+        <reference anchor="RFC8201" target="https://www.rfc-editor.org/info/rfc8201" quoteTitle="true" derivedAnchor="RFC8201">
+          <front>
+            <title>Path MTU Discovery for IP version 6</title>
+            <author initials="J." surname="McCann" fullname="J. McCann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Deering" fullname="S. Deering">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Mogul" fullname="J. Mogul">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hinden" fullname="R. Hinden" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="July"/>
+            <abstract>
+              <t indent="0">This document describes Path MTU Discovery (PMTUD) for IP version 6. It is largely derived from RFC 1191, which describes Path MTU Discovery for IP version 4.  It obsoletes RFC 1981.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="87"/>
+          <seriesInfo name="RFC" value="8201"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8201"/>
+        </reference>
+        <reference anchor="RFC8323" target="https://www.rfc-editor.org/info/rfc8323" quoteTitle="true" derivedAnchor="RFC8323">
+          <front>
+            <title>CoAP (Constrained Application Protocol) over TCP, TLS, and WebSockets</title>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Lemay" fullname="S. Lemay">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Hartke" fullname="K. Hartke">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Silverajan" fullname="B. Silverajan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Raymor" fullname="B. Raymor" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="February"/>
+            <abstract>
+              <t indent="0">The Constrained Application Protocol (CoAP), although inspired by HTTP, was designed to use UDP instead of TCP.  The message layer of CoAP over UDP includes support for reliable delivery, simple congestion control, and flow control.</t>
+              <t indent="0">Some environments benefit from the availability of CoAP carried over reliable transports such as TCP or Transport Layer Security (TLS). This document outlines the changes required to use CoAP over TCP, TLS, and WebSockets transports.  It also formally updates RFC 7641 for use with these transports and RFC 7959 to enable the use of larger messages over a reliable transport.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8323"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8323"/>
+        </reference>
+        <reference anchor="RFC8352" target="https://www.rfc-editor.org/info/rfc8352" quoteTitle="true" derivedAnchor="RFC8352">
+          <front>
+            <title>Energy-Efficient Features of Internet of Things Protocols</title>
+            <author initials="C." surname="Gomez" fullname="C. Gomez">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kovatsch" fullname="M. Kovatsch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tian" fullname="H. Tian">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Z." surname="Cao" fullname="Z. Cao" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="April"/>
+            <abstract>
+              <t indent="0">This document describes the challenges for energy-efficient protocol operation on constrained devices and the current practices used to overcome those challenges.  It summarizes the main link-layer techniques used for energy-efficient networking, and it highlights the impact of such techniques on the upper-layer protocols so that they can together achieve an energy-efficient behavior.  The document also provides an overview of energy-efficient mechanisms available at each layer of the IETF protocol suite specified for constrained-node networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8352"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8352"/>
+        </reference>
+        <reference anchor="RFC8376" target="https://www.rfc-editor.org/info/rfc8376" quoteTitle="true" derivedAnchor="RFC8376">
+          <front>
+            <title>Low-Power Wide Area Network (LPWAN) Overview</title>
+            <author initials="S." surname="Farrell" fullname="S. Farrell" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="May"/>
+            <abstract>
+              <t indent="0">Low-Power Wide Area Networks (LPWANs) are wireless technologies with characteristics such as large coverage areas, low bandwidth, possibly very small packet and application-layer data sizes, and long battery life operation.  This memo is an informational overview of the set of LPWAN technologies being considered in the IETF and of the gaps that exist between the needs of those technologies and the goal of running IP in LPWANs.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8376"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8376"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC8900" target="https://www.rfc-editor.org/info/rfc8900" quoteTitle="true" derivedAnchor="RFC8900">
+          <front>
+            <title>IP Fragmentation Considered Fragile</title>
+            <author initials="R." surname="Bonica" fullname="R. Bonica">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Baker" fullname="F. Baker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hinden" fullname="R. Hinden">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Troan" fullname="O. Troan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Gont" fullname="F. Gont">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="September"/>
+            <abstract>
+              <t indent="0">This document describes IP fragmentation and explains how it introduces fragility to Internet communication.</t>
+              <t indent="0">This document also proposes alternatives to IP fragmentation and provides recommendations for developers and network operators.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="230"/>
+          <seriesInfo name="RFC" value="8900"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8900"/>
+        </reference>
+        <reference anchor="RFC8931" target="https://www.rfc-editor.org/info/rfc8931" quoteTitle="true" derivedAnchor="RFC8931">
+          <front>
+            <title>IPv6 over Low-Power Wireless Personal Area Network (6LoWPAN) Selective Fragment Recovery</title>
+            <author initials="P." surname="Thubert" fullname="P. Thubert" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="November"/>
+            <abstract>
+              <t indent="0">This document updates RFC 4944 with a protocol that forwards individual fragments across a route-over mesh and recovers them end to end, with congestion control capabilities to protect the network.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8931"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8931"/>
+        </reference>
+        <reference anchor="RFC8961" target="https://www.rfc-editor.org/info/rfc8961" quoteTitle="true" derivedAnchor="RFC8961">
+          <front>
+            <title>Requirements for Time-Based Loss Detection</title>
+            <author initials="M." surname="Allman" fullname="M. Allman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="November"/>
+            <abstract>
+              <t indent="0">Many protocols must detect packet loss for various reasons (e.g., to ensure reliability using retransmissions or to understand the level of congestion along a network path).  While many mechanisms have been designed to detect loss, ultimately, protocols can only count on the passage of time without delivery confirmation to declare a packet "lost". Each implementation of a time-based loss detection mechanism represents a balance between correctness and timeliness; therefore, no implementation suits all situations.  This document provides high-level requirements for time-based loss detectors appropriate for general use in unicast communication across the Internet.  Within the requirements, implementations have latitude to define particulars that best address each situation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="233"/>
+          <seriesInfo name="RFC" value="8961"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8961"/>
+        </reference>
+        <reference anchor="RIOT" quoteTitle="true" target="https://doi.org/10.1109/JIOT.2018.2815038" derivedAnchor="RIOT">
+          <front>
+            <title>RIOT: An Open Source Operating System for Low-End Embedded Devices in the IoT</title>
+            <author initials="E." surname="Baccelli" fullname="Emmanuel Baccelli">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gündoğa" fullname="Cenk Gündoğa">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Hahm" fullname="Oliver Hahm">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Kietzmann" fullname="Kietzmann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Lenders" fullname="Martine Lenders">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Petersen" fullname="Hauke Petersen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Schleiser" fullname="Schleiser">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Schmidt" fullname="Thomas Schmidt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Wählisch" fullname="Matthias Wählisch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="March"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/JIOT.2018.2815038"/>
+          <refcontent>IEEE Internet of Things Journal, Vol. 5, Issue 6</refcontent>
+        </reference>
+        <reference anchor="SHREW" quoteTitle="true" target="https://doi.org/10.1145/863955.863966" derivedAnchor="SHREW">
+          <front>
+            <title>Low-Rate TCP-Targeted Denial of Service Attacks (The Shrew vs. the Mice and Elephants)</title>
+            <author initials="A." surname="Nyrhinen" fullname="Aleksandar Kuzmanovic">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Knightly" fullname="Edward Knightly">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="August"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1145/863955.863966"/>
+          <refcontent>SIGCOMM'03</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-tcpm-generalized-ecn" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-tcpm-generalized-ecn-07" derivedAnchor="TCPM-ECN">
+          <front>
+            <title>ECN++: Adding Explicit Congestion Notification (ECN) to TCP Control Packets</title>
+            <author fullname="Marcelo Bagnulo">
+              <organization showOnFrontPage="true">Universidad Carlos III de Madrid</organization>
+            </author>
+            <author fullname="Bob Briscoe">
+              <organization showOnFrontPage="true">Independent</organization>
+            </author>
+            <date month="February" day="16" year="2021"/>
+            <abstract>
+              <t indent="0">   This document describes an experimental modification to ECN when used
+   with TCP.  It allows the use of ECN on the following TCP packets:
+   SYNs, pure ACKs, Window probes, FINs, RSTs and retransmissions.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tcpm-generalized-ecn-07"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-tcpm-generalized-ecn-07.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-tcp-implementations-for-con">TCP Implementations for Constrained Devices</name>
+      <t indent="0" pn="section-appendix.a-1">This section overviews the main features of TCP implementations for constrained devices. The survey is limited to open-source stacks with a small footprint. It is not meant to be all-encompassing. For more powerful embedded systems (e.g., with 32-bit processors), there are further stacks that comprehensively implement TCP. On the other hand, please be aware that this Annex is based on information available as of the writing.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.1">
+        <name slugifiedName="name-uip">uIP</name>
+        <t indent="0" pn="section-a.1-1">uIP is a TCP/IP stack, targeted for 8- and 16-bit microcontrollers, which pioneered TCP/IP implementations for constrained devices.
+           uIP has been deployed with Contiki and the Arduino Ethernet shield. A code size of ~5 kB (which comprises checksumming, IPv4, ICMP, and TCP) 
+           has been reported for uIP <xref target="Dunk" format="default" sectionFormat="of" derivedContent="Dunk"/>. Later versions of uIP implement IPv6 as well.</t>
+        <t indent="0" pn="section-a.1-2">uIP uses the same global buffer for both incoming and outgoing traffic, which has a
+           size of a single packet.  In case of a retransmission, an application must be able to reproduce the same user data that had been
+           transmitted. Multiple connections are supported but need to share the global buffer.
+        </t>
+        <t indent="0" pn="section-a.1-3">The MSS is announced via the MSS option on connection establishment, and the receive window size (of 1 MSS) is not modified during a connection. Stop-and-wait operation is used for sending data. Among other optimizations, this allows for the avoidance of sliding window operations, which use 32-bit arithmetic extensively and are expensive on 8-bit CPUs.</t>
+        <t indent="0" pn="section-a.1-4">Contiki uses the "split hack" technique (see <xref target="DelAck" format="default" sectionFormat="of" derivedContent="Section 3.2.3"/>) to avoid Delayed ACKs for senders using a single segment.</t>
+        <t indent="0" pn="section-a.1-5">The code size of the TCP implementation in Contiki-NG has been measured to be 3.2 kB on CC2538DK, cross-compiling on Linux.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.2">
+        <name slugifiedName="name-lwip">lwIP</name>
+        <t indent="0" pn="section-a.2-1">lwIP is a TCP/IP stack, targeted for 8- and 16-bit microcontrollers. lwIP has a total code size of ~14 kB to ~22 kB 
+          (which comprises memory management, checksumming, network interfaces, IPv4, ICMP, and TCP) and a TCP code size of ~9 kB to ~14 kB <xref target="Dunk" format="default" sectionFormat="of" derivedContent="Dunk"/>.
+        Both IPv4 and IPv6 are supported in lwIP since v2.0.0.</t>
+        <t indent="0" pn="section-a.2-2">In contrast with uIP, lwIP decouples applications from the network stack. lwIP supports a TCP transmission window greater than a single segment, as well as the buffering of incoming and outgoing data. Other implemented mechanisms comprise slow start, congestion avoidance, fast retransmit, and fast recovery. 
+           SACK and Window Scale support has been recently added to lwIP.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.3">
+        <name slugifiedName="name-riot">RIOT</name>
+        <t indent="0" pn="section-a.3-1"> The RIOT TCP implementation (called "GNRC TCP") has been designed for Class 1 devices <xref target="RFC7228" format="default" sectionFormat="of" derivedContent="RFC7228"/>. The main target platforms are 8- and 16-bit microcontrollers, with 32-bit platforms also supported. GNRC TCP 
+            offers a similar function set as uIP, but it provides and maintains an independent receive buffer for each connection. In contrast to uIP, retransmission is also handled by GNRC TCP. For simplicity, GNRC TCP uses a single-MSS implementation. The application programmer does not need to know anything about the TCP internals; therefore, GNRC TCP can be seen as a user-friendly uIP TCP implementation.
+        </t>
+        <t indent="0" pn="section-a.3-2"> The MSS is set on connections establishment and cannot be changed during connection lifetime. GNRC TCP allows multiple connections in parallel, but each TCB must 
+            be allocated somewhere in the system. By default, there is only enough memory allocated for a single TCP connection, but it can be increased at compile time if the user needs multiple parallel connections.
+        </t>
+        <t indent="0" pn="section-a.3-3"> The RIOT TCP implementation offers an optional Portable Operating System Interface (POSIX) socket wrapper that enables POSIX compliance, if needed.
+        </t>
+        <t indent="0" pn="section-a.3-4"> Further details on RIOT and GNRC can be found in <xref target="RIOT" format="default" sectionFormat="of" derivedContent="RIOT"/> and <xref target="GNRC" format="default" sectionFormat="of" derivedContent="GNRC"/>. 
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.4">
+        <name slugifiedName="name-tinyos">TinyOS</name>
+        <t indent="0" pn="section-a.4-1">TinyOS was important as a platform for early constrained devices. TinyOS has an experimental TCP stack that uses a simple non-blocking library-based implementation of TCP, which provides a subset of the socket interface primitives. The application is responsible for buffering. The TCP library does not do any receive-side buffering. Instead, it will immediately dispatch new, in-order data to the application or otherwise drop the segment. A send buffer is provided by the application. Multiple TCP connections are possible. Recently, there has been little work on the stack.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.5">
+        <name slugifiedName="name-freertos">FreeRTOS</name>
+        <t indent="0" pn="section-a.5-1">FreeRTOS is a real-time operating system kernel for embedded devices that 
+              is supported by 16- and 32-bit microprocessors. Its TCP implementation is based on multiple-segment window size, although a "Tiny-TCP" option, which is a single-MSS variant, can be enabled. Delayed ACKs are supported, with a 20 ms Delayed ACK timer as a technique intended "to gain performance".
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.6">
+        <name slugifiedName="name-uc-os">uC/OS</name>
+        <t indent="0" pn="section-a.6-1">uC/OS is a real-time operating system kernel for embedded devices, which is maintained by Micrium.  uC/OS is intended for 8-, 16-, and 32-bit microprocessors. The uC/OS TCP implementation supports a multiple-segment window size.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-a.7">
+        <name slugifiedName="name-summary">Summary</name>
+        <t indent="0" pn="section-a.7-1">None of the implementations considered in this Annex support ECN or TFO.</t>
+        <table anchor="table_1" align="center" pn="table-1">
+          <name slugifiedName="name-summary-of-tcp-features-for">Summary of TCP Features for Different Lightweight TCP Implementations</name>
+          <thead>
+            <tr>
+              <th colspan="2" align="left" rowspan="1"/>
+              <th align="left" colspan="1" rowspan="1">uIP</th>
+              <th align="left" colspan="1" rowspan="1">lwIP orig</th>
+              <th align="left" colspan="1" rowspan="1">lwIP 2.1</th>
+              <th align="left" colspan="1" rowspan="1">RIOT</th>
+              <th align="left" colspan="1" rowspan="1">TinyOS</th>
+              <th align="left" colspan="1" rowspan="1">FreeRTOS</th>
+              <th align="left" colspan="1" rowspan="1">uC/OS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="2" align="left" rowspan="1">Code Size (kB)</td>
+              <td align="center" colspan="1" rowspan="1">&lt;5</td>
+              <td align="center" colspan="1" rowspan="1">~9 to ~14</td>
+              <td align="center" colspan="1" rowspan="1">38</td>
+              <td align="center" colspan="1" rowspan="1">&lt;7</td>
+              <td align="center" colspan="1" rowspan="1">N/A</td>
+              <td align="center" colspan="1" rowspan="1">&lt;9.2</td>
+              <td align="center" colspan="1" rowspan="1">N/A</td>
+            </tr>
+            <tr>
+              <td colspan="2" align="left" rowspan="1">Memory</td>
+              <td align="center" colspan="1" rowspan="1">(a)</td>
+              <td align="center" colspan="1" rowspan="1">(T1)</td>
+              <td align="center" colspan="1" rowspan="1">(T4)</td>
+              <td align="center" colspan="1" rowspan="1">(T3)</td>
+              <td align="center" colspan="1" rowspan="1">N/A</td>
+              <td align="center" colspan="1" rowspan="1">(T2)</td>
+              <td align="center" colspan="1" rowspan="1">N/A</td>
+            </tr>
+            <tr>
+              <th rowspan="1" colspan="9" align="left">TCP Features</th>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Single-Segm.</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Slow start</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Fast rec/retx</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Keep-alive</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Win. Scale</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">TCP timest.</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">SACK</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Del. ACKs</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Socket</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="center" colspan="1" rowspan="1">No</td>
+              <td align="left" colspan="1" rowspan="1">Optional</td>
+              <td align="center" colspan="1" rowspan="1">(I)</td>
+              <td align="left" colspan="1" rowspan="1">Subset</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <td rowspan="1" colspan="2" align="right">Concur. Conn.</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+              <td align="center" colspan="1" rowspan="1">Yes</td>
+            </tr>
+            <tr>
+              <th rowspan="1" colspan="2" align="left">TLS supported</th>
+              <th align="center" colspan="1" rowspan="1">No</th>
+              <th align="center" colspan="1" rowspan="1">No</th>
+              <th align="center" colspan="1" rowspan="1">Yes</th>
+              <th align="center" colspan="1" rowspan="1">Yes</th>
+              <th align="center" colspan="1" rowspan="1">Yes</th>
+              <th align="center" colspan="1" rowspan="1">Yes</th>
+              <th align="center" colspan="1" rowspan="1">Yes</th>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-a.7-3">Legend:</t>
+        <dl spacing="normal" indent="8" newline="false" pn="section-a.7-4">
+          <dt pn="section-a.7-4.1">(T1):</dt>
+          <dd pn="section-a.7-4.2">TCP-only, on x86 and AVR platforms</dd>
+          <dt pn="section-a.7-4.3">(T2):</dt>
+          <dd pn="section-a.7-4.4">TCP-only, on ARM Cortex-M platform</dd>
+          <dt pn="section-a.7-4.5">(T3):</dt>
+          <dd pn="section-a.7-4.6">TCP-only, on ARM Cortex-M0+ platform (NOTE: RAM usage for the same platform 
+             is ~2.5 kB for one TCP connection plus ~1.2 kB for each additional connection)</dd>
+          <dt pn="section-a.7-4.7">(T4):</dt>
+          <dd pn="section-a.7-4.8">TCP-only, on CC2538DK, cross-compiling on Linux</dd>
+          <dt pn="section-a.7-4.9">(a):</dt>
+          <dd pn="section-a.7-4.10">Includes IP, ICMP, and TCP on x86 and AVR platforms. The Contiki-NG TCP implementation has a code size of 3.2 kB on CC2538DK, cross-compiling on Linux</dd>
+          <dt pn="section-a.7-4.11">(I):</dt>
+          <dd pn="section-a.7-4.12">Optional POSIX socket wrapper that enables POSIX compliance if needed</dd>
+          <dt pn="section-a.7-4.13">Mult.:</dt>
+          <dd pn="section-a.7-4.14">Multiple</dd>
+          <dt pn="section-a.7-4.15">N/A:</dt>
+          <dd pn="section-a.7-4.16">Not Available</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="ACKs" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">The work of <contact fullname="Carles Gomez"/> has been funded in part by the Spanish Government (Ministerio de Educacion, Cultura y Deporte) through Jose Castillejo grants CAS15/00336
+         and CAS18/00170; the European Regional Development Fund (ERDF); the Spanish Government through projects TEC2016-79988-P, PID2019-106808RA-I00, AEI/FEDER, and UE; and
+         the Generalitat de Catalunya Grant 2017 SGR 376. 
+      Part of his contribution to this work has been carried out during his stays as a visiting scholar at the Computer Laboratory of the University of Cambridge.</t>
+      <t indent="0" pn="section-appendix.b-2"> The authors appreciate the feedback received for this document. The    
+   following folks provided comments that helped improve the document: 
+   <contact fullname="Carsten Bormann"/>, <contact fullname="Zhen Cao"/>, <contact fullname="Wei Genyu"/>, <contact fullname="Ari Keränen"/>, <contact fullname="Abhijan Bhattacharyya"/>, <contact fullname="Andres Arcia-Moret"/>, <contact fullname="Yoshifumi Nishida"/>, <contact fullname="Joe Touch"/>, <contact fullname="Fred Baker"/>, <contact fullname="Nik Sultana"/>, <contact fullname="Kerry Lynn"/>, <contact fullname="Erik Nordmark"/>, <contact fullname="Markku Kojo"/>, <contact fullname="Hannes Tschofenig"/>, <contact fullname="David Black"/>, <contact fullname="Ilpo Jarvinen"/>, 
+   <contact fullname="Emmanuel Baccelli"/>, <contact fullname="Stuart Cheshire"/>, <contact fullname="Gorry Fairhurst"/>, <contact fullname="Ingemar Johansson"/>, <contact fullname="Ted Lemon"/>, and <contact fullname="Michael Tüxen"/>. 
+   <contact fullname="Simon Brummer"/> provided details and kindly performed Random Access Memory (RAM) and Read-Only Memory (ROM) usage measurements on the RIOT TCP implementation. <contact fullname="Xavi Vilajosana"/> provided details on the OpenWSN TCP implementation.
+   <contact fullname="Rahul Jadhav"/> kindly performed code size measurements on the Contiki-NG and lwIP 2.1.2 TCP implementations. He also provided details on the uIP TCP implementation.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Carles Gomez" initials="C." surname="Gomez">
+        <organization showOnFrontPage="true">UPC</organization>
+        <address>
+          <postal>
+            <street>C/Esteve Terradas, 7</street>
+            <city>Castelldefels</city>
+            <region/>
+            <code>08860</code>
+            <country>Spain</country>
+          </postal>
+          <phone/>
+          <email>carlesgo@entel.upc.edu</email>
+          <uri/>
+        </address>
+      </author>
+      <author fullname="Jon Crowcroft" initials="J." surname="Crowcroft">
+        <organization showOnFrontPage="true">University of Cambridge</organization>
+        <address>
+          <postal>
+            <street>JJ Thomson Avenue</street>
+            <city>Cambridge</city>
+            <code>CB3 0FD</code>
+            <country>United Kingdom</country>
+          </postal>
+          <phone/>
+          <email>jon.crowcroft@cl.cam.ac.uk</email>
+          <uri/>
+        </address>
+      </author>
+      <author fullname="Michael Scharf" initials="M." surname="Scharf">
+        <organization showOnFrontPage="true">Hochschule Esslingen</organization>
+        <address>
+          <postal>
+            <street>University of Applied Sciences</street>
+            <street>Flandernstr. 101</street>
+            <city>Esslingen am Neckar</city>
+            <region/>
+            <code>73732</code>
+            <country>Germany</country>
+          </postal>
+          <phone/>
+          <email>michael.scharf@hs-esslingen.de</email>
+          <uri/>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

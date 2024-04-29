@@ -1,0 +1,1259 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="exp" docName="draft-pauly-dprive-oblivious-doh-11" indexInclude="true" ipr="trust200902" number="9230" prepTime="2022-06-08T16:56:16" scripts="Common,Latin" sortRefs="true" submissionType="independent" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-pauly-dprive-oblivious-doh-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9230" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Oblivious DoH">Oblivious DNS over HTTPS</title>
+    <seriesInfo name="RFC" value="9230" stream="independent"/>
+    <author initials="E." surname="Kinnear" fullname="Eric Kinnear">
+      <organization showOnFrontPage="true">Apple Inc.</organization>
+      <address>
+        <postal>
+          <street>One Apple Park Way</street>
+          <city>Cupertino</city>
+          <region>California</region>
+          <code>95014</code>
+          <country>United States of America</country>
+        </postal>
+        <email>ekinnear@apple.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="McManus" fullname="Patrick McManus">
+      <organization showOnFrontPage="true">Fastly</organization>
+      <address>
+        <email>mcmanus@ducksong.com</email>
+      </address>
+    </author>
+    <author initials="T." surname="Pauly" fullname="Tommy Pauly">
+      <organization showOnFrontPage="true">Apple Inc.</organization>
+      <address>
+        <postal>
+          <street>One Apple Park Way</street>
+          <city>Cupertino</city>
+          <region>California</region>
+          <code>95014</code>
+          <country>United States of America</country>
+        </postal>
+        <email>tpauly@apple.com</email>
+      </address>
+    </author>
+    <author initials="T." surname="Verma" fullname="Tanya Verma">
+      <organization showOnFrontPage="true">Cloudflare</organization>
+      <address>
+        <postal>
+          <street>101 Townsend St</street>
+          <city>San Francisco</city>
+          <region>California</region>
+          <code>94107</code>
+          <country>United States of America</country>
+        </postal>
+        <email>vermatanyax@gmail.com</email>
+      </address>
+    </author>
+    <author initials="C.A." surname="Wood" fullname="Christopher A. Wood">
+      <organization showOnFrontPage="true">Cloudflare</organization>
+      <address>
+        <postal>
+          <street>101 Townsend St</street>
+          <city>San Francisco</city>
+          <region>California</region>
+          <code>94107</code>
+          <country>United States of America</country>
+        </postal>
+        <email>caw@heapingbits.net</email>
+      </address>
+    </author>
+    <date month="06" year="2022"/>
+    <keyword>Privacy</keyword>
+    <keyword>DNS Privacy</keyword>
+    <keyword>DoH</keyword>
+    <keyword>ODoH</keyword>
+    <keyword>HPKE</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes a protocol that allows clients to hide their IP addresses from DNS resolvers
+via proxying encrypted DNS over HTTPS (DoH) messages. This improves privacy of
+DNS operations by not allowing any one server entity to be aware of both the client IP
+address and the content of DNS queries and answers.</t>
+      <t indent="0" pn="section-abstract-2">This experimental protocol has been developed outside the IETF and is published here to
+guide implementation, ensure interoperability among implementations, and enable
+wide-scale experimentation.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for examination, experimental implementation, and
+            evaluation.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document defines an Experimental Protocol for the Internet
+            community.  This is a contribution to the RFC Series,
+            independently of any other RFC stream.  The RFC Editor has chosen to publish this
+            document at its discretion and makes no statement about its value
+            for implementation or deployment.  Documents approved for publication
+            by the RFC Editor are not candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9230" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-specification-of-requiremen">Specification of Requirements</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-deployment-requirements">Deployment Requirements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-exchange">HTTP Exchange</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-request">HTTP Request</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-request-example">HTTP Request Example</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-response">HTTP Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-response-example">HTTP Response Example</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.5">
+                <t indent="0" pn="section-toc.1-1.4.2.5.1"><xref derivedContent="4.5" format="counter" sectionFormat="of" target="section-4.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-metadata">HTTP Metadata</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-configuration-and-public-ke">Configuration and Public Key Format</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protocol-encoding">Protocol Encoding</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-message-format">Message Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-encryption-and-decryption-r">Encryption and Decryption Routines</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oblivious-client-behavior">Oblivious Client Behavior</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oblivious-target-behavior">Oblivious Target Behavior</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compliance-requirements">Compliance Requirements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-experiment-overview">Experiment Overview</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-denial-of-service">Denial of Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-proxy-policies">Proxy Policies</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.3">
+                <t indent="0" pn="section-toc.1-1.11.2.3.1"><xref derivedContent="11.3" format="counter" sectionFormat="of" target="section-11.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication">Authentication</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oblivious-doh-message-media">Oblivious DoH Message Media Type</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="13" format="counter" sectionFormat="of" target="section-13"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.13.2">
+              <li pn="section-toc.1-1.13.2.1">
+                <t indent="0" pn="section-toc.1-1.13.2.1.1"><xref derivedContent="13.1" format="counter" sectionFormat="of" target="section-13.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.13.2.2">
+                <t indent="0" pn="section-toc.1-1.13.2.2.1"><xref derivedContent="13.2" format="counter" sectionFormat="of" target="section-13.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-of-generic-proxy-servic">Use of Generic Proxy Services</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.16">
+            <t indent="0" pn="section-toc.1-1.16.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">DNS over HTTPS (DoH) <xref target="RFC8484" format="default" sectionFormat="of" derivedContent="RFC8484"/> defines a mechanism to allow DNS messages to be
+transmitted in HTTP messages protected with TLS. This provides improved confidentiality
+and authentication for DNS interactions in various circumstances.</t>
+      <t indent="0" pn="section-1-2">While DoH can prevent eavesdroppers from directly reading the contents of DNS exchanges,
+clients cannot send DNS queries to and receive answers from servers without revealing
+their local IP address (and thus information about the identity or location of the client)
+to the server.</t>
+      <t indent="0" pn="section-1-3">Proposals such as Oblivious DNS <xref target="I-D.annee-dprive-oblivious-dns" format="default" sectionFormat="of" derivedContent="OBLIVIOUS-DNS"/> increase privacy
+by ensuring that no single DNS server is aware of both the client IP address and the message
+contents.</t>
+      <t indent="0" pn="section-1-4">This document defines Oblivious DoH, an experimental protocol built on DoH that permits proxied
+resolution, in which DNS messages are encrypted so that no server can independently read
+both the client IP address and the DNS message contents.</t>
+      <t indent="0" pn="section-1-5">As with DoH, DNS messages exchanged over Oblivious DoH are fully formed DNS messages.
+Clients that want to receive answers that are relevant to the network they are on without
+revealing their exact IP address can thus use the EDNS0 Client Subnet option (<xref section="7.1.2" sectionFormat="comma" target="RFC7871" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7871#section-7.1.2" derivedContent="RFC7871"/>)
+to provide a hint to the resolver using Oblivious DoH.</t>
+      <t indent="0" pn="section-1-6">This mechanism is intended to be used as one mechanism for resolving privacy-sensitive
+content in the broader context of DNS privacy.</t>
+      <t indent="0" pn="section-1-7">This experimental protocol has been developed outside the IETF and is published here to
+guide implementation, ensure interoperability among implementations, and enable
+wide-scale experimentation. See <xref target="experiment" format="default" sectionFormat="of" derivedContent="Section 10"/> for more details about the experiment.</t>
+      <section anchor="specification-of-requirements" numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-specification-of-requiremen">Specification of Requirements</name>
+        <t indent="0" pn="section-1.1-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+      </section>
+    </section>
+    <section anchor="terminology" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">This document defines the following terms:</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-2-2">
+        <dt pn="section-2-2.1">
+Oblivious Client:  </dt>
+        <dd pn="section-2-2.2">
+          <t indent="0" pn="section-2-2.2.1">A client that sends DNS queries to an Oblivious Target, through an Oblivious Proxy. The Client is responsible for selecting the combination of Proxy and Target to use for a given query.</t>
+        </dd>
+        <dt pn="section-2-2.3">
+Oblivious Proxy:  </dt>
+        <dd pn="section-2-2.4">
+          <t indent="0" pn="section-2-2.4.1">An HTTP server that proxies encrypted DNS queries and responses between an Oblivious Client and an
+Oblivious Target and is identified by a URI Template <xref target="RFC6570" format="default" sectionFormat="of" derivedContent="RFC6570"/> (see <xref target="oblivious-request" format="default" sectionFormat="of" derivedContent="Section 4.1"/>).
+Note that this Oblivious Proxy is not acting as a full HTTP proxy but is instead a specialized
+server used to forward Oblivious DNS messages.</t>
+        </dd>
+        <dt pn="section-2-2.5">
+Oblivious Target:  </dt>
+        <dd pn="section-2-2.6">
+          <t indent="0" pn="section-2-2.6.1">An HTTP server that receives and decrypts encrypted Oblivious Client DNS queries from an Oblivious Proxy
+and returns encrypted DNS responses via that same Proxy. In order to provide DNS responses, the Target
+can be a DNS resolver, be co-located with a resolver, or forward to a resolver.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-2-3">Throughout the rest of this document, we use the terms "Client", "Proxy", and "Target" to refer to an Oblivious Client, 
+Oblivious Proxy, and Oblivious Target, respectively.</t>
+    </section>
+    <section anchor="deployment-requirements" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-deployment-requirements">Deployment Requirements</name>
+      <t indent="0" pn="section-3-1">Oblivious DoH requires, at a minimum:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-2">
+        <li pn="section-3-2.1">An Oblivious Proxy server, identified by a URI Template.</li>
+        <li pn="section-3-2.2">An Oblivious Target server. The Target and Proxy are expected to be non-colluding (see 
+<xref target="security-considerations" format="default" sectionFormat="of" derivedContent="Section 11"/>).</li>
+        <li pn="section-3-2.3">One or more Target public keys for encrypting DNS queries sent to a Target via a Proxy
+(<xref target="publickey" format="default" sectionFormat="of" derivedContent="Section 5"/>). These keys guarantee that only the intended Target can decrypt Client queries.</li>
+      </ul>
+      <t indent="0" pn="section-3-3">The mechanism for discovering and provisioning the Proxy URI Template and Target public keys
+is out of scope for this document.</t>
+    </section>
+    <section anchor="http-exchange" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-http-exchange">HTTP Exchange</name>
+      <t indent="0" pn="section-4-1">Unlike direct resolution, oblivious hostname resolution over DoH involves three parties:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4-2"><li pn="section-4-2.1" derivedCounter="1.">The Client, which generates queries.</li>
+        <li pn="section-4-2.2" derivedCounter="2.">The Proxy, which receives encrypted queries from the Client and passes them on to a Target.</li>
+        <li pn="section-4-2.3" derivedCounter="3.">The Target, which receives proxied queries from the Client via the Proxy and produces proxied
+answers.</li>
+      </ol>
+      <figure anchor="fig-doh-exchange" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-oblivious-doh-exchange">Oblivious DoH Exchange</name>
+        <artwork align="left" pn="section-4-3.1">
+     --- [ Request encrypted with Target public key ] --&gt;
++---------+             +-----------+             +-----------+
+| Client  +-------------&gt; Oblivious +-------------&gt; Oblivious |
+|         &lt;-------------+   Proxy   &lt;-------------+  Target   |
++---------+             +-----------+             +-----------+
+    &lt;-- [   Response encrypted with symmetric key   ] ---
+</artwork>
+      </figure>
+      <section anchor="oblivious-request" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-http-request">HTTP Request</name>
+        <t indent="0" pn="section-4.1-1">Oblivious DoH queries are created by the Client and are sent to the Proxy as HTTP
+requests using the POST method. Clients are configured with a Proxy URI Template
+<xref target="RFC6570" format="default" sectionFormat="of" derivedContent="RFC6570"/> and the Target URI. The scheme for both the Proxy URI Template and
+the Target URI <bcp14>MUST</bcp14> be "https". The Proxy URI Template uses the Level 3 encoding
+defined in
+<xref target="RFC6570" sectionFormat="of" section="1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6570#section-1.2" derivedContent="RFC6570"/> and contains two variables: "targethost",
+which indicates the hostname of the Target server; and "targetpath",
+which indicates the path on which the Target is accessible. Examples of
+Proxy URI Templates are shown below:</t>
+        <artwork align="left" pn="section-4.1-2">
+https://dnsproxy.example/dns-query{?targethost,targetpath}
+https://dnsproxy.example/{targethost}/{targetpath}
+</artwork>
+        <t indent="0" pn="section-4.1-3">The URI Template <bcp14>MUST</bcp14> contain both the "targethost" and "targetpath" variables exactly
+once and <bcp14>MUST NOT</bcp14> contain any other variables. The variables <bcp14>MUST</bcp14> be within the path
+or query components of the URI. Clients <bcp14>MUST</bcp14> ignore configurations that do not conform
+to this template. See <xref target="request-example" format="default" sectionFormat="of" derivedContent="Section 4.2"/> for an example request.</t>
+        <t indent="0" pn="section-4.1-4">Oblivious DoH messages have no cache value, since both requests and responses are
+encrypted using ephemeral key material. Requests and responses <bcp14>MUST NOT</bcp14> be cached.</t>
+        <t indent="0" pn="section-4.1-5">Clients <bcp14>MUST</bcp14> set the HTTP Content-Type header to "application/oblivious-dns-message"
+to indicate that this request is an Oblivious DoH query intended for proxying. Clients
+also <bcp14>SHOULD</bcp14> set this same value for the HTTP Accept header.</t>
+        <t indent="0" pn="section-4.1-6">A correctly encoded request has the HTTP Content-Type header "application/oblivious-dns-message",
+uses the HTTP POST method, and contains "targethost" and "targetpath" variables. If the Proxy
+fails to match the "targethost" and "targetpath" variables from the path, it <bcp14>MUST</bcp14> treat the
+request as malformed. The Proxy constructs the URI of the Target with the "https" scheme, 
+using the value of "targethost" as the URI host and the percent-decoded value of "targetpath" as the
+URI path. Proxies <bcp14>MUST</bcp14> check that Client requests are correctly encoded and <bcp14>MUST</bcp14> return a
+4xx (Client Error) if the check fails, along with the Proxy-Status response header
+with an "error" parameter of type "http_request_error" <xref target="RFC9209" format="default" sectionFormat="of" derivedContent="RFC9209"/>.</t>
+        <t indent="0" pn="section-4.1-7">Proxies <bcp14>MAY</bcp14> choose to not forward connections to non-standard ports. In such cases, Proxies
+can indicate the error with a 403 response status code, along with a Proxy-Status response
+header with an "error" parameter of type "http_request_denied" and with an appropriate
+explanation in "details".</t>
+        <t indent="0" pn="section-4.1-8">If the Proxy cannot establish a connection to the Target, it can indicate the error with a 
+502 response status code, along with a Proxy-Status response header with an "error" parameter
+whose type indicates the reason. For example, if DNS resolution fails, the error type might be
+"dns_timeout", whereas if the TLS connection fails, the error type might be "tls_protocol_error".</t>
+        <t indent="0" pn="section-4.1-9">Upon receipt of requests from a Proxy, Targets <bcp14>MUST</bcp14> validate that the request has the HTTP
+Content-Type header "application/oblivious-dns-message" and uses the HTTP POST method.
+Targets can respond with a 4xx response status code if this check fails.</t>
+      </section>
+      <section anchor="request-example" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-http-request-example">HTTP Request Example</name>
+        <t indent="0" pn="section-4.2-1">The following example shows how a Client requests that a Proxy, "dnsproxy.example",
+forward an encrypted message to "dnstarget.example". The URI Template for the
+Proxy is "https://dnsproxy.example/dns-query{?targethost,targetpath}". The URI for
+the Target is "https://dnstarget.example/dns-query".</t>
+        <sourcecode name="" type="http-message" markers="false" pn="section-4.2-2">
+:method = POST
+:scheme = https
+:authority = dnsproxy.example
+:path = /dns-query?targethost=dnstarget.example&amp;targetpath=/dns-query
+accept = application/oblivious-dns-message
+content-type = application/oblivious-dns-message
+content-length = 106
+
+&lt;Bytes containing an encrypted Oblivious DNS query&gt;
+</sourcecode>
+        <t indent="0" pn="section-4.2-3">The Proxy then sends the following request on to the Target:</t>
+        <sourcecode name="" type="http-message" markers="false" pn="section-4.2-4">
+:method = POST
+:scheme = https
+:authority = dnstarget.example
+:path = /dns-query
+accept = application/oblivious-dns-message
+content-type = application/oblivious-dns-message
+content-length = 106
+
+&lt;Bytes containing an encrypted Oblivious DNS query&gt;
+</sourcecode>
+      </section>
+      <section anchor="oblivious-response" numbered="true" removeInRFC="false" toc="include" pn="section-4.3">
+        <name slugifiedName="name-http-response">HTTP Response</name>
+        <t indent="0" pn="section-4.3-1">The response to an Oblivious DoH query is generated by the Target. It <bcp14>MUST</bcp14> set the
+Content-Type HTTP header to "application/oblivious-dns-message" for all successful responses.
+The body of the response contains an encrypted DNS message; see <xref target="encryption" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+        <t indent="0" pn="section-4.3-2">The response from a Target <bcp14>MUST</bcp14> set the Content-Type HTTP header to "application/oblivious-dns-message", and that same type
+<bcp14>MUST</bcp14> be used on all successful responses sent by the Proxy to the Client. A Client <bcp14>MUST</bcp14> only consider a response that contains the
+Content-Type header before processing the payload. A response without the appropriate header <bcp14>MUST</bcp14> be
+treated as an error and be handled appropriately. All other aspects of the HTTP response and error handling are
+inherited from standard DoH.</t>
+        <t indent="0" pn="section-4.3-3">Proxies forward responses from the Target to the Client, without any modifications to the body or status code.
+The Proxy also <bcp14>SHOULD</bcp14> add a Proxy-Status response header with a "received-status" parameter indicating
+that the status code was generated by the Target.</t>
+        <t indent="0" pn="section-4.3-4">Note that if a Client receives a 3xx status code and chooses to follow a redirect, the subsequent request
+<bcp14>MUST</bcp14> also be performed through a Proxy in order to avoid directly exposing requests to the Target.</t>
+        <t indent="0" pn="section-4.3-5">Requests that cannot be processed by the Target result in 4xx (Client Error) responses. If the Target
+and Client keys do not match, it is an authorization failure (HTTP status code 401; see <xref target="RFC9110" sectionFormat="of" section="15.5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-15.5.2" derivedContent="HTTP"/>). Otherwise, if the Client's request is invalid, such as in the case of decryption
+failure, wrong message type, or deserialization failure, this is a bad request (HTTP status code 400; see <xref target="RFC9110" sectionFormat="of" section="15.5.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9110#section-15.5.1" derivedContent="HTTP"/>).</t>
+        <t indent="0" pn="section-4.3-6">Even in the case of DNS responses indicating failure, such as SERVFAIL or NXDOMAIN, a successful HTTP response
+with a 2xx status code is used as long as the DNS response is valid. This is identical to how DoH <xref target="RFC8484" format="default" sectionFormat="of" derivedContent="RFC8484"/>
+handles HTTP response codes.</t>
+      </section>
+      <section anchor="http-response-example" numbered="true" removeInRFC="false" toc="include" pn="section-4.4">
+        <name slugifiedName="name-http-response-example">HTTP Response Example</name>
+        <t indent="0" pn="section-4.4-1">The following example shows a 2xx (Successful) response that can be sent from a Target to
+a Client via a Proxy.</t>
+        <sourcecode name="" type="http-message" markers="false" pn="section-4.4-2">
+:status = 200
+content-type = application/oblivious-dns-message
+content-length = 154
+
+&lt;Bytes containing an encrypted Oblivious DNS response&gt;
+</sourcecode>
+      </section>
+      <section anchor="http-metadata" numbered="true" removeInRFC="false" toc="include" pn="section-4.5">
+        <name slugifiedName="name-http-metadata">HTTP Metadata</name>
+        <t indent="0" pn="section-4.5-1">Proxies forward requests and responses between Clients and Targets as specified in <xref target="oblivious-request" format="default" sectionFormat="of" derivedContent="Section 4.1"/>.
+Metadata sent with these messages could inadvertently weaken or remove Oblivious DoH privacy properties.
+Proxies <bcp14>MUST NOT</bcp14> send any Client-identifying information about Clients to Targets, such as
+"Forwarded" HTTP headers <xref target="RFC7239" format="default" sectionFormat="of" derivedContent="RFC7239"/>. Additionally, Clients <bcp14>MUST NOT</bcp14> include any private state in
+requests to Proxies, such as HTTP cookies. See <xref target="authentication" format="default" sectionFormat="of" derivedContent="Section 11.3"/> for related discussion about
+Client authentication information.</t>
+      </section>
+    </section>
+    <section anchor="publickey" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-configuration-and-public-ke">Configuration and Public Key Format</name>
+      <t indent="0" pn="section-5-1">In order to send a message to a Target, the Client needs to know a public key to use
+for encrypting its queries. The mechanism for discovering this configuration is
+out of scope for this document.</t>
+      <t indent="0" pn="section-5-2">Servers ought to rotate public keys regularly. It is <bcp14>RECOMMENDED</bcp14> that servers rotate keys
+every day. Shorter rotation windows reduce the anonymity set of Clients that might use
+the public key, whereas longer rotation windows widen the time frame of possible compromise.</t>
+      <t indent="0" pn="section-5-3">An Oblivious DNS public key configuration is a structure encoded, using TLS-style
+encoding <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>, as follows:</t>
+      <sourcecode name="" type="tls-presentation" markers="false" pn="section-5-4">
+struct {
+   uint16 kem_id;
+   uint16 kdf_id;
+   uint16 aead_id;
+   opaque public_key&lt;1..2^16-1&gt;;
+} ObliviousDoHConfigContents;
+
+struct {
+   uint16 version;
+   uint16 length;
+   select (ObliviousDoHConfig.version) {
+      case 0x0001: ObliviousDoHConfigContents contents;
+   }
+} ObliviousDoHConfig;
+
+ObliviousDoHConfig ObliviousDoHConfigs&lt;1..2^16-1&gt;;
+</sourcecode>
+      <t indent="0" pn="section-5-5">The <tt>ObliviousDoHConfigs</tt> structure contains one or more <tt>ObliviousDoHConfig</tt> structures in decreasing order of
+preference. This allows a server to support multiple versions of Oblivious DoH and multiple sets of Oblivious DoH
+parameters.</t>
+      <t indent="0" pn="section-5-6">An <tt>ObliviousDoHConfig</tt> structure contains a versioned representation of an Oblivious DoH configuration,
+with the following fields.</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-5-7">
+        <dt pn="section-5-7.1">
+version:  </dt>
+        <dd pn="section-5-7.2">
+          <t indent="0" pn="section-5-7.2.1">The version of Oblivious DoH for which this configuration is used. Clients <bcp14>MUST</bcp14> ignore any
+<tt>ObliviousDoHConfig</tt> structure with a version they do not support. The version of Oblivious DoH
+specified in this document is <tt>0x0001</tt>.</t>
+        </dd>
+        <dt pn="section-5-7.3">
+length:  </dt>
+        <dd pn="section-5-7.4">
+          <t indent="0" pn="section-5-7.4.1">The length, in bytes, of the next field.</t>
+        </dd>
+        <dt pn="section-5-7.5">
+contents:  </dt>
+        <dd pn="section-5-7.6">
+          <t indent="0" pn="section-5-7.6.1">An opaque byte string whose contents depend on the version. For this
+specification, the contents are an <tt>ObliviousDoHConfigContents</tt> structure.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-5-8">An <tt>ObliviousDoHConfigContents</tt> structure contains the information needed to encrypt a message under
+<tt>ObliviousDoHConfigContents.public_key</tt> such that only the owner of the corresponding private
+key can decrypt the message. The values for <tt>ObliviousDoHConfigContents.kem_id</tt>,
+<tt>ObliviousDoHConfigContents.kdf_id</tt>, and <tt>ObliviousDoHConfigContents.aead_id</tt>
+are described in <xref target="RFC9180" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9180#section-7" derivedContent="HPKE"/>. The fields in this structure
+are as follows:</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-5-9">
+        <dt pn="section-5-9.1">
+kem_id:  </dt>
+        <dd pn="section-5-9.2">
+          <t indent="0" pn="section-5-9.2.1">The hybrid public key encryption (HPKE) key encapsulation mechanism (KEM) identifier corresponding to <tt>public_key</tt>. Clients <bcp14>MUST</bcp14> ignore any
+<tt>ObliviousDoHConfig</tt> structure with a key using a KEM they do not support.</t>
+        </dd>
+        <dt pn="section-5-9.3">
+kdf_id:  </dt>
+        <dd pn="section-5-9.4">
+          <t indent="0" pn="section-5-9.4.1">The HPKE key derivation function (KDF) identifier corresponding to <tt>public_key</tt>. Clients <bcp14>MUST</bcp14> ignore any
+<tt>ObliviousDoHConfig</tt> structure with a key using a KDF they do not support.</t>
+        </dd>
+        <dt pn="section-5-9.5">
+aead_id:  </dt>
+        <dd pn="section-5-9.6">
+          <t indent="0" pn="section-5-9.6.1">The HPKE authenticated encryption with associated data (AEAD) identifier corresponding to <tt>public_key</tt>. Clients <bcp14>MUST</bcp14> ignore any
+<tt>ObliviousDoHConfig</tt> structure with a key using an AEAD they do not support.</t>
+        </dd>
+        <dt pn="section-5-9.7">
+public_key:  </dt>
+        <dd pn="section-5-9.8">
+          <t indent="0" pn="section-5-9.8.1">The HPKE public key used by the Client to encrypt Oblivious DoH queries.</t>
+        </dd>
+      </dl>
+    </section>
+    <section anchor="encryption" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-protocol-encoding">Protocol Encoding</name>
+      <t indent="0" pn="section-6-1">This section includes encoding and wire format details for Oblivious DoH, as well
+as routines for encrypting and decrypting encoded values.</t>
+      <section anchor="encoding" numbered="true" removeInRFC="false" toc="include" pn="section-6.1">
+        <name slugifiedName="name-message-format">Message Format</name>
+        <t indent="0" pn="section-6.1-1">There are two types of Oblivious DoH messages: Queries (0x01) and Responses (0x02).
+Both messages carry the following information:</t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-6.1-2"><li pn="section-6.1-2.1" derivedCounter="1.">A DNS message, which is either a Query or Response, depending on context.</li>
+          <li pn="section-6.1-2.2" derivedCounter="2.">Padding of arbitrary length, which <bcp14>MUST</bcp14> contain all zeros.</li>
+        </ol>
+        <t indent="0" pn="section-6.1-3">They are encoded using the following structure:</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-6.1-4">
+struct {
+   opaque dns_message&lt;1..2^16-1&gt;;
+   opaque padding&lt;0..2^16-1&gt;;
+} ObliviousDoHMessagePlaintext;
+</sourcecode>
+        <t indent="0" pn="section-6.1-5">Both Query and Response messages use the <tt>ObliviousDoHMessagePlaintext</tt> format.</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-6.1-6">
+ObliviousDoHMessagePlaintext ObliviousDoHQuery;
+ObliviousDoHMessagePlaintext ObliviousDoHResponse;
+</sourcecode>
+        <t indent="0" pn="section-6.1-7">An encrypted <tt>ObliviousDoHMessagePlaintext</tt> parameter is carried in an <tt>ObliviousDoHMessage</tt>
+message, encoded as follows:</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-6.1-8">
+struct {
+   uint8  message_type;
+   opaque key_id&lt;0..2^16-1&gt;;
+   opaque encrypted_message&lt;1..2^16-1&gt;;
+} ObliviousDoHMessage;
+</sourcecode>
+        <t indent="0" pn="section-6.1-9">The <tt>ObliviousDoHMessage</tt> structure contains the following fields:</t>
+        <dl indent="3" newline="false" spacing="normal" pn="section-6.1-10">
+          <dt pn="section-6.1-10.1">
+message_type:  </dt>
+          <dd pn="section-6.1-10.2">
+            <t indent="0" pn="section-6.1-10.2.1">A one-byte identifier for the type of message. Query messages use <tt>message_type</tt> 0x01, and Response
+messages use <tt>message_type</tt> 0x02.</t>
+          </dd>
+          <dt pn="section-6.1-10.3">
+key_id:  </dt>
+          <dd pn="section-6.1-10.4">
+            <t indent="0" pn="section-6.1-10.4.1">The identifier of the corresponding <tt>ObliviousDoHConfigContents</tt> key. This is computed as
+<tt>Expand(Extract("", config), "odoh key id", Nh)</tt>, where <tt>config</tt> is the <tt>ObliviousDoHConfigContents</tt> structure
+and <tt>Extract</tt>, <tt>Expand</tt>, and <tt>Nh</tt> are as specified by the HPKE cipher suite KDF corresponding to
+<tt>config.kdf_id</tt>.</t>
+          </dd>
+          <dt pn="section-6.1-10.5">
+encrypted_message:  </dt>
+          <dd pn="section-6.1-10.6">
+            <t indent="0" pn="section-6.1-10.6.1">An encrypted message for the Oblivious Target (for Query messages) or Client (for Response messages).
+Implementations <bcp14>MAY</bcp14> enforce limits on the size of this field, depending on the size of plaintext DNS
+messages. (DNS queries, for example, will not reach the size limit of 2^16-1 in practice.)</t>
+          </dd>
+        </dl>
+        <t indent="0" pn="section-6.1-11">The contents of <tt>ObliviousDoHMessage.encrypted_message</tt> depend on <tt>ObliviousDoHMessage.message_type</tt>.
+In particular, <tt>ObliviousDoHMessage.encrypted_message</tt> is an encryption of an <tt>ObliviousDoHQuery</tt> message
+if the message is a Query and an encryption of <tt>ObliviousDoHResponse</tt> if the message is a Response.</t>
+      </section>
+      <section anchor="encryption-and-decryption-routines" numbered="true" removeInRFC="false" toc="include" pn="section-6.2">
+        <name slugifiedName="name-encryption-and-decryption-r">Encryption and Decryption Routines</name>
+        <t indent="0" pn="section-6.2-1">Clients use the following utility functions for encrypting a Query and decrypting
+a Response as described in <xref target="odoh-Client" format="default" sectionFormat="of" derivedContent="Section 7"/>.</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-2">
+          <li pn="section-6.2-2.1">encrypt_query_body: Encrypt an Oblivious DoH query.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-3">
+def encrypt_query_body(pkR, key_id, Q_plain):
+  enc, context = SetupBaseS(pkR, "odoh query")
+  aad = 0x01 || len(key_id) || key_id
+  ct = context.Seal(aad, Q_plain)
+  Q_encrypted = enc || ct
+  return Q_encrypted
+</sourcecode>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-4">
+          <li pn="section-6.2-4.1">decrypt_response_body: Decrypt an Oblivious DoH response.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-5">
+def decrypt_response_body(context, Q_plain, R_encrypted, resp_nonce):
+  aead_key, aead_nonce = derive_secrets(context, Q_plain, resp_nonce)
+  aad = 0x02 || len(resp_nonce) || resp_nonce
+  R_plain, error = Open(key, nonce, aad, R_encrypted)
+  return R_plain, error
+</sourcecode>
+        <t indent="0" pn="section-6.2-6">The <tt>derive_secrets</tt> function is described below.</t>
+        <t indent="0" pn="section-6.2-7">Targets use the following utility functions in processing queries and producing
+responses as described in <xref target="odoh-target" format="default" sectionFormat="of" derivedContent="Section 8"/>.</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-8">
+          <li pn="section-6.2-8.1">setup_query_context: Set up an HPKE context used for decrypting an Oblivious DoH query.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-9">
+def setup_query_context(skR, key_id, Q_encrypted):
+  enc || ct = Q_encrypted
+  context = SetupBaseR(enc, skR, "odoh query")
+  return context
+</sourcecode>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-10">
+          <li pn="section-6.2-10.1">decrypt_query_body: Decrypt an Oblivious DoH query.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-11">
+def decrypt_query_body(context, key_id, Q_encrypted):
+  aad = 0x01 || len(key_id) || key_id
+  enc || ct = Q_encrypted
+  Q_plain, error = context.Open(aad, ct)
+  return Q_plain, error
+</sourcecode>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-12">
+          <li pn="section-6.2-12.1">derive_secrets: Derive keying material used for encrypting an Oblivious DoH response.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-13">
+def derive_secrets(context, Q_plain, resp_nonce):
+  secret = context.Export("odoh response", Nk)
+  salt = Q_plain || len(resp_nonce) || resp_nonce
+  prk = Extract(salt, secret)
+  key = Expand(odoh_prk, "odoh key", Nk)
+  nonce = Expand(odoh_prk, "odoh nonce", Nn)
+  return key, nonce
+</sourcecode>
+        <t indent="0" pn="section-6.2-14">The <tt>random(N)</tt> function returns <tt>N</tt> cryptographically secure random bytes
+from a good source of entropy <xref target="RFC4086" format="default" sectionFormat="of" derivedContent="RFC4086"/>. The <tt>max(A, B)</tt> function returns
+<tt>A</tt> if <tt>A &gt; B</tt>, and <tt>B</tt> otherwise.</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.2-15">
+          <li pn="section-6.2-15.1">encrypt_response_body: Encrypt an Oblivious DoH response.</li>
+        </ul>
+        <sourcecode name="" type="pseudocode" markers="false" pn="section-6.2-16">
+def encrypt_response_body(R_plain, aead_key, aead_nonce, resp_nonce):
+  aad = 0x02 || len(resp_nonce) || resp_nonce
+  R_encrypted = Seal(aead_key, aead_nonce, aad, R_plain)
+  return R_encrypted
+</sourcecode>
+      </section>
+    </section>
+    <section anchor="odoh-Client" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-oblivious-client-behavior">Oblivious Client Behavior</name>
+      <t indent="0" pn="section-7-1">Let <tt>M</tt> be a DNS message (query) a Client wishes to protect with Oblivious DoH.
+When sending an Oblivious DoH Query for resolving <tt>M</tt> to an Oblivious Target with
+<tt>ObliviousDoHConfigContents</tt> <tt>config</tt>, a Client does the following:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-7-2"><li pn="section-7-2.1" derivedCounter="1.">Creates an <tt>ObliviousDoHQuery</tt> structure, carrying the message M and padding, to produce Q_plain.</li>
+        <li pn="section-7-2.2" derivedCounter="2.">Deserializes <tt>config.public_key</tt> to produce a public key pkR of type <tt>config.kem_id</tt>.</li>
+        <li pn="section-7-2.3" derivedCounter="3.">Computes the encrypted message as <tt>Q_encrypted = encrypt_query_body(pkR, key_id, Q_plain)</tt>,
+where <tt>key_id</tt> is as computed in <xref target="encryption" format="default" sectionFormat="of" derivedContent="Section 6"/>. Note also that <tt>len(key_id)</tt> outputs the length of <tt>key_id</tt>
+as a two-byte unsigned integer.</li>
+        <li pn="section-7-2.4" derivedCounter="4.">Outputs an <tt>ObliviousDoHMessage</tt> message <tt>Q</tt>, where <tt>Q.message_type = 0x01</tt>, <tt>Q.key_id</tt> carries <tt>key_id</tt>,
+and <tt>Q.encrypted_message = Q_encrypted</tt>.</li>
+      </ol>
+      <t indent="0" pn="section-7-3">The Client then sends <tt>Q</tt> to the Proxy according to <xref target="oblivious-request" format="default" sectionFormat="of" derivedContent="Section 4.1"/>.
+Once the Client receives a response <tt>R</tt>, encrypted as specified in <xref target="odoh-target" format="default" sectionFormat="of" derivedContent="Section 8"/>,
+it uses <tt>decrypt_response_body</tt> to decrypt <tt>R.encrypted_message</tt> (using <tt>R.key_id</tt> as
+a nonce) and produce R_plain. Clients <bcp14>MUST</bcp14> validate <tt>R_plain.padding</tt> (as all zeros)
+before using <tt>R_plain.dns_message</tt>.</t>
+    </section>
+    <section anchor="odoh-target" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-oblivious-target-behavior">Oblivious Target Behavior</name>
+      <t indent="0" pn="section-8-1">Targets that receive a Query message Q decrypt and process it as follows:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-8-2"><li pn="section-8-2.1" derivedCounter="1.">Look up the <tt>ObliviousDoHConfigContents</tt> information according to <tt>Q.key_id</tt>. If no such key exists,
+the Target <bcp14>MAY</bcp14> discard the query, and if so, it <bcp14>MUST</bcp14> return a 401 (Unauthorized) response
+to the Proxy. Otherwise, let <tt>skR</tt> be the private key corresponding to this public key,
+or one chosen for trial decryption.</li>
+        <li pn="section-8-2.2" derivedCounter="2.">Compute <tt>context = setup_query_context(skR, Q.key_id, Q.encrypted_message)</tt>.</li>
+        <li pn="section-8-2.3" derivedCounter="3.">Compute <tt>Q_plain, error = decrypt_query_body(context, Q.key_id, Q.encrypted_message)</tt>.</li>
+        <li pn="section-8-2.4" derivedCounter="4.">If no error was returned and <tt>Q_plain.padding</tt> is valid (all zeros), resolve
+<tt>Q_plain.dns_message</tt> as needed, yielding a DNS message M. Otherwise, if an error
+was returned or the padding was invalid, return a 400 (Client Error) response to the Proxy.</li>
+        <li pn="section-8-2.5" derivedCounter="5.">Create an <tt>ObliviousDoHResponseBody</tt> structure, carrying the message <tt>M</tt> and padding,
+to produce <tt>R_plain</tt>.</li>
+        <li pn="section-8-2.6" derivedCounter="6.">Create a fresh nonce <tt>resp_nonce = random(max(Nn, Nk))</tt>.</li>
+        <li pn="section-8-2.7" derivedCounter="7.">Compute <tt>aead_key, aead_nonce = derive_secrets(context, Q_plain, resp_nonce)</tt>.</li>
+        <li pn="section-8-2.8" derivedCounter="8.">Compute <tt>R_encrypted = encrypt_response_body(R_plain, aead_key, aead_nonce, resp_nonce)</tt>.
+The <tt>key_id</tt> field used for encryption carries <tt>resp_nonce</tt> in order for Clients to
+derive the same secrets. Also, the <tt>Seal</tt> function is the function that is associated with the
+HPKE AEAD.</li>
+        <li pn="section-8-2.9" derivedCounter="9.">Output an <tt>ObliviousDoHMessage</tt> message <tt>R</tt>, where <tt>R.message_type = 0x02</tt>,
+<tt>R.key_id = resp_nonce</tt>, and <tt>R.encrypted_message = R_encrypted</tt>.</li>
+      </ol>
+      <t indent="0" pn="section-8-3">The Target then sends <tt>R</tt> in a 2xx (Successful) response to the Proxy; see <xref target="oblivious-response" format="default" sectionFormat="of" derivedContent="Section 4.3"/>.
+The Proxy forwards the message <tt>R</tt> without modification back to the Client as the HTTP response
+to the Client's original HTTP request. In the event of an error (non-2xx status code), the
+Proxy forwards the Target error to the Client; see <xref target="oblivious-response" format="default" sectionFormat="of" derivedContent="Section 4.3"/>.</t>
+    </section>
+    <section anchor="compliance" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-compliance-requirements">Compliance Requirements</name>
+      <t indent="0" pn="section-9-1">Oblivious DoH uses HPKE for public key encryption <xref target="RFC9180" format="default" sectionFormat="of" derivedContent="HPKE"/>.
+In the absence of an application profile standard specifying otherwise, a compliant
+Oblivious DoH implementation <bcp14>MUST</bcp14> support the following HPKE cipher suite:</t>
+      <dl spacing="normal" indent="3" newline="false" pn="section-9-2">
+        <dt pn="section-9-2.1">KEM:</dt>
+        <dd pn="section-9-2.2">DHKEM(X25519, HKDF-SHA256) (see <xref target="RFC9180" sectionFormat="comma" section="7.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9180#section-7.1" derivedContent="HPKE"/>)</dd>
+        <dt pn="section-9-2.3">KDF:</dt>
+        <dd pn="section-9-2.4">HKDF-SHA256 (see <xref target="RFC9180" sectionFormat="comma" section="7.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9180#section-7.2" derivedContent="HPKE"/>)</dd>
+        <dt pn="section-9-2.5">AEAD:</dt>
+        <dd pn="section-9-2.6">AES-128-GCM (see <xref target="RFC9180" sectionFormat="comma" section="7.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9180#section-7.3" derivedContent="HPKE"/>)</dd>
+      </dl>
+    </section>
+    <section anchor="experiment" numbered="true" removeInRFC="false" toc="include" pn="section-10">
+      <name slugifiedName="name-experiment-overview">Experiment Overview</name>
+      <t indent="0" pn="section-10-1">This document describes an experimental protocol built on DoH. The purpose of this
+experiment is to assess deployment configuration viability and related performance
+impacts on DNS resolution by measuring key performance indicators such as resolution
+latency. Experiment participants will test various parameters affecting service operation
+and performance, including mechanisms for discovery and configuration of DoH Proxies
+and Targets, as well as performance implications of connection reuse and pools where
+appropriate. The results of this experiment will be used to influence future protocol
+design and deployment efforts related to Oblivious DoH, such as Oblivious HTTP
+<xref target="I-D.ietf-ohai-ohttp" format="default" sectionFormat="of" derivedContent="OHTP"/>. Implementations of DoH that are not involved in the
+experiment will not recognize this protocol and will not participate in the experiment.
+It is anticipated that the use of Oblivious DoH will be widespread and that this experiment will be of long duration.</t>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-11">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-11-1">Oblivious DoH aims to keep knowledge of the true query origin and its contents known only to Clients.
+As a simplified model, consider a case where there exist two Clients C1 and C2, one Proxy P, and
+one Target T. Oblivious DoH assumes an extended Dolev-Yao style attacker <xref target="Dolev-Yao" format="default" sectionFormat="of" derivedContent="Dolev-Yao"/> that can observe all
+network activity and can adaptively compromise either P or T, but not C1 or C2. Note that compromising
+both P and T is equivalent to collusion between these two parties in practice. Once compromised,
+the attacker has access to all session information and private key material. (This generalizes to
+arbitrarily many Clients, Proxies, and Targets, with the constraints that (1) not all Targets and Proxies
+are simultaneously compromised and (2) at least two Clients are left uncompromised.) The attacker is
+prohibited from sending Client-identifying information, such as IP addresses, to Targets. (This would
+allow the attacker to trivially link a query to the corresponding Client.)</t>
+      <t indent="0" pn="section-11-2">In this model, both C1 and C2 send Oblivious DoH queries Q1 and Q2, respectively, through P to T,
+and T provides answers A1 and A2. The attacker aims to link C1 to (Q1, A1) and C2 to (Q2, A2), respectively.
+The attacker succeeds if this linkability is possible without any additional interaction. (For example,
+if T is compromised, it could return a DNS answer corresponding to an entity it controls and then observe
+the subsequent connection from a Client, learning its identity in the process. Such attacks are out of
+scope for this model.)</t>
+      <t indent="0" pn="section-11-3">Oblivious DoH security prevents such linkability. Informally, this means:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-11-4"><li pn="section-11-4.1" derivedCounter="1.">Queries and answers are known only to Clients and Targets in possession of the corresponding
+response key and HPKE keying material. In particular, Proxies know the origin and destination
+of an oblivious query, yet do not know the plaintext query. Likewise, Targets know only the oblivious
+query origin, i.e., the Proxy, and the plaintext query. Only the Client knows both the plaintext
+query contents and destination.</li>
+        <li pn="section-11-4.2" derivedCounter="2.">Target resolvers cannot link queries from the same Client in the absence of unique per-Client
+keys.</li>
+      </ol>
+      <t indent="0" pn="section-11-5">Traffic analysis mitigations are outside the scope of this document. In particular, this document
+does not prescribe padding lengths for <tt>ObliviousDoHQuery</tt> and <tt>ObliviousDoHResponse</tt> messages.
+Implementations <bcp14>SHOULD</bcp14> follow the guidance in <xref target="RFC8467" format="default" sectionFormat="of" derivedContent="RFC8467"/> for choosing padding length.</t>
+      <t indent="0" pn="section-11-6">Oblivious DoH security does not depend on Proxy and Target indistinguishability. Specifically, an
+on-path attacker could determine whether a connection to a specific endpoint is used for oblivious or
+direct DoH queries. However, this has no effect on the confidentiality goals listed above.</t>
+      <section anchor="denial-of-service" numbered="true" removeInRFC="false" toc="include" pn="section-11.1">
+        <name slugifiedName="name-denial-of-service">Denial of Service</name>
+        <t indent="0" pn="section-11.1-1">Malicious Clients (or Proxies) can send bogus Oblivious DoH queries to Targets as a Denial-of-Service
+(DoS) attack. Target servers can throttle processing requests if such an event occurs. Additionally,
+since Targets provide explicit errors upon decryption failure, i.e., if ciphertext decryption fails
+or if the plaintext DNS message is malformed, Proxies can throttle specific Clients in response to
+these errors. In general, however, Targets trust Proxies to not overwhelm the Target, and it is
+expected that Proxies implement either some form of rate limiting or client authentication to limit
+abuse; see <xref target="authentication" format="default" sectionFormat="of" derivedContent="Section 11.3"/>.</t>
+        <t indent="0" pn="section-11.1-2">Malicious Targets or Proxies can send bogus answers in response to Oblivious DoH queries. Response
+decryption failure is a signal that either the Proxy or Target is misbehaving. Clients can choose to
+stop using one or both of these servers in the event of such failure. However, as noted above, malicious
+Targets and Proxies are out of scope for the threat model.</t>
+      </section>
+      <section anchor="proxy-policies" numbered="true" removeInRFC="false" toc="include" pn="section-11.2">
+        <name slugifiedName="name-proxy-policies">Proxy Policies</name>
+        <t indent="0" pn="section-11.2-1">Proxies are free to enforce any forwarding policy they desire for Clients. For example, they can choose
+to only forward requests to known or otherwise trusted Targets.</t>
+        <t indent="0" pn="section-11.2-2">Proxies that do not reuse connections to Targets for many Clients may allow Targets to link individual
+queries to unknown Targets. To mitigate this linkability vector, it is <bcp14>RECOMMENDED</bcp14> that Proxies pool
+and reuse connections to Targets. Note that this benefits performance as well as privacy, since
+queries do not incur any delay that might otherwise result from Proxy-to-Target connection establishment.</t>
+      </section>
+      <section anchor="authentication" numbered="true" removeInRFC="false" toc="include" pn="section-11.3">
+        <name slugifiedName="name-authentication">Authentication</name>
+        <t indent="0" pn="section-11.3-1">Depending on the deployment scenario, Proxies and Targets might require authentication before use.
+Regardless of the authentication mechanism in place, Proxies <bcp14>MUST NOT</bcp14> reveal any Client
+authentication information to Targets. This is required so Targets cannot uniquely identify
+individual Clients.</t>
+        <t indent="0" pn="section-11.3-2">Note that if Targets require Proxies to authenticate at the HTTP or  application layer before use,
+this ought to be done before attempting to forward any Client query to the Target. This will allow
+Proxies to distinguish 401 (Unauthorized) response codes due to authentication failure from
+401 response codes due to Client key mismatch; see <xref target="oblivious-response" format="default" sectionFormat="of" derivedContent="Section 4.3"/>.</t>
+      </section>
+    </section>
+    <section anchor="iana" numbered="true" removeInRFC="false" toc="include" pn="section-12">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-12-1">This document makes changes to the "Media Types" registry.
+The changes are described in the following subsection.</t>
+      <section anchor="oblivious-doh-message-media-type" numbered="true" removeInRFC="false" toc="include" pn="section-12.1">
+        <name slugifiedName="name-oblivious-doh-message-media">Oblivious DoH Message Media Type</name>
+        <t indent="0" pn="section-12.1-1">This document registers a new media type, "application/oblivious-dns-message".</t>
+        <dl spacing="normal" indent="3" newline="false" pn="section-12.1-2">
+          <dt pn="section-12.1-2.1">Type name:</dt>
+          <dd pn="section-12.1-2.2">application</dd>
+          <dt pn="section-12.1-2.3">Subtype name:</dt>
+          <dd pn="section-12.1-2.4">oblivious-dns-message</dd>
+          <dt pn="section-12.1-2.5">Required parameters:</dt>
+          <dd pn="section-12.1-2.6">N/A</dd>
+          <dt pn="section-12.1-2.7">Optional parameters:</dt>
+          <dd pn="section-12.1-2.8">N/A</dd>
+          <dt pn="section-12.1-2.9">Encoding considerations:</dt>
+          <dd pn="section-12.1-2.10">This is a binary format, containing encrypted DNS
+requests and responses encoded as <tt>ObliviousDoHMessage</tt> values, as defined
+in <xref target="encoding" format="default" sectionFormat="of" derivedContent="Section 6.1"/>.</dd>
+          <dt pn="section-12.1-2.11">Security considerations:</dt>
+          <dd pn="section-12.1-2.12">See this document. The content is an encrypted DNS
+message, and not executable code.</dd>
+          <dt pn="section-12.1-2.13">Interoperability considerations:</dt>
+          <dd pn="section-12.1-2.14">This document specifies the format of
+conforming messages and the interpretation thereof; see <xref target="encoding" format="default" sectionFormat="of" derivedContent="Section 6.1"/>.</dd>
+          <dt pn="section-12.1-2.15">Published specification:</dt>
+          <dd pn="section-12.1-2.16">This document</dd>
+          <dt pn="section-12.1-2.17">Applications that use this media type:</dt>
+          <dd pn="section-12.1-2.18">This media type is intended
+to be used by Clients wishing to hide their DNS queries when
+using DNS over HTTPS.</dd>
+          <dt pn="section-12.1-2.19">Additional information:</dt>
+          <dd pn="section-12.1-2.20">N/A</dd>
+          <dt pn="section-12.1-2.21">Person and email address to contact for further information:</dt>
+          <dd pn="section-12.1-2.22">See the
+Authors' Addresses section.</dd>
+          <dt pn="section-12.1-2.23">Intended usage:</dt>
+          <dd pn="section-12.1-2.24">COMMON</dd>
+          <dt pn="section-12.1-2.25">Restrictions on usage:</dt>
+          <dd pn="section-12.1-2.26">N/A</dd>
+          <dt pn="section-12.1-2.27">Author:</dt>
+          <dd pn="section-12.1-2.28">Tommy Pauly (tpauly@apple.com)</dd>
+          <dt pn="section-12.1-2.29">Change controller:</dt>
+          <dd pn="section-12.1-2.30">IETF</dd>
+          <dt pn="section-12.1-2.31">Provisional registration? (standards tree only):</dt>
+          <dd pn="section-12.1-2.32">No</dd>
+        </dl>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="RFC9180" to="HPKE"/>
+    <displayreference target="RFC9110" to="HTTP"/>
+    <displayreference target="I-D.annee-dprive-oblivious-dns" to="OBLIVIOUS-DNS"/>
+    <displayreference target="I-D.ietf-ohai-ohttp" to="OHTP"/>
+    <references pn="section-13">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-13.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC9180" target="https://www.rfc-editor.org/info/rfc9180" quoteTitle="true" derivedAnchor="HPKE">
+          <front>
+            <title>Hybrid Public Key Encryption</title>
+            <author initials="R." surname="Barnes" fullname="R. Barnes">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Bhargavan" fullname="K. Bhargavan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Lipp" fullname="B. Lipp">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Wood" fullname="C. Wood">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="February"/>
+            <abstract>
+              <t indent="0">This document describes a scheme for hybrid public key encryption (HPKE). This scheme provides a variant of public key encryption of arbitrary-sized plaintexts for a recipient public key. It also includes three authenticated variants, including one that authenticates possession of a pre-shared key and two optional ones that authenticate possession of a key encapsulation mechanism (KEM) private key. HPKE works for any combination of an asymmetric KEM, key derivation function (KDF), and authenticated encryption with additional data (AEAD) encryption function. Some authenticated variants may not be supported by all KEMs. We provide instantiations of the scheme using widely used and efficient primitives, such as Elliptic Curve Diffie-Hellman (ECDH) key agreement, HMAC-based key derivation function (HKDF), and SHA2.</t>
+              <t indent="0">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9180"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9180"/>
+        </reference>
+        <reference anchor="RFC9110" target="https://www.rfc-editor.org/info/rfc9110" quoteTitle="true" derivedAnchor="HTTP">
+          <front>
+            <title>HTTP Semantics</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Nottingham" fullname="M. Nottingham" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document describes the overall architecture of HTTP, establishes common terminology, and defines aspects of the protocol that are shared by all versions. In this definition are core protocol elements, extensibility mechanisms, and the "http" and "https" Uniform Resource Identifier (URI) schemes. </t>
+              <t indent="0">This document updates RFC 3864 and obsoletes RFCs 2818, 7231, 7232, 7233, 7235, 7538, 7615, 7694, and portions of 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="97"/>
+          <seriesInfo name="RFC" value="9110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9110"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4086" target="https://www.rfc-editor.org/info/rfc4086" quoteTitle="true" derivedAnchor="RFC4086">
+          <front>
+            <title>Randomness Requirements for Security</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Schiller" fullname="J. Schiller">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Crocker" fullname="S. Crocker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="June"/>
+            <abstract>
+              <t indent="0">Security systems are built on strong cryptographic algorithms that foil pattern analysis attempts.  However, the security of these systems is dependent on generating secret quantities for passwords, cryptographic keys, and similar quantities.  The use of pseudo-random processes to generate secret quantities can result in pseudo-security. A sophisticated attacker may find it easier to reproduce the environment that produced the secret quantities and to search the resulting small set of possibilities than to locate the quantities in the whole of the potential number space.</t>
+              <t indent="0">Choosing random quantities to foil a resourceful and motivated adversary is surprisingly difficult.  This document points out many pitfalls in using poor entropy sources or traditional pseudo-random number generation techniques for generating such quantities.  It recommends the use of truly random hardware techniques and shows that the existing hardware on many systems can be used for this purpose. It provides suggestions to ameliorate the problem when a hardware solution is not available, and it gives examples of how large such quantities need to be for some applications.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="106"/>
+          <seriesInfo name="RFC" value="4086"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4086"/>
+        </reference>
+        <reference anchor="RFC6570" target="https://www.rfc-editor.org/info/rfc6570" quoteTitle="true" derivedAnchor="RFC6570">
+          <front>
+            <title>URI Template</title>
+            <author initials="J." surname="Gregorio" fullname="J. Gregorio">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Fielding" fullname="R. Fielding">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Hadley" fullname="M. Hadley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Nottingham" fullname="M. Nottingham">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Orchard" fullname="D. Orchard">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="March"/>
+            <abstract>
+              <t indent="0">A URI Template is a compact sequence of characters for describing a range of Uniform Resource Identifiers through variable expansion. This specification defines the URI Template syntax and the process for expanding a URI Template into a URI reference, along with guidelines for the use of URI Templates on the Internet.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6570"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6570"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC8467" target="https://www.rfc-editor.org/info/rfc8467" quoteTitle="true" derivedAnchor="RFC8467">
+          <front>
+            <title>Padding Policies for Extension Mechanisms for DNS (EDNS(0))</title>
+            <author initials="A." surname="Mayrhofer" fullname="A. Mayrhofer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="October"/>
+            <abstract>
+              <t indent="0">RFC 7830 specifies the "Padding" option for Extension Mechanisms for DNS (EDNS(0)) but does not specify the actual padding length for specific applications.  This memo lists the possible options ("padding policies"), discusses the implications of each option, and provides a recommended (experimental) option.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8467"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8467"/>
+        </reference>
+        <reference anchor="RFC8484" target="https://www.rfc-editor.org/info/rfc8484" quoteTitle="true" derivedAnchor="RFC8484">
+          <front>
+            <title>DNS Queries over HTTPS (DoH)</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="McManus" fullname="P. McManus">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="October"/>
+            <abstract>
+              <t indent="0">This document defines a protocol for sending DNS queries and getting DNS responses over HTTPS.  Each DNS query-response pair is mapped into an HTTP exchange.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8484"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8484"/>
+        </reference>
+        <reference anchor="RFC9209" target="https://www.rfc-editor.org/info/rfc9209" quoteTitle="true" derivedAnchor="RFC9209">
+          <front>
+            <title>The Proxy-Status HTTP Response Header Field</title>
+            <author initials="M" surname="Nottingham" fullname="Mark Nottingham">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P" surname="Sikora" fullname="Piotr Sikora">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2022" month="June"/>
+          </front>
+          <seriesInfo name="RFC" value="9209"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9209"/>
+        </reference>
+      </references>
+      <references pn="section-13.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="Dolev-Yao" target="https://www.cs.huji.ac.il/~dolev/pubs/dolev-yao-ieee-01056650.pdf" quoteTitle="true" derivedAnchor="Dolev-Yao">
+          <front>
+            <title>On the Security of Public Key Protocols</title>
+            <author fullname="Danny Dolev" surname="Dolev" initials="D">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Andrew C. Yao" surname="Yao" initials="A. C.">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" year="1983"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/TIT.1983.1056650"/>
+          <refcontent>IEEE Transactions on Information Theory, Vol. IT-29, No. 2</refcontent>
+        </reference>
+        <reference anchor="I-D.annee-dprive-oblivious-dns" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-annee-dprive-oblivious-dns-00" derivedAnchor="OBLIVIOUS-DNS">
+          <front>
+            <title>Oblivious DNS - Strong Privacy for DNS Queries</title>
+            <author fullname="Annie Edmundson">
+              <organization showOnFrontPage="true">Princeton University</organization>
+            </author>
+            <author fullname="Paul Schmitt">
+              <organization showOnFrontPage="true">Princeton University</organization>
+            </author>
+            <author fullname="Nick Feamster">
+              <organization showOnFrontPage="true">Princeton University</organization>
+            </author>
+            <author fullname="Allison Mankin">
+              <organization showOnFrontPage="true">Salesforce</organization>
+            </author>
+            <date month="July" day="2" year="2018"/>
+            <abstract>
+              <t indent="0">   Recognizing the privacy vulnerabilities associated with DNS queries,
+   a number of standards have been developed and services deployed that
+   that encrypt a user's DNS queries to the recursive resolver and thus
+   obscure them from some network observers and from the user's Internet
+   service provider.  However, these systems merely transfer trust to a
+   third party.  We argue that no single party should be able to
+   associate DNS queries with a client IP address that issues those
+   queries.  To this end, this document specifies Oblivious DNS (ODNS),
+   which introduces an additional layer of obfuscation between clients
+   and their queries.  To accomplish this, ODNS uses its own
+   authoritative namespace; the authoritative servers for the ODNS
+   namespace act as recursive resolvers for the DNS queries that they
+   receive, but they never see the IP addresses for the clients that
+   initiated these queries.  The ODNS experimental protocol is
+   compatible with existing DNS infrastructure.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-annee-dprive-oblivious-dns-00"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-annee-dprive-oblivious-dns-00.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-ohai-ohttp" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-ohai-ohttp-01" derivedAnchor="OHTP">
+          <front>
+            <title>Oblivious HTTP</title>
+            <author fullname="Martin Thomson">
+              <organization showOnFrontPage="true">Mozilla</organization>
+            </author>
+            <author fullname="Christopher A. Wood" surname="Wood" initials="C.A.">
+              <organization showOnFrontPage="true">Cloudflare</organization>
+            </author>
+            <date month="February" day="15" year="2022"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-ohai-ohttp-01"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC7239" target="https://www.rfc-editor.org/info/rfc7239" quoteTitle="true" derivedAnchor="RFC7239">
+          <front>
+            <title>Forwarded HTTP Extension</title>
+            <author initials="A." surname="Petersson" fullname="A. Petersson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Nilsson" fullname="M. Nilsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">This document defines an HTTP extension header field that allows proxy components to disclose information lost in the proxying process, for example, the originating IP address of a request or IP address of the proxy on the user-agent-facing interface.  In a path of proxying components, this makes it possible to arrange it so that each subsequent component will have access to, for example, all IP addresses used in the chain of proxied HTTP requests.</t>
+              <t indent="0">This document also specifies guidelines for a proxy administrator to anonymize the origin of a request.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7239"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7239"/>
+        </reference>
+        <reference anchor="RFC7871" target="https://www.rfc-editor.org/info/rfc7871" quoteTitle="true" derivedAnchor="RFC7871">
+          <front>
+            <title>Client Subnet in DNS Queries</title>
+            <author initials="C." surname="Contavalli" fullname="C. Contavalli">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="van der Gaast" fullname="W. van der Gaast">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Lawrence" fullname="D. Lawrence">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Kumari" fullname="W. Kumari">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="May"/>
+            <abstract>
+              <t indent="0">This document describes an Extension Mechanisms for DNS (EDNS0) option that is in active use to carry information about the network that originated a DNS query and the network for which the subsequent response can be cached.  Since it has some known operational and privacy shortcomings, a revision will be worked through the IETF for improvement.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7871"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7871"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="use-of-generic-proxy-services" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-use-of-generic-proxy-servic">Use of Generic Proxy Services</name>
+      <t indent="0" pn="section-appendix.a-1">Using DoH over anonymizing proxy services such as Tor can also achieve the desired goal of separating
+query origins from their contents. However, there are several reasons why such systems are undesirable
+as contrasted with Oblivious DoH:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.a-2"><li pn="section-appendix.a-2.1" derivedCounter="1.">Tor is meant to be a generic connection-level anonymity system, and it incurs higher latency costs
+and protocol complexity for the purpose of proxying individual DNS queries. In contrast, Oblivious DoH
+is a lightweight protocol built on DoH, implemented as an application-layer proxy, that can be enabled
+as a default mode for users that need increased privacy.</li>
+        <li pn="section-appendix.a-2.2" derivedCounter="2.">As a one-hop proxy, Oblivious DoH encourages connectionless proxies to mitigate Client query correlation
+with few round trips. In contrast, multi-hop systems such as Tor often run secure connections (TLS) end to end,
+which means that DoH servers could track queries over the same connection. Using a fresh DoH connection
+per query would incur a non-negligible penalty in connection setup time.</li>
+      </ol>
+    </section>
+    <section anchor="acknowledgments" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">This work is inspired by Oblivious DNS <xref target="I-D.annee-dprive-oblivious-dns" format="default" sectionFormat="of" derivedContent="OBLIVIOUS-DNS"/>. Thanks to all of the
+authors of that document. Thanks to
+<contact fullname="Nafeez Ahamed"/>,
+<contact fullname="Elliot Briggs"/>,
+<contact fullname="Marwan Fayed"/>,
+<contact fullname="Jonathan Hoyland"/>,
+<contact fullname="Frederic Jacobs"/>,
+<contact fullname="Tommy Jensen"/>,
+<contact fullname="Erik Nygren"/>,
+<contact fullname="Paul Schmitt"/>,
+<contact fullname="Brian Swander"/>, and
+<contact fullname="Peter Wu"/>
+for their feedback and input.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="E." surname="Kinnear" fullname="Eric Kinnear">
+        <organization showOnFrontPage="true">Apple Inc.</organization>
+        <address>
+          <postal>
+            <street>One Apple Park Way</street>
+            <city>Cupertino</city>
+            <region>California</region>
+            <code>95014</code>
+            <country>United States of America</country>
+          </postal>
+          <email>ekinnear@apple.com</email>
+        </address>
+      </author>
+      <author initials="P." surname="McManus" fullname="Patrick McManus">
+        <organization showOnFrontPage="true">Fastly</organization>
+        <address>
+          <email>mcmanus@ducksong.com</email>
+        </address>
+      </author>
+      <author initials="T." surname="Pauly" fullname="Tommy Pauly">
+        <organization showOnFrontPage="true">Apple Inc.</organization>
+        <address>
+          <postal>
+            <street>One Apple Park Way</street>
+            <city>Cupertino</city>
+            <region>California</region>
+            <code>95014</code>
+            <country>United States of America</country>
+          </postal>
+          <email>tpauly@apple.com</email>
+        </address>
+      </author>
+      <author initials="T." surname="Verma" fullname="Tanya Verma">
+        <organization showOnFrontPage="true">Cloudflare</organization>
+        <address>
+          <postal>
+            <street>101 Townsend St</street>
+            <city>San Francisco</city>
+            <region>California</region>
+            <code>94107</code>
+            <country>United States of America</country>
+          </postal>
+          <email>vermatanyax@gmail.com</email>
+        </address>
+      </author>
+      <author initials="C.A." surname="Wood" fullname="Christopher A. Wood">
+        <organization showOnFrontPage="true">Cloudflare</organization>
+        <address>
+          <postal>
+            <street>101 Townsend St</street>
+            <city>San Francisco</city>
+            <region>California</region>
+            <code>94107</code>
+            <country>United States of America</country>
+          </postal>
+          <email>caw@heapingbits.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

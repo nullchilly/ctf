@@ -1,0 +1,1311 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-secevent-http-push-14" indexInclude="true" ipr="trust200902" number="8935" prepTime="2020-11-30T16:32:05" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-secevent-http-push-14" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8935" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Push-Based SET Using HTTP">Push-Based Security Event Token (SET) Delivery Using HTTP</title>
+    <seriesInfo name="RFC" value="8935" stream="IETF"/>
+    <author fullname="Annabelle Backman" initials="A." surname="Backman" role="editor">
+      <organization showOnFrontPage="true">Amazon</organization>
+      <address>
+        <email>richanna@amazon.com</email>
+      </address>
+    </author>
+    <author fullname="Michael B. Jones" initials="M." surname="Jones" role="editor">
+      <organization showOnFrontPage="true">Microsoft</organization>
+      <address>
+        <email>mbj@microsoft.com</email>
+        <uri>https://self-issued.info/</uri>
+      </address>
+    </author>
+    <author fullname="Marius Scurtescu" initials="M." surname="Scurtescu">
+      <organization showOnFrontPage="true">Coinbase</organization>
+      <address>
+        <email>marius.scurtescu@coinbase.com</email>
+      </address>
+    </author>
+    <author fullname="Morteza Ansari" initials="M." surname="Ansari">
+      <organization showOnFrontPage="true">Independent</organization>
+      <address>
+        <email>morteza@sharppics.com</email>
+      </address>
+    </author>
+    <author fullname="Anthony Nadalin" initials="A." surname="Nadalin">
+      <organization showOnFrontPage="true">Independent</organization>
+      <address>
+        <email>nadalin@prodigy.net</email>
+      </address>
+    </author>
+    <date month="11" year="2020"/>
+    <area>Security</area>
+    <workgroup>Security Events Working Group</workgroup>
+    <keyword>JSON Web Token</keyword>
+    <keyword>JWT</keyword>
+    <keyword>Security Event Token</keyword>
+    <keyword>SET</keyword>
+    <keyword>Delivery</keyword>
+    <keyword>JavaScript Object Notation</keyword>
+    <keyword>JSON</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+        This specification defines how a Security Event Token (SET) can be
+        delivered to an intended recipient using HTTP POST over TLS.  The SET
+        is transmitted in the body of an HTTP POST request to an endpoint
+        operated by the recipient, and the recipient indicates successful or
+        failed transmission via the HTTP response.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8935" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction-and-overview">Introduction and Overview</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-notational-conventions">Notational Conventions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-definitions">Definitions</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-set-delivery">SET Delivery</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-transmitting-a-set">Transmitting a SET</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-success-response">Success Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-failure-response">Failure Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t indent="0" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-event-token-error-">Security Event Token Error Codes</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication-and-authoriz">Authentication and Authorization</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-delivery-reliability">Delivery Reliability</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication-using-signed">Authentication Using Signed SETs</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-considerations">HTTP Considerations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-confidentiality-of-sets">Confidentiality of SETs</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.4">
+                <t indent="0" pn="section-toc.1-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-denial-of-service">Denial of Service</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.5">
+                <t indent="0" pn="section-toc.1-1.5.2.5.1"><xref derivedContent="5.5" format="counter" sectionFormat="of" target="section-5.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authenticating-persisted-se">Authenticating Persisted SETs</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-event-token-error-c">Security Event Token Error Codes</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2.1.2">
+                  <li pn="section-toc.1-1.7.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.7.2.1.2.1.1"><xref derivedContent="7.1.1" format="counter" sectionFormat="of" target="section-7.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-registration-template">Registration Template</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.7.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.7.2.1.2.2.1"><xref derivedContent="7.1.2" format="counter" sectionFormat="of" target="section-7.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-initial-registry-contents">Initial Registry Contents</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-unencrypted-transport-consi">Unencrypted Transport Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" toc="include" numbered="true" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction-and-overview">Introduction and Overview</name>
+      <t indent="0" pn="section-1-1">
+                This specification defines a mechanism by which a transmitter of a
+                <xref target="RFC8417" format="default" sectionFormat="of" derivedContent="RFC8417">Security Event Token (SET)</xref> can deliver
+                the SET to an intended SET Recipient via <xref target="RFC7231" format="default" sectionFormat="of" derivedContent="RFC7231">HTTP POST</xref>
+		over TLS.
+		This is an alternative SET delivery method to the one defined in
+		<xref target="RFC8936" format="default" sectionFormat="of" derivedContent="RFC8936"/>.
+      </t>
+      <t indent="0" pn="section-1-2">
+                Push-based SET delivery over HTTP POST is intended for scenarios where all of
+                the following apply:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-3">
+        <li pn="section-1-3.1">The transmitter of the SET is capable of making outbound HTTP requests.</li>
+        <li pn="section-1-3.2">
+                        The recipient is capable of hosting a TLS-enabled HTTP endpoint that is accessible
+                        to the transmitter.
+                    </li>
+        <li pn="section-1-3.3">
+		      The transmitter and recipient are willing to exchange data with one another.
+		    </li>
+      </ul>
+      <t indent="0" pn="section-1-4">
+		In some scenarios, either push-based or poll-based delivery could be used,
+		and in others, only one of them would be applicable.
+      </t>
+      <t indent="0" pn="section-1-5">
+                A mechanism for exchanging configuration metadata such as endpoint URLs,
+                cryptographic keys,
+		and possible implementation constraints such as buffer size limitations
+		between the transmitter and recipient is
+                out of scope for this specification. How SETs are defined and the process
+                by which security events are identified for SET Recipients are specified
+                in <xref target="RFC8417" format="default" sectionFormat="of" derivedContent="RFC8417"/>.
+      </t>
+      <section anchor="notat" toc="include" numbered="true" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-notational-conventions">Notational Conventions</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+          <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals,
+    as shown here.
+        </t>
+        <t indent="0" pn="section-1.1-2">
+	 Throughout this document, all figures may contain spaces and extra
+	 line wrapping for readability and due to space limitations.
+        </t>
+      </section>
+      <section anchor="defs" toc="include" numbered="true" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-definitions">Definitions</name>
+        <t indent="0" pn="section-1.2-1">
+                    This specification utilizes the following terms defined in <xref target="RFC8417" format="default" sectionFormat="of" derivedContent="RFC8417"/>:
+                    "Security Event Token (SET)", "SET Issuer", "SET Recipient", and "Event Payload",
+                    as well as the term defined below:
+        </t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-1.2-2">
+          <dt pn="section-1.2-2.1">SET Transmitter:</dt>
+          <dd pn="section-1.2-2.2">
+          An entity that delivers SETs in its possession to one or more SET
+          Recipients.
+          </dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="Delivery" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-set-delivery">SET Delivery</name>
+      <t indent="0" pn="section-2-1">
+                To deliver a SET to a given SET Recipient, the SET Transmitter
+                makes a SET Transmission Request to the SET Recipient, with the SET
+                itself contained within the request. The SET Recipient replies to
+                this request with a response either acknowledging successful
+                transmission of the SET or indicating that an error occurred
+                while receiving, parsing, and/or validating the SET.
+
+      </t>
+      <t indent="0" pn="section-2-2">
+                Upon receipt of a SET, the SET Recipient <bcp14>SHALL</bcp14> validate that all of
+                the following are true:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-3">
+        <li pn="section-2-3.1">The SET Recipient can parse the SET.</li>
+        <li pn="section-2-3.2">
+                        The SET is authentic (i.e., it was issued by the issuer
+                        specified within the SET,
+			and if signed, was signed by a key belonging to the issuer).
+                    </li>
+        <li pn="section-2-3.3">
+                        The SET Recipient is identified as an intended audience of
+                        the SET.
+                    </li>
+        <li pn="section-2-3.4">
+                        The SET Issuer is recognized as an issuer that the SET Recipient
+                        is willing to receive SETs from (e.g., the issuer is listed as allowed
+                        by the SET Recipient).
+                    </li>
+        <li pn="section-2-3.5">
+		      The SET Recipient is willing to accept this SET from this SET Transmitter
+		      (e.g., the SET Transmitter is expected to send SETs
+		      with the issuer and subject of the SET in question).
+                    </li>
+      </ul>
+      <t indent="0" pn="section-2-4">
+                The mechanisms by which the SET Recipient performs this validation
+                are out of scope for this document. SET parsing, issuer identification,
+		and audience identification are defined in <xref target="RFC8417" format="default" sectionFormat="of" derivedContent="RFC8417"/>.
+                The mechanism for validating the authenticity of a SET is deployment
+                specific and may vary depending on the authentication mechanisms in
+                use and whether the SET is signed and/or encrypted (See <xref target="aa" format="default" sectionFormat="of" derivedContent="Section 3"/>).
+      </t>
+      <t indent="0" pn="section-2-5">
+                SET Transmitters <bcp14>MAY</bcp14> transmit SETs issued by another entity. The SET
+                Recipient may accept or reject (i.e., return an error response such as
+                <tt>access_denied</tt>) a SET at its own discretion.
+      </t>
+      <t indent="0" pn="section-2-6">
+                The SET Recipient persists the SET in a way that
+                is sufficient to meet the SET Recipient's own reliability requirements.
+		The level and method of retention of SETs
+		by SET Recipients is out of scope of this specification.
+                Once the SET has been validated and persisted, the SET Recipient <bcp14>SHOULD</bcp14>
+                immediately return a response indicating that the SET was successfully
+                delivered. The SET Recipient <bcp14>SHOULD NOT</bcp14> perform further processing of the SET
+		beyond the required validation steps prior to sending this response.
+                Any additional steps <bcp14>SHOULD</bcp14> be executed asynchronously from delivery
+		to minimize the time the SET Transmitter is waiting for a response.
+      </t>
+      <t indent="0" pn="section-2-7">
+                The SET Transmitter <bcp14>MAY</bcp14> transmit the same SET to the SET Recipient multiple
+                times, regardless of the response from the SET Recipient. The SET Recipient
+                <bcp14>MUST</bcp14> respond as it would if the SET had not been previously received by the 
+                SET Recipient. The SET Recipient <bcp14>MUST NOT</bcp14> expect or depend on a SET Transmitter
+                to retransmit a SET or otherwise make a SET available to the SET Recipient
+                once the SET Recipient acknowledges that it was received successfully.
+      </t>
+      <t indent="0" pn="section-2-8">
+                The SET Transmitter should not retransmit a SET unless the SET Transmitter
+                suspects that previous transmissions may have failed due to potentially
+                recoverable errors (such as network outage or temporary service interruption at
+                either the SET Transmitter or SET Recipient). In all other cases, the SET
+                Transmitter <bcp14>SHOULD NOT</bcp14> retransmit a SET. The SET
+                Transmitter <bcp14>SHOULD</bcp14> delay retransmission for an appropriate amount of time
+                to avoid overwhelming the SET Recipient (see <xref target="reliability" format="default" sectionFormat="of" derivedContent="Section 4"/>).
+      </t>
+      <section anchor="httpPost" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-transmitting-a-set">Transmitting a SET</name>
+        <t indent="0" pn="section-2.1-1">
+                    To transmit a SET to a SET Recipient, the SET Transmitter makes
+                    an HTTP POST request to a TLS-enabled HTTP endpoint provided by the SET Recipient.  The
+                    <tt>Content-Type</tt> header field of this request <bcp14>MUST</bcp14>
+                    be <tt>application/secevent+jwt</tt> as defined in
+                    Sections <xref target="RFC8417" sectionFormat="bare" section="2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8417#section-2.3" derivedContent="RFC8417"/> and <xref target="RFC8417" sectionFormat="bare" section="7.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8417#section-7.2" derivedContent="RFC8417"/> of <xref target="RFC8417" sectionFormat="bare" format="default" derivedContent="RFC8417"/>, and the
+                    <tt>Accept</tt> header field <bcp14>MUST</bcp14> be <tt>application/json</tt>.  The
+                    request body <bcp14>MUST</bcp14> consist of the SET itself, represented as a
+                    <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JSON Web Token (JWT)</xref>.
+        </t>
+        <t indent="0" pn="section-2.1-2">
+                    The SET Transmitter <bcp14>MAY</bcp14> include in the request an <tt>Accept-Language</tt>
+                    header field to indicate to the SET Recipient the preferred language(s) in which to
+                    receive error messages.
+        </t>
+        <t indent="0" pn="section-2.1-3">
+                    The mechanisms by which the SET Transmitter determines the HTTP endpoint to
+                    use when transmitting a SET to a given SET Recipient are not defined by this
+                    specification and are deployment specific.
+        </t>
+        <t keepWithNext="true" indent="0" pn="section-2.1-4">
+                        The following is a non-normative example of a SET Transmission Request:
+        </t>
+        <figure anchor="postSet" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-example-set-transmission-re">Example SET Transmission Request</name>
+          <sourcecode name="" type="http-message" markers="false" pn="section-2.1-5.1">
+  POST /Events HTTP/1.1
+  Host: notify.rp.example.com
+  Accept: application/json
+  Accept-Language: en-US, en;q=0.5
+  Content-Type: application/secevent+jwt
+
+  eyJ0eXAiOiJzZWNldmVudCtqd3QiLCJhbGciOiJIUzI1NiJ9Cg
+  .
+  eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmNvbS8iLCJqdGkiOiI3NTZFNjk
+  3MTc1NjUyMDY5NjQ2NTZFNzQ2OTY2Njk2NTcyIiwiaWF0IjoxNTA4MTg0ODQ1LC
+  JhdWQiOiI2MzZDNjk2NTZFNzQ1RjY5NjQiLCJldmVudHMiOnsiaHR0cHM6Ly9zY
+  2hlbWFzLm9wZW5pZC5uZXQvc2VjZXZlbnQvcmlzYy9ldmVudC10eXBlL2FjY291
+  bnQtZGlzYWJsZWQiOnsic3ViamVjdCI6eyJzdWJqZWN0X3R5cGUiOiJpc3Mtc3V
+  iIiwiaXNzIjoiaHR0cHM6Ly9pZHAuZXhhbXBsZS5jb20vIiwic3ViIjoiNzM3NT
+  YyNkE2NTYzNzQifSwicmVhc29uIjoiaGlqYWNraW5nIn19fQ
+  .
+  Y4rXxMD406P2edv00cr9Wf3_XwNtLjB9n-jTqN1_lLc
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="successResponse" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-success-response">Success Response</name>
+        <t indent="0" pn="section-2.2-1">If the SET is determined to be valid, the SET Recipient <bcp14>SHALL</bcp14>
+                    acknowledge successful transmission by responding with HTTP
+                    Response Status Code 202 (Accepted) (see <xref target="RFC7231" sectionFormat="of" section="6.3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7231#section-6.3.3" derivedContent="RFC7231"/>).
+		    The body of the response <bcp14>MUST</bcp14> be empty.
+        </t>
+        <t keepWithNext="true" indent="0" pn="section-2.2-2">The following is a non-normative example of a successful
+                        receipt of a SET.</t>
+        <figure anchor="goodPostResponse" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-example-successful-delivery">Example Successful Delivery Response</name>
+          <sourcecode name="" type="http-message" markers="false" pn="section-2.2-3.1">
+  HTTP/1.1 202 Accepted
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="failureResponse" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-failure-response">Failure Response</name>
+        <t indent="0" pn="section-2.3-1">In the event of a general HTTP error condition, the SET Recipient
+                    responds with the applicable HTTP Status Code, as defined in
+                    <xref target="RFC7231" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7231#section-6" derivedContent="RFC7231"/>.</t>
+        <t indent="0" pn="section-2.3-2">
+                    When the SET Recipient detects an error parsing,
+                    validating, or authenticating a SET transmitted in a SET
+                    Transmission Request, the SET Recipient
+                    <bcp14>SHALL</bcp14> respond with an HTTP Response Status
+                    Code of 400 (Bad Request).  The <tt>Content-Type</tt>
+                    header field of this response <bcp14>MUST</bcp14> be
+                    <tt>application/json</tt>, and the body <bcp14>MUST</bcp14> be a
+                    UTF-8 encoded <xref target="RFC8259" format="default" sectionFormat="of" derivedContent="RFC8259">JSON</xref> object containing the
+                    following name/value pairs:
+        </t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-2.3-3">
+          <dt pn="section-2.3-3.1">err:</dt>
+          <dd pn="section-2.3-3.2">
+                            A Security Event Token Error Code (see <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/>).
+                        </dd>
+          <dt pn="section-2.3-3.3">description:</dt>
+          <dd pn="section-2.3-3.4">
+                            A UTF-8 string containing a human-readable description of the error
+                            that may provide additional diagnostic information. The exact content
+                            of this field is implementation specific.
+                        </dd>
+        </dl>
+        <t indent="0" pn="section-2.3-4">
+                    The response <bcp14>MUST</bcp14> include a
+                    <tt>Content-Language</tt> header field whose value
+                    indicates the language of the error descriptions included
+                    in the response body. If the SET Recipient can provide
+                    error descriptions in multiple languages, they
+                    <bcp14>SHOULD</bcp14> choose the language to use according
+                    to the value of the <tt>Accept-Language</tt> header field
+                    sent by the SET Transmitter in the transmission request,
+                    as described in <xref target="RFC7231" sectionFormat="of" section="5.3.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7231#section-5.3.5" derivedContent="RFC7231"/>. If the SET Transmitter did not send an
+                    <tt>Accept-Language</tt> header field, or if the SET
+                    Recipient does not support any of the languages included
+                    in the header field, the SET Recipient <bcp14>MUST</bcp14>
+                    respond with messages that are understandable by an
+                    English-speaking person, as described in <xref target="RFC2277" sectionFormat="of" section="4.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc2277#section-4.5" derivedContent="RFC2277"/>.
+        </t>
+        <t keepWithNext="true" indent="0" pn="section-2.3-5">The following is a non-normative example error response indicating
+                        that the key used to encrypt the SET has been revoked.</t>
+        <figure anchor="errorResponseInvalidKey" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-example-error-response-inva">Example Error Response (invalid_key)</name>
+          <sourcecode name="http-message" type="" markers="false" pn="section-2.3-6.1">
+  HTTP/1.1 400 Bad Request
+  Content-Language: en-US
+  Content-Type: application/json
+
+  {
+    "err": "invalid_key",
+    "description": "Key ID 12345 has been revoked."
+  }
+</sourcecode>
+        </figure>
+        <t keepWithNext="true" indent="0" pn="section-2.3-7">The following is a non-normative example error response indicating
+                        that the access token included in the request is expired.</t>
+        <figure anchor="errorResponseExpiredToken" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-example-error-response-auth">Example Error Response (authentication_failed)</name>
+          <sourcecode name="" type="http-message" markers="false" pn="section-2.3-8.1">
+  HTTP/1.1 400 Bad Request
+  Content-Language: en-US
+  Content-Type: application/json
+
+  {
+    "err": "authentication_failed",
+    "description": "Access token has expired."
+  }
+</sourcecode>
+        </figure>
+        <t keepWithNext="true" indent="0" pn="section-2.3-9">The following is a non-normative example error response indicating
+                        that the SET Receiver is not willing to accept SETs issued by the specified
+                        issuer from this particular SET Transmitter.</t>
+        <figure anchor="errorResponseBadIssuer" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-example-error-response-acce">Example Error Response (access_denied)</name>
+          <sourcecode name="" type="http-message" markers="false" pn="section-2.3-10.1">
+HTTP/1.1 400 Bad Request
+Content-Language: en-US
+Content-Type: application/json
+
+{
+  "err": "invalid_issuer",
+  "description": "Not authorized for issuer https://iss.example.com/"
+}
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="error_codes" numbered="true" toc="include" removeInRFC="false" pn="section-2.4">
+        <name slugifiedName="name-security-event-token-error-">Security Event Token Error Codes</name>
+        <t indent="0" pn="section-2.4-1">Security Event Token Error Codes are strings that identify a
+                    specific category of error that may occur when parsing or validating a SET.
+
+
+                    Every Security Event Token Error Code <bcp14>MUST</bcp14> have a unique name
+                    registered in the IANA "Security Event Token Error Codes"
+                    registry established by <xref target="iana_set_errors" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.</t>
+        <t indent="0" pn="section-2.4-2">The following table presents the initial set of Error Codes that are registered
+                    in the IANA "Security Event Token Error Codes" registry:</t>
+        <table anchor="reqErrors" align="center" pn="table-1">
+          <name slugifiedName="name-set-error-codes">SET Error Codes</name>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Error Code</th>
+              <th align="left" colspan="1" rowspan="1">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">invalid_request</td>
+              <td align="left" colspan="1" rowspan="1">The request body cannot be parsed as a SET, or the
+                        Event Payload within the SET does not conform to the event's definition.</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">invalid_key</td>
+              <td align="left" colspan="1" rowspan="1">One or more keys used to encrypt or sign the SET is
+                        invalid or otherwise unacceptable to the SET Recipient (expired,
+                        revoked, failed certificate validation, etc.).</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">invalid_issuer</td>
+              <td align="left" colspan="1" rowspan="1">The SET Issuer is invalid for the SET Recipient.</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">invalid_audience</td>
+              <td align="left" colspan="1" rowspan="1">The SET Audience does not correspond to the SET Recipient.</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">authentication_failed</td>
+              <td align="left" colspan="1" rowspan="1">The SET Recipient could not authenticate the
+                        SET Transmitter.</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">access_denied</td>
+              <td align="left" colspan="1" rowspan="1">The SET Transmitter is not authorized to transmit the
+                        SET to the SET Recipient.</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-2.4-4">
+		  Other Error Codes may also be received,
+		  as the set of Error Codes is extensible
+		  via the IANA "Security Event Token Error Codes" registry
+		  established in <xref target="iana_set_errors" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.
+        </t>
+      </section>
+    </section>
+    <section anchor="aa" toc="include" numbered="true" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-authentication-and-authoriz">Authentication and Authorization</name>
+      <t indent="0" pn="section-3-1">The SET delivery method described in this specification is based upon
+      HTTP over TLS <xref target="RFC2818" format="default" sectionFormat="of" derivedContent="RFC2818"/> and standard
+      HTTP authentication and authorization schemes, as per <xref target="RFC7235" format="default" sectionFormat="of" derivedContent="RFC7235"/>.  The TLS server certificate
+      <bcp14>MUST</bcp14> be validated using DNS-ID <xref target="RFC6125" format="default" sectionFormat="of" derivedContent="RFC6125"/> and/or DNS-Based Authentication of Named Entities
+      (DANE) <xref target="RFC6698" format="default" sectionFormat="of" derivedContent="RFC6698"/>.
+      </t>
+      <t indent="0" pn="section-3-2">
+	      Authorization for the eligibility to provide actionable SETs can be determined by
+	      using the identity of the SET Issuer,
+	      the identity of the SET Transmitter, perhaps using mutual TLS,
+	      or via other employed authentication methods.
+	      Because SETs are
+	      not commands, SET Recipients are free to ignore SETs that
+	      are not of interest.
+      </t>
+    </section>
+    <section anchor="reliability" toc="include" numbered="true" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-delivery-reliability">Delivery Reliability</name>
+      <t indent="0" pn="section-4-1">
+                Delivery reliability requirements may vary depending upon the use cases.
+		This specification defines the response from the SET
+                Recipient in such a way as to provide the SET Transmitter with the
+                information necessary to determine what further action is required,
+                if any, in order to meet their requirements.  SET Transmitters with
+                high reliability requirements may be tempted to always retry failed
+                transmissions. However, it should be noted that for many types of SET
+                delivery errors, a retry is extremely unlikely to be successful.  For
+                example, <tt>invalid_request</tt> indicates a structural
+                error in the content of the request body that is likely to remain when
+                retransmitting the same SET.  Others such as <tt>access_denied</tt>
+                may be transient, for example, if the SET Transmitter refreshes expired
+                credentials prior to retransmission.
+      </t>
+      <t indent="0" pn="section-4-2">
+                The SET Transmitter may be unaware of whether or not a SET has been delivered
+                to a SET Recipient. For example, a network interruption could prevent the
+                SET Transmitter from receiving the success response, or a service outage could
+                prevent the SET Transmitter from recording the fact that the SET was delivered. 
+                It is left to the implementer to decide how to handle such cases, based on
+                their requirements. For example, it may be appropriate for the SET Transmitter to
+                retransmit the SET to the SET Recipient, erring on the side of guaranteeing delivery,
+                or it may be appropriate to assume delivery was successful, erring on the side of
+                not spending resources retransmitting previously delivered SETs. Other options,
+                such as sending the SET to a "dead letter queue" for manual examination may also
+                be appropriate.
+      </t>
+      <t indent="0" pn="section-4-3">
+                Implementers <bcp14>SHOULD</bcp14> evaluate the reliability requirements of their use cases and the
+                impact of various retry mechanisms and retransmission policies on the performance
+                of their systems to determine an appropriate strategy for handling various error
+                conditions.
+      </t>
+    </section>
+    <section anchor="Security" toc="include" numbered="true" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <section anchor="payloadAuthentication" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-authentication-using-signed">Authentication Using Signed SETs</name>
+        <t indent="0" pn="section-5.1-1">
+		  JWS signed SETs can be
+		  used (see <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/> and
+		  <xref target="RFC8417" sectionFormat="of" section="5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8417#section-5" derivedContent="RFC8417"/>)
+		  to enable the SET Recipient
+		  to validate that the SET Issuer is authorized to provide actionable SETs.
+        </t>
+      </section>
+      <section anchor="HTTP" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-http-considerations">HTTP Considerations</name>
+        <t indent="0" pn="section-5.2-1">SET delivery depends on the use of Hypertext Transfer Protocol and
+        is thus subject to the security considerations of HTTP (<xref target="RFC7230" sectionFormat="of" section="9" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7230#section-9" derivedContent="RFC7230"/>) and its related
+        specifications.</t>
+      </section>
+      <section anchor="Confidentiality" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-confidentiality-of-sets">Confidentiality of SETs</name>
+        <t indent="0" pn="section-5.3-1">
+		  SETs may contain sensitive information, including Personally
+		  Identifiable Information (PII), or be distributed through
+		  third parties.  In such cases, SET Transmitters and SET
+		  Recipients <bcp14>MUST</bcp14> protect the confidentiality
+		  of the SET contents.  TLS <bcp14>MUST</bcp14> be used to
+		  secure the transmitted SETs.  In some use cases, encrypting
+		  the SET as described in <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref> will also be required.  The
+		  Event delivery endpoint <bcp14>MUST</bcp14> support at least
+		  TLS version 1.2 <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/>
+		  and <bcp14>SHOULD</bcp14> support the newest version of TLS
+		  that meets its security requirements, which as of the time
+		  of this publication is TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.  The client <bcp14>MUST</bcp14> perform
+		  a TLS/SSL server certificate check using DNS-ID <xref target="RFC6125" format="default" sectionFormat="of" derivedContent="RFC6125"/> and/or DANE <xref target="RFC6698" format="default" sectionFormat="of" derivedContent="RFC6698"/>.  How a SET Transmitter
+		  determines the expected service identity to match the SET
+		  Recipient's server certificate against is out of scope for
+		  this document.  The implementation security considerations
+		  for TLS in "Recommendations for Secure Use of Transport
+		  Layer Security (TLS) and Datagram Transport Layer Security
+		  (DTLS)" <xref target="RFC7525" format="default" sectionFormat="of" derivedContent="RFC7525"/>
+          <bcp14>MUST</bcp14> be followed.
+        </t>
+      </section>
+      <section anchor="DoS" numbered="true" toc="include" removeInRFC="false" pn="section-5.4">
+        <name slugifiedName="name-denial-of-service">Denial of Service</name>
+        <t indent="0" pn="section-5.4-1">
+                    The SET Recipient may be vulnerable to a denial-of-service attack where a
+                    malicious party makes a high volume of requests containing invalid SETs,
+                    causing the endpoint to expend significant resources on cryptographic
+                    operations that are bound to fail. This may be mitigated by authenticating
+                    SET Transmitters with a mechanism such as mutual TLS.
+		    Rate-limiting problematic transmitters is also a possible means of mitigation.
+        </t>
+      </section>
+      <section anchor="Persisted" numbered="true" toc="include" removeInRFC="false" pn="section-5.5">
+        <name slugifiedName="name-authenticating-persisted-se">Authenticating Persisted SETs</name>
+        <t indent="0" pn="section-5.5-1">
+                    At the time of receipt, the SET Recipient can rely upon TLS
+                    mechanisms, HTTP authentication methods, and/or other context from the
+                    transmission request to authenticate the SET Transmitter and validate the
+                    authenticity of the SET.  However, this context is typically unavailable to
+                    systems to which the SET Recipient forwards the SET, or to systems that
+                    retrieve the SET from storage.  If the SET Recipient requires the ability to
+                    validate SET authenticity outside of the context of the transmission request,
+                    then the SET Recipient <bcp14>SHOULD</bcp14> ensure that such SETs have been signed in
+                    accordance with <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/>.
+		    Needed context could also be stored with the SET and retrieved with it.
+        </t>
+      </section>
+    </section>
+    <section anchor="Privacy" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-6-1">
+                SET Transmitters should attempt to deliver SETs that are targeted to the specific
+                business and protocol needs of subscribers.
+      </t>
+      <t indent="0" pn="section-6-2">When sharing personally identifiable information or information
+                that is otherwise considered confidential to affected users, SET
+                Transmitters and Recipients <bcp14>MUST</bcp14> have the appropriate legal agreements
+                and user consent or terms of service in place.
+		Furthermore, data that needs confidentiality protection <bcp14>MUST</bcp14> be encrypted,
+		at least with TLS
+		and sometimes also using JSON Web Encryption (JWE) <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516"/>.
+      </t>
+      <t indent="0" pn="section-6-3">
+	      In some cases, subject identifiers themselves may be considered sensitive
+	      information, such that their inclusion within a SET may be considered a violation
+	      of privacy.  SET Issuers and SET Transmitters should consider the ramifications of sharing a
+	      particular subject identifier with a SET Recipient (e.g., whether doing so could
+	      enable correlation and/or de-anonymization of data) and choose appropriate
+	      subject identifiers for their use cases.
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="iana_set_errors" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-security-event-token-error-c">Security Event Token Error Codes</name>
+        <t indent="0" pn="section-7.1-1">
+                    This document defines Security Event Token Error
+                    Codes, for which IANA has created and now maintains a
+                    new registry titled "Security Event Token Error
+                    Codes".  Initial values for the "Security Event Token
+                    Error Codes" registry are defined in <xref target="reqErrors" format="default" sectionFormat="of" derivedContent="Table 1"/> and registered
+                    below.  Future assignments are to be made through the
+                    Specification Required registration policy <xref target="RFC8126" format="default" sectionFormat="of" derivedContent="RFC8126"/> and shall follow the
+                    template below.
+        </t>
+        <t indent="0" pn="section-7.1-2">
+                    Error Codes are intended to be interpreted by automated
+                    systems; therefore, they <bcp14>SHOULD</bcp14> identify
+                    classes of errors to which an automated system could
+                    respond in a meaningfully distinct way (e.g., by
+                    refreshing authentication credentials and retrying the
+                    request).
+        </t>
+        <t indent="0" pn="section-7.1-3">
+		  Error Code names are case sensitive.
+		  Names may not match other registered names in a case-insensitive manner
+		  unless the Designated Experts state that there is a compelling reason
+		  to allow an exception.
+        </t>
+        <t indent="0" pn="section-7.1-4">
+		  Criteria that should be applied by the Designated Experts includes
+		  determining whether the proposed registration duplicates existing functionality,
+		  whether it is likely to be of general applicability
+		  or whether it is useful only for a single application,
+		  and whether the registration description is clear.
+        </t>
+        <t indent="0" pn="section-7.1-5">
+		  It is suggested that multiple Designated Experts be
+		  appointed who are able to represent the perspectives of
+		  different applications using this specification in order to
+		  enable broadly informed review of registration decisions.
+		  In cases where a registration decision could be perceived as
+		  creating a conflict of interest for a particular expert,
+		  that expert should defer to the judgment of the other
+		  experts.
+        </t>
+        <section anchor="iana_set_errors_template" numbered="true" toc="include" removeInRFC="false" pn="section-7.1.1">
+          <name slugifiedName="name-registration-template">Registration Template</name>
+          <dl newline="true" spacing="normal" indent="3" pn="section-7.1.1-1">
+            <dt pn="section-7.1.1-1.1">Error Code</dt>
+            <dd pn="section-7.1.1-1.2">
+                                The name of the Security Event Token 
+                                Error Code, as described in <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/>. The
+                                name <bcp14>MUST</bcp14> be a case-sensitive
+                                ASCII string consisting only of letters,
+                                digits, and underscore; these are the
+                                characters whose codes fall within the
+                                inclusive ranges 0x30-39, 0x41-5A, 0x5F, and
+                                0x61-7A.
+                            </dd>
+            <dt pn="section-7.1.1-1.3">Description</dt>
+            <dd pn="section-7.1.1-1.4">
+                                A brief human-readable description of the Security Event Token 
+                                Error Code.
+                            </dd>
+            <dt pn="section-7.1.1-1.5">Change Controller</dt>
+            <dd pn="section-7.1.1-1.6">
+                                For error codes registered by the IETF or its working groups, list "IETF".
+				For all other error codes, list the name of the
+                                party responsible for the registration.  Contact information such as
+                                mailing address, email address, or phone number may also be provided.
+                            </dd>
+            <dt pn="section-7.1.1-1.7">Reference</dt>
+            <dd pn="section-7.1.1-1.8">
+                                A reference to the document or documents that define the Security Event
+                                Token Error Code. The definition <bcp14>MUST</bcp14> specify the name and
+                                description of the error code and explain under what circumstances the
+                                error code may be used. URIs that can be used to retrieve copies of each
+                                document at no cost <bcp14>SHOULD</bcp14> be included.
+                            </dd>
+          </dl>
+        </section>
+        <section anchor="InitialContents" numbered="true" toc="include" removeInRFC="false" pn="section-7.1.2">
+          <name slugifiedName="name-initial-registry-contents">Initial Registry Contents</name>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-1">
+            <dt pn="section-7.1.2-1.1">Error Code:</dt>
+            <dd pn="section-7.1.2-1.2">invalid_request</dd>
+            <dt pn="section-7.1.2-1.3">Description:</dt>
+            <dd pn="section-7.1.2-1.4">The request body cannot be parsed as a SET or the Event
+                          Payload within the SET does not conform to the event's definition.</dd>
+            <dt pn="section-7.1.2-1.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-1.6">IETF</dd>
+            <dt pn="section-7.1.2-1.7">Reference:</dt>
+            <dd pn="section-7.1.2-1.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-2">
+            <dt pn="section-7.1.2-2.1">Error Code:</dt>
+            <dd pn="section-7.1.2-2.2">invalid_key</dd>
+            <dt pn="section-7.1.2-2.3">Description:</dt>
+            <dd pn="section-7.1.2-2.4">One or more keys used to encrypt or sign the SET is invalid
+                          or otherwise unacceptable to the SET Recipient (expired, revoked,
+                          failed certificate validation, etc.).</dd>
+            <dt pn="section-7.1.2-2.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-2.6">IETF</dd>
+            <dt pn="section-7.1.2-2.7">Reference:</dt>
+            <dd pn="section-7.1.2-2.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-3">
+            <dt pn="section-7.1.2-3.1">Error Code:</dt>
+            <dd pn="section-7.1.2-3.2">invalid_issuer</dd>
+            <dt pn="section-7.1.2-3.3">Description:</dt>
+            <dd pn="section-7.1.2-3.4">The SET Issuer is invalid for the SET Recipient.</dd>
+            <dt pn="section-7.1.2-3.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-3.6">IETF</dd>
+            <dt pn="section-7.1.2-3.7">Reference:</dt>
+            <dd pn="section-7.1.2-3.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-4">
+            <dt pn="section-7.1.2-4.1">Error Code:</dt>
+            <dd pn="section-7.1.2-4.2">invalid_audience</dd>
+            <dt pn="section-7.1.2-4.3">Description:</dt>
+            <dd pn="section-7.1.2-4.4">The SET Audience does not correspond to the SET Recipient.</dd>
+            <dt pn="section-7.1.2-4.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-4.6">IETF</dd>
+            <dt pn="section-7.1.2-4.7">Reference:</dt>
+            <dd pn="section-7.1.2-4.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-5">
+            <dt pn="section-7.1.2-5.1">Error Code:</dt>
+            <dd pn="section-7.1.2-5.2">authentication_failed</dd>
+            <dt pn="section-7.1.2-5.3">Description:</dt>
+            <dd pn="section-7.1.2-5.4">The SET Recipient could not authenticate the SET Transmitter.</dd>
+            <dt pn="section-7.1.2-5.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-5.6">IETF</dd>
+            <dt pn="section-7.1.2-5.7">Reference:</dt>
+            <dd pn="section-7.1.2-5.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+          <dl newline="false" spacing="compact" indent="3" pn="section-7.1.2-6">
+            <dt pn="section-7.1.2-6.1">Error Code:</dt>
+            <dd pn="section-7.1.2-6.2">access_denied</dd>
+            <dt pn="section-7.1.2-6.3">Description:</dt>
+            <dd pn="section-7.1.2-6.4">The SET Transmitter is not authorized to transmit the
+                          SET to the SET Recipient.</dd>
+            <dt pn="section-7.1.2-6.5">Change Controller:</dt>
+            <dd pn="section-7.1.2-6.6">IETF</dd>
+            <dt pn="section-7.1.2-6.7">Reference:</dt>
+            <dd pn="section-7.1.2-6.8">
+              <xref target="error_codes" format="default" sectionFormat="of" derivedContent="Section 2.4"/> of RFC 8935
+		      </dd>
+          </dl>
+        </section>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC2277" target="https://www.rfc-editor.org/info/rfc2277" quoteTitle="true" derivedAnchor="RFC2277">
+          <front>
+            <title>IETF Policy on Character Sets and Languages</title>
+            <author initials="H." surname="Alvestrand" fullname="H. Alvestrand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="January"/>
+            <abstract>
+              <t indent="0">This document is the current policies being applied by the Internet Engineering Steering Group (IESG) towards the standardization efforts in the Internet Engineering Task Force (IETF) in order to help Internet protocols fulfill these requirements.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="18"/>
+          <seriesInfo name="RFC" value="2277"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2277"/>
+        </reference>
+        <reference anchor="RFC2818" target="https://www.rfc-editor.org/info/rfc2818" quoteTitle="true" derivedAnchor="RFC2818">
+          <front>
+            <title>HTTP Over TLS</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="May"/>
+            <abstract>
+              <t indent="0">This memo describes how to use Transport Layer Security (TLS) to secure Hypertext Transfer Protocol (HTTP) connections over the Internet.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2818"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2818"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC6125" target="https://www.rfc-editor.org/info/rfc6125" quoteTitle="true" derivedAnchor="RFC6125">
+          <front>
+            <title>Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)</title>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hodges" fullname="J. Hodges">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="March"/>
+            <abstract>
+              <t indent="0">Many application technologies enable secure communication between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS). This document specifies procedures for representing and verifying the identity of application services in such interactions.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6125"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6125"/>
+        </reference>
+        <reference anchor="RFC6698" target="https://www.rfc-editor.org/info/rfc6698" quoteTitle="true" derivedAnchor="RFC6698">
+          <front>
+            <title>The DNS-Based Authentication of Named Entities (DANE) Transport Layer Security (TLS) Protocol: TLSA</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Schlyter" fullname="J. Schlyter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="August"/>
+            <abstract>
+              <t indent="0">Encrypted communication on the Internet often uses Transport Layer Security (TLS), which depends on third parties to certify the keys used.  This document improves on that situation by enabling the administrators of domain names to specify the keys used in that domain's TLS servers.  This requires matching improvements in TLS client software, but no change in TLS server software.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6698"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6698"/>
+        </reference>
+        <reference anchor="RFC7230" target="https://www.rfc-editor.org/info/rfc7230" quoteTitle="true" derivedAnchor="RFC7230">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems.  This document provides an overview of HTTP architecture and its associated terminology, defines the "http" and "https" Uniform Resource Identifier (URI) schemes, defines the HTTP/1.1 message syntax and parsing requirements, and describes related security concerns for implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7230"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7230"/>
+        </reference>
+        <reference anchor="RFC7231" target="https://www.rfc-editor.org/info/rfc7231" quoteTitle="true" derivedAnchor="RFC7231">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless \%application- level protocol for distributed, collaborative, hypertext information systems.  This document defines the semantics of HTTP/1.1 messages, as expressed by request methods, request header fields, response status codes, and response header fields, along with the payload of messages (metadata and body content) and mechanisms for content negotiation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7231"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7231"/>
+        </reference>
+        <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515" quoteTitle="true" derivedAnchor="RFC7515">
+          <front>
+            <title>JSON Web Signature (JWS)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Signature (JWS) represents content secured with digital signatures or Message Authentication Codes (MACs) using JSON-based data structures.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and an IANA registry defined by that specification.  Related encryption capabilities are described in the separate JSON Web Encryption (JWE) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7515"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7515"/>
+        </reference>
+        <reference anchor="RFC7516" target="https://www.rfc-editor.org/info/rfc7516" quoteTitle="true" derivedAnchor="RFC7516">
+          <front>
+            <title>JSON Web Encryption (JWE)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hildebrand" fullname="J. Hildebrand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Encryption (JWE) represents encrypted content using JSON-based data structures.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and IANA registries defined by that specification.  Related digital signature and Message Authentication Code (MAC) capabilities are described in the separate JSON Web Signature (JWS) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7516"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7516"/>
+        </reference>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519" quoteTitle="true" derivedAnchor="RFC7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties.  The claims in a JWT are encoded as a JSON object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or integrity protected with a Message Authentication Code (MAC) and/or encrypted.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        <reference anchor="RFC7525" target="https://www.rfc-editor.org/info/rfc7525" quoteTitle="true" derivedAnchor="RFC7525">
+          <front>
+            <title>Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="Y." surname="Sheffer" fullname="Y. Sheffer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Holz" fullname="R. Holz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) are widely used to protect data exchanged over application protocols such as HTTP, SMTP, IMAP, POP, SIP, and XMPP.  Over the last few years, several serious attacks on TLS have emerged, including attacks on its most commonly used cipher suites and their modes of operation.  This document provides recommendations for improving the security of deployed services that use TLS and DTLS. The recommendations are applicable to the majority of use cases.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="195"/>
+          <seriesInfo name="RFC" value="7525"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7525"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author initials="M." surname="Cotton" fullname="M. Cotton">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="June"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters.  To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper.  For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed.  This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259" quoteTitle="true" derivedAnchor="RFC8259">
+          <front>
+            <title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author initials="T." surname="Bray" fullname="T. Bray" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="December"/>
+            <abstract>
+              <t indent="0">JavaScript Object Notation (JSON) is a lightweight, text-based, language-independent data interchange format.  It was derived from the ECMAScript Programming Language Standard.  JSON defines a small set of formatting rules for the portable representation of structured data.</t>
+              <t indent="0">This document removes inconsistencies with other specifications of JSON, repairs specification errors, and offers experience-based interoperability guidance.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8259"/>
+        </reference>
+        <reference anchor="RFC8417" target="https://www.rfc-editor.org/info/rfc8417" quoteTitle="true" derivedAnchor="RFC8417">
+          <front>
+            <title>Security Event Token (SET)</title>
+            <author initials="P." surname="Hunt" fullname="P. Hunt" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Denniss" fullname="W. Denniss">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Ansari" fullname="M. Ansari">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="July"/>
+            <abstract>
+              <t indent="0">This specification defines the Security Event Token (SET) data structure.  A SET describes statements of fact from the perspective of an issuer about a subject.  These statements of fact represent an event that occurred directly to or about a security subject, for example, a statement about the issuance or revocation of a token on behalf of a subject.  This specification is intended to enable representing security- and identity-related events.  A SET is a JSON Web Token (JWT), which can be optionally signed and/or encrypted. SETs can be distributed via protocols such as HTTP.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8417"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8417"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC7235" target="https://www.rfc-editor.org/info/rfc7235" quoteTitle="true" derivedAnchor="RFC7235">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Authentication</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application- level protocol for distributed, collaborative, hypermedia information systems.  This document defines the HTTP Authentication framework.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7235"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7235"/>
+        </reference>
+        <reference anchor="RFC8936" target="https://www.rfc-editor.org/info/rfc8936" quoteTitle="true" derivedAnchor="RFC8936">
+          <front>
+            <title>Poll-Based Security Event Token (SET) Delivery Using HTTP</title>
+            <author initials="A" surname="Backman" fullname="Annabelle Backman" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Jones" fullname="Michael Jones" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Scurtescu" fullname="Marius Scurtescu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Ansari" fullname="Morteza Ansari">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A" surname="Nadalin" fullname="Anthony Nadalin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="November" year="2020"/>
+          </front>
+          <seriesInfo name="RFC" value="8936"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8936"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Unencrypted" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-unencrypted-transport-consi">Unencrypted Transport Considerations</name>
+      <t indent="0" pn="section-appendix.a-1">
+	    Earlier versions of this specification made the use of TLS optional
+	    and described security and privacy considerations resulting from use
+	    of unencrypted HTTP as the underlying transport.
+	    When the working group decided to mandate usage of HTTP over TLS,
+	    it also decided to preserve the description of these considerations
+	    in this non-normative appendix.
+      </t>
+      <t indent="0" pn="section-appendix.a-2">
+	    SETs may contain sensitive information that is considered
+	    Personally Identifiable Information (PII).
+	    In such cases, SET Transmitters and
+	    SET Recipients <bcp14>MUST</bcp14> protect the confidentiality of the SET contents.
+	    When TLS is not used, this means that the SET <bcp14>MUST</bcp14> be encrypted
+	    as described in <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref>.
+      </t>
+      <t indent="0" pn="section-appendix.a-3">
+	    If SETs were allowed to be transmitted over unencrypted channels, some privacy-sensitive
+	    information about them might leak, even though the SETs themselves are encrypted.
+	    For instance, an attacker may be able to determine whether or not a SET was accepted and the reason for its rejection
+	    or may be able to derive information from being able to observe the size of the encrypted SET.
+	    (Note that even when TLS is utilized, some information leakage is still possible;
+	    message padding algorithms to prevent side channels remain an open research topic.)
+      </t>
+    </section>
+    <section anchor="Acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">
+	    The editors would like to thank the members of the SCIM Working Group, which
+	    began discussions of provisioning events starting with draft-hunt-scim-notify-00 in 2015.
+	    We would like to thank <contact fullname="Phil Hunt"/> and the other authors of draft-ietf-secevent-delivery-02,
+	    upon which this specification is based.
+	    We would like to thank the participants in the SecEvents
+	    Working Group for their contributions to this specification.
+      </t>
+      <t indent="0" pn="section-appendix.b-2">
+	    Additionally, we would like to thank the following individuals for their reviews of the specification:
+	    <contact fullname="Joe Clarke"/>,
+	    <contact fullname="Roman Danyliw"/>,
+	    <contact fullname="Vijay Gurbani"/>,
+	    <contact fullname="Benjamin Kaduk"/>,
+	    <contact fullname="Erik Kline"/>,
+	    <contact fullname="Murray Kucherawy"/>,
+	    <contact fullname="Barry Leiba"/>,
+	    <contact fullname="Yaron Sheffer"/>,
+	    <contact fullname="Robert Sparks"/>,
+	    <contact fullname="Valery Smyslov"/>,
+	    <contact fullname="Éric Vyncke"/>,
+	    and
+	    <contact fullname="Robert Wilton"/>.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Annabelle Backman" initials="A." surname="Backman" role="editor">
+        <organization showOnFrontPage="true">Amazon</organization>
+        <address>
+          <email>richanna@amazon.com</email>
+        </address>
+      </author>
+      <author fullname="Michael B. Jones" initials="M." surname="Jones" role="editor">
+        <organization showOnFrontPage="true">Microsoft</organization>
+        <address>
+          <email>mbj@microsoft.com</email>
+          <uri>https://self-issued.info/</uri>
+        </address>
+      </author>
+      <author fullname="Marius Scurtescu" initials="M." surname="Scurtescu">
+        <organization showOnFrontPage="true">Coinbase</organization>
+        <address>
+          <email>marius.scurtescu@coinbase.com</email>
+        </address>
+      </author>
+      <author fullname="Morteza Ansari" initials="M." surname="Ansari">
+        <organization showOnFrontPage="true">Independent</organization>
+        <address>
+          <email>morteza@sharppics.com</email>
+        </address>
+      </author>
+      <author fullname="Anthony Nadalin" initials="A." surname="Nadalin">
+        <organization showOnFrontPage="true">Independent</organization>
+        <address>
+          <email>nadalin@prodigy.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

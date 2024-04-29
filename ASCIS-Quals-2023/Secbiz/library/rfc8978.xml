@@ -1,0 +1,857 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-v6ops-slaac-renum-05" indexInclude="true" ipr="trust200902" number="8978" prepTime="2021-03-10T11:52:53" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-v6ops-slaac-renum-05" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8978" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Reaction to Renumbering Events">Reaction of IPv6 Stateless Address Autoconfiguration (SLAAC) to Flash-Renumbering Events</title>
+    <seriesInfo name="RFC" value="8978" stream="IETF"/>
+    <author fullname="Fernando Gont" initials="F." surname="Gont">
+      <organization abbrev="SI6 Networks" showOnFrontPage="true">SI6 Networks</organization>
+      <address>
+        <postal>
+          <street>Segurola y Habana 4310, 7mo Piso</street>
+          <city>Villa Devoto</city>
+          <region>Ciudad Autónoma de Buenos Aires</region>
+          <country>Argentina</country>
+        </postal>
+        <email>fgont@si6networks.com</email>
+        <uri>https://www.si6networks.com</uri>
+      </address>
+    </author>
+    <author fullname="Jan Žorž" initials="J." surname="Žorž">
+      <organization abbrev="6connect" showOnFrontPage="true">6connect, Inc.</organization>
+      <address>
+        <email>jan@6connect.com</email>
+      </address>
+    </author>
+    <author initials="R." surname="Patterson" fullname="Richard Patterson">
+      <organization showOnFrontPage="true">Sky UK</organization>
+      <address>
+        <email>richard.patterson@sky.uk</email>
+      </address>
+    </author>
+    <date month="03" year="2021"/>
+    <area>Operations and Management</area>
+    <workgroup>v6ops</workgroup>
+    <keyword>IPv6</keyword>
+    <keyword>problem</keyword>
+    <keyword>address</keyword>
+    <keyword>prefix delegation</keyword>
+    <keyword>DHCPv6</keyword>
+    <keyword>stale prefixes</keyword>
+    <keyword>old prefixes</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">In scenarios where network configuration information
+related to IPv6 prefixes becomes invalid without any explicit and reliable
+signaling of that condition (such as when a Customer Edge router crashes and
+reboots without knowledge of the previously employed prefixes), hosts on the
+local network may continue using stale prefixes for an unacceptably long time
+(on the order of several days), thus resulting in connectivity problems. This
+document describes this issue and discusses operational workarounds that may
+help to improve network robustness. Additionally, it highlights areas where
+further work may be needed.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8978" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-analysis-of-the-problem">Analysis of the Problem</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-of-dynamic-prefixes">Use of Dynamic Prefixes</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-default-pio-lifetime-values">Default PIO Lifetime Values in IPv6 Stateless Address Autoconfiguration (SLAAC)</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-recovering-from-stale-netwo">Recovering from Stale Network Configuration Information</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t indent="0" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-lack-of-explicit-signaling-">Lack of Explicit Signaling about Stale Information</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.5">
+                <t indent="0" pn="section-toc.1-1.2.2.5.1"><xref derivedContent="2.5" format="counter" sectionFormat="of" target="section-2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-interaction-between-dhcpv6-">Interaction between DHCPv6-PD and SLAAC</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operational-mitigations">Operational Mitigations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-stable-prefixes">Stable Prefixes</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-slaac-parameter-tweaking">SLAAC Parameter Tweaking</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-future-work">Future Work</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">IPv6 Stateless Address Autoconfiguration (SLAAC) <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/> conveys information about prefixes to be
+employed for address configuration via Prefix Information Options (PIOs) sent
+in Router Advertisement (RA) messages. IPv6 largely assumes prefix stability,
+with network renumbering only taking place in a planned manner: old
+prefixes are deprecated (and eventually invalidated) via reduced prefix lifetimes and new prefixes  are introduced (with
+longer lifetimes) at the same time. However, there are several
+scenarios that may lead to the so-called "flash-renumbering" events, where a
+prefix employed by a network suddenly becomes invalid and replaced by a new
+prefix. In some of these scenarios, the local router producing the network
+renumbering event may try to deprecate (and eventually invalidate) the currently employed prefix (by
+explicitly signaling the network about the renumbering event), whereas in other
+scenarios, it may be unable to do so.</t>
+      <t indent="0" pn="section-1-2">In scenarios where network configuration information related to IPv6
+prefixes becomes invalid without any explicit and reliable signaling of that
+condition, hosts on the local network may continue using stale prefixes for an
+unacceptably long period of time, thus resulting in connectivity problems.</t>
+      <t indent="0" pn="section-1-3">Scenarios where this problem may arise include, but are not limited to, the following:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-4">
+        <li pn="section-1-4.1">The most common IPv6 deployment scenario for residential or small
+office networks, where a Customer Edge (CE) router employs DHCPv6 Prefix
+Delegation (DHCPv6-PD) <xref target="RFC8415" format="default" sectionFormat="of" derivedContent="RFC8415"/> to request a
+prefix from an Internet Service Provider (ISP), and a sub-prefix of the leased
+prefix is advertised on the LAN side of the CE router via Stateless Address
+Autoconfiguration (SLAAC) <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/>. In
+scenarios where the CE router crashes and reboots, the CE router may obtain (via
+DHCPv6-PD) a different prefix from the one previously leased and therefore
+advertise (via SLAAC) a new sub-prefix on the LAN side. Hosts will typically
+configure addresses for the new sub-prefix but will also normally retain and may
+actively employ the addresses configured for the previously advertised sub-prefix,
+since their associated Preferred Lifetime and Valid Lifetime allow them to do
+so.</li>
+        <li pn="section-1-4.2">A router (e.g., Customer Edge router) advertises autoconfiguration
+ prefixes (corresponding to prefixes learned via DHCPv6-PD) with constant PIO
+ lifetimes that are not synchronized with the DHCPv6-PD lease time (even though
+ <xref target="RFC8415" sectionFormat="of" section="6.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8415#section-6.3" derivedContent="RFC8415"/> requires such
+ synchronization). While this behavior violates the aforementioned requirement
+ from <xref target="RFC8415" format="default" sectionFormat="of" derivedContent="RFC8415"/>, it is not an unusual behavior.
+For example, this is particularly true for implementations in which DHCPv6-PD is implemented in a different software module
+ than SLAAC.</li>
+        <li pn="section-1-4.3">A switch-port that a host is connected to is moved to another subnet (VLAN) as a result of manual switch-port reconfiguration or 802.1x reauthentication.  There has been evidence that
+       some 802.1x supplicants do not reset network settings after
+       successful 802.1x authentication.  If a host fails 802.1x authentication for some reason, it may be placed in a "quarantine" VLAN; if successfully authenticated later on, the host may end up having IPv6 addresses from both the old ("quarantine") and new VLANs.</li>
+        <li pn="section-1-4.4">During a planned network renumbering event, a router is configured to
+       send an RA including a Prefix Information
+ Option (PIO) for the "old" prefix with the Preferred Lifetime set to zero and the Valid Lifetime set to a small value, as well as a PIO for the new prefix with default lifetimes.
+ However, due to unsolicited RAs being sent to a multicast destination address,
+ and multicast being rather unreliable on busy Wi-Fi networks, the RA might not
+ be received by local hosts.</li>
+        <li pn="section-1-4.5">An automated device config management system performs periodic config
+ pushes to network devices.  In these scenarios, network devices may simply immediately
+ forget their previous configuration, rather than withdraw it gracefully.  If such a push results in
+       changing the prefix configured on a particular subnet, hosts
+       attached to that subnet might not get notified about the prefix
+       change, and their addresses from the "old" prefix might not be
+       deprecated (and eventually invalidated) in a timely manner.  A related scenario is an incorrect network renumbering event, where a network administrator renumbers a network by simply
+       removing the "old" prefix from the configuration and configuring a
+       new prefix instead.
+ </li>
+      </ul>
+      <t indent="0" pn="section-1-5">
+Lacking any explicit and reliable signaling to deprecate (and eventually invalidate) the stale prefixes, hosts may continue to employ the previously configured addresses, which will typically result in packets being filtered or blackholed either on the CE router or within the ISP network. </t>
+      <t indent="0" pn="section-1-6">The default values for the Preferred Lifetime and Valid Lifetime of
+PIOs specified in <xref target="RFC4861" format="default" sectionFormat="of" derivedContent="RFC4861"/> mean that, in the
+aforementioned scenarios, the stale addresses would be retained and could be
+actively employed for new communication instances for an unacceptably long
+period of time (one month and one week, respectively). This could lead to
+interoperability problems, instead of hosts transitioning to the
+newly advertised prefix(es) in a more timely manner.</t>
+      <t indent="0" pn="section-1-7">Some devices have implemented ad hoc mechanisms to address this
+problem, such as sending RAs to deprecate (and eventually invalidate) apparently stale prefixes when the
+device receives any packets employing a source address from a prefix not
+currently advertised for address configuration on the local network <xref target="FRITZ" format="default" sectionFormat="of" derivedContent="FRITZ"/>. However, this may introduce other
+interoperability problems, particularly in multihomed/multi-prefix
+scenarios. This is a clear indication that advice in this area is
+warranted.</t>
+      <t indent="0" pn="section-1-8">Unresponsiveness to these flash-renumbering events is caused by the
+inability of the network to deprecate (and eventually invalidate) stale information as well as by the
+inability of hosts to react to network configuration changes in a more timely
+manner. Clearly, it would be desirable that these flash-renumbering events
+do not occur and that, when they do occur, hosts are explicitly and
+reliably notified of their occurrence. However, for robustness reasons, it is
+paramount for hosts to be able to recover from stale configuration information
+even when these flash-renumbering events occur and the network is unable to
+explicitly and reliably notify hosts about such conditions. </t>
+      <t indent="0" pn="section-1-9"><xref target="problem" format="default" sectionFormat="of" derivedContent="Section 2"/> analyzes this problem in
+more detail. <xref target="Solutions" format="default" sectionFormat="of" derivedContent="Section 3"/> describes possible
+operational mitigations. <xref target="futurework" format="default" sectionFormat="of" derivedContent="Section 4"/> describes
+possible future work to mitigate the aforementioned problem.</t>
+    </section>
+    <section anchor="problem" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-analysis-of-the-problem">Analysis of the Problem</name>
+      <t indent="0" pn="section-2-1">As noted in <xref target="intro" format="default" sectionFormat="of" derivedContent="Section 1"/>, the problem discussed in this document is exacerbated by the default values of some protocol parameters and other factors. The following sections analyze each of them in detail.</t>
+      <section anchor="ops" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-use-of-dynamic-prefixes">Use of Dynamic Prefixes</name>
+        <t indent="0" pn="section-2.1-1">In network scenarios where dynamic prefixes are employed, renumbering events lead to updated network configuration information being propagated through the network, such that the renumbering events are gracefully handled. However, if the renumbering event happens along with, e.g., loss of configuration state by some of the devices involved in the renumbering procedure (e.g., a router crashes, reboots, and gets leased a new prefix), this may result in a flash-renumbering event, where new prefixes are introduced without properly phasing out the old ones.</t>
+        <t indent="0" pn="section-2.1-2">In simple residential or small office scenarios, the problem discussed in this document would be avoided if DHCPv6-PD leased "stable" prefixes. However, a recent survey <xref target="UK-NOF" format="default" sectionFormat="of" derivedContent="UK-NOF"/> indicates that 37% of the responding ISPs employ dynamic IPv6 prefixes. That is, dynamic IPv6 prefixes are an operational reality.</t>
+        <t indent="0" pn="section-2.1-3">Deployment reality aside, there are a number of possible issues associated with stable prefixes:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2.1-4">
+          <li pn="section-2.1-4.1">Provisioning systems may be unable to deliver stable IPv6 prefixes.</li>
+          <li pn="section-2.1-4.2">While an ISP might lease stable prefixes to the home or small
+office, the Customer Edge router might in turn lease sub-prefixes of these
+prefixes to other internal network devices. Unless the associated lease
+databases are stored on non-volatile memory, these internal devices might get
+leased dynamic sub-prefixes of the stable prefix leased by the ISP. In other
+words, every time a prefix is leased, there is the potential for the resulting
+prefixes to become dynamic, even if the device leasing sub-prefixes has been
+leased a stable prefix by its upstream router. </li>
+          <li pn="section-2.1-4.3">While there is a range of information that may be employed to
+correlate network activity <xref target="RFC7721" format="default" sectionFormat="of" derivedContent="RFC7721"/>, the use
+of stable prefixes clearly simplifies network activity correlation and may reduce 
+the effectiveness of "temporary addresses" <xref target="RFC8981" format="default" sectionFormat="of" derivedContent="RFC8981"/>. </li>
+          <li pn="section-2.1-4.4">There might be existing advice for ISPs to deliver dynamic IPv6
+prefixes <strong>by default</strong> (e.g., see <xref target="GERMAN-DP" format="default" sectionFormat="of" derivedContent="GERMAN-DP"/>) over privacy concerns associated with stable prefixes.</li>
+          <li pn="section-2.1-4.5">There might be scalability and performance drawbacks of either a disaggregated distributed routing topology or a centralized topology, which are often required to provide stable prefixes, i.e., distributing more-specific routes or summarizing routes at centralized locations.</li>
+        </ul>
+        <t indent="0" pn="section-2.1-5">For a number of reasons (such as the ones stated above), IPv6 deployments might employ dynamic prefixes (even at the expense of the issues discussed in this document), and there might be scenarios in which the dynamics of a network are such that the network exhibits the behavior of dynamic prefixes. Rather than trying to regulate how operators may run their networks, this document aims at improving network robustness in the deployed Internet.</t>
+      </section>
+      <section anchor="timer-problem" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-default-pio-lifetime-values">Default PIO Lifetime Values in IPv6 Stateless Address Autoconfiguration (SLAAC)</name>
+        <t indent="0" pn="section-2.2-1">The impact of the issue discussed in this document is a function of the lifetime values employed for PIOs, since these values determine for how long the corresponding addresses will be preferred and considered valid. Thus, when the problem discussed in this document is experienced, the longer the PIO lifetimes, the higher the impact.</t>
+        <t indent="0" pn="section-2.2-2"><xref target="RFC4861" format="default" sectionFormat="of" derivedContent="RFC4861"/> specifies the following default PIO lifetime values:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2.2-3">
+          <li pn="section-2.2-3.1">Preferred Lifetime (AdvPreferredLifetime): 604800 seconds (7 days)</li>
+          <li pn="section-2.2-3.2">Valid Lifetime (AdvValidLifetime): 2592000 seconds (30 days)</li>
+        </ul>
+        <t indent="0" pn="section-2.2-4">Under problematic circumstances, such as when the corresponding network information has become stale without any explicit and reliable signal from the network (as described in <xref target="intro" format="default" sectionFormat="of" derivedContent="Section 1"/>), it could take hosts up to 7 days
+    (one week) to deprecate the corresponding addresses and up to 30 days (one
+    month) to eventually invalidate and remove any addresses configured
+    for the stale prefix.  This means that it will typically take hosts
+    an unacceptably long period of time (on the order of several days) to
+    recover from these scenarios. </t>
+      </section>
+      <section anchor="hosts-problem" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-recovering-from-stale-netwo">Recovering from Stale Network Configuration Information</name>
+        <t indent="0" pn="section-2.3-1">SLAAC hosts are unable to recover from stale network configuration information, since:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2.3-2">
+          <li pn="section-2.3-2.1">In scenarios where SLAAC routers explicitly signal the
+     renumbering event, hosts will typically deprecate, but not
+     invalidate, the stale addresses, since item "e)" of <xref target="RFC4862" sectionFormat="of" section="5.5.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4862#section-5.5.3" derivedContent="RFC4862"/> specifies that an unauthenticated RA may never reduce
+     the valid lifetime of an address to less than two hours.
+     Communication with the new "users" of the stale prefix
+     will not be possible, since the stale prefix will still be
+     considered "on-link" by the local hosts.</li>
+          <li pn="section-2.3-2.2">In the absence of explicit signaling from SLAAC routers, SLAAC
+     hosts will typically fail to recover from stale configuration
+     information in a timely manner, since hosts would need to rely
+     on the last Preferred Lifetime and Valid Lifetime advertised
+     for the stale prefix, for the corresponding addresses to become
+     deprecated and subsequently invalidated. Please see <xref target="timer-problem" format="default" sectionFormat="of" derivedContent="Section 2.2"/> of
+     this document for a discussion of the default PIO lifetime values.</li>
+        </ul>
+      </section>
+      <section anchor="cpe-problem" numbered="true" toc="include" removeInRFC="false" pn="section-2.4">
+        <name slugifiedName="name-lack-of-explicit-signaling-">Lack of Explicit Signaling about Stale Information</name>
+        <t indent="0" pn="section-2.4-1">Whenever prefix information has changed, a SLAAC router should advertise not only the new information but also the
+ stale information with appropriate lifetime values (both the Preferred
+ Lifetime and the Valid Lifetime set to 0). This would provide explicit
+ signaling to SLAAC hosts to remove the stale information (including
+ configured addresses and routes). However, in certain scenarios, such as when a CE router crashes and reboots, the CE
+router may have no knowledge about the previously advertised prefixes and thus
+might be unable to advertise them with appropriate lifetimes (in order to
+deprecate and eventually invalidate them). </t>
+        <t indent="0" pn="section-2.4-2">In any case, we note that, as discussed in <xref target="hosts-problem" format="default" sectionFormat="of" derivedContent="Section 2.3"/>, PIOs with small Valid Lifetimes in unauthenticated RAs will
+not lower the Valid Lifetime to any value shorter than two hours (as per <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/>). Therefore, even if a SLAAC router tried
+to explicitly signal the network about the stale configuration information via
+unauthenticated RAs, implementations compliant with <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/> would deprecate the corresponding prefixes but would fail
+to invalidate them. </t>
+        <aside pn="section-2.4-3">
+          <t indent="0" pn="section-2.4-3.1">NOTE: </t>
+          <t indent="0" pn="section-2.4-3.2">Some implementations have been updated to honor small PIO lifetimes
+values, as proposed in <xref target="I-D.ietf-6man-slaac-renum" format="default" sectionFormat="of" derivedContent="RENUM-RXN"/>. For example, please see <xref target="Linux-update" format="default" sectionFormat="of" derivedContent="Linux-update"/>.</t>
+        </aside>
+      </section>
+      <section anchor="dhcpv6-pd-slaac-problem" numbered="true" toc="include" removeInRFC="false" pn="section-2.5">
+        <name slugifiedName="name-interaction-between-dhcpv6-">Interaction between DHCPv6-PD and SLAAC</name>
+        <t indent="0" pn="section-2.5-1">While DHCPv6-PD is normally employed along with SLAAC, the interaction between the two protocols is largely unspecified. Not unusually, the two protocols are implemented in two different software components, with the interface between the two implemented by means of some sort of script that feeds the SLAAC implementation with values learned from DHCPv6-PD.</t>
+        <t indent="0" pn="section-2.5-2">At times, the prefix lease time is fed as a constant value to the
+SLAAC router implementation, meaning that, eventually, the prefix lifetimes
+advertised on the LAN side will span <strong>past</strong> the DHCPv6-PD lease
+time. This is clearly incorrect, since the SLAAC router implementation would be
+allowing the use of such prefixes for a period of time that is longer than the one they have been leased for via DHCPv6-PD. </t>
+      </section>
+    </section>
+    <section anchor="Solutions" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-operational-mitigations">Operational Mitigations</name>
+      <t indent="0" pn="section-3-1">The following subsections discuss possible operational workarounds
+for the aforementioned problems. 
+
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-stable-prefixes">Stable Prefixes</name>
+        <t indent="0" pn="section-3.1-1">As noted in <xref target="ops" format="default" sectionFormat="of" derivedContent="Section 2.1"/>, the use of
+stable prefixes would eliminate the issue in <strong>some</strong> of the
+scenarios discussed in <xref target="intro" format="default" sectionFormat="of" derivedContent="Section 1"/> of this
+document, such as the typical home network deployment. However, as noted in <xref target="ops" format="default" sectionFormat="of" derivedContent="Section 2.1"/>, there might be reasons for which an administrator may want or may
+need to employ dynamic prefixes.</t>
+      </section>
+      <section anchor="host-side" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-slaac-parameter-tweaking">SLAAC Parameter Tweaking</name>
+        <t indent="0" pn="section-3.2-1">An operator may wish to override some SLAAC parameters such that,
+under normal circumstances, the associated timers will be refreshed/reset, but in the
+presence of network faults (such as the one discussed in this document), the
+associated timers go off and trigger some fault recovering action (e.g., deprecate and
+eventually invalidate stale addresses).</t>
+        <t indent="0" pn="section-3.2-2">The following router configuration variables from <xref target="RFC4861" format="default" sectionFormat="of" derivedContent="RFC4861"/> (corresponding to the "lifetime" parameters
+of PIOs) could be overridden as follows:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.2-3">
+          <li pn="section-3.2-3.1">AdvPreferredLifetime: 2700 seconds (45 minutes)</li>
+          <li pn="section-3.2-3.2">AdvValidLifetime: 5400 seconds (90 minutes)</li>
+        </ul>
+        <aside pn="section-3.2-4">
+          <t indent="0" pn="section-3.2-4.1">NOTES:</t>
+          <t indent="0" pn="section-3.2-4.2">The aforementioned values for AdvPreferredLifetime and AdvValidLifetime are
+expected to be appropriate for most networks. In some networks, particularly
+those where the operator has complete control of prefix allocation and where hosts on
+the network may spend long periods of time sleeping (e.g., sensors with limited
+battery), longer values may be appropriate.</t>
+          <t indent="0" pn="section-3.2-4.3">
+ A CE router advertising a sub-prefix of a prefix leased via DHCPv6-PD will
+periodically refresh the Preferred Lifetime and the Valid Lifetime of an
+advertised prefix to AdvPreferredLifetime and AdvValidLifetime, respectively,
+as long as the resulting lifetimes of the corresponding prefixes do not extend
+past the DHCPv6-PD lease time <xref target="I-D.ietf-v6ops-cpe-slaac-renum" format="default" sectionFormat="of" derivedContent="RENUM-CPE"/>. </t>
+        </aside>
+        <t indent="0" pn="section-3.2-5">RATIONALE:</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.2-6">
+          <li pn="section-3.2-6.1">In the context of <xref target="RFC8028" format="default" sectionFormat="of" derivedContent="RFC8028"/>,
+where it is clear that use of addresses configured for a given prefix is tied
+to using the next-hop router that advertised the prefix, it does not make sense
+for the Preferred Lifetime of a PIO to be larger than the Router Lifetime
+(AdvDefaultLifetime) of the corresponding Router Advertisement messages. The
+Valid Lifetime is set to a larger value to cope with transient network
+problems.</li>
+          <li pn="section-3.2-6.2">Lacking RAs that refresh information, addresses configured for advertised
+prefixes become deprecated in a more timely manner; therefore, Rule 3 of <xref target="RFC6724" format="default" sectionFormat="of" derivedContent="RFC6724"/> causes other configured addresses (if
+available) to be used instead.</li>
+          <li pn="section-3.2-6.3">Reducing the Valid Lifetime of PIOs helps reduce the amount of time a host may maintain stale information
+ and the amount of time an advertising router would need to advertise stale
+ prefixes to invalidate them. Reducing the Preferred Lifetime of PIOs helps reduce the amount of time it takes for a host to prefer other working
+ prefixes (see <xref target="RFC4861" sectionFormat="of" section="12" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4861#section-12" derivedContent="RFC4861"/>). However, we note that while the values suggested in this section are an
+ improvement over the default values specified in <xref target="RFC4861" format="default" sectionFormat="of" derivedContent="RFC4861"/>, they represent a trade-off among a number of factors,
+ including responsiveness, possible impact on the battery life of connected
+ devices <xref target="RFC7772" format="default" sectionFormat="of" derivedContent="RFC7772"/>, etc. Thus, they may or may
+ not provide sufficient mitigation to the problem discussed in this
+ document.</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="futurework" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-future-work">Future Work</name>
+      <t indent="0" pn="section-4-1">Improvements in Customer Edge routers <xref target="RFC7084" format="default" sectionFormat="of" derivedContent="RFC7084"/>, such that they can signal hosts about stale prefixes
+to deprecate (and eventually invalidate) them accordingly, can help mitigate the problem discussed in this
+document for the "home network" scenario. Such work is currently being pursued
+in <xref target="I-D.ietf-v6ops-cpe-slaac-renum" format="default" sectionFormat="of" derivedContent="RENUM-CPE"/>.</t>
+      <t indent="0" pn="section-4-2">Improvements in the SLAAC protocol <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/> and some IPv6-related algorithms, such as "Default Address Selection for
+Internet Protocol Version 6 (IPv6)" <xref target="RFC6724" format="default" sectionFormat="of" derivedContent="RFC6724"/>, would help improve network
+robustness. Such work is currently being pursued in <xref target="I-D.ietf-6man-slaac-renum" format="default" sectionFormat="of" derivedContent="RENUM-RXN"/>.</t>
+      <t indent="0" pn="section-4-3">The aforementioned work is considered out of the scope of this
+present document, which only focuses on documenting the problem and discussing
+operational mitigations.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-5-1">This document has no IANA actions.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">This document discusses a problem that may arise in scenarios where
+flash-renumbering events occur and proposes workarounds to mitigate the
+aforementioned problem. This document does not introduce any new security
+issues; therefore, the same security considerations as for <xref target="RFC4861" format="default" sectionFormat="of" derivedContent="RFC4861"/> and <xref target="RFC4862" format="default" sectionFormat="of" derivedContent="RFC4862"/> apply.</t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.linkova-6man-default-addr-selection-update" to="DEFAULT-ADDR"/>
+    <displayreference target="I-D.ietf-6man-slaac-renum" to="RENUM-RXN"/>
+    <displayreference target="I-D.ietf-v6ops-cpe-slaac-renum" to="RENUM-CPE"/>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC4861" target="https://www.rfc-editor.org/info/rfc4861" quoteTitle="true" derivedAnchor="RFC4861">
+          <front>
+            <title>Neighbor Discovery for IP version 6 (IPv6)</title>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Nordmark" fullname="E. Nordmark">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Simpson" fullname="W. Simpson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Soliman" fullname="H. Soliman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document specifies the Neighbor Discovery protocol for IP Version 6.  IPv6 nodes on the same link use Neighbor Discovery to discover each other's presence, to determine each other's link-layer addresses, to find routers, and to maintain reachability information about the paths to active neighbors.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4861"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4861"/>
+        </reference>
+        <reference anchor="RFC4862" target="https://www.rfc-editor.org/info/rfc4862" quoteTitle="true" derivedAnchor="RFC4862">
+          <front>
+            <title>IPv6 Stateless Address Autoconfiguration</title>
+            <author initials="S." surname="Thomson" fullname="S. Thomson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Jinmei" fullname="T. Jinmei">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document specifies the steps a host takes in deciding how to autoconfigure its interfaces in IP version 6.  The autoconfiguration process includes generating a link-local address, generating global addresses via stateless address autoconfiguration, and the Duplicate Address Detection procedure to verify the uniqueness of the addresses on a link.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4862"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4862"/>
+        </reference>
+        <reference anchor="RFC6724" target="https://www.rfc-editor.org/info/rfc6724" quoteTitle="true" derivedAnchor="RFC6724">
+          <front>
+            <title>Default Address Selection for Internet Protocol Version 6 (IPv6)</title>
+            <author initials="D." surname="Thaler" fullname="D. Thaler" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Draves" fullname="R. Draves">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Matsumoto" fullname="A. Matsumoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Chown" fullname="T. Chown">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="September"/>
+            <abstract>
+              <t indent="0">This document describes two algorithms, one for source address selection and one for destination address selection.  The algorithms specify default behavior for all Internet Protocol version 6 (IPv6) implementations.  They do not override choices made by applications or upper-layer protocols, nor do they preclude the development of more advanced mechanisms for address selection.  The two algorithms share a common context, including an optional mechanism for allowing administrators to provide policy that can override the default behavior.  In dual-stack implementations, the destination address selection algorithm can consider both IPv4 and IPv6 addresses -- depending on the available source addresses, the algorithm might prefer IPv6 addresses over IPv4 addresses, or vice versa.</t>
+              <t indent="0">Default address selection as defined in this specification applies to all IPv6 nodes, including both hosts and routers.  This document obsoletes RFC 3484.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6724"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6724"/>
+        </reference>
+        <reference anchor="RFC8028" target="https://www.rfc-editor.org/info/rfc8028" quoteTitle="true" derivedAnchor="RFC8028">
+          <front>
+            <title>First-Hop Router Selection by Hosts in a Multi-Prefix Network</title>
+            <author initials="F." surname="Baker" fullname="F. Baker">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Carpenter" fullname="B. Carpenter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="November"/>
+            <abstract>
+              <t indent="0">This document describes expected IPv6 host behavior in a scenario that has more than one prefix, each allocated by an upstream network that is assumed to implement BCP 38 ingress filtering, when the host has multiple routers to choose from.  It also applies to other scenarios such as the usage of stateful firewalls that effectively act as address-based filters.  Host behavior in choosing a first-hop router may interact with source address selection in a given implementation.  However, the selection of the source address for a packet is done before the first-hop router for that packet is chosen. Given that the network or host is, or appears to be, multihomed with multiple provider-allocated addresses, that the host has elected to use a source address in a given prefix, and that some but not all neighboring routers are advertising that prefix in their Router Advertisement Prefix Information Options, this document specifies to which router a host should present its transmission.  It updates RFC 4861.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8028"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8028"/>
+        </reference>
+        <reference anchor="RFC8415" target="https://www.rfc-editor.org/info/rfc8415" quoteTitle="true" derivedAnchor="RFC8415">
+          <front>
+            <title>Dynamic Host Configuration Protocol for IPv6 (DHCPv6)</title>
+            <author initials="T." surname="Mrugalski" fullname="T. Mrugalski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Siodelski" fullname="M. Siodelski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Volz" fullname="B. Volz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Yourtchenko" fullname="A. Yourtchenko">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Richardson" fullname="M. Richardson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Jiang" fullname="S. Jiang">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Lemon" fullname="T. Lemon">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Winters" fullname="T. Winters">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="November"/>
+            <abstract>
+              <t indent="0">This document describes the Dynamic Host Configuration Protocol for IPv6 (DHCPv6): an extensible mechanism for configuring nodes with network configuration parameters, IP addresses, and prefixes. Parameters can be provided statelessly, or in combination with stateful assignment of one or more IPv6 addresses and/or IPv6 prefixes.  DHCPv6 can operate either in place of or in addition to stateless address autoconfiguration (SLAAC).</t>
+              <t indent="0">This document updates the text from RFC 3315 (the original DHCPv6 specification) and incorporates prefix delegation (RFC 3633), stateless DHCPv6 (RFC 3736), an option to specify an upper bound for how long a client should wait before refreshing information (RFC 4242), a mechanism for throttling DHCPv6 clients when DHCPv6 service is not available (RFC 7083), and relay agent handling of unknown messages (RFC 7283).  In addition, this document clarifies the interactions between models of operation (RFC 7550).  As such, this document obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283, and RFC 7550.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8415"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8415"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.linkova-6man-default-addr-selection-update" quoteTitle="true" target="https://tools.ietf.org/html/draft-linkova-6man-default-addr-selection-update-00" derivedAnchor="DEFAULT-ADDR">
+          <front>
+            <title>Default Address Selection and Subnet Renumbering</title>
+            <author fullname="Jen Linkova">
+	 </author>
+            <date month="March" day="30" year="2017"/>
+            <abstract>
+              <t indent="0">   This document discusses some scenarios when IPv6 hosts might not be
+   able to properly detect the fact the network they are connected to
+   has changed IPv6 addressing.  It proposes changes to the Default
+   Address Selection algorithm defined in [RFC6724] to mitigate the
+   impact of the abovementioned failure scenarios as well as provides
+   recommendations for sending Prefix Information Options (PIO).  It
+   updated [RFC6724].
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-linkova-6man-default-addr-selection-update-00"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-linkova-6man-default-addr-selection-update-00.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="FRITZ" target="https://www.si6networks.com/2016/02/16/quiz-weird-ipv6-traffic-on-the-local-network-updated-with-solution/" quoteTitle="true" derivedAnchor="FRITZ">
+          <front>
+            <title>Quiz: Weird IPv6 Traffic on the Local Network (updated with solution)</title>
+            <author fullname="Fernando Gont" initials="F." surname="Gont">
+              <organization abbrev="SI6 Networks / UTN-FRH" showOnFrontPage="true">SI6 Networks</organization>
+              <address>
+                <postal>
+                  <street>Segurola y Habana 4310, 7mo Piso</street>
+                  <city>Villa Devoto</city>
+                  <region>Ciudad Autonoma de Buenos Aires</region>
+                  <country>Argentina</country>
+                </postal>
+                <phone>+54 11 4650 8472</phone>
+                <email>fgont@si6networks.com</email>
+                <uri>https://www.si6networks.com</uri>
+              </address>
+            </author>
+            <date month="February" year="2016"/>
+          </front>
+          <refcontent>SI6 Networks</refcontent>
+        </reference>
+        <reference anchor="GERMAN-DP" quoteTitle="false" target="http://www.bfdi.bund.de/SharedDocs/Publikationen/Entschliessungssammlung/DSBundLaender/84DSK_EinfuehrungIPv6.pdf?__blob=publicationFile" derivedAnchor="GERMAN-DP">
+          <front>
+            <title>"Einführung von IPv6: Hinweise für Provider im Privatkundengeschäft und Hersteller" [Introduction of IPv6: Notes for providers in the consumer market and manufacturers]</title>
+            <author>
+              <organization showOnFrontPage="true">BFDI</organization>
+            </author>
+            <date month="November" year="2012"/>
+          </front>
+          <refcontent>Entschliessung der 84. Konferenz der Datenschutzbeauftragten des Bundes und der Lander [Resolution of the 84th Conference of the Federal and State Commissioners for Data Protection]</refcontent>
+        </reference>
+        <reference anchor="Linux-update" target="https://patchwork.ozlabs.org/project/netdev/patch/20200419122457.GA971@archlinux-current.localdomain/" quoteTitle="true" derivedAnchor="Linux-update">
+          <front>
+            <title>Subject: [net-next] ipv6: Honor all IPv6 PIO Valid Lifetime values</title>
+            <author fullname="Fernando Gont" initials="F." surname="Gont">
+            </author>
+            <date day="19" month="April" year="2020"/>
+          </front>
+          <refcontent>message to the netdev mailing list</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-v6ops-cpe-slaac-renum" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-v6ops-cpe-slaac-renum-07" derivedAnchor="RENUM-CPE">
+          <front>
+            <title>Improving the Reaction of Customer Edge Routers to IPv6 Renumbering Events</title>
+            <author fullname="Fernando Gont">
+              <organization showOnFrontPage="true">SI6 Networks</organization>
+            </author>
+            <author fullname="Jan Zorz">
+              <organization showOnFrontPage="true">6connect</organization>
+            </author>
+            <author fullname="Richard Patterson">
+              <organization showOnFrontPage="true">Sky UK</organization>
+            </author>
+            <author fullname="Bernie Volz">
+              <organization showOnFrontPage="true">Cisco</organization>
+            </author>
+            <date month="February" day="16" year="2021"/>
+            <abstract>
+              <t indent="0">   This document specifies improvements to Customer Edge Routers that
+   help mitigate the problems that may arise when network configuration
+   information becomes invalid, without any explicit signaling of that
+   condition to the local nodes.  This document updates RFC7084.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-v6ops-cpe-slaac-renum-07"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-v6ops-cpe-slaac-renum-07.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-6man-slaac-renum" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-6man-slaac-renum-02" derivedAnchor="RENUM-RXN">
+          <front>
+            <title>Improving the Robustness of Stateless Address Autoconfiguration (SLAAC) to Flash Renumbering Events</title>
+            <author fullname="Fernando Gont">
+              <organization showOnFrontPage="true">SI6 Networks</organization>
+            </author>
+            <author fullname="Jan Zorz">
+              <organization showOnFrontPage="true">6connect</organization>
+            </author>
+            <author fullname="Richard Patterson">
+              <organization showOnFrontPage="true">Sky UK</organization>
+            </author>
+            <date month="January" day="19" year="2021"/>
+            <abstract>
+              <t indent="0">   In renumbering scenarios where an IPv6 prefix suddenly becomes
+   invalid, hosts on the local network will continue using stale
+   prefixes for an unacceptably long period of time, thus resulting in
+   connectivity problems.  This document improves the reaction of IPv6
+   Stateless Address Autoconfiguration to such renumbering scenarios.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-6man-slaac-renum-02"/>
+          <format type="TXT" target="https://www.ietf.org/internet-drafts/draft-ietf-6man-slaac-renum-02.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC7084" target="https://www.rfc-editor.org/info/rfc7084" quoteTitle="true" derivedAnchor="RFC7084">
+          <front>
+            <title>Basic Requirements for IPv6 Customer Edge Routers</title>
+            <author initials="H." surname="Singh" fullname="H. Singh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Beebee" fullname="W. Beebee">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Donley" fullname="C. Donley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Stark" fullname="B. Stark">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="November"/>
+            <abstract>
+              <t indent="0">This document specifies requirements for an IPv6 Customer Edge (CE) router.  Specifically, the current version of this document focuses on the basic provisioning of an IPv6 CE router and the provisioning of IPv6 hosts attached to it.  The document also covers IP transition technologies.  Two transition technologies in RFC 5969's IPv6 Rapid Deployment on IPv4 Infrastructures (6rd) and RFC 6333's Dual-Stack Lite (DS-Lite) are covered in the document.  The document obsoletes RFC 6204.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7084"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7084"/>
+        </reference>
+        <reference anchor="RFC7721" target="https://www.rfc-editor.org/info/rfc7721" quoteTitle="true" derivedAnchor="RFC7721">
+          <front>
+            <title>Security and Privacy Considerations for IPv6 Address Generation Mechanisms</title>
+            <author initials="A." surname="Cooper" fullname="A. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="F." surname="Gont" fullname="F. Gont">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Thaler" fullname="D. Thaler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t indent="0">This document discusses privacy and security considerations for several IPv6 address generation mechanisms, both standardized and non-standardized.  It evaluates how different mechanisms mitigate different threats and the trade-offs that implementors, developers, and users face in choosing different addresses or address generation mechanisms.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7721"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7721"/>
+        </reference>
+        <reference anchor="RFC7772" target="https://www.rfc-editor.org/info/rfc7772" quoteTitle="true" derivedAnchor="RFC7772">
+          <front>
+            <title>Reducing Energy Consumption of Router Advertisements</title>
+            <author initials="A." surname="Yourtchenko" fullname="A. Yourtchenko">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Colitti" fullname="L. Colitti">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="February"/>
+            <abstract>
+              <t indent="0">Frequent Router Advertisement messages can severely impact host power consumption.  This document recommends operational practices to avoid such impact.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="202"/>
+          <seriesInfo name="RFC" value="7772"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7772"/>
+        </reference>
+        <reference anchor="RFC8981" target="https://www.rfc-editor.org/info/rfc8981" quoteTitle="true" derivedAnchor="RFC8981">
+          <front>
+            <title>Temporary Address Extensions for Stateless Address Autoconfiguration in IPv6</title>
+            <author initials="F." surname="Gont" fullname="F. Gont">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Krishnan" fullname="S. Krishnan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Narten" fullname="T. Narten">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Draves" fullname="R. Draves">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="February"/>
+            <abstract>
+              <t indent="0">This document describes an extension to IPv6 Stateless Address Autoconfiguration that causes hosts to generate temporary addresses with randomized interface identifiers for each prefix advertised with autoconfiguration enabled. Changing addresses over time limits the window of time during which eavesdroppers and other information collectors may trivially perform address-based network-activity correlation when the same address is employed for multiple transactions by the same host. Additionally, it reduces the window of exposure of a host as being accessible via an address that becomes revealed as a result of active communication. This document obsoletes RFC 4941.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8981"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8981"/>
+        </reference>
+        <reference anchor="RIPE-690" target="https://www.ripe.net/publications/docs/ripe-690" quoteTitle="true" derivedAnchor="RIPE-690">
+          <front>
+            <title>Best Current Operational Practice for Operators: IPv6 prefix assignment for end-users - persistent vs non-persistent, and what size to choose</title>
+            <author fullname="Jan Žorž" initials="J." surname="Žorž"/>
+            <author fullname="Sander Steffann" initials="S." surname="Steffann"/>
+            <author fullname="Primož Dražumeric" initials="P." surname="Dražumerič"/>
+            <author fullname="Mark Townsley" initials="M." surname="Townsley"/>
+            <author fullname="Andrew Alston" initials="A." surname="Alston"/>
+            <author fullname="Gert Doering" initials="G." surname="Doering"/>
+            <author fullname="Jordi Palet Martinez" initials="J." surname="Palet Martinez"/>
+            <author fullname="Jen Linkova" initials="J." surname="Linkova"/>
+            <author fullname="Luis Balbinot" initials="L." surname="Balbinot"/>
+            <author fullname="Kevin Meynell" initials="K." surname="Meynell"/>
+            <author fullname="Lee Howard" initials="L." surname="Howard"/>
+            <date month="October" year="2017"/>
+          </front>
+          <seriesInfo name="RIPE" value="690"/>
+        </reference>
+        <reference anchor="UK-NOF" target="https://indico.uknof.org.uk/event/41/contributions/542/" quoteTitle="true" derivedAnchor="UK-NOF">
+          <front>
+            <title>IPv6 Deployment Survey and BCOP</title>
+            <author fullname="Jordi Palet Martinez" initials="J." surname="Palet Martinez"/>
+            <date month="January" year="2018"/>
+          </front>
+          <seriesInfo name="UK NOF" value="39"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The authors would like to thank (in alphabetical order) <contact fullname="Brian Carpenter"/>, <contact fullname="Alissa Cooper"/>,
+      <contact fullname="Roman Danyliw"/>, <contact fullname="Owen DeLong"/>, 
+      <contact fullname="Martin Duke"/>, <contact fullname="Guillermo Gont"/>, 
+      <contact fullname="Philip Homburg"/>, <contact fullname="Sheng Jiang"/>,
+      <contact fullname="Benjamin Kaduk"/>, <contact fullname="Erik Kline"/>,
+      <contact fullname="Murray Kucherawy"/>, <contact fullname="Warren       Kumari"/>, <contact fullname="Ted Lemon"/>, <contact fullname="Juergen       Schoenwaelder"/>, <contact fullname="Éric Vyncke"/>, <contact fullname="Klaas Wierenga"/>, <contact fullname="Robert Wilton"/>, and
+      <contact fullname="Dale Worley"/> for providing valuable comments on
+      earlier draft versions of this document.</t>
+      <t indent="0" pn="section-appendix.a-2">The authors would like to thank (in alphabetical order) <contact fullname="Mikael Abrahamsson"/>, <contact fullname="Luis Balbinot"/>,
+      <contact fullname="Brian Carpenter"/>, <contact fullname="Tassos       Chatzithomaoglou"/>, <contact fullname="Uesley Correa"/>, <contact fullname="Owen DeLong"/>, <contact fullname="Gert Doering"/>, <contact fullname="Martin Duke"/>, <contact fullname="Fernando Frediani"/>, <contact fullname="Steinar Haug"/>, <contact fullname="Nick Hilliard"/>, <contact fullname="Philip Homburg"/>, <contact fullname="Lee Howard"/>, <contact fullname="Christian Huitema"/>, <contact fullname="Ted Lemon"/>, <contact fullname="Albert Manfredi"/>, <contact fullname="Jordi Palet Martinez"/>,
+      <contact fullname="Michael Richardson"/>, <contact fullname="Mark Smith"/>,
+      <contact fullname="Tarko Tikan"/>, and <contact fullname="Ole Troan"/>
+      for providing valuable comments on a previous document on which this
+      document is based.</t>
+      <t indent="0" pn="section-appendix.a-3">Fernando would like to thank <contact fullname="Alejandro D'Egidio"/> and <contact fullname="Sander Steffann"/> for a discussion of these issues. Fernando would
+      also like to thank <contact fullname="Brian Carpenter"/> who, over the
+      years, has answered many questions and provided valuable comments that
+      have benefited his protocol-related work.</t>
+      <t indent="0" pn="section-appendix.a-4">The problem discussed in this document has been previously documented
+      by <contact fullname="Jen Linkova"/> in <xref target="I-D.linkova-6man-default-addr-selection-update" format="default" sectionFormat="of" derivedContent="DEFAULT-ADDR"/> and also in <xref target="RIPE-690" format="default" sectionFormat="of" derivedContent="RIPE-690"/>. 
+      <xref target="intro" format="default" sectionFormat="of" derivedContent="Section 1"/> borrows text
+      from <xref target="I-D.linkova-6man-default-addr-selection-update" format="default" sectionFormat="of" derivedContent="DEFAULT-ADDR"/>, authored by <contact fullname="Jen Linkova"/>.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Fernando Gont" initials="F." surname="Gont">
+        <organization abbrev="SI6 Networks" showOnFrontPage="true">SI6 Networks</organization>
+        <address>
+          <postal>
+            <street>Segurola y Habana 4310, 7mo Piso</street>
+            <city>Villa Devoto</city>
+            <region>Ciudad Autónoma de Buenos Aires</region>
+            <country>Argentina</country>
+          </postal>
+          <email>fgont@si6networks.com</email>
+          <uri>https://www.si6networks.com</uri>
+        </address>
+      </author>
+      <author fullname="Jan Žorž" initials="J." surname="Žorž">
+        <organization abbrev="6connect" showOnFrontPage="true">6connect, Inc.</organization>
+        <address>
+          <email>jan@6connect.com</email>
+        </address>
+      </author>
+      <author initials="R." surname="Patterson" fullname="Richard Patterson">
+        <organization showOnFrontPage="true">Sky UK</organization>
+        <address>
+          <email>richard.patterson@sky.uk</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

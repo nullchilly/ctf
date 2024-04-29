@@ -1,0 +1,1673 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-stir-oob-07" indexInclude="true" ipr="trust200902" number="8816" prepTime="2021-02-04T13:06:22" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-stir-oob-07" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8816" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="STIR Out-of-Band">Secure Telephone Identity Revisited (STIR) Out-of-Band Architecture and Use Cases</title>
+    <seriesInfo name="RFC" value="8816" stream="IETF"/>
+    <author fullname="Eric Rescorla" initials="E." surname="Rescorla">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <email>ekr@rtfm.com</email>
+      </address>
+    </author>
+    <author initials="J." surname="Peterson" fullname="Jon Peterson">
+      <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+      <address>
+        <postal>
+          <street>1800 Sutter St Suite 570</street>
+          <city>Concord</city>
+          <region>CA</region>
+          <code>94520</code>
+          <country>United States of America</country>
+        </postal>
+        <email>jon.peterson@team.neustar</email>
+      </address>
+    </author>
+    <date month="02" year="2021"/>
+    <keyword>SIP</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The Personal Assertion Token (PASSporT) format defines
+a token that can be carried by signaling protocols, including SIP,
+to cryptographically attest the identity of callers.
+However, not all telephone calls use Internet signaling protocols,
+and some calls use them for only part of their signaling
+path, while some cannot reliably deliver SIP header fields end-to-end.
+This document describes use cases that require the delivery of
+PASSporT objects outside of the signaling path, and defines
+architectures and semantics to provide
+this functionality.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8816" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operating-environments">Operating Environments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dataflows">Dataflows</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-cases">Use Cases</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-case-1-voip-to-pstn-call">Case 1: VoIP to PSTN Call</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-case-2-two-smart-pstn-endpo">Case 2: Two Smart PSTN Endpoints</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-case-3-pstn-to-voip-call">Case 3: PSTN to VoIP Call</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.4">
+                <t indent="0" pn="section-toc.1-1.5.2.4.1"><xref derivedContent="5.4" format="counter" sectionFormat="of" target="section-5.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-case-4-gateway-out-of-band">Case 4: Gateway Out-of-Band</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.5">
+                <t indent="0" pn="section-toc.1-1.5.2.5.1"><xref derivedContent="5.5" format="counter" sectionFormat="of" target="section-5.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-case-5-enterprise-call-cent">Case 5: Enterprise Call Center</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-storing-and-retrieving-pass">Storing and Retrieving PASSporTs</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-storage">Storage</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-retrieval">Retrieval</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-solution-architecture">Solution Architecture</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-credentials-and-phone-numbe">Credentials and Phone Numbers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-call-flow">Call Flow</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-analysis">Security Analysis</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-substitution-attacks">Substitution Attacks</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rate-control-for-cps-storag">Rate Control for CPS Storage</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication-and-verifica">Authentication and Verification Service Behavior for Out-of-Band</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication-service-as">Authentication Service (AS)</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-verification-service-vs">Verification Service (VS)</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="8.3" format="counter" sectionFormat="of" target="section-8.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-gateway-placement-services">Gateway Placement Services</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-https-interface-to-">Example HTTPS Interface to the CPS</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-cps-discovery">CPS Discovery</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-encryption-key-lookup">Encryption Key Lookup</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="13" format="counter" sectionFormat="of" target="section-13"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="14" format="counter" sectionFormat="of" target="section-14"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="15" format="counter" sectionFormat="of" target="section-15"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.16">
+            <t indent="0" pn="section-toc.1-1.16.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.17">
+            <t indent="0" pn="section-toc.1-1.17.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The STIR problem statement <xref target="RFC7340" format="default" sectionFormat="of" derivedContent="RFC7340"/>
+describes widespread problems enabled by impersonation in the telephone network,
+including illegal robocalling, voicemail hacking, and swatting.
+As telephone services are increasingly migrating onto the Internet,
+and using Voice over IP (VoIP) protocols such as <xref target="RFC3261" format="default" sectionFormat="of" derivedContent="RFC3261">SIP</xref>,
+it is necessary for these protocols to support stronger identity mechanisms to prevent impersonation.
+For example, <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> defines a SIP Identity header field
+capable of carrying <xref target="RFC8225" format="default" sectionFormat="of" derivedContent="RFC8225">PASSporT objects</xref>
+in SIP as a means to cryptographically attest that the originator of a
+telephone call is authorized to use the calling party number (or, for native SIP cases,
+SIP URI) associated with the originator of the call.
+      </t>
+      <t indent="0" pn="section-1-2">Not all telephone calls use SIP today, however, and even those that do use SIP do not always carry SIP signaling end-to-end.
+   Calls from telephone numbers still routinely traverse the Public Switched Telephone Network (PSTN) at some
+   point.  Broadly, calls fall into one of three categories:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-1-3">
+        <li pn="section-1-3.1" derivedCounter="1.">
+        One or both of the endpoints is actually a PSTN endpoint.
+         </li>
+        <li pn="section-1-3.2" derivedCounter="2.">Both of the endpoints are non-PSTN (SIP, Jingle, etc.) but the call transits the PSTN at some point.
+         </li>
+        <li pn="section-1-3.3" derivedCounter="3.">Non-PSTN calls that do not transit the PSTN at all (such as native SIP end-to-end calls).
+        </li>
+      </ol>
+      <t indent="0" pn="section-1-4">The first two categories represent the  majority of telephone calls associated with problems like illegal robocalling: many robocalls today originate on the Internet but terminate at PSTN endpoints.
+   However, the core network elements that operate the PSTN are legacy devices that
+   are unlikely to be upgradable at this point to support an in-band authentication system.
+   As such, those devices largely cannot be modified to pass signatures originating on the Internet -- or indeed any in-band signaling
+   data -- intact.  Even if fields for tunneling arbitrary data can be found in traditional PSTN signaling, in some cases legacy elements would strip the signatures from those fields; in
+   others, they might damage them to the point where they cannot be
+   verified.  For those first two categories above, any in-band authentication scheme does not
+   seem practical in the current environment.
+      </t>
+      <t indent="0" pn="section-1-5">While the core network of the PSTN remains fixed, the endpoints of
+   the telephone network are becoming increasingly programmable and
+   sophisticated.  Landline "plain old telephone service" deployments,
+   especially in the developed world, are shrinking, and increasingly
+   being replaced by three classes of intelligent devices:  smart
+   phones, IP Private Branch Exchanges (PBXs), and terminal adapters.  All three are general
+   purpose computers, and typically all three have Internet access as
+   well as access to the PSTN; they may be used for residential, mobile, or enterprise telephone services.
+   Additionally, various kinds of gateways increasingly front for
+   deployments of legacy PBX and PSTN switches. All of this provides a potential avenue for
+   building an authentication system that implements stronger identity while leaving PSTN systems intact.
+      </t>
+      <t indent="0" pn="section-1-6"> This capability also provides an ideal transitional technology while in-band STIR adoption is ramping up. It permits early adopters to use the technology even when intervening network
+elements are not yet STIR-aware, and through various kinds of gateways, it may allow providers with a significant PSTN investment to still secure their calls with STIR.
+      </t>
+      <t indent="0" pn="section-1-7">The techniques described in this document therefore build on the
+<xref target="RFC8225" format="default" sectionFormat="of" derivedContent="RFC8225">PASSporT</xref> mechanism and the work of <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> to describe a way that
+a PASSporT object created in the originating network of a call can reach the terminating network even when it cannot be carried end-to-end in-band in the call signaling. This relies on
+a new service defined in this document called a Call Placement Service (CPS) that permits the PASSporT object to be stored during call processing and retrieved for verification purposes.
+      </t>
+      <t indent="0" pn="section-1-8">Potential implementors should note that this document merely defines the operating environments in which this
+       out-of-band STIR mechanism is intended to operate.  It provides use cases, gives a broad description of the components, and a potential solution architecture.
+Various environments may have their own security requirements: a public deployment of out-of-band STIR faces far greater challenges than a constrained intra-network deployment.
+        To flesh out the storage and retrieval of PASSporTs in the CPS within this
+        context, this document includes a strawman protocol suitable for that purpose. Deploying this framework in any given environment
+        would require additional specification outside the scope of this document.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/>
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-operating-environments">Operating Environments</name>
+      <t indent="0" pn="section-3-1">This section describes the environments in which the proposed out-of-band STIR mechanism is intended to operate.  In the simplest setting, Alice
+   calls Bob, and her call is routed through some set of gateways and/or the PSTN
+   that do not support end-to-end delivery of STIR.  Both Alice
+   and Bob have smart devices that can access the Internet (perhaps enterprise devices, or even end-user ones), but they do not have
+   a clear telephone signaling connection between them:  Alice cannot inject any data into
+   signaling that Bob can read, with the exception of the asserted destination and origination
+   E.164 numbers. The calling party number might originate from her own device or from the network.  These numbers are effectively the only data that can be used for coordination between the endpoints.
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-3-2">
+                            +---------+
+                           /           \
+                       +---             +---+
+  +----------+        /                      \        +----------+
+  |          |       |        Gateways        |       |          |
+  |   Alice  |&lt;-----&gt;|         and/or         |&lt;-----&gt;|    Bob   |
+  | (caller) |       |          PSTN          |       | (callee) |
+  +----------+        \                      /        +----------+
+                       +---             +---+
+                           \           /
+                            +---------+
+</artwork>
+      <t indent="0" pn="section-3-3">In a more complicated setting, Alice and/or Bob may not have a smart or
+   programmable device, but instead just a traditional telephone. However, one or both of them are behind a STIR-aware gateway that can participate in out-of-band coordination, as shown below:
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-3-4">
+                           +---------+
+                          /           \
+                      +---             +---+
++----------+  +--+   /                      \   +--+  +----------+
+|          |  |  |  |        Gateways        |  |  |  |          |
+|   Alice  |&lt;-|GW|-&gt;|         and/or         |&lt;-|GW|-&gt;|    Bob   |
+| (caller) |  |  |  |          PSTN          |  |  |  | (callee) |
++----------+  +--+   \                      /   +--+  +----------+
+                      +---             +---+
+                          \           /
+                           +---------+
+</artwork>
+      <t indent="0" pn="section-3-5">In such a case, Alice might have an analog (e.g., PSTN) connection to her
+   gateway or switch that is responsible for her identity.  Similarly, the gateway
+   would verify Alice's identity, generate the right calling party number
+   information, and provide that number to Bob using ordinary
+   Plain Old Telephone Service (POTS) mechanisms.
+      </t>
+    </section>
+    <section anchor="data" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-dataflows">Dataflows</name>
+      <t indent="0" pn="section-4-1">Because in these operating environments, endpoints cannot pass cryptographic information to one another directly
+  through signaling, any solution must
+   involve some rendezvous mechanism to allow endpoints to communicate.
+   We call this rendezvous service a Call Placement Service (CPS), a service where a record of call placement,
+   in this case a PASSporT, can be stored for future retrieval.  In
+   principle, this service could communicate any information, but minimally we
+   expect it to include a full-form PASSporT that attests
+   the caller, callee, and the time of the call.  The callee can use the
+   existence of a PASSporT for a given incoming call as rough validation of
+   the asserted origin of that call.  (See <xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/> for limitations of
+   this design.)
+      </t>
+      <t indent="0" pn="section-4-2">This architecture does not mandate that any particular sort
+of entity operate a CPS or mandate any means to discover a CPS. A CPS
+could be run internally within a network or made publicly available.
+One or more CPSes could be run by a carrier, as repositories for PASSporTs
+for calls sent to its customers, or a CPS could be built into an enterprise
+PBX or even a smartphone. To the degree possible, it is
+specified here generically as an idea that may have applicability to a variety of STIR deployments.
+      </t>
+      <t indent="0" pn="section-4-3">There are roughly two plausible dataflow architectures for the CPS:
+      </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4-4">
+        <li pn="section-4-4.1" derivedCounter="1.">The callee registers with the CPS.  When the caller wishes to
+      place a call to the callee, it sends the PASSporT to the CPS, which immediately
+      forwards it to the callee.
+                 </li>
+        <li pn="section-4-4.2" derivedCounter="2.">The caller stores the PASSporT with the CPS at the time of call
+      placement.  When the callee receives the call, it contacts the CPS
+      and retrieves the PASSporT.
+        </li>
+      </ol>
+      <t indent="0" pn="section-4-5">While the first architecture is roughly isomorphic to current VoIP
+   protocols, it shares their drawbacks.  Specifically, the callee must
+   maintain a full-time connection to the CPS to serve as a notification
+   channel.  This comes with the usual networking costs to the callee
+   and is especially problematic for mobile endpoints. Indeed, if the endpoints had the capabilities
+   to implement such an architecture, they could surely just use SIP or some other
+   protocol to set up a secure session; even if the media were going through the traditional PSTN, a
+   "shadow" SIP session could convey the PASSporT. Thus, we focus
+   on the second architecture in which the PSTN incoming call serves as
+   the notification channel, and the callee can then contact the CPS to
+   retrieve the PASSporT. In specialized environments, for example, a call center that receives a large volume of
+   incoming calls that originated in the PSTN, the notification channel approach might be viable.
+      </t>
+    </section>
+    <section anchor="uses" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-use-cases">Use Cases</name>
+      <t indent="0" pn="section-5-1">The following are the motivating use cases for this mechanism. Bear in mind that,
+just as in <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>, there may be multiple Identity header fields in a single SIP
+INVITE, so there may be multiple PASSporTs in this out-of-band mechanism associated with a single call. For example, a SIP user agent might create a PASSporT for a call with an end-user
+credential, and as the call exits the originating administrative domain,
+the network authentication service might create its own PASSporT for the same call. As such, these use cases may overlap
+in the processing of a single call.
+      </t>
+      <section anchor="case-ip-pstn" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-case-1-voip-to-pstn-call">Case 1: VoIP to PSTN Call</name>
+        <t indent="0" pn="section-5.1-1">A call originates in a SIP environment in a STIR-aware administrative domain. The local authentication service for that administrative domain creates a PASSporT that is carried
+in band in the call per <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>. The call is routed out of the originating administrative domain and reaches a gateway to the PSTN.
+Eventually, the call will terminate on a mobile smartphone that supports this out-of-band mechanism.
+        </t>
+        <t indent="0" pn="section-5.1-2">In this use case, the originating authentication service
+can store the PASSporT with the appropriate CPS (per the practices of
+<xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>) for the target telephone number
+as a fallback in case SIP signaling will not reach end-to-end. When
+the destination mobile smartphone receives the call over the PSTN, it
+consults the CPS and discovers a PASSporT from the originating telephone number waiting for it.
+It uses this PASSporT to verify the calling party number.
+        </t>
+      </section>
+      <section anchor="case-pstn-pstn-gw" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-case-2-two-smart-pstn-endpo">Case 2: Two Smart PSTN Endpoints</name>
+        <t indent="0" pn="section-5.2-1">A call originates with an enterprise PBX that has both
+Internet access and a built-in gateway to the PSTN, which communicates
+through traditional telephone signaling protocols.
+The PBX immediately routes the call to the PSTN, but before it does,
+it provisions a PASSporT on the CPS associated with the target telephone number.
+        </t>
+        <t indent="0" pn="section-5.2-2">After normal PSTN routing, the call lands on a smart mobile handset that supports the STIR out-of-band mechanism. It queries the appropriate CPS over the Internet to determine if a call has been placed to it
+by a STIR-aware device. It finds the PASSporT provisioned by the
+enterprise PBX and uses it to verify the calling party number.
+        </t>
+      </section>
+      <section anchor="case-pstn-ip" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-case-3-pstn-to-voip-call">Case 3: PSTN to VoIP Call</name>
+        <t indent="0" pn="section-5.3-1">A call originates with an enterprise PBX that has both
+Internet access and a built-in gateway to the PSTN. It will immediately
+route the call to the PSTN, but before it does, it provisions
+a PASSporT with the CPS associated with the target telephone number.
+However, it turns out that the call will eventually route through
+the PSTN to an Internet gateway, which will translate this into a SIP
+call and deliver it to an administrative domain with a STIR verification service.
+        </t>
+        <t indent="0" pn="section-5.3-2">In this case, there are two subcases for how the PASSporT
+might be retrieved. In subcase 1, the Internet gateway that receives
+the call from the PSTN could query the appropriate CPS to determine
+if the original caller created and provisioned a PASSporT for this call. If so,
+it can retrieve the PASSporT and, when it creates a SIP INVITE for
+this call, add a corresponding Identity header field per
+<xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>. When the SIP INVITE reaches
+the destination administrative domain, it will be able to verify the
+PASSporT normally. Note that to avoid discrepancies with the Date
+header field value, only a full-form PASSporT should be used for this purpose. In
+subcase 2, the gateway does not retrieve the PASSporT itself, but
+instead the verification service at the destination administrative
+domain does so. Subcase 1 would perhaps be valuable for deployments where
+the destination administrative domain supports in-band STIR but not out-of-band STIR.
+        </t>
+      </section>
+      <section anchor="case-gateways" numbered="true" toc="include" removeInRFC="false" pn="section-5.4">
+        <name slugifiedName="name-case-4-gateway-out-of-band">Case 4: Gateway Out-of-Band</name>
+        <t indent="0" pn="section-5.4-1">A call originates in the SIP world in a STIR-aware administrative domain.
+The local authentication service for that administrative domain creates a PASSporT that is carried
+in band in the call per <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>. The call is routed
+out of the originating administrative domain and eventually reaches a gateway to the PSTN.
+        </t>
+        <t indent="0" pn="section-5.4-2">In this case, the originating authentication service does not support the out-of-band mechanism, so instead the gateway to the PSTN extracts the PASSporT from the SIP request and provisions it to the CPS. (When the call reaches the gateway to the PSTN, the gateway might first check the CPS to see if a PASSporT object had already been provisioned for this call, and only provision a PASSporT if none is present).
+        </t>
+        <t indent="0" pn="section-5.4-3">Ultimately, the call may terminate on the PSTN or be routed back to a SIP environment. In the former case, perhaps the destination endpoint queries the CPS to retrieve the PASSporT provisioned by the first gateway. If the call ultimately returns to a SIP environment, it might be the gateway from the PSTN back to the Internet that retrieves the PASSporT from the CPS and attaches it to the new SIP INVITE it creates, or it might be the terminating administrative domain's verification service that checks the CPS when an INVITE arrives with no Identity header field. Either way, the PASSporT can survive the gap in SIP coverage caused by the PSTN leg of the call.
+        </t>
+      </section>
+      <section anchor="case-enterprise" numbered="true" toc="include" removeInRFC="false" pn="section-5.5">
+        <name slugifiedName="name-case-5-enterprise-call-cent">Case 5: Enterprise Call Center</name>
+        <t indent="0" pn="section-5.5-1">A call originates from a mobile user, and a STIR authentication service operated by their carrier creates a PASSporT for the call. As the carrier forwards the call via SIP, it attaches the PASSporT to the SIP call with an Identity header field. As a fallback in case the call will not go end-to-end over SIP, the carrier also stores the PASSporT in a CPS.
+        </t>
+        <t indent="0" pn="section-5.5-2">The call is then routed over SIP for a time, before it
+transitions to the PSTN and ultimately is handled by a legacy PBX at a
+high-volume call center. The call center supports the out-of-band service,
+and has a high-volume interface to a CPS to retrieve PASSporTs for incoming
+calls; agents at the call center use a general purpose computer to manage
+inbound calls and can receive STIR notifications through it. When the PASSporT
+arrives at the CPS, it is sent through a subscription/notification interface
+to a system that can correlate incoming calls with valid PASSporTs. The call
+center agent sees that a valid call from the originating number has arrived.
+        </t>
+      </section>
+    </section>
+    <section anchor="authz" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-storing-and-retrieving-pass">Storing and Retrieving PASSporTs</name>
+      <t indent="0" pn="section-6-1">The use cases show a variety of entities accessing the CPS to
+store and retrieve PASSporTs. The question of how the CPS authorizes the
+storage and retrieval of PASSporTs is thus a key design decision in the architecture.
+The STIR architecture assumes that service providers and, in some cases,
+end-user devices will have credentials suitable for attesting authority
+over telephone numbers per <xref target="RFC8226" format="default" sectionFormat="of" derivedContent="RFC8226"/>.
+These credentials provide the most obvious way that a CPS can authorize
+the storage and retrieval of PASSporTs. However, as use cases 3, 4, and 5
+in <xref target="uses" format="default" sectionFormat="of" derivedContent="Section 5"/> show, it may sometimes make sense
+for the entity storing or retrieving PASSporTs to be an intermediary rather
+than a device associated with either the originating or terminating side of
+a call; those intermediaries often would not have access to STIR
+credentials covering the telephone numbers in question. Requiring authorization
+based on a credential to store PASSporTs is therefore undesirable, though
+potentially acceptable if sufficient steps are taken to mitigate any privacy
+risk of leaking data.
+      </t>
+      <t indent="0" pn="section-6-2">It is an explicit design goal of this mechanism to minimize
+the potential privacy exposure of using a CPS. Ideally, the out-of-band
+ mechanism should not result in a worse privacy situation than in-band
+STIR <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>: for in-band, we might say
+that a SIP entity is authorized to receive a PASSporT if it is an intermediate
+or final target of the routing of a SIP request. As the originator of a
+call cannot necessarily predict the routing path a call will follow, an
+out-of-band mechanism could conceivably even improve on the privacy story.
+      </t>
+      <t indent="0" pn="section-6-3">Broadly, the architecture recommended here thus is one focused
+on permitting any entity to store encrypted PASSporTs at the CPS, indexed
+under the called number. PASSporTs will be encrypted with a public key
+associated with the called number, so these PASSporTs may safely be retrieved
+by any entity because only holders of the corresponding private key will be
+able to decrypt the PASSporT.  This also prevents the CPS itself from
+learning the contents of PASSporTs, and thus metadata about calls in
+progress, which makes the CPS a less attractive target for pervasive
+monitoring (see <xref target="RFC7258" format="default" sectionFormat="of" derivedContent="RFC7258"/>). As a first
+step, transport-level security can provide confidentiality from eavesdroppers
+for both the storing and retrieval of PASSporTs. To bolster the privacy story,
+to prevent denial-of-service flooding of the CPS, and to complicate traffic
+analysis, a few additional mechanisms are also recommended below.
+      </t>
+      <section anchor="stor" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-storage">Storage</name>
+        <t indent="0" pn="section-6.1-1">There are a few dimensions to authorizing the storage of PASSporTs.
+Encrypting PASSporTs prior to storage entails that a CPS has no way to tell
+if a PASSporT is valid; it simply conveys encrypted blocks that it cannot
+access itself and can make no authorization decision based on the PASSporT
+contents. There is certainly no prospect for the CPS to verify the PASSporTs itself.
+        </t>
+        <t indent="0" pn="section-6.1-2">Note that this architecture requires clients that store PASSporTs
+to have access to an encryption key associated with the intended called party
+to be used to encrypt the PASSporT. Discovering this key requires the existence
+of a key lookup service (see <xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/>),
+depending on how the CPS is architected; however, some kind of key store or
+repository could be implemented adjacent to it and perhaps even incorporated
+into its operation. Key discovery is made more complicated by the fact that
+there can potentially be multiple entities that have
+ authority over a telephone number: a carrier, a reseller, an enterprise,
+and an end user might all have credentials permitting them to attest that they
+are allowed to originate calls from a number, say. PASSporTs for out-of-band use
+therefore might need to be encrypted with multiple keys in the hopes that one
+will be decipherable by the relying party.
+        </t>
+        <t indent="0" pn="section-6.1-3">Again, the most obvious way to authorize storage is to require
+the originator to authenticate themselves to the CPS with their STIR credential.
+However, since the call is indexed at the CPS under the called number,
+this can weaken the privacy story of the architecture, as it reveals to
+the CPS both the identity of the caller and the callee. Moreover, it does not work
+for the gateway use cases described above; to support those use cases, we must
+effectively allow any entity to store PASSporTs at a CPS. This does not degrade
+the anti-impersonation security of STIR, because entities who do not possess
+the necessary credentials to sign the PASSporT will not be able to create
+PASSporTs that will be treated as valid by verifiers. In this architecture,
+it does not matter whether the CPS received a PASSporT from the authentication
+service that created it or from an intermediary gateway downstream in the
+routing path as in case 4 above. However, if literally anyone can store
+PASSporTs in the CPS, an attacker could easily flood the CPS with millions
+of bogus PASSporTs indexed under a calling number, and thereby prevent the called
+party from finding a valid PASSporT for an incoming call buried in a haystack of fake entries.
+        </t>
+        <t indent="0" pn="section-6.1-4">The solution architecture must therefore include some sort of traffic
+control system to prevent flooding. Preferably, this should not require
+authenticating the source, as this will reveal to the CPS both the source and
+destination of traffic. A potential solution is discussed below in <xref target="rate-control" format="default" sectionFormat="of" derivedContent="Section 7.5"/>.
+        </t>
+      </section>
+      <section anchor="retr" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-retrieval">Retrieval</name>
+        <t indent="0" pn="section-6.2-1">For retrieval of PASSporTs, this architecture assumes that clients will
+contact the CPS through some sort of polling or notification interface to receive all
+ current PASSporTs for calls destined to a particular telephone number, or block of numbers.
+        </t>
+        <t indent="0" pn="section-6.2-2">As PASSporTs stored at the CPS are encrypted with a key belonging
+to the intended destination, the CPS can safely allow anyone to download PASSporTs
+for a called number without much fear of compromising private information
+about calls in progress -- provided that the CPS always returns at least one
+encrypted blob in response to a request, even if there was no call in progress.
+Otherwise, entities could poll the CPS constantly, or eavesdrop on traffic,
+to learn whether or not calls were in progress. The CPS <bcp14>MUST</bcp14> generate
+at least one unique and plausible encrypted response to all retrieval requests,
+and these dummy encrypted PASSporTs <bcp14>MUST NOT</bcp14> be repeated for
+later calls. An encryption scheme needs to be carefully chosen to make messages
+look indistinguishable from random when encrypted, so that information about the
+called party is not discoverable from legitimate encrypted PASSporTs.
+        </t>
+        <t indent="0" pn="section-6.2-3">Because the entity placing a call may discover multiple keys
+associated with the called party number, multiple valid PASSporTs may be
+stored in the CPS. A particular called party who retrieves PASSporTs from
+the CPS may have access to only one of those keys. Thus, the presence of
+one or more PASSporTs that the called party cannot decrypt -- which would
+be indistinguishable from the "dummy" PASSporTs created by the CPS when
+no calls are in progress - does not entail that there is no call in progress.
+A retriever likely will need to decrypt all PASSporTs retrieved from the CPS,
+and may find only one that is valid.
+        </t>
+        <t indent="0" pn="section-6.2-4">In order to prevent the CPS from learning the numbers that a callee
+controls, callees might also request PASSporTs for numbers that they do not own,
+that they have no hope of decrypting. Implementations could even allow a callee
+to request PASSporTs for a range or prefix of numbers: a trade-off where that
+callee is willing to sift through bulk quantities of undecryptable PASSporTs
+for the sake of hiding from the CPS which numbers it controls.
+        </t>
+        <t indent="0" pn="section-6.2-5">Note that in out-of-band call forwarding cases, special behavior is
+required to manage the relationship between PASSporTs using the diversion
+extension <xref target="I-D.ietf-stir-passport-divert" format="default" sectionFormat="of" derivedContent="PASSPORT-DIVERT"/>.
+The originating authentication service encrypts the initial PASSporT with the
+public encryption key of the intended destination, but once a call is forwarded,
+it may go to a destination that does not possess the corresponding private key
+and thus could not decrypt the original PASSporT. This requires the retargeting
+entity to generate encrypted PASSporTs that show a secure chain of diversion:
+a retargeting storer <bcp14>SHOULD</bcp14> use the "div-o" PASSporT type,
+with its "opt" extension, as specified in
+<xref target="I-D.ietf-stir-passport-divert" format="default" sectionFormat="of" derivedContent="PASSPORT-DIVERT"/>, in order to nest
+the original PASSporT within the encrypted diversion PASSporT.
+        </t>
+      </section>
+    </section>
+    <section anchor="arch" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-solution-architecture">Solution Architecture</name>
+      <t indent="0" pn="section-7-1">In this section, we discuss a high-level architecture for providing the service
+   described in the previous sections.  This discussion is deliberately
+   sketchy, focusing on broad concepts and skipping over details.  The
+   intent here is merely to provide an overall architecture, not an implementable
+   specification. A more concrete example of how this might be specified is given in <xref target="web" format="default" sectionFormat="of" derivedContent="Section 9"/>.
+      </t>
+      <section anchor="phone" numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-credentials-and-phone-numbe">Credentials and Phone Numbers</name>
+        <t indent="0" pn="section-7.1-1">We start from the premise of the
+   <xref target="RFC7340" format="default" sectionFormat="of" derivedContent="RFC7340">STIR problem statement</xref> that phone numbers can be
+   associated with credentials that can be used to attest
+   ownership of numbers.  For purposes of exposition, we will assume
+   that ownership is associated with the endpoint (e.g., a smartphone),
+   but it might well be associated with a provider or gateway acting for the
+   endpoint instead.  It might be the case that multiple entities are
+   able to act for a given number, provided that they have the
+   appropriate authority. <xref target="RFC8226" format="default" sectionFormat="of" derivedContent="RFC8226"/> describes
+   a credential system suitable for this purpose; the question of how an entity is determined
+   to have control of a given number is out of scope for this document.
+        </t>
+      </section>
+      <section anchor="solve" numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-call-flow">Call Flow</name>
+        <t indent="0" pn="section-7.2-1">An overview of the basic calling and verification process is shown
+   below.  In this diagram, we assume that Alice has the number
+   +1.111.555.1111 and Bob has the number +2.222.555.2222.
+        </t>
+        <artwork name="" type="" align="left" alt="" pn="section-7.2-2">
+Alice                    Call Placement Service                  Bob
+--------------------------------------------------------------------
+
+Store Encrypted PASSporT for 2.222.555.2222 -&gt;
+
+Call from 1.111.555.1111 ------------------------------------------&gt;
+
+
+                                 &lt;-------------- Request PASSporT(s)
+                                  for 2.222.555.2222
+
+                                 Obtain Encrypted PASSporT --------&gt;
+                                    (2.222.555.2222, 1.111.555.1111)
+
+                                  [Ring phone with verified callerid
+                                                   = 1.111.555.1111]
+</artwork>
+        <t indent="0" pn="section-7.2-3">When Alice wishes to make a call to Bob, she contacts the CPS and
+   stores an encrypted PASSporT on
+   the CPS indexed under Bob's number. The CPS then awaits retrievals for
+   that number.
+        </t>
+        <t indent="0" pn="section-7.2-4">When Alice places the call, Bob's phone would usually ring and display
+   Alice's number (+1.111.555.1111), which is informed by the existing
+   PSTN mechanisms for relaying a calling party number (e.g., the
+   Calling Party's Number (CIN) field of
+   the Initial Address Message (IAM)).  Instead,
+   Bob's phone transparently contacts the CPS and requests any current
+   PASSporTs for calls to his number.  The CPS responds with any such PASSporTs
+   (or dummy PASSporTs if no relevant ones are currently stored).
+If such a PASSporT exists, and the verification service in Bob's phone decrypts it using
+   his private key, validates it, then
+   Bob's phone can present the calling party number
+   information as valid.  Otherwise, the call is unverifiable.  Note
+   that this does not necessarily mean that the call is bogus; because
+   we expect incremental deployment, many legitimate calls will be
+   unverifiable.
+        </t>
+      </section>
+      <section anchor="sec" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-security-analysis">Security Analysis</name>
+        <t indent="0" pn="section-7.3-1">The primary attack we seek to prevent is an attacker convincing the
+   callee that a given call is from some other caller C. There are two
+   scenarios to be concerned with:
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-7.3-2">
+          <li pn="section-7.3-2.1" derivedCounter="1.">The attacker wishes to impersonate a target when no call from that
+         target is in progress.
+                 </li>
+          <li pn="section-7.3-2.2" derivedCounter="2.">The attacker wishes to substitute himself for an existing call setup.
+        </li>
+        </ol>
+        <t indent="0" pn="section-7.3-3">If an attacker can inject fake PASSporTs into the CPS or in the
+   communication from the CPS to the callee, he can mount either attack.
+   As PASSporTs should be
+   digitally signed by an appropriate authority for the number and verified by the callee
+   (see <xref target="phone" format="default" sectionFormat="of" derivedContent="Section 7.1"/>), this should not arise in ordinary operations.
+   Any attacker who is aware of calls in progress can attempt to mount a race to substitute themselves
+   as described in <xref target="sub" format="default" sectionFormat="of" derivedContent="Section 7.4"/>. For privacy and robustness reasons,
+   using <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446">TLS</xref> on the originating
+   side when storing the PASSporT at the CPS is <bcp14>RECOMMENDED</bcp14>.
+        </t>
+        <t indent="0" pn="section-7.3-4">The entire system depends on the security of the credential
+   infrastructure.  If the authentication credentials for a given number
+   are compromised, then an attacker can impersonate calls from that
+   number. However, that is no different from in-band STIR <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>.
+        </t>
+        <t indent="0" pn="section-7.3-5">A secondary attack we must also prevent is denial-of-service against the CPS, which requires some form of rate control solution that will not degrade the privacy properties of the architecture.
+        </t>
+      </section>
+      <section anchor="sub" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-substitution-attacks">Substitution Attacks</name>
+        <t indent="0" pn="section-7.4-1">All that the receipt of the PASSporT from the CPS proves to the called party
+   is that Alice is trying to call
+   Bob (or at least was as of very recently) -- it does not prove that
+   any particular incoming call is from Alice.  Consider the scenario
+   in which we have a service that provides an automatic callback to a
+   user-provided number.  In that case, the attacker can try to arrange for a
+   false caller-id value, as shown below:</t>
+        <artwork name="" type="" align="left" alt="" pn="section-7.4-2">
+ Attacker            Callback Service           CPS               Bob
+ --------------------------------------------------------------------
+ Place call to Bob ----------&gt;
+  (from 111.555.1111)
+                             Store PASSporT for
+                             CS:Bob -------------&gt;
+
+ Call from Attacker (forged CS caller-id info)  --------------------&gt;
+
+                             Call from CS ------------------------&gt; X
+
+
+                                                &lt;-- Retrieve PASSporT
+                                                           for CS:Bob
+
+                        PASSporT for CS:Bob ------------------------&gt;
+
+                                         [Ring phone with callerid =
+                                            111.555.1111]
+</artwork>
+        <t indent="0" pn="section-7.4-3">In order to mount this attack, the attacker contacts the Callback
+   Service (CS) and provides it with Bob's number.  This causes the CS
+   to initiate a call to Bob. As before, the CS contacts the CPS to
+   insert an appropriate PASSporT and then initiates a call to Bob. Because
+   it is a valid CS injecting the PASSporT, none of the security checks
+   mentioned above help.  However, the attacker simultaneously initiates
+   a call to Bob using forged caller-id information corresponding to the
+   CS.  If he wins the race with the CS, then Bob's phone will attempt
+   to verify the attacker's call (and succeed since they are
+   indistinguishable), and the CS's call will go to busy/voice mail/call
+   waiting.
+        </t>
+        <t indent="0" pn="section-7.4-4">
+   In order to prevent a passive attacker from using traffic analysis or
+   similar means to learn precisely when a call is placed, it is essential
+   that the connection between the caller and the CPS be encrypted as recommended above.
+   Authentication services could store dummy PASSporTs at the CPS at random intervals in order
+   to make it more difficult for an eavesdropper to use traffic analysis to determine
+   that a call was about to be placed.
+        </t>
+        <t indent="0" pn="section-7.4-5">
+   Note that in a SIP environment, the callee might notice that
+   there were multiple INVITEs and thus detect this attack, but in some PSTN
+   interworking scenarios, or highly intermediated networks, only one call setup
+   attempt will reach the target. Also note that the success of this substitution
+   attack depends on the attacker landing their call within the narrow window
+   that the PASSporT is retained in the CPS, so
+   shortening that window will reduce the
+   opportunity for the attack. Finally, smart endpoints could implement some sort of
+   state coordination to ensure that both sides believe the call is in progress, though
+   methods of supporting that are outside the scope of this document.
+        </t>
+      </section>
+      <section anchor="rate-control" numbered="true" toc="include" removeInRFC="false" pn="section-7.5">
+        <name slugifiedName="name-rate-control-for-cps-storag">Rate Control for CPS Storage</name>
+        <t indent="0" pn="section-7.5-1">In order to prevent the flooding of a CPS with bogus PASSporTs,
+we propose the use of "blind signatures" (see <xref target="RFC5636" format="default" sectionFormat="of" derivedContent="RFC5636"/>).
+A sender will initially authenticate to the CPS using its STIR credentials
+and acquire a signed token from the CPS that will be presented later
+when storing a PASSporT. The flow looks as follows:
+        </t>
+        <artwork name="" type="" align="left" alt="" pn="section-7.5-2">
+    Sender                                 CPS
+
+    Authenticate to CPS ---------------------&gt;
+    Blinded(K_temp) -------------------------&gt;
+    &lt;------------- Sign(K_cps, Blinded(K_temp))
+    [Disconnect]
+
+
+    Sign(K_cps, K_temp)
+    Sign(K_temp, E(K_receiver, PASSporT)) ---&gt;
+</artwork>
+        <t indent="0" pn="section-7.5-3">At an initial time when no call is yet in progress, a potential client connects to the CPS, authenticates,
+and sends a blinded version of a freshly generated public key. The
+CPS returns a signed version of that blinded key. The sender can
+then unblind the key and get a signature on K_temp from the CPS.
+        </t>
+        <t indent="0" pn="section-7.5-4">
+Then later, when a client wants to store a PASSporT, it connects
+to the CPS anonymously (preferably over a network connection that cannot be correlated with the token acquisition) and
+sends both the signed K_temp and its own signature over the
+encrypted PASSporT. The CPS verifies both signatures and, if they
+verify, stores the encrypted passport (discarding the signatures).
+        </t>
+        <t indent="0" pn="section-7.5-5">
+This design lets the CPS rate limit how many PASSporTs a given
+sender can store just by counting how many times K_temp appears;
+perhaps CPS policy might reject storage attempts and require acquisition
+of a new K_temp after storing more than a certain number of PASSporTs
+indexed under the same destination number in a short interval.
+This does not, of course, allow the CPS to tell when bogus data
+is being provisioned by an attacker,
+simply the rate at which data is being provisioned. Potentially,
+feedback mechanisms could be developed that would allow the called
+parties to tell the CPS when they are receiving unusual or bogus
+PASSporTs.
+        </t>
+        <t indent="0" pn="section-7.5-6">
+This architecture also assumes that the CPS will age out PASSporTs.
+A CPS <bcp14>SHOULD NOT</bcp14> keep any stored PASSporT for longer
+than the recommended freshness
+policy for the "iat" value as described in
+<xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> (i.e., sixty seconds)
+unless some local policy for a CPS deployment requires a longer or shorter interval.
+Any reduction in this window makes substitution attacks
+(see <xref target="sub" format="default" sectionFormat="of" derivedContent="Section 7.4"/>) harder to mount,
+but making the window too small might conceivably age PASSporTs out
+while a heavily redirected call is still alerting.
+</t>
+        <t indent="0" pn="section-7.5-7">
+An alternative potential approach to blind signatures would be
+the use of verifiable oblivious pseudorandom functions (VOPRFs, per
+<xref target="I-D.privacy-pass" format="default" sectionFormat="of" derivedContent="PRIVACY-PASS"/>), which may prove faster.
+        </t>
+      </section>
+    </section>
+    <section anchor="u8224" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-authentication-and-verifica">Authentication and Verification Service Behavior for Out-of-Band</name>
+      <t indent="0" pn="section-8-1">
+<xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> defines an authentication service and a verification service as functions that act in the context of SIP requests and responses. This specification thus provides a more generic description of authentication service and verification service behavior that might or might not involve any SIP transactions, but depends only on placing a request for communications from
+an originating identity to one or more destination identities.
+      </t>
+      <section anchor="as" numbered="true" toc="include" removeInRFC="false" pn="section-8.1">
+        <name slugifiedName="name-authentication-service-as">Authentication Service (AS)</name>
+        <t indent="0" pn="section-8.1-1">
+Out-of-band authentication services perform steps similar to those defined in <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> with some exceptions:
+        </t>
+        <t indent="0" pn="section-8.1-2">
+Step 1: The authentication service <bcp14>MUST</bcp14> determine whether it is
+    authoritative for the identity of the originator of the request, that is, the identity it will populate in the "orig" claim of the PASSporT.
+It can do so only if it possesses the private key of one or more credentials that can be used
+    to sign for that identity, be it a domain or a telephone number or some other identifier. For example, the authentication service could hold the private key associated with a <xref target="RFC8225" format="default" sectionFormat="of" derivedContent="RFC8225">STIR certificate</xref>.
+        </t>
+        <t indent="0" pn="section-8.1-3">
+Step 2: The authentication service <bcp14>MUST</bcp14> determine that the
+originator of communications can claim the originating identity. This is a policy
+decision made by the authentication service that depends on its relationship to
+the originator. For an out-of-band application built into the
+calling device, for example, this is the same check performed in Step 1: does the
+calling device hold a private key, one corresponding to a STIR certificate,
+that can sign for the originating identity?
+        </t>
+        <t anchor="as-step3" indent="0" pn="section-8.1-4">
+Step 3: The authentication service <bcp14>MUST</bcp14> acquire the public encryption key
+of the destination, which will be used to encrypt the PASSporT (see <xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/>).
+It <bcp14>MUST</bcp14> also discover (see <xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>)
+the CPS associated with the destination. The authentication service
+may already have the encryption key and destination CPS cached, or may need
+to query a service to acquire the key. Note that per <xref target="rate-control" format="default" sectionFormat="of" derivedContent="Section 7.5"/>,
+the authentication service may also need to acquire a token for PASSporT
+storage from the CPS upon CPS discovery. It is anticipated that the discovery mechanism
+(see <xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>) used to find the appropriate
+CPS will also find the proper key server for the public key of the destination.
+In some cases, a destination may have multiple public encryption keys associated with it.
+In that case, the authentication service <bcp14>MUST</bcp14> collect all of those keys.
+        </t>
+        <t indent="0" pn="section-8.1-5">
+Step 4: The authentication service <bcp14>MUST</bcp14> create the PASSporT object. This includes acquiring the system time to populate the "iat" claim, and populating the "orig" and "dest" claims as
+described in <xref target="RFC8225" format="default" sectionFormat="of" derivedContent="RFC8225"/>. The authentication service <bcp14>MUST</bcp14> then encrypt the PASSporT. If in Step 3 the authentication service discovered multiple public keys for the destination, it
+        <bcp14>MUST</bcp14> create one encrypted copy for each public key it discovered.
+        </t>
+        <t indent="0" pn="section-8.1-6">
+Finally, the authentication service stores the encrypted PASSporT(s) at the CPS
+discovered in Step 3. Only after that is completed should any call be initiated.
+Note that a call might be initiated over SIP, and the authentication
+service would place the same PASSporT in the Identity header field value of the SIP request --
+though SIP would carry a cleartext version rather than an encrypted version
+sent to the CPS. In that case, out-of-band would serve as a fallback mechanism
+if the request was not conveyed over SIP end-to-end. Also, note that the
+authentication service <bcp14>MAY</bcp14> use a compact form of the PASSporT
+for a SIP request, whereas the version stored at the CPS <bcp14>MUST</bcp14>
+always be a full-form PASSporT.
+        </t>
+      </section>
+      <section anchor="vs" numbered="true" toc="include" removeInRFC="false" pn="section-8.2">
+        <name slugifiedName="name-verification-service-vs">Verification Service (VS)</name>
+        <t indent="0" pn="section-8.2-1">
+When a call arrives, an out-of-band verification service performs steps similar to those defined in <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/> with some exceptions:
+        </t>
+        <t anchor="vs-step1" indent="0" pn="section-8.2-2">
+Step 1: The verification service contacts the CPS and requests all current PASSporTs for its destination number; or alternatively it may receive PASSporTs through a push interface from the CPS in some deployments. The verification service <bcp14>MUST</bcp14> then decrypt all PASSporTs using its private key. Some PASSporTs may not be decryptable for any number of reasons: they may be intended for a different verification service, or they may be "dummy" values inserted by the CPS for privacy purposes. The next few steps will narrow down the set of PASSporTs that the verification service will examine from that initial decryptable set.
+        </t>
+        <t indent="0" pn="section-8.2-3">
+Step 2: The verification service <bcp14>MUST</bcp14> determine if any "ppt" extensions in the PASSporTs are unsupported. It takes only the set of supported PASSporTs and applies the next step to them.
+        </t>
+        <t indent="0" pn="section-8.2-4">
+Step 3: The verification service <bcp14>MUST</bcp14> determine if there is an overlap between the calling party number presented in call signaling and the "orig" field of any decrypted PASSporTs. It takes the set of matching PASSporTs and applies the next step to them.
+        </t>
+        <t indent="0" pn="section-8.2-5">
+Step 4: The verification service <bcp14>MUST</bcp14> determine if the credentials that signed each PASSporT are valid, and if the verification service trusts the CA that issued the credentials. It takes the set
+of trusted PASSporTs to the next step.
+        </t>
+        <t indent="0" pn="section-8.2-6">
+Step 5: The verification service <bcp14>MUST</bcp14> check the freshness of the "iat" claim of each PASSporT. The exact interval of time that determines freshness is left to local policy. It takes the set of fresh PASSporTs to the next step.
+        </t>
+        <t indent="0" pn="section-8.2-7">
+Step 6: The verification service <bcp14>MUST</bcp14> check the validity of the signature over each PASSporT, as described in <xref target="RFC8225" format="default" sectionFormat="of" derivedContent="RFC8225"/>.
+        </t>
+        <t indent="0" pn="section-8.2-8">
+Finally, the verification service will end up with one or more valid PASSporTs corresponding to the call it has received. In keeping with baseline STIR, this document does not dictate any particular treatment of calls that have valid PASSporTs associated with them; the handling of the call
+   after the verification process depends on how the verification
+   service is implemented and on local policy. However, it is anticipated that local policies could involve
+   making different forwarding decisions in intermediary
+   implementations, or changing how the user is alerted or how identity
+   is rendered in user agent implementations.
+        </t>
+      </section>
+      <section anchor="hybrid" numbered="true" toc="include" removeInRFC="false" pn="section-8.3">
+        <name slugifiedName="name-gateway-placement-services">Gateway Placement Services</name>
+        <t indent="0" pn="section-8.3-1">
+The STIR out-of-band mechanism also supports the presence of gateway placement services, which do not create PASSporTs themselves, but instead take PASSporTs out of signaling protocols and store them at a CPS before gatewaying to a protocol that cannot carry PASSporTs itself. For example, a SIP gateway that sends calls to the PSTN could receive a call with an Identity header field, extract a PASSporT from the Identity header field, and store that PASSporT at a CPS.
+        </t>
+        <t indent="0" pn="section-8.3-2">
+To place a PASSporT at a CPS, a gateway <bcp14>MUST</bcp14> perform
+<xref target="as-step3" format="none" sectionFormat="of" derivedContent="">Step 3</xref> of <xref target="as" format="default" sectionFormat="of" derivedContent="Section 8.1"/> above:
+that is, it must discover the CPS and public key associated with the
+destination of the call, and may need to acquire a PASSporT storage token
+(see <xref target="stor" format="default" sectionFormat="of" derivedContent="Section 6.1"/>). Per <xref target="as-step3" format="none" sectionFormat="of" derivedContent="">Step 3</xref>
+of <xref target="as" format="default" sectionFormat="of" derivedContent="Section 8.1"/>, this may entail discovering several keys.
+The gateway then collects the in-band PASSporT(s) from the in-band signaling,
+encrypts the PASSporT(s), and stores them at the CPS.
+        </t>
+        <t indent="0" pn="section-8.3-3">
+A similar service could be performed by a gateway that retrieves PASSporTs from a CPS and inserts them into signaling protocols that support carrying PASSporTs in-band. This behavior may be defined by future specifications.
+        </t>
+      </section>
+    </section>
+    <section anchor="web" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-example-https-interface-to-">Example HTTPS Interface to the CPS</name>
+      <t indent="0" pn="section-9-1">
+As a rough example, we show a CPS implementation here that uses a
+Representational State Transfer (REST) API <xref target="REST" format="default" sectionFormat="of" derivedContent="REST"/> to store and retrieve objects at the CPS.
+The calling party stores the PASSporT at the CPS prior to initiating the call; the
+PASSporT is stored at a location at the CPS that corresponds to the called number.
+Note that it is possible for multiple parties to be calling a number at the same time, and that for called
+numbers such as large call centers, many PASSporTs could legitimately be stored
+simultaneously, and it might prove difficult to correlate these with incoming calls.
+      </t>
+      <t indent="0" pn="section-9-2">
+Assume that an authentication service has created the following PASSporT for a call to the telephone number 2.222.555.2222 (note that these are dummy values):
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-9-3">
+   eyJhbGciOiJFUzI1NiIsInR5cCI6InBhc3Nwb3J0IiwieDV1IjoiaHR0cHM6Ly9
+   jZXJ0LmV4YW1wbGUub3JnL3Bhc3Nwb3J0LmNlciJ9.eyJkZXN0Ijp7InRuIjpbI
+   jIyMjI1NTUyMjIyIl19LCJpYXQiOiIxNTgzMjUxODEwIiwib3JpZyI6eyJ0biI6
+   IjExMTE1NTUxMTExIn19.pnij4IlLHoR4vxID0u3CT1e9Hq4xLngZUTv45Vbxmd
+   3IVyZug4KOSa378yfP4x6twY0KTdiDypsereS438ZHaQ
+</artwork>
+      <t indent="0" pn="section-9-4">
+Through some discovery mechanism (see <xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>), the authentication service discovers the network location of a web service that acts as the CPS for 2.222.555.2222. Through the same mechanism, we will say that it has also discovered one public encryption key for that destination. It uses that encryption key to encrypt the PASSporT, resulting in the encrypted PASSporT:
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-9-5">
+   rlWuoTpvBvWSHmV1AvVfVaE5pPV6VaOup3Ajo3W0VvjvrQI1VwbvnUE0pUZ6Yl9w
+   MKW0YzI4LJ1joTHho3WaY3Oup3Ajo3W0YzAypvW9rlWxMKA0Vwc7VaIlnFV6JlWm
+   nKN6LJkcL2INMKuuoKOfMF5wo20vKK0fVzyuqPV6VwR0AQZlZQtmAQHvYPWipzyaV
+   wc7VaEhVwbvZGVkAGH1AGRlZGVvsK0ed3cwG1ubEjnxRTwUPaJFjHafuq0-mW6S1
+   IBtSJFwUOe8Dwcwyx-pcSLcSLfbwAPcGmB3DsCBypxTnF6uRpx7j
+</artwork>
+      <t indent="0" pn="section-9-6">
+Having concluded the numbered steps in <xref target="as" format="default" sectionFormat="of" derivedContent="Section 8.1"/>, including acquiring any token (per <xref target="stor" format="default" sectionFormat="of" derivedContent="Section 6.1"/>) needed to store the PASSporT at the CPS, the authentication service then stores the encrypted PASSporT:
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-9-7">
+   POST /cps/2.222.555.2222/ppts HTTP/1.1
+   Host: cps.example.com
+   Content-Type: application/passport
+
+   rlWuoTpvBvWSHmV1AvVfVaE5pPV6VaOup3Ajo3W0VvjvrQI1VwbvnUE0pUZ6Yl9w
+   MKW0YzI4LJ1joTHho3WaY3Oup3Ajo3W0YzAypvW9rlWxMKA0Vwc7VaIlnFV6JlWm
+   nKN6LJkcL2INMKuuoKOfMF5wo20vKK0fVzyuqPV6VwR0AQZlZQtmAQHvYPWipzyaV
+   wc7VaEhVwbvZGVkAGH1AGRlZGVvsK0ed3cwG1ubEjnxRTwUPaJFjHafuq0-mW6S1
+   IBtSJFwUOe8Dwcwyx-pcSLcSLfbwAPcGmB3DsCBypxTnF6uRpx7j
+</artwork>
+      <t indent="0" pn="section-9-8">
+The web service assigns a new location for this encrypted PASSporT in the collection, returning a 201 OK with the location of /cps/2.222.222.2222/ppts/ppt1.
+Now the authentication service can place the call, which may be signaled by various protocols. Once the call arrives at the terminating side, a verification service
+contacts its CPS to ask for the set of incoming calls for its telephone number (2.222.222.2222).
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-9-9">
+   GET /cps/2.222.555.2222/ppts
+   Host: cps.example.com
+</artwork>
+      <t indent="0" pn="section-9-10">
+ This returns to the verification service a list of the PASSporTs currently in the collection, which currently consists of only /cps/2.222.222.2222/ppts/ppt1. The verification
+ service then sends a new GET for /cps/2.222.555.2222/ppts/ppt1/ which yields:
+      </t>
+      <artwork name="" type="" align="left" alt="" pn="section-9-11">
+   HTTP/1.1 200 OK
+   Content-Type: application/passport
+   Link: &lt;https://cps.example.com/cps/2.222.555.2222/ppts&gt;
+
+   rlWuoTpvBvWSHmV1AvVfVaE5pPV6VaOup3Ajo3W0VvjvrQI1VwbvnUE0pUZ6Yl9w
+   MKW0YzI4LJ1joTHho3WaY3Oup3Ajo3W0YzAypvW9rlWxMKA0Vwc7VaIlnFV6JlWm
+   nKN6LJkcL2INMKuuoKOfMF5wo20vKK0fVzyuqPV6VwR0AQZlZQtmAQHvYPWipzyaV
+   wc7VaEhVwbvZGVkAGH1AGRlZGVvsK0ed3cwG1ubEjnxRTwUPaJFjHafuq0-mW6S1
+   IBtSJFwUOe8Dwcwyx-pcSLcSLfbwAPcGmB3DsCBypxTnF6uRpx7j
+</artwork>
+      <t indent="0" pn="section-9-12">
+ That concludes <xref target="vs-step1" format="none" sectionFormat="of" derivedContent="">Step 1</xref> of <xref target="vs" format="default" sectionFormat="of" derivedContent="Section 8.2"/>; the verification service then goes on to the next step, processing that PASSporT through its various checks. A complete protocol description for CPS interactions is left to future work.
+      </t>
+    </section>
+    <section anchor="cps" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-cps-discovery">CPS Discovery</name>
+      <t indent="0" pn="section-10-1">
+In order for the two ends of the out-of-band dataflow to coordinate, they must agree on a way to discover a CPS and retrieve PASSporT objects from it
+based solely on the rendezvous information available: the calling party number and the called number. Because the storage of PASSporTs in this architecture is indexed
+by the called party number, it makes sense to discover a CPS based on the called party number as well.
+There are a number of potential service discovery mechanisms that could be used for
+this purpose. The means of service discovery may vary by use case.
+      </t>
+      <t indent="0" pn="section-10-2">
+ Although the discussion above is written largely in terms of a single CPS, having a significant fraction of all telephone calls result in storing and retrieving PASSporTs at a single monolithic CPS
+    has obvious scaling problems, and would as well allow the CPS to
+    gather metadata about a very wide set of callers and callees.  These issues can be alleviated by operational models with a
+   federated CPS; any service discovery mechanism for out-of-band STIR
+should enable federation of the CPS function. Likely models include ones
+   where a carrier operates one or more CPS instances on behalf of its customers,
+an enterprise runs a CPS instance on behalf of its PBX users, or a third-party service provider
+offers a CPS as a cloud service.
+      </t>
+      <t indent="0" pn="section-10-3">
+   Some service discovery possibilities under consideration include the following:
+      </t>
+      <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-10-4">
+        <li pn="section-10-4.1">
+   For some deployments in closed (e.g., intra-network) environments, the CPS location can simply
+   be provisioned in implementations, obviating the need for a discovery protocol.
+          </li>
+        <li pn="section-10-4.2">
+   If a credential lookup service is already available (see <xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/>),
+   the CPS location can also be recorded in the callee's credentials;
+an extension to <xref target="RFC8226" format="default" sectionFormat="of" derivedContent="RFC8226"/> could, for example,
+provide a link to the location of the CPS
+   where PASSporTs should be stored for a destination.
+   </li>
+        <li pn="section-10-4.3">
+There exist a number of common directory systems that might be used to translate
+telephone numbers into the URIs of a CPS.
+<xref target="RFC6116" format="default" sectionFormat="of" derivedContent="RFC6116">ENUM</xref> is commonly implemented,
+though no "golden root" central ENUM administration exists that could be easily
+reused today to help the endpoints discover a common CPS. Other protocols associated
+with queries for telephone numbers, such as the
+<xref target="I-D.ietf-modern-teri" format="default" sectionFormat="of" derivedContent="MODERN-TERI">Telephone-Related Information (TeRI) protocol</xref>,
+could also serve for this application.
+        </li>
+        <li pn="section-10-4.4">
+Another possibility is to use a single distributed service for this function.
+<xref target="I-D.jennings-vipr-overview" format="default" sectionFormat="of" derivedContent="VIPR-OVERVIEW">Verification Involving PSTN Reachability (VIPR)</xref> proposed a
+<xref target="RFC6940" format="default" sectionFormat="of" derivedContent="RFC6940">REsource LOcation And Discovery (RELOAD)</xref> usage for telephone numbers to help direct calls to enterprises on the Internet. It would be possible to describe a similar RELOAD usage
+to identify the CPS where calls for a particular telephone number should be stored.
+One advantage that the STIR architecture has over VIPR is that it assumes a credential system
+that proves authority over telephone numbers; those credentials could be used to determine
+whether or not a CPS could legitimately claim to be the proper store for a given telephone
+number.
+    </li>
+      </ul>
+      <t indent="0" pn="section-10-5">
+This document does not prescribe any single way to do service discovery for a CPS;
+it is envisioned that initial deployments will provision the location of the CPS
+at the authentication service and verification service.
+      </t>
+    </section>
+    <section anchor="lookup" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-encryption-key-lookup">Encryption Key Lookup</name>
+      <t indent="0" pn="section-11-1">
+   In order to encrypt a PASSporT (see <xref target="stor" format="default" sectionFormat="of" derivedContent="Section 6.1"/>), the caller needs access to the callee's
+   public encryption key. Note that because STIR uses the Elliptic Curve Digital Signature Algorithm (ECDSA)
+   for signing PASSporTs, the public key used to
+   verify PASSporTs is not suitable for this function, and thus the encryption key
+   must be discovered separately. This requires some sort
+   of directory/lookup system.
+      </t>
+      <t indent="0" pn="section-11-2">
+   Some initial STIR deployments have fielded certificate repositories so that verification services
+can acquire the signing credentials for PASSporTs, which are linked through a URI in the "x5u" element of the PASSporT.
+These certificate repositories could clearly be repurposed for allowing authentication services to download
+the public encryption key for the called party -- provided they can be discovered by calling parties.
+   This document does not specify any
+   particular discovery scheme, but instead offers some general guidance about potential approaches.
+      </t>
+      <t indent="0" pn="section-11-3">
+   It is a desirable property that the public encryption key for a given party
+be linked to their STIR credential. An <xref target="RFC7748" format="default" sectionFormat="of" derivedContent="RFC7748">Elliptic Curve Diffie-Hellman (ECDH)</xref>
+public-private key pair might be generated for a
+<xref target="I-D.ietf-tls-subcerts" format="default" sectionFormat="of" derivedContent="TLS-SUBCERTS">subcert</xref> of the STIR credential.
+That subcert could be looked up along with the STIR credential of the called party.
+Further details of this subcert, and the exact lookup mechanism involved, are deferred for future protocol work.
+      </t>
+      <t indent="0" pn="section-11-4">
+   Obviously, if there is a single central database that the caller and
+   callee each access in real time to download the other's
+   keys, then this represents a real privacy risk, as the central
+   key database learns about each call.  A number of mechanisms are
+   potentially available to mitigate this:
+      </t>
+      <ul empty="true" spacing="normal" bare="false" indent="3" pn="section-11-5">
+        <li pn="section-11-5.1">
+ Have endpoints pre-fetch keys for potential counterparties
+      (e.g., their address book or the entire database).
+                 </li>
+        <li pn="section-11-5.2">
+  Have caching servers in the user's network that proxy their
+      fetches and thus conceal the relationship between the user and the
+      keys they are fetching.
+        </li>
+      </ul>
+      <t indent="0" pn="section-11-6">
+  Clearly, there is a privacy/timeliness trade-off in that getting
+    up-to-date knowledge about credential validity requires
+   contacting the credential directory in real-time (e.g., via the
+   <xref target="RFC6960" format="default" sectionFormat="of" derivedContent="RFC6960">Online Certificate Status Protocol (OCSP)</xref>).
+   This is somewhat mitigated for the caller's credentials in that he
+   can get short-term credentials right before placing a call which only
+   reveals his calling rate, but not who he is calling.  Alternately,
+   the CPS can verify the caller's credentials via OCSP, though of
+   course this requires the callee to trust the CPS's verification.
+   This approach does not work as well for the callee's credentials, but
+   the risk there is more modest since an attacker would need to both
+   have the callee's credentials and regularly poll the database for
+   every potential caller.
+      </t>
+      <t indent="0" pn="section-11-7">
+   We consider the exact best point in the trade-off space to be an open
+   issue.
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-12">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-12-1">This document has no IANA actions.</t>
+    </section>
+    <section anchor="priv" numbered="true" toc="include" removeInRFC="false" pn="section-13">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-13-1">
+    Delivering PASSporTs out-of-band offers a different set of privacy properties
+than traditional in-band STIR. In-band operations convey
+PASSporTs as headers in SIP messages in cleartext, which any
+forwarding intermediaries can potentially inspect. By contrast, out-of-band
+    STIR stores these PASSporTs at a service after encrypting them
+as described in <xref target="authz" format="default" sectionFormat="of" derivedContent="Section 6"/>, effectively creating a path
+    between the authentication and verification service in which the CPS
+is the sole intermediary, but the CPS cannot read the PASSporTs.
+    Potentially, out-of-band PASSporT delivery could thus improve on the privacy story of STIR.
+      </t>
+      <t indent="0" pn="section-13-2">
+    The principle actors in the operation of out-of-band are the
+AS, VS, and CPS. The
+AS and VS functions differ from baseline behavior <xref target="RFC8224" format="default" sectionFormat="of" derivedContent="RFC8224"/>,
+in that they interact with a CPS over a non-SIP interface,
+of which the REST interface in <xref target="web" format="default" sectionFormat="of" derivedContent="Section 9"/> serves as an example.
+Some out-of-band deployments may also require a discovery service for the
+CPS itself (<xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>) and/or encryption keys
+(<xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/>). Even with encrypted PASSporTs,
+the network interactions by which the AS and VS interact with the CPS, and
+to a lesser extent any discovery services, thus create potential opportunities
+for data leakage about calling and called parties.
+      </t>
+      <t indent="0" pn="section-13-3">
+    The process of storing and retrieving PASSporTs at a CPS can itself
+reveal information about calls being placed. The mechanism takes
+    care not to require that the AS authenticate itself to the CPS,
+relying instead on a blind signature mechanism for flood control prevention.
+<xref target="sub" format="default" sectionFormat="of" derivedContent="Section 7.4"/>
+    discusses the practice of storing "dummy" PASSporTs at random intervals
+to thwart traffic analysis, and as <xref target="vs" format="default" sectionFormat="of" derivedContent="Section 8.2"/> notes, a CPS is required to
+    return a dummy PASSporT even if there is no PASSporT indexed for
+that calling number, which similarly enables the retrieval side to
+randomly request PASSporTs when there are no calls in progress.
+Note that the caller's IP address itself leaks information about the caller.
+Proxying the storage of the CPS through some third party could help prevent
+this attack. It might also be possible to use a more sophisticated system
+such as Riposte <xref target="RIPOSTE" format="default" sectionFormat="of" derivedContent="RIPOSTE"/>.
+These measures can help to mitigate information disclosure in the system.
+In implementations that require service discovery
+(see <xref target="cps" format="default" sectionFormat="of" derivedContent="Section 10"/>), perhaps through key discovery
+(<xref target="lookup" format="default" sectionFormat="of" derivedContent="Section 11"/>), similar measures could be used
+to make sure that service discovery does not itself disclose information about calls.
+      </t>
+      <t indent="0" pn="section-13-4">
+    Ultimately, this document only provides a framework for future implementation
+of out-of-band systems, and the privacy properties of a given implementation will
+depend on architectural assumptions made in those environments. More closed
+systems for intranet operations may adopt a weaker security posture but
+otherwise mitigate the risks of information disclosure, whereas more open environments
+will require careful implementation of the practices described here.
+      </t>
+      <t indent="0" pn="section-13-5">
+    For general privacy risks associated with the operations of STIR,
+also see the privacy considerations covered in <xref target="RFC8224" section="11" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8224#section-11" derivedContent="RFC8224"/>.
+      </t>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-14">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-14-1">This entire document is about security, but the detailed security
+   properties will vary depending on how the framework is applied and deployed. General guidance for dealing
+      with the most obvious security challenges posed by this framework is given in
+Sections <xref target="sec" format="counter" sectionFormat="of" derivedContent="7.3"/> and <xref target="sub" format="counter" sectionFormat="of" derivedContent="7.4"/>,
+along proposed solutions for problems like denial-of-service attacks or traffic analysis against the CPS.</t>
+      <t indent="0" pn="section-14-2">Although there are considerable security challenges associated with
+widespread deployment of a public CPS, those must be weighed against the
+potential usefulness of a service that delivers a STIR assurance without
+requiring the passage of end-to-end SIP. Ultimately, the security properties
+of this mechanism are at least comparable to in-band
+  STIR: the substitution attack documented in <xref target="sub" format="default" sectionFormat="of" derivedContent="Section 7.4"/>
+could be implemented by any in-band SIP intermediary or eavesdropper who
+happened to see the PASSporT in transit, say, and launched its own call with a
+copy of that PASSporT to race against the original to the destination.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-stir-passport-divert" to="PASSPORT-DIVERT"/>
+    <displayreference target="I-D.ietf-modern-teri" to="MODERN-TERI"/>
+    <displayreference target="I-D.ietf-tls-subcerts" to="TLS-SUBCERTS"/>
+    <displayreference target="I-D.privacy-pass" to="PRIVACY-PASS"/>
+    <displayreference target="I-D.jennings-vipr-overview" to="VIPR-OVERVIEW"/>
+    <references pn="section-15">
+      <name slugifiedName="name-informative-references">Informative References</name>
+      <reference anchor="I-D.ietf-modern-teri" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-modern-teri-00" derivedAnchor="MODERN-TERI">
+        <front>
+          <title>An Architecture and Information Model for Telephone-Related Information (TeRI)</title>
+          <author initials="J" surname="Peterson" fullname="Jon Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="July" day="2" year="2018"/>
+          <abstract>
+            <t indent="0">As telephone services migrate to the Internet, Internet applications require tools to access and manage information about telephone numbers.  This document specifies a protocol-independent framework and information model for managing service and administration data related to telephone numbers.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="Internet-Draft" value="draft-ietf-modern-teri-00"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-modern-teri-00.txt"/>
+        <refcontent>Work in Progress</refcontent>
+      </reference>
+      <reference anchor="I-D.ietf-stir-passport-divert" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-stir-passport-divert-09" derivedAnchor="PASSPORT-DIVERT">
+        <front>
+          <title>PASSporT Extension for Diverted Calls</title>
+          <author initials="J" surname="Peterson" fullname="Jon Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="July" day="13" year="2020"/>
+          <abstract>
+            <t indent="0">PASSporT is specified in RFC 8225 to convey cryptographically-signed information about the people involved in personal communications. This document extends PASSporT to include an indication that a call has been diverted from its original destination to a new one.  This information can greatly improve the decisions made by verification services in call forwarding scenarios.  Also specified here is an encapsulation mechanism for nesting a PASSporT within another PASSporT that assists relying parties in some diversion scenarios.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="Internet-Draft" value="draft-ietf-stir-passport-divert-09"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-stir-passport-divert-09.txt"/>
+        <refcontent>Work in Progress</refcontent>
+      </reference>
+      <reference anchor="I-D.privacy-pass" quoteTitle="true" target="https://tools.ietf.org/html/draft-privacy-pass-00" derivedAnchor="PRIVACY-PASS">
+        <front>
+          <title>The Privacy Pass Protocol</title>
+          <author initials="A" surname="Davidson" fullname="Alex Davidson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="N" surname="Sullivan" fullname="Nick Sullivan">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="November" day="3" year="2019"/>
+          <abstract>
+            <t indent="0">This document specifies the Privacy Pass protocol for anonymously authorizing clients with services on the Internet.  Note to Readers  Source for this draft and an issue tracker can be found at https://github.com/grittygrease/draft-privacy-pass [1].</t>
+          </abstract>
+        </front>
+        <seriesInfo name="Internet-Draft" value="draft-privacy-pass-00"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-privacy-pass-00.txt"/>
+        <refcontent>Work in Progress</refcontent>
+      </reference>
+      <reference anchor="REST" quoteTitle="true" derivedAnchor="REST">
+        <front>
+          <title>Architectural Styles and the Design of Network-based Software Architectures, Chapter 5: Representational State Transfer</title>
+          <author initials="R" surname="Fielding" fullname="Roy Fielding">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2010"/>
+        </front>
+        <seriesInfo name="Ph.D. Dissertation," value="University of California, Irvine"/>
+        <format type="pdf" target="http://www.ics.uci.edu/~fielding/pubs/dissertation/fielding_dissertation.pdf"/>
+      </reference>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1997" month="March"/>
+          <abstract>
+            <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      <reference anchor="RFC3261" target="https://www.rfc-editor.org/info/rfc3261" quoteTitle="true" derivedAnchor="RFC3261">
+        <front>
+          <title>SIP: Session Initiation Protocol</title>
+          <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="G." surname="Camarillo" fullname="G. Camarillo">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Johnston" fullname="A. Johnston">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J." surname="Peterson" fullname="J. Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Sparks" fullname="R. Sparks">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="M." surname="Handley" fullname="M. Handley">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E." surname="Schooler" fullname="E. Schooler">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2002" month="June"/>
+          <abstract>
+            <t indent="0">This document describes Session Initiation Protocol (SIP), an application-layer control (signaling) protocol for creating, modifying, and terminating sessions with one or more participants.  These sessions include Internet telephone calls, multimedia distribution, and multimedia conferences.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="3261"/>
+        <seriesInfo name="DOI" value="10.17487/RFC3261"/>
+      </reference>
+      <reference anchor="RFC5636" target="https://www.rfc-editor.org/info/rfc5636" quoteTitle="true" derivedAnchor="RFC5636">
+        <front>
+          <title>Traceable Anonymous Certificate</title>
+          <author initials="S." surname="Park" fullname="S. Park">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Park" fullname="H. Park">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="Y." surname="Won" fullname="Y. Won">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J." surname="Lee" fullname="J. Lee">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Kent" fullname="S. Kent">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2009" month="August"/>
+          <abstract>
+            <t indent="0">This document defines a practical architecture and protocols for offering privacy for a user who requests and uses an X.509 certificate containing a pseudonym, while still retaining the ability to map such a certificate to the real user who requested it.  The architecture is compatible with IETF certificate request formats such as PKCS10 (RFC 2986) and CMC (RFC 5272).  The architecture separates the authorities involved in issuing a certificate: one for verifying ownership of a private key (Blind Issuer) and the other for validating the contents of a certificate (Anonymity Issuer).  The end entity (EE) certificates issued under this model are called Traceable Anonymous Certificates (TACs).  This memo defines an Experimental Protocol for the  Internet community.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="5636"/>
+        <seriesInfo name="DOI" value="10.17487/RFC5636"/>
+      </reference>
+      <reference anchor="RFC6116" target="https://www.rfc-editor.org/info/rfc6116" quoteTitle="true" derivedAnchor="RFC6116">
+        <front>
+          <title>The E.164 to Uniform Resource Identifiers (URI) Dynamic Delegation Discovery System (DDDS) Application (ENUM)</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="L." surname="Conroy" fullname="L. Conroy">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="K." surname="Fujiwara" fullname="K. Fujiwara">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2011" month="March"/>
+          <abstract>
+            <t indent="0">This document discusses the use of the Domain Name System (DNS) for storage of data associated with E.164 numbers, and for resolving those numbers into URIs that can be used (for example) in telephony call setup.  This document also describes how the DNS can be used to identify the services associated with an E.164 number.  This document obsoletes RFC 3761.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="6116"/>
+        <seriesInfo name="DOI" value="10.17487/RFC6116"/>
+      </reference>
+      <reference anchor="RFC6940" target="https://www.rfc-editor.org/info/rfc6940" quoteTitle="true" derivedAnchor="RFC6940">
+        <front>
+          <title>REsource LOcation And Discovery (RELOAD) Base Protocol</title>
+          <author initials="C." surname="Jennings" fullname="C. Jennings">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="B." surname="Lowekamp" fullname="B. Lowekamp" role="editor">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Baset" fullname="S. Baset">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="January"/>
+          <abstract>
+            <t indent="0">This specification defines REsource LOcation And Discovery (RELOAD), a peer-to-peer (P2P) signaling protocol for use on the Internet.  A P2P signaling protocol provides its clients with an abstract storage and messaging service between a set of cooperating peers that form the overlay network.  RELOAD is designed to support a P2P Session Initiation Protocol (P2PSIP) network, but can be utilized by other applications with similar requirements by defining new usages that specify the Kinds of data that need to be stored for a particular application.  RELOAD defines a security model based on a certificate enrollment service that provides unique identities.  NAT traversal is a fundamental service of the protocol.  RELOAD also allows access from "client" nodes that do not need to route traffic or store data for others.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="6940"/>
+        <seriesInfo name="DOI" value="10.17487/RFC6940"/>
+      </reference>
+      <reference anchor="RFC6960" target="https://www.rfc-editor.org/info/rfc6960" quoteTitle="true" derivedAnchor="RFC6960">
+        <front>
+          <title>X.509 Internet Public Key Infrastructure Online Certificate Status Protocol - OCSP</title>
+          <author initials="S." surname="Santesson" fullname="S. Santesson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="M." surname="Myers" fullname="M. Myers">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Ankney" fullname="R. Ankney">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="A." surname="Malpani" fullname="A. Malpani">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Galperin" fullname="S. Galperin">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Adams" fullname="C. Adams">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2013" month="June"/>
+          <abstract>
+            <t indent="0">This document specifies a protocol useful in determining the current status of a digital certificate without requiring Certificate Revocation Lists (CRLs). Additional mechanisms addressing PKIX operational requirements are specified in separate documents.  This document obsoletes RFCs 2560 and 6277.  It also updates RFC 5912.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="6960"/>
+        <seriesInfo name="DOI" value="10.17487/RFC6960"/>
+      </reference>
+      <reference anchor="RFC7258" target="https://www.rfc-editor.org/info/rfc7258" quoteTitle="true" derivedAnchor="RFC7258">
+        <front>
+          <title>Pervasive Monitoring Is an Attack</title>
+          <author initials="S." surname="Farrell" fullname="S. Farrell">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="May"/>
+          <abstract>
+            <t indent="0">Pervasive monitoring is a technical attack that should be mitigated in the design of IETF protocols, where possible.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="188"/>
+        <seriesInfo name="RFC" value="7258"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7258"/>
+      </reference>
+      <reference anchor="RFC7340" target="https://www.rfc-editor.org/info/rfc7340" quoteTitle="true" derivedAnchor="RFC7340">
+        <front>
+          <title>Secure Telephone Identity Problem Statement and Requirements</title>
+          <author initials="J." surname="Peterson" fullname="J. Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Schulzrinne" fullname="H. Schulzrinne">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2014" month="September"/>
+          <abstract>
+            <t indent="0">Over the past decade, Voice over IP (VoIP) systems based on SIP have replaced many traditional telephony deployments.  Interworking VoIP systems with the traditional telephone network has reduced the overall level of calling party number and Caller ID assurances by granting attackers new and inexpensive tools to impersonate or obscure calling party numbers when orchestrating bulk commercial calling schemes, hacking voicemail boxes, or even circumventing multi-factor authentication systems trusted by banks.  Despite previous attempts to provide a secure assurance of the origin of SIP communications, we still lack effective standards for identifying the calling party in a VoIP session.  This document examines the reasons why providing identity for telephone numbers on the Internet has proven so difficult and shows how changes in the last decade may provide us with new strategies for attaching a secure identity to SIP sessions.  It also gives high-level requirements for a solution in this space.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7340"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7340"/>
+      </reference>
+      <reference anchor="RFC7748" target="https://www.rfc-editor.org/info/rfc7748" quoteTitle="true" derivedAnchor="RFC7748">
+        <front>
+          <title>Elliptic Curves for Security</title>
+          <author initials="A." surname="Langley" fullname="A. Langley">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="M." surname="Hamburg" fullname="M. Hamburg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Turner" fullname="S. Turner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2016" month="January"/>
+          <abstract>
+            <t indent="0">This memo specifies two elliptic curves over prime fields that offer a high level of practical security in cryptographic applications, including Transport Layer Security (TLS).  These curves are intended to operate at the ~128-bit and ~224-bit security level, respectively, and are generated deterministically based on a list of required properties.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="7748"/>
+        <seriesInfo name="DOI" value="10.17487/RFC7748"/>
+      </reference>
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author initials="B." surname="Leiba" fullname="B. Leiba">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2017" month="May"/>
+          <abstract>
+            <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+      <reference anchor="RFC8224" target="https://www.rfc-editor.org/info/rfc8224" quoteTitle="true" derivedAnchor="RFC8224">
+        <front>
+          <title>Authenticated Identity Management in the Session Initiation Protocol (SIP)</title>
+          <author initials="J." surname="Peterson" fullname="J. Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Jennings" fullname="C. Jennings">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Wendt" fullname="C. Wendt">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="February"/>
+          <abstract>
+            <t indent="0">The baseline security mechanisms in the Session Initiation Protocol (SIP) are inadequate for cryptographically assuring the identity of the end users that originate SIP requests, especially in an interdomain context.  This document defines a mechanism for securely identifying originators of SIP requests.  It does so by defining a SIP header field for conveying a signature used for validating the identity and for conveying a reference to the credentials of the signer.</t>
+            <t indent="0">This document obsoletes RFC 4474.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8224"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8224"/>
+      </reference>
+      <reference anchor="RFC8225" target="https://www.rfc-editor.org/info/rfc8225" quoteTitle="true" derivedAnchor="RFC8225">
+        <front>
+          <title>PASSporT: Personal Assertion Token</title>
+          <author initials="C." surname="Wendt" fullname="C. Wendt">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J." surname="Peterson" fullname="J. Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="February"/>
+          <abstract>
+            <t indent="0">This document defines a method for creating and validating a token that cryptographically verifies an originating identity or, more generally, a URI or telephone number representing the originator of personal communications.  The Personal Assertion Token, PASSporT, is cryptographically signed to protect the integrity of the identity of the originator and to verify the assertion of the identity information at the destination.  The cryptographic signature is defined with the intention that it can confidently verify the originating persona even when the signature is sent to the destination party over an insecure channel.  PASSporT is particularly useful for many personal-communications applications over IP networks and other multi-hop interconnection scenarios where the originating and destination parties may not have a direct trusted relationship.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8225"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8225"/>
+      </reference>
+      <reference anchor="RFC8226" target="https://www.rfc-editor.org/info/rfc8226" quoteTitle="true" derivedAnchor="RFC8226">
+        <front>
+          <title>Secure Telephone Identity Credentials: Certificates</title>
+          <author initials="J." surname="Peterson" fullname="J. Peterson">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S." surname="Turner" fullname="S. Turner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="February"/>
+          <abstract>
+            <t indent="0">In order to prevent the impersonation of telephone numbers on the Internet, some kind of credential system needs to exist that cryptographically asserts authority over telephone numbers.  This document describes the use of certificates in establishing authority over telephone numbers, as a component of a broader architecture for managing telephone numbers as identities in protocols like SIP.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8226"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8226"/>
+      </reference>
+      <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+        <front>
+          <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+          <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="August"/>
+          <abstract>
+            <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+            <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8446"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+      </reference>
+      <reference anchor="RIPOSTE" target="https://people.csail.mit.edu/henrycg/pubs/oakland15riposte/" quoteTitle="true" derivedAnchor="RIPOSTE">
+        <front>
+          <title>Riposte: An Anonymous Messaging System Handling Millions of Users</title>
+          <author initials="H" surname="Corrigan-Gibbs" fullname="Henry Corrigan-Gibbs">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="D" surname="Boneh" fullname="Dan Boneh">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="D" surname="Mazières" fullname="David Mazières">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2015" month="May"/>
+        </front>
+      </reference>
+      <reference anchor="I-D.ietf-tls-subcerts" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-tls-subcerts-10" derivedAnchor="TLS-SUBCERTS">
+        <front>
+          <title>Delegated Credentials for TLS</title>
+          <author initials="R" surname="Barnes" fullname="Richard Barnes">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="S" surname="Iyengar" fullname="Subodh Iyengar">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="N" surname="Sullivan" fullname="Nick Sullivan">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="E" surname="Rescorla" fullname="Eric Rescorla">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="January" day="24" year="2021"/>
+          <abstract>
+            <t indent="0">The organizational separation between the operator of a TLS endpoint and the certification authority can create limitations.  For example, the lifetime of certificates, how they may be used, and the algorithms they support are ultimately determined by the certification authority.  This document describes a mechanism by which operators may delegate their own credentials for use in TLS, without breaking compatibility with peers that do not support this specification.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="Internet-Draft" value="draft-ietf-tls-subcerts-10"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-tls-subcerts-10.txt"/>
+        <refcontent>Work in Progress</refcontent>
+      </reference>
+      <reference anchor="I-D.jennings-vipr-overview" quoteTitle="true" target="https://tools.ietf.org/html/draft-jennings-vipr-overview-06" derivedAnchor="VIPR-OVERVIEW">
+        <front>
+          <title>Verification Involving PSTN Reachability: Requirements and Architecture Overview</title>
+          <author initials="M" surname="Barnes" fullname="Mary Barnes">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C" surname="Jennings" fullname="Cullen Jennings">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J" surname="Rosenberg" fullname="Jonathan Rosenberg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="M" surname="Petit-Huguenin" fullname="Marc Petit-Huguenin">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="December" day="9" year="2013"/>
+          <abstract>
+            <t indent="0">The Session Initiation Protocol (SIP) has seen widespread deployment within individual domains, typically supporting voice and video communications.  Though it was designed from the outset to support inter-domain federation over the public Internet, such federation has not materialized.  The primary reasons for this are the complexities of inter-domain phone number routing and concerns over security. This document reviews this problem space, outlines requirements, and then describes a model and technique for inter-domain federation with SIP involving the Public Switched Telephone Network (PSTN), called Verification Involving PSTN Reachability (VIPR).  VIPR addresses the problems that have prevented inter-domain federation over the Internet.  It provides fully distributed inter-domain routing for phone numbers, authorized mappings from phone numbers to domains, a new technique for automated SIP anti-spam, and privacy of number ownership, all while preserving the trapezoidal model of SIP.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="Internet-Draft" value="draft-jennings-vipr-overview-06"/>
+        <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-jennings-vipr-overview-06.txt"/>
+        <refcontent>Work in Progress</refcontent>
+      </reference>
+    </references>
+    <section anchor="Acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The ideas
+   in this document came out of discussions with <contact fullname="Richard Barnes"/> and
+   <contact fullname="Cullen Jennings"/>. We'd also like to thank
+   <contact fullname="Russ Housley"/>, <contact fullname="Chris Wendt"/>,
+   <contact fullname="Eric Burger"/>, <contact fullname="Mary Barnes"/>,
+   <contact fullname="Ben Campbell"/>, <contact fullname="Ted Huang"/>,
+   <contact fullname="Jonathan Rosenberg"/>, and <contact fullname="Robert Sparks"/>
+   for helpful suggestions.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Eric Rescorla" initials="E." surname="Rescorla">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <email>ekr@rtfm.com</email>
+        </address>
+      </author>
+      <author initials="J." surname="Peterson" fullname="Jon Peterson">
+        <organization abbrev="Neustar" showOnFrontPage="true">Neustar, Inc.</organization>
+        <address>
+          <postal>
+            <street>1800 Sutter St Suite 570</street>
+            <city>Concord</city>
+            <region>CA</region>
+            <code>94520</code>
+            <country>United States of America</country>
+          </postal>
+          <email>jon.peterson@team.neustar</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

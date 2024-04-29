@@ -1,0 +1,843 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-lwig-minimal-esp-12" indexInclude="true" ipr="trust200902" number="9333" prepTime="2023-01-13T14:50:59" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-lwig-minimal-esp-12" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9333" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Minimal IP ESP">Minimal IP Encapsulating Security Payload (ESP)</title>
+    <seriesInfo name="RFC" value="9333" stream="IETF"/>
+    <author surname="Migault" initials="D." fullname="Daniel Migault">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street>8275 Rte Transcanadienne</street>
+          <city>Saint-Laurent</city>
+          <region>QC</region>
+          <code>H4S 0B6</code>
+          <country>Canada</country>
+        </postal>
+        <email>daniel.migault@ericsson.com</email>
+      </address>
+    </author>
+    <author surname="Guggemos" initials="T." fullname="Tobias Guggemos">
+      <organization showOnFrontPage="true">LMU Munich</organization>
+      <address>
+        <postal>
+          <street>MNM-Team</street>
+          <street>Oettingenstr. 67</street>
+          <city>80538 Munich</city>
+          <country>Germany</country>
+        </postal>
+        <email>guggemos@mnm-team.org</email>
+      </address>
+    </author>
+    <date month="01" year="2023"/>
+    <area>Internet</area>
+    <workgroup>Light-Weight Implementation Guidance (lwig)</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+This document describes the minimal properties that an IP Encapsulating Security Payload (ESP) implementation needs to meet to remain interoperable with the standard ESP as defined in RFC 4303.
+Such a minimal version of ESP is not intended to become a replacement of ESP in RFC 4303.
+Instead, a minimal implementation is expected to be optimized for constrained environments while remaining interoperable with implementations of ESP.
+In addition, this document provides some considerations for implementing minimal ESP in a constrained environment, such as limiting the number of flash writes, handling frequent wakeup and sleep states, limiting wakeup time, and reducing the use of random generation. </t>
+      <t indent="0" pn="section-abstract-2"> This document does not update or modify RFC 4303. It provides a compact description of how to implement the minimal version of that protocol.
+RFC 4303 remains the authoritative description.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9333" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-notation">Requirements Notation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-parameters-index-s">Security Parameters Index (SPI)</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-spi-gene">Considerations for SPI Generation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sequence-number-sn">Sequence Number (SN)</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-padding">Padding</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-next-header-and-dummy-packe">Next Header and "Dummy" Packets</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-icv">ICV</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cryptographic-suites">Cryptographic Suites</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">ESP <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> is part of the IPsec protocol suite <xref target="RFC4301" format="default" sectionFormat="of" derivedContent="RFC4301"/>.
+IPsec is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service, and limited Traffic Flow Confidentiality (TFC) padding.</t>
+      <t indent="0" pn="section-1-2"><xref target="fig-esp-description" format="default" sectionFormat="of" derivedContent="Figure 1"/> describes an ESP packet.
+Currently, ESP is implemented in the kernel of most major multipurpose Operating Systems (OSes).
+ESP is usually implemented with all of its features to fit the multipurpose usage of these OSes, at the expense of resources and with no considerations for code size.
+Constrained devices are likely to have their own implementation of ESP optimized and adapted to their specific use, such as limiting the number of flash writes (for each packet or across wake time), handling frequent wakeup and sleep states, limiting wakeup time, and reducing the use of random generation.
+With the adoption of IPsec by Internet of Things (IoT) devices with minimal IKEv2 <xref target="RFC7815" format="default" sectionFormat="of" derivedContent="RFC7815"/> and ESP Header Compression (EHC) <xref target="I-D.mglt-ipsecme-diet-esp" format="default" sectionFormat="of" derivedContent="EHC-DIET-ESP"/> <xref target="I-D.mglt-ipsecme-ikev2-diet-esp-extension" format="default" sectionFormat="of" derivedContent="EHC-IKEv2"/>, these ESP implementations <bcp14>MUST</bcp14> remain interoperable with standard ESP implementations.
+This document describes the minimal properties an ESP implementation needs to meet to remain interoperable with ESP <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>.
+In addition, this document provides advice to implementers for implementing ESP within constrained environments.
+This document does not update or modify <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>.</t>
+      <t indent="0" pn="section-1-3">For each field of the ESP packet represented in <xref target="fig-esp-description" format="default" sectionFormat="of" derivedContent="Figure 1"/>, this document provides recommendations and guidance for minimal implementations.
+The primary purpose of minimal ESP is to remain interoperable with other nodes implementing ESP <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>, while limiting the standard complexity of the implementation.
+</t>
+      <figure anchor="fig-esp-description" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-esp-packet-description">ESP Packet Description</name>
+        <artwork name="" type="" align="left" alt="" pn="section-1-4.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ----
+|               Security Parameters Index (SPI)                 | ^Int.
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |Cov-
+|                      Sequence Number                          | |ered
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | ----
+|                    Payload Data* (variable)                   | |   ^
+~                                                               ~ |   |
+|                                                               | |Conf.
++               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |Cov-
+|               |     Padding (0-255 bytes)                     | |ered*
++-+-+-+-+-+-+-+-+               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |   |
+|                               |  Pad Length   | Next Header   | v   v
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ------
+|         Integrity Check Value (ICV) (variable)                |
+~                                                               ~
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+      </figure>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-requirements-notation">Requirements Notation</name>
+      <t indent="0" pn="section-2-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+      </t>
+    </section>
+    <section anchor="sec-spi" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-security-parameters-index-s">Security Parameters Index (SPI)</name>
+      <t indent="0" pn="section-3-1"> <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> defines the SPI as a mandatory 32-bit field.  </t>
+      <t indent="0" pn="section-3-2"> The SPI has local significance to index the Security Association (SA).
+As described in <xref target="RFC4301" sectionFormat="of" section="4.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4301#section-4.1" derivedContent="RFC4301"/>, nodes supporting only unicast communications can index their SA using only the SPI.
+Nodes supporting multicast communications also require the use of IP
+addresses; thus, SA lookup needs to be performed using the longest
+match.
+</t>
+      <t indent="0" pn="section-3-3"> For nodes supporting only unicast communications, indexing the SA using only the SPI is <bcp14>RECOMMENDED</bcp14>.
+The index may be based on the full 32 bits of the SPI or a subset of these bits.
+The node may require a combination of the SPI as well as other parameters (like the IP address) to index the SA.</t>
+      <t indent="0" pn="section-3-4"> Values 0-255 <bcp14>MUST NOT</bcp14> be used.
+As per <xref target="RFC4303" sectionFormat="of" section="2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc4303#section-2.1" derivedContent="RFC4303"/>, values 1-255 are reserved, and 0 is only allowed to be used internally and <bcp14>MUST NOT</bcp14> be sent over the wire. </t>
+      <t indent="0" pn="section-3-5"> <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> does not require the 32-bit SPI to be randomly generated, although that is the <bcp14>RECOMMENDED</bcp14> way to generate SPIs as it provides some privacy and security benefits and avoids correlation between ESP communications.
+To obtain a usable random 32-bit SPI, the node generates a random 32-bit value and checks it does not fall within the 0-255 range.
+If the SPI has an acceptable value, it is used to index the inbound session.
+Otherwise, the generated value is discarded, and the process repeats until a valid value is found.
+</t>
+      <t indent="0" pn="section-3-6">Some constrained devices are less concerned with the privacy properties associated with randomly generated SPIs.
+Examples of such devices might include sensors looking to reduce their code complexity.
+The use of a predictive function to generate the SPI might be preferred over the generation and handling of random values.
+An implementation of such predictable function could use the combination of a fixed value and the memory address of the Security Association Database (SAD) structure.
+For every incoming packet, the node will be able to point to the SAD structure directly from the SPI value.
+This avoids having a separate and additional binding and lookup function for the SPI to its SAD entry for every incoming packet.
+</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-considerations-for-spi-gene">Considerations for SPI Generation</name>
+        <t indent="0" pn="section-3.1-1">SPIs that are not randomly generated over 32 bits may have privacy and security concerns.
+As a result, the use of alternative designs requires careful security and privacy reviews.
+This section provides some considerations for the adoption of alternative designs. </t>
+        <t indent="0" pn="section-3.1-2">The SPI value is only looked up for inbound traffic.
+The SPI negotiated with IKEv2 <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> or minimal IKEv2 <xref target="RFC7815" format="default" sectionFormat="of" derivedContent="RFC7815"/> by a peer is the value used by the remote peer when it sends traffic.
+The main advantage of using a rekeying mechanism is to enable a rekey, which is performed by replacing an old SA with a new SA, both indexed with distinct SPIs. 
+The SPI is only used for inbound traffic by the peer, which allows each peer to manage the set of SPIs used for its inbound traffic. 
+The necessary number of SPIs reflects the number of inbound SAs as well as the ability to rekey those SAs. Typically, rekeying an SA is performed by creating a new SA (with a dedicated SPI) before the old SA is deleted. This results in an additional SA and the need to support an additional SPI.
+Similarly, the privacy concerns associated with the generation of non-random SPIs is also limited to the incoming traffic. </t>
+        <t indent="0" pn="section-3.1-3">
+Alternatively, some constrained devices will not implement IKEv2 or minimal IKEv2 and, as such, will not be able to manage a rollover between two distinct SAs. In addition, some of these constrained devices are likely to have a limited number of SAs; for example, they are likely to be indexed over 3 bytes only. One possible way to enable a rekeying mechanism with these devices is to use the SPI where, for example, the first 3 bytes designates the SA while the remaining byte indicates a rekey index.
+SPI numbers can be used to implement tracking the inbound SAs when rekeying is taking place. When rekeying an SPI, the new SPI could use the SPI bytes to indicate the rekeying index.
+</t>
+        <t indent="0" pn="section-3.1-4">The use of a small, limited set of SPI numbers across communications comes
+with privacy and security concerns.  Some specific values or subsets of SPI
+values could reveal the model or manufacturer of the node implementing ESP or
+reveal a state such as "not yet rekeyed" or "rekeyed 10 times".  If a
+constrained host uses a very limited number of applications, eventually a
+single one, the SPI itself could indicate what kind of traffic is transmitted
+(e.g., the kind of application typically running).  This could also be
+correlated with encrypted data size to further leak information to an observer
+on the network.  In addition, use of specific hardcoded SPI numbers could
+reveal a manufacturer or device version. If updated devices use different SPI
+numbers, an attacker could locate vulnerable devices by their use of specific
+SPI numbers.
+</t>
+        <t indent="0" pn="section-3.1-5">
+A privacy analysis should consider at least the type of information as well as the traffic pattern before deciding whether non-random SPIs are safe to use.
+Typically, temperature and wind sensors that are used outdoors do not leak privacy-sensitive information, and most of their traffic is expected to be outbound traffic.
+When used indoors, a sensor that reports an encrypted status of a door (closed or opened) every minute might not leak sensitive information outside the local network.
+In these examples, the privacy aspect of the information itself might be limited. Being able to determine the version of the sensor to potentially take control of it may also have some limited security consequences. Of course, this depends on the context in which these sensors are being used. If the risks associated to privacy and security are acceptable, a non-randomized SPI can be used.
+</t>
+      </section>
+    </section>
+    <section anchor="sec-sn" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-sequence-number-sn">Sequence Number (SN)</name>
+      <t indent="0" pn="section-4-1"> The Sequence Number (SN) in <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> is a mandatory 32-bit field in the packet.  </t>
+      <t indent="0" pn="section-4-2"> The SN is set by the sender so the receiver can implement anti-replay protection.
+The SN is derived from any strictly increasing function that guarantees the following: if packet B is sent after packet A, then the SN of packet B is higher than the SN of packet A.  </t>
+      <t indent="0" pn="section-4-3">Some constrained devices may establish communication with specific devices where it is known whether or not the peer implements anti-replay protection.
+As per <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>, the sender <bcp14>MUST</bcp14> still implement a strictly increasing function to generate the SN.  </t>
+      <t indent="0" pn="section-4-4">
+  It is <bcp14>RECOMMENDED</bcp14> that multipurpose ESP implementations
+  increment a counter for each packet sent.  However, a constrained device may
+  avoid maintaining this context and use another source that is known to
+  always increase.  Typically, constrained devices use 802.15.4 Time Slotted
+  Channel Hopping (TSCH).  This communication is heavily dependent on time.  A
+  constrained device can take advantage of this clock mechanism to generate
+  the SN.  A lot of IoT devices are in a sleep state most of the time and wake
+  up only to perform a specific operation before going back to sleep.  These
+  devices have separate hardware that allows them to wake up after a certain
+  timeout and typically also have timers that start running when the device is
+  booted up, so they might have a concept of time with certain granularity.
+  This requires devices to store any information in stable storage that can be
+  restored across sleeps (e.g., flash memory).  Storing information associated
+  with the SA (such as the SN) requires some read and write operations on
+  stable storage after each packet is sent as opposed to an SPI number or
+  cryptographic keys that are only written to stable storage at the creation
+  of the SA.  Write operations wear out the flash storage.  Write operations
+  also slow down the system significantly, as writing to flash is much slower
+  than reading from flash.  While these devices have internal clocks or timers
+  that might not be very accurate, they are good enough to guarantee that each
+  time the device wakes up from sleep, the time is greater than what it was
+  before the device went to sleep.  Using time for the SN would guarantee a
+  strictly increasing function and avoid storing any additional values or
+  context related to the SN on flash.  In addition to the time value, a
+  RAM-based counter can be used to ensure that the serial numbers are still
+  increasing and unique if the device sends multiple packets over an SA within
+  one wakeup period.
+</t>
+      <t indent="0" pn="section-4-5">For inbound traffic, it is <bcp14>RECOMMENDED</bcp14> that receivers
+implement anti-replay protection.  The size of the window should depend on the
+network characteristic to deliver packets out of order.  In an environment
+where out-of-order packets are not possible, the window size can be set to
+one.  An ESP implementation may choose to not implement anti-replay
+protection.  An implementation of anti-replay protection may require the
+device to write the received SN for every packet to stable storage.  This will
+have the same issues as discussed earlier with the SN.  Some constrained
+device implementations may choose to not implement the optional anti-replay
+protection.  A typical example is an IoT device such as a temperature sensor
+that sends a temperature measurement every 60 seconds and receives an
+acknowledgment from the receiver.  In a case like this, the ability to spoof
+and replay an acknowledgement is of limited interest and might not justify the
+implementation of an anti-replay mechanism.  Receiving peers may also use an
+ESP anti-replay mechanism adapted to a specific application.  Typically, when
+the sending peer is using an SN based on time, anti-replay may be implemented
+by discarding any packets that present an SN whose value is too much in the
+past.  Such mechanisms may consider clock drifting in various ways in addition
+to acceptable delay induced by the network to avoid the anti-replay windows
+rejecting legitimate packets.  Receiving peers could accept any SN as long as it is higher
+than the previously received SN.  Another mechanism could be used where only
+the received time on the device is used to consider a packet to be valid,
+without looking at the SN at all.
+</t>
+      <t indent="0" pn="section-4-6">The SN can be represented as a 32-bit number or as a 64-bit number, known as an "Extended Sequence Number (ESN)".
+As per <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>, support of ESN is not mandatory, and its use is negotiated via IKEv2 <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/>.
+An ESN is used for high-speed links to ensure there can be more than 2<sup>32</sup> packets before the SA needs to be rekeyed to prevent the SN from rolling over.
+This assumes the SN is incremented by 1 for each packet.
+When the SN is incremented differently -- such as when time is used -- rekeying needs to happen based on how the SN is incremented to prevent the SN from rolling over.
+The security of all data protected under a given key decreases slightly with each message, and a node must ensure the limit is not reached, even though the SN would permit it.
+Estimation of the maximum number of packets to be sent by a node is not always predictable, and large margins should be used, especially as nodes could be online for much more time than expected.
+Even for constrained devices, it is <bcp14>RECOMMENDED</bcp14> to implement some rekeying mechanisms (see <xref target="sec-security-considerations" format="default" sectionFormat="of" derivedContent="Section 10"/>).
+</t>
+    </section>
+    <section anchor="sec-padding" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-padding">Padding</name>
+      <t indent="0" pn="section-5-1"> Padding is required to keep the 32-bit alignment of ESP.
+It is also required for some encryption transforms that need a specific block size of input, such as ENCR_AES_CBC.
+ESP specifies padding in the Pad Length byte, followed by up to 255 bytes of padding.
+</t>
+      <t indent="0" pn="section-5-2"> Checking the padding structure is not mandatory, so constrained devices may omit these checks on received ESP packets.
+For outgoing ESP packets, padding must be applied as required by ESP.  </t>
+      <t indent="0" pn="section-5-3"> In some situations, the padding bytes may take a fixed value.
+This would typically be the case when the Payload Data is of fixed size.  </t>
+      <t indent="0" pn="section-5-4">ESP <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> additionally provides Traffic Flow Confidentiality (TFC) as a way to perform padding to hide traffic characteristics.
+TFC is not mandatory and is negotiated with the SA management protocol, such as IKEv2.
+TFC has been widely implemented, but it is not widely deployed for ESP traffic.
+It is <bcp14>NOT RECOMMENDED</bcp14> to implement TFC for minimal ESP. </t>
+      <t indent="0" pn="section-5-5">As a consequence, communication protection that relies on TFC would be more
+sensitive to traffic patterns without TFC.  This can leak application
+information as well as the manufacturer or model of the device used to a
+passive monitoring attacker.  Such information can be used, for example, by an
+attacker if a vulnerability is known for the specific device or application.
+In addition, some applications (such as health applications) could leak
+important privacy-oriented information.
+</t>
+      <t indent="0" pn="section-5-6">Constrained devices that have a limited battery lifetime may prefer to avoid sending extra padding bytes.
+In most cases, the payload carried by these devices is quite small, and the standard padding mechanism can be used as an alternative to TFC.
+Alternatively, any information leak based on the size -- or presence -- of the packet can also be addressed at the application level before the packet is encrypted with ESP.
+If application packets vary between 1 to 30 bytes, the application could always send 32-byte responses to ensure all traffic sent is of identical length.
+To prevent leaking information that a sensor changed state, such as "temperature changed" or "door opened", an application could send this information at regular time intervals, rather than when a specific event is happening, even if the sensor state did not change.
+</t>
+    </section>
+    <section anchor="sec-nh" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-next-header-and-dummy-packe">Next Header and "Dummy" Packets</name>
+      <t indent="0" pn="section-6-1">ESP <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> defines the Next Header as a mandatory 8-bit field in the packet.
+The Next Header, only visible after decryption, specifies the data contained in the payload.
+In addition, the Next Header may carry an indication on how to process the packet <xref target="I-D.nikander-esp-beet-mode" format="default" sectionFormat="of" derivedContent="BEET-ESP"/>.
+The Next Header can point to a "dummy" packet, i.e., a packet with the Next Header value set to 59, meaning "no next header".
+The data following "no next header" is unstructured "dummy" data. (Note that this document uses the term "dummy" for consistency with <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>.)
+</t>
+      <t indent="0" pn="section-6-2">The ability to generate, receive, and ignore "dummy" packets is required by <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/>.
+An implementation can omit ever generating and sending "dummy" packets.
+For interoperability, a minimal ESP implementation <bcp14>MUST</bcp14> be able to process and discard "dummy" packets without indicating an error.
+</t>
+      <t indent="0" pn="section-6-3">
+In constrained environments, sending "dummy" packets may have too much impact on the device lifetime, in which case, "dummy" packets should not be generated and sent.
+
+On the other hand, constrained devices running specific applications that would leak too much information by not generating and sending "dummy" packets may implement this functionality or even implement something similar at the application layer.
+Note also that similarly to padding and TFC that can be used to hide some traffic characteristics (see <xref target="sec-padding" format="default" sectionFormat="of" derivedContent="Section 5"/>), "dummy" packets may also reveal some patterns that can be used to identify the application.
+For example, an application may send "dummy" data to hide a traffic pattern. Suppose such an application sends a 1-byte data when a change occurs. 
+This results in sending a packet notifying a change has occurred. 
+"Dummy" packets may be used to prevent such information from being leaked by sending a 1-byte packet every second when the information is not changed.
+After an upgrade, the data becomes 2 bytes. At that point, the  "dummy" packets do not hide anything, and having 1 byte regularly versus 2 bytes makes even the identification of the application version easier to identify.
+This generally makes the use of "dummy" packets more appropriate on high-speed links.
+</t>
+      <t indent="0" pn="section-6-4"> In some cases, devices are dedicated to a single application or a single transport protocol. In this case, the Next Header has a fixed value.</t>
+      <t indent="0" pn="section-6-5">Specific processing indications have not been standardized yet <xref target="I-D.nikander-esp-beet-mode" format="default" sectionFormat="of" derivedContent="BEET-ESP"/> and are expected to result from an agreement between the peers.
+As a result, they <bcp14>SHOULD NOT</bcp14> be part of a minimal implementation of ESP.  </t>
+    </section>
+    <section anchor="sec-icv" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-icv">ICV</name>
+      <t indent="0" pn="section-7-1">The ICV depends on the cryptographic suite used.
+As detailed in <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/>, authentication or authenticated encryption is <bcp14>RECOMMENDED</bcp14>, and as such, the ICV field must be present with a size different from zero.
+Its length is defined by the security recommendations only.  </t>
+    </section>
+    <section anchor="sec-encr" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-cryptographic-suites">Cryptographic Suites</name>
+      <t indent="0" pn="section-8-1"> The recommended algorithms to use are expected to evolve over time, and implementers <bcp14>SHOULD</bcp14> follow the recommendations provided by <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/> and updates.
+</t>
+      <t indent="0" pn="section-8-2"> This section lists some of the criteria that may be considered to select an appropriate cryptographic suite.
+The list is not expected to be exhaustive and may also evolve over time. </t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-8-3">
+
+	<li pn="section-8-3.1" derivedCounter="1.">Security: Security is the criteria that should be considered first
+	for the selection of encryption algorithm transforms.  The security of
+	encryption algorithm transforms is expected to evolve over time, and
+	it is of primary importance to follow up-to-date security guidance and
+	recommendations.  The chosen encryption algorithm <bcp14>MUST NOT</bcp14> be vulnerable or weak (see <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/> for outdated ciphers).  ESP can be used to
+	authenticate only (ENCR_NULL) or to encrypt the communication.  In the
+	latter case, Authenticated Encryption with Associated Data (AEAD) is
+	<bcp14>RECOMMENDED</bcp14> <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/>.</li>
+        <li pn="section-8-3.2" derivedCounter="2.">Resilience to Nonce Reuse: Some transforms, including AES-GCM,
+        are vulnerable to nonce collision with a given key.  While the
+        generation of the nonce may prevent such collision during a session,
+        the mechanisms are unlikely to provide such protection across sleep
+        states or reboot.  This causes an issue for devices that are
+        configured using static keys (called "manual keying"), and manual keying
+        should not be used with these encryption algorithms.  When the key is
+        likely to be reused across reboots, algorithms that are resistant to nonce misuse
+         (for example, AES-SIV <xref target="RFC5297" format="default" sectionFormat="of" derivedContent="RFC5297"/>, AES-GCM-SIV <xref target="RFC8452" format="default" sectionFormat="of" derivedContent="RFC8452"/>, and Deoxys-II <xref target="DeoxysII" format="default" sectionFormat="of" derivedContent="DeoxysII"/>) are <bcp14>RECOMMENDED</bcp14>.  Note, however,
+        that none of these are currently defined for use with
+        ESP.</li>
+        <li pn="section-8-3.3" derivedCounter="3.">Interoperability: Constrained devices usually only implement one
+        or very few different encryption algorithm transforms.  <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/> takes the life cycle of encryption
+        algorithm transforms and device manufacturing into consideration in
+        its recommendations for mandatory-to-implement (MTI)
+        algorithms.</li>
+        <li pn="section-8-3.4" derivedCounter="4.">Power Consumption and Cipher Suite Complexity: Complexity of the
+        encryption algorithm transform and the energy cost associated with it
+        are especially important considerations for devices that have limited
+        resources or are battery powered.  The battery life might determine
+        the lifetime of the entire device.  When choosing a cryptographic
+        function, reusing specific libraries or taking
+        advantage of hardware acceleration provided by the device should be considered.  For
+        example, if the device benefits from AES hardware modules and uses
+        ENCR_AES_CTR, it may prefer AUTH_AES-XCBC for its authentication.  In
+        addition, some devices may embed radio modules with hardware
+        acceleration for AES-CCM, in which case, this transform may be
+        preferred.</li>
+        <li pn="section-8-3.5" derivedCounter="5.">
+          <t indent="0" pn="section-8-3.5.1">Power Consumption and Bandwidth Consumption: Reducing the
+        payload sent may significantly reduce the energy consumption of the
+        device.  Encryption algorithm transforms with low overhead are
+        strongly preferred.  To reduce the overall payload size, one may, for
+        example:</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-3.5.2">
+            <li pn="section-8-3.5.2.1">Use counter-based ciphers without fixed block length
+	    (e.g., AES-CTR or ChaCha20-Poly1305).</li>
+            <li pn="section-8-3.5.2.2">Use ciphers capable of using implicit
+            Initialization Vectors (IVs) <xref target="RFC8750" format="default" sectionFormat="of" derivedContent="RFC8750"/>.</li>
+            <li pn="section-8-3.5.2.3">Use ciphers recommended for IoT <xref target="RFC8221" format="default" sectionFormat="of" derivedContent="RFC8221"/>.</li>
+            <li pn="section-8-3.5.2.4"> Avoid padding by sending payload data that are
+            aligned to the cipher block length -- 2 bytes for the ESP trailer.</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">This document has no IANA actions.</t>
+    </section>
+    <section anchor="sec-security-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1"> The security considerations in <xref target="RFC4303" format="default" sectionFormat="of" derivedContent="RFC4303"/> apply to this document as well.
+In addition, this document provides security recommendations and guidance for the implementation choices for each ESP field.  </t>
+      <t indent="0" pn="section-10-2">The security of a communication provided by ESP is closely related to the security associated with the management of that key.
+This usually includes mechanisms to prevent a nonce from repeating, for example.
+When a node is provisioned with a session key that is used across reboot, the implementer <bcp14>MUST</bcp14> ensure that the mechanisms put in place remain valid across reboot as well.
+</t>
+      <t indent="0" pn="section-10-3">It is <bcp14>RECOMMENDED</bcp14> to use ESP in conjunction with key management protocols such as, for example, IKEv2 <xref target="RFC7296" format="default" sectionFormat="of" derivedContent="RFC7296"/> or minimal IKEv2 <xref target="RFC7815" format="default" sectionFormat="of" derivedContent="RFC7815"/>.
+Such mechanisms are responsible for negotiating fresh session keys as well as preventing a session key being used beyond its lifetime.
+
+When such mechanisms cannot be implemented, such as when the session key is provisioned, the device <bcp14>MUST</bcp14> ensure that keys are not used beyond their lifetime and that the key remains used in compliance with all security requirements across reboots (e.g., conditions on counters and nonces remain valid).
+</t>
+      <t indent="0" pn="section-10-4">When a device generates its own key or when random values such as nonces are generated, the random generation <bcp14>MUST</bcp14> follow <xref target="RFC4086" format="default" sectionFormat="of" derivedContent="RFC4086"/>.
+In addition, <xref target="SP-800-90A-Rev-1" format="default" sectionFormat="of" derivedContent="SP-800-90A-Rev-1"/> provides guidance on how to build random generators based on deterministic random functions.
+</t>
+    </section>
+    <section anchor="sec-privacy-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-11">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-11-1">Preventing the leakage of privacy-sensitive information is a hard problem to solve and usually results in balancing the information potentially being leaked to the cost associated with the counter measures.
+This problem is not inherent to the minimal ESP described in this document and also concerns the use of ESP in general. </t>
+      <t indent="0" pn="section-11-2">This document targets minimal implementations of ESP and, as such, describes a minimalistic way to implement ESP.
+In some cases, this may result in potentially revealing privacy-sensitive pieces of information.
+This document describes these privacy implications so the implementer can make the appropriate decisions given the specificities of a given environment and deployment. </t>
+      <t indent="0" pn="section-11-3">The main risk associated with privacy is the ability to identify an application or a device by analyzing the traffic, which is designated as "traffic shaping".
+As discussed in <xref target="sec-spi" format="default" sectionFormat="of" derivedContent="Section 3"/>, the use in a very specific context of non-randomly generated SPIs might ease the determination of the device or the application in some cases.
+Similarly, padding provides limited capabilities to obfuscate the traffic compared to those provided by TFC. Such consequences on privacy are detailed in <xref target="sec-padding" format="default" sectionFormat="of" derivedContent="Section 5"/>. </t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.mglt-ipsecme-diet-esp" to="EHC-DIET-ESP"/>
+    <displayreference target="I-D.mglt-ipsecme-ikev2-diet-esp-extension" to="EHC-IKEv2"/>
+    <displayreference target="I-D.nikander-esp-beet-mode" to="BEET-ESP"/>
+    <references pn="section-12">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-12.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+          <format target="https://www.rfc-editor.org/info/rfc2119" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4086" target="https://www.rfc-editor.org/info/rfc4086" quoteTitle="true" derivedAnchor="RFC4086">
+          <front>
+            <title>Randomness Requirements for Security</title>
+            <author fullname="D. Eastlake 3rd" initials="D." surname="Eastlake 3rd"/>
+            <author fullname="J. Schiller" initials="J." surname="Schiller"/>
+            <author fullname="S. Crocker" initials="S." surname="Crocker"/>
+            <date month="June" year="2005"/>
+            <abstract>
+              <t indent="0">Security systems are built on strong cryptographic algorithms that foil pattern analysis attempts. However, the security of these systems is dependent on generating secret quantities for passwords, cryptographic keys, and similar quantities. The use of pseudo-random processes to generate secret quantities can result in pseudo-security. A sophisticated attacker may find it easier to reproduce the environment that produced the secret quantities and to search the resulting small set of possibilities than to locate the quantities in the whole of the potential number space.</t>
+              <t indent="0">Choosing random quantities to foil a resourceful and motivated adversary is surprisingly difficult. This document points out many pitfalls in using poor entropy sources or traditional pseudo-random number generation techniques for generating such quantities. It recommends the use of truly random hardware techniques and shows that the existing hardware on many systems can be used for this purpose. It provides suggestions to ameliorate the problem when a hardware solution is not available, and it gives examples of how large such quantities need to be for some applications. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="106"/>
+          <seriesInfo name="RFC" value="4086"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4086"/>
+          <format target="https://www.rfc-editor.org/info/rfc4086" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4301" target="https://www.rfc-editor.org/info/rfc4301" quoteTitle="true" derivedAnchor="RFC4301">
+          <front>
+            <title>Security Architecture for the Internet Protocol</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <author fullname="K. Seo" initials="K." surname="Seo"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the "Security Architecture for IP", which is designed to provide security services for traffic at the IP layer.  This document obsoletes RFC 2401 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4301"/>
+          <format target="https://www.rfc-editor.org/info/rfc4301" type="TXT"/>
+        </reference>
+        <reference anchor="RFC4303" target="https://www.rfc-editor.org/info/rfc4303" quoteTitle="true" derivedAnchor="RFC4303">
+          <front>
+            <title>IP Encapsulating Security Payload (ESP)</title>
+            <author fullname="S. Kent" initials="S." surname="Kent"/>
+            <date month="December" year="2005"/>
+            <abstract>
+              <t indent="0">This document describes an updated version of the Encapsulating Security Payload (ESP) protocol, which is designed to provide a mix of security services in IPv4 and IPv6.  ESP is used to provide confidentiality, data origin authentication, connectionless integrity, an anti-replay service (a form of partial sequence integrity), and limited traffic flow confidentiality.  This document obsoletes RFC 2406 (November 1998). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4303"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4303"/>
+          <format target="https://www.rfc-editor.org/info/rfc4303" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7296" target="https://www.rfc-editor.org/info/rfc7296" quoteTitle="true" derivedAnchor="RFC7296">
+          <front>
+            <title>Internet Key Exchange Protocol Version 2 (IKEv2)</title>
+            <author fullname="C. Kaufman" initials="C." surname="Kaufman"/>
+            <author fullname="P. Hoffman" initials="P." surname="Hoffman"/>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <author fullname="P. Eronen" initials="P." surname="Eronen"/>
+            <author fullname="T. Kivinen" initials="T." surname="Kivinen"/>
+            <date month="October" year="2014"/>
+            <abstract>
+              <t indent="0">This document describes version 2 of the Internet Key Exchange (IKE) protocol.  IKE is a component of IPsec used for performing mutual authentication and establishing and maintaining Security Associations (SAs).  This document obsoletes RFC 5996, and includes all of the errata for it.  It advances IKEv2 to be an Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="79"/>
+          <seriesInfo name="RFC" value="7296"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7296"/>
+          <format target="https://www.rfc-editor.org/info/rfc7296" type="TXT"/>
+        </reference>
+        <reference anchor="RFC7815" target="https://www.rfc-editor.org/info/rfc7815" quoteTitle="true" derivedAnchor="RFC7815">
+          <front>
+            <title>Minimal Internet Key Exchange Version 2 (IKEv2) Initiator Implementation</title>
+            <author fullname="T. Kivinen" initials="T." surname="Kivinen"/>
+            <date month="March" year="2016"/>
+            <abstract>
+              <t indent="0">This document describes a minimal initiator version of the Internet Key Exchange version 2 (IKEv2) protocol for constrained nodes. IKEv2 is a component of IPsec used for performing mutual authentication and establishing and maintaining Security Associations (SAs). IKEv2 includes several optional features, which are not needed in minimal implementations. This document describes what is required from the minimal implementation and also describes various optimizations that can be done. The protocol described here is interoperable with a full IKEv2 implementation using shared secret authentication (IKEv2 does not require the use of certificate authentication). This minimal initiator implementation can only talk to a full IKEv2 implementation acting as the responder; thus, two minimal initiator implementations cannot talk to each other.</t>
+              <t indent="0">This document does not update or modify RFC 7296 but provides a more compact description of the minimal version of the protocol. If this document and RFC 7296 conflict, then RFC 7296 is the authoritative description.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7815"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7815"/>
+          <format target="https://www.rfc-editor.org/info/rfc7815" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+          <format target="https://www.rfc-editor.org/info/rfc8174" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8221" target="https://www.rfc-editor.org/info/rfc8221" quoteTitle="true" derivedAnchor="RFC8221">
+          <front>
+            <title>Cryptographic Algorithm Implementation Requirements and Usage Guidance for Encapsulating Security Payload (ESP) and Authentication Header (AH)</title>
+            <author fullname="P. Wouters" initials="P." surname="Wouters"/>
+            <author fullname="D. Migault" initials="D." surname="Migault"/>
+            <author fullname="J. Mattsson" initials="J." surname="Mattsson"/>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <author fullname="T. Kivinen" initials="T." surname="Kivinen"/>
+            <date month="October" year="2017"/>
+            <abstract>
+              <t indent="0">This document replaces RFC 7321, "Cryptographic Algorithm Implementation Requirements and Usage Guidance for Encapsulating Security Payload (ESP) and Authentication Header (AH)".  The goal of this document is to enable ESP and AH to benefit from cryptography that is up to date while making IPsec interoperable.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8221"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8221"/>
+          <format target="https://www.rfc-editor.org/info/rfc8221" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8750" target="https://www.rfc-editor.org/info/rfc8750" quoteTitle="true" derivedAnchor="RFC8750">
+          <front>
+            <title>Implicit Initialization Vector (IV) for Counter-Based Ciphers in Encapsulating Security Payload (ESP)</title>
+            <author fullname="D. Migault" initials="D." surname="Migault"/>
+            <author fullname="T. Guggemos" initials="T." surname="Guggemos"/>
+            <author fullname="Y. Nir" initials="Y." surname="Nir"/>
+            <date month="March" year="2020"/>
+            <abstract>
+              <t indent="0">Encapsulating Security Payload (ESP) sends an initialization vector (IV) in each packet.  The size of the IV depends on the applied transform and is usually 8 or 16 octets for the transforms defined at the time this document was written.  When used with IPsec, some algorithms, such as AES-GCM, AES-CCM, and ChaCha20-Poly1305, take the IV to generate a nonce that is used as an input parameter for encrypting and decrypting.  This IV must be unique but can be predictable.  As a result, the value provided in the ESP Sequence Number (SN) can be used instead to generate the nonce.  This avoids sending the IV itself and saves 8 octets per packet in the case of AES-GCM, AES-CCM, and ChaCha20-Poly1305.  This document describes how to do this.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8750"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8750"/>
+          <format target="https://www.rfc-editor.org/info/rfc8750" type="TXT"/>
+        </reference>
+      </references>
+      <references pn="section-12.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.nikander-esp-beet-mode" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-nikander-esp-beet-mode-09" derivedAnchor="BEET-ESP">
+          <front>
+            <title>A Bound End-to-End Tunnel (BEET) mode for ESP</title>
+            <author initials="P." surname="Nikander" fullname="Pekka Nikander">
+              <organization showOnFrontPage="true">Ericsson Research Nomadic Lab</organization>
+            </author>
+            <author initials="J." surname="Melen" fullname="Jan Melen">
+              <organization showOnFrontPage="true">Ericsson Research Nomadic Lab</organization>
+            </author>
+            <date month="August" day="5" year="2008"/>
+            <abstract>
+              <t indent="0">This document specifies a new mode, called Bound End-to-End Tunnel
+(BEET) mode, for IPsec ESP.  The new mode augments the existing ESP
+tunnel and transport modes.  For end-to-end tunnels, the new mode
+provides limited tunnel mode semantics without the regular tunnel
+mode overhead.  The mode is intended to support new uses of ESP,
+including mobility and multi-address multi-homing.
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-nikander-esp-beet-mode-09"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-nikander-esp-beet-mode-09.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="DeoxysII" target="https://competitions.cr.yp.to/round3/deoxysv141.pdf" quoteTitle="true" derivedAnchor="DeoxysII">
+          <front>
+            <title>Deoxys v1.41</title>
+            <author initials="J." surname="Jean" fullname="Jérémy Jean">
+              <organization showOnFrontPage="true">ANSSI, Paris, France `&amp;' Nanyang Technological University, Singapore</organization>
+            </author>
+            <author initials="I." surname="Nikolić" fullname="Ivica Nikolić">
+              <organization showOnFrontPage="true">Nanyang Technological University, Singapore</organization>
+            </author>
+            <author initials="T." surname="Peyrin" fullname="Thomas Peyrin">
+              <organization showOnFrontPage="true">Nanyang Technological University, Singapore</organization>
+            </author>
+            <author initials="Y." surname="Seurin" fullname="Yannick Seurin">
+              <organization showOnFrontPage="true">ANSSI, Paris, France</organization>
+            </author>
+            <date month="October" year="2016"/>
+          </front>
+        </reference>
+        <reference anchor="I-D.mglt-ipsecme-diet-esp" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-mglt-ipsecme-diet-esp-08" derivedAnchor="EHC-DIET-ESP">
+          <front>
+            <title>ESP Header Compression and Diet-ESP</title>
+            <author initials="D." surname="Migault" fullname="Daniel Migault">
+              <organization showOnFrontPage="true">Ericsson</organization>
+            </author>
+            <author initials="T." surname="Guggemos" fullname="Tobias Guggemos">
+              <organization showOnFrontPage="true">LMU Munich</organization>
+            </author>
+            <author initials="C." surname="Bormann" fullname="Carsten Bormann">
+              <organization showOnFrontPage="true">Universitaet Bremen TZI</organization>
+            </author>
+            <author initials="D." surname="Schinazi" fullname="David Schinazi">
+              <organization showOnFrontPage="true">Google LLC</organization>
+            </author>
+            <date month="May" day="13" year="2022"/>
+            <abstract>
+              <t indent="0">   With the use of encrypted ESP for secure IP communication, the
+   compression of IP payload is only possible with complex frameworks,
+   such as RObust Header Compression (ROHC).  Such frameworks are too
+   complex for numerous use cases and especially for IoT scenarios,
+   which makes IPsec not being used here, although it offers
+   architectural benefits.
+
+   ESP Header Compression (EHC) defines a flexible framework to compress
+   communications protected with IPsec/ESP.  Compression and
+   decompression is defined by EHC Rules orchestrated by EHC Strategies.
+   The necessary state is hold within the IPsec Security Association and
+   can be negotiated during key agreement, e.g. with IKEv2.
+
+   The document specifies the necessary parameters of the EHC Context to
+   allow compression of ESP and the most common included protocols, such
+   as IPv4, IPv6, UDP and TCP and the corresponding EHC Rules.  It also
+   defines the Diet-ESP EHC Strategy which compresses up to 32 bytes per
+   packet for traditional IPv6 VPN and up to 66 bytes for IPv6 VPN sent
+   over a single TCP or UDP session.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mglt-ipsecme-diet-esp-08"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-mglt-ipsecme-diet-esp-08.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.mglt-ipsecme-ikev2-diet-esp-extension" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-mglt-ipsecme-ikev2-diet-esp-extension-02" derivedAnchor="EHC-IKEv2">
+          <front>
+            <title>Internet Key Exchange version 2 (IKEv2) extension for the ESP Header Compression (EHC) Strategy</title>
+            <author initials="D." surname="Migault" fullname="Daniel Migault">
+              <organization showOnFrontPage="true">Ericsson</organization>
+            </author>
+            <author initials="T." surname="Guggemos" fullname="Tobias Guggemos">
+              <organization showOnFrontPage="true">LMU Munich</organization>
+            </author>
+            <author initials="D." surname="Schinazi" fullname="David Schinazi">
+              <organization showOnFrontPage="true">Apple Inc.</organization>
+            </author>
+            <date month="May" day="13" year="2022"/>
+            <abstract>
+              <t indent="0">   ESP Header Compression (EHC) reduces the ESP overhead by compressing
+   ESP fields.  Compression results from a coordination of various EHC
+   Rules designed as EHC Strategies.  An EHC Strategy may require to be
+   configured with some configuration parameters.
+
+   When a Security Association (SA) is enabling EHC, the two peers need
+   to agree which EHC Strategy is applied as well as its associated
+   configuration parameters.
+
+   This document describes an extension of IKEv2 that enables two peers
+   to agree on a specific EHC Strategy as well as its associated
+   configuration parameters.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mglt-ipsecme-ikev2-diet-esp-extension-02"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-mglt-ipsecme-ikev2-diet-esp-extension-02.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC5297" target="https://www.rfc-editor.org/info/rfc5297" quoteTitle="true" derivedAnchor="RFC5297">
+          <front>
+            <title>Synthetic Initialization Vector (SIV) Authenticated Encryption Using the Advanced Encryption Standard (AES)</title>
+            <author fullname="D. Harkins" initials="D." surname="Harkins"/>
+            <date month="October" year="2008"/>
+            <abstract>
+              <t indent="0">This memo describes SIV (Synthetic Initialization Vector), a block cipher mode of operation.  SIV takes a key, a plaintext, and multiple variable-length octet strings that will be authenticated but not encrypted.  It produces a ciphertext having the same length as the plaintext and a synthetic initialization vector.  Depending on how it is used, SIV achieves either the goal of deterministic authenticated encryption or the goal of nonce-based, misuse-resistant authenticated encryption.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5297"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5297"/>
+          <format target="https://www.rfc-editor.org/info/rfc5297" type="TXT"/>
+        </reference>
+        <reference anchor="RFC8452" target="https://www.rfc-editor.org/info/rfc8452" quoteTitle="true" derivedAnchor="RFC8452">
+          <front>
+            <title>AES-GCM-SIV: Nonce Misuse-Resistant Authenticated Encryption</title>
+            <author fullname="S. Gueron" initials="S." surname="Gueron"/>
+            <author fullname="A. Langley" initials="A." surname="Langley"/>
+            <author fullname="Y. Lindell" initials="Y." surname="Lindell"/>
+            <date month="April" year="2019"/>
+            <abstract>
+              <t indent="0">This memo specifies two authenticated encryption algorithms that are nonce misuse resistant -- that is, they do not fail catastrophically if a nonce is repeated.</t>
+              <t indent="0">This document is the product of the Crypto Forum Research Group.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8452"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8452"/>
+          <format target="https://www.rfc-editor.org/info/rfc8452" type="TXT"/>
+        </reference>
+        <reference anchor="SP-800-90A-Rev-1" target="https://csrc.nist.gov/publications/detail/sp/800-90a/rev-1/final" quoteTitle="true" derivedAnchor="SP-800-90A-Rev-1">
+          <front>
+            <title>Recommendation for Random Number Generation Using Deterministic Random Bit Generators</title>
+            <author initials="E." surname="Barker" fullname="Elaine Barker">
+              <organization showOnFrontPage="true">NIST</organization>
+            </author>
+            <author initials="J." surname="Kelsey" fullname="John Kelsey">
+              <organization showOnFrontPage="true">NIST</organization>
+            </author>
+            <date month="June" year="2015"/>
+          </front>
+          <seriesInfo name="NIST SP" value="800-90A Rev 1"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.SP.800-90Ar1"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The authors would like to thank <contact fullname="Daniel       Palomares"/>, <contact fullname="Scott Fluhrer"/>, <contact fullname="Tero Kivinen"/>, <contact fullname="Valery Smyslov"/>,
+      <contact fullname="Yoav Nir"/>, <contact fullname="Michael       Richardson"/>, <contact fullname="Thomas Peyrin"/>, <contact fullname="Eric Thormarker"/>, <contact fullname="Nancy Cam-Winget"/>, and
+      <contact fullname="Bob Briscoe"/> for their valuable comments.  In
+      particular, <contact fullname="Scott Fluhrer"/> suggested including the
+      rekey index in the SPI.  <contact fullname="Tero Kivinen"/> also
+      provided multiple clarifications and examples of ESP deployment within
+      constrained devices with their associated optimizations.
+<contact fullname="Thomas Peyrin"/>, <contact fullname="Eric Thormarker"/>, and
+<contact fullname="Scott Fluhrer"/> suggested and clarified the use of
+transform resilient to nonce misuse. The authors would also like to thank <contact fullname="Mohit Sethi"/> for his support as the LWIG Working Group Chair.
+</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author surname="Migault" initials="D." fullname="Daniel Migault">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street>8275 Rte Transcanadienne</street>
+            <city>Saint-Laurent</city>
+            <region>QC</region>
+            <code>H4S 0B6</code>
+            <country>Canada</country>
+          </postal>
+          <email>daniel.migault@ericsson.com</email>
+        </address>
+      </author>
+      <author surname="Guggemos" initials="T." fullname="Tobias Guggemos">
+        <organization showOnFrontPage="true">LMU Munich</organization>
+        <address>
+          <postal>
+            <street>MNM-Team</street>
+            <street>Oettingenstr. 67</street>
+            <city>80538 Munich</city>
+            <country>Germany</country>
+          </postal>
+          <email>guggemos@mnm-team.org</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,2133 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-oauth-jwsreq-34" indexInclude="true" ipr="trust200902" number="9101" prepTime="2021-08-21T00:17:00" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-oauth-jwsreq-34" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9101" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="OAuth JAR">The OAuth 2.0 Authorization Framework: JWT-Secured Authorization Request (JAR)</title>
+    <seriesInfo name="RFC" value="9101" stream="IETF"/>
+    <author fullname="Nat Sakimura" initials="N." surname="Sakimura">
+      <organization showOnFrontPage="true">NAT.Consulting</organization>
+      <address>
+        <postal>
+          <street>Kunitachi</street>
+          <region>Tokyo 186-0004</region>
+          <extaddr>2-22-17 Naka</extaddr>
+          <country>Japan</country>
+        </postal>
+        <phone>+81-42-580-7401</phone>
+        <email>nat@nat.consulting</email>
+        <uri>https://nat.sakimura.org/</uri>
+      </address>
+    </author>
+    <author fullname="John Bradley" initials="J." surname="Bradley">
+      <organization showOnFrontPage="true">Yubico</organization>
+      <address>
+        <postal>
+          <street>Casilla 177</street>
+          <extaddr>Sucursal Talagante</extaddr>
+          <city>Talagante</city>
+          <region>RM</region>
+          <code/>
+          <country>Chile</country>
+        </postal>
+        <phone>+1.202.630.5272</phone>
+        <email>rfc9101@ve7jtb.com</email>
+        <uri>http://www.thread-safe.com/</uri>
+      </address>
+    </author>
+    <author fullname="Michael B. Jones" surname="Jones" initials="M.">
+      <organization showOnFrontPage="true">Microsoft</organization>
+      <address>
+        <postal>
+          <street>One Microsoft Way</street>
+          <city>Redmond</city>
+          <region>Washington</region>
+          <code>98052</code>
+          <country>United States of America</country>
+        </postal>
+        <email>mbj@microsoft.com</email>
+        <uri>https://self-issued.info/</uri>
+      </address>
+    </author>
+    <date month="08" year="2021"/>
+    <area>Security</area>
+    <workgroup>OAuth Working Group</workgroup>
+    <keyword>Assertion</keyword>
+    <keyword>Claim</keyword>
+    <keyword>Security Token</keyword>
+    <keyword>OAuth</keyword>
+    <keyword>JavaScript Object Notation</keyword>
+    <keyword>JSON</keyword>
+    <keyword>JSON Web Token</keyword>
+    <keyword>JWT</keyword>
+    <keyword>JSON Web Signature</keyword>
+    <keyword>JWS</keyword>
+    <keyword>JSON Web Encryption</keyword>
+    <keyword>JWE</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The authorization request in OAuth 2.0 described in RFC 6749 utilizes
+      query parameter serialization, which means that authorization request
+      parameters are encoded in the URI of the request and sent through user
+      agents such as web browsers.  While it is easy to implement, it means
+      that a) the communication through the user agents is not integrity
+      protected and thus, the parameters can be tainted, b) the source of
+      the communication is not authenticated, and c) the communication
+      through the user agents can be monitored.  Because of these weaknesses,
+      several attacks to the protocol have now been put forward.</t>
+      <t indent="0" pn="section-abstract-2">This document introduces the ability to send request parameters in a
+      JSON Web Token (JWT) instead, which allows the request to be signed with
+      JSON Web Signature (JWS) and encrypted with JSON Web Encryption (JWE) so
+      that the integrity, source authentication, and confidentiality
+      properties of the authorization request are attained.  The request can
+      be sent by value or by reference.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9101" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-object">Request Object</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-object-uri">Request Object URI</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-symbols-and-abbreviated-ter">Symbols and Abbreviated Terms</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-object-2">Request Object</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-request">Authorization Request</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-passing-a-request-object-by">Passing a Request Object by Value</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-passing-a-request-object-by-">Passing a Request Object by Reference</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.2.2">
+                  <li pn="section-toc.1-1.5.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.1.1"><xref derivedContent="5.2.1" format="counter" sectionFormat="of" target="section-5.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-uri-referencing-the-request">URI Referencing the Request Object</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.2.1"><xref derivedContent="5.2.2" format="counter" sectionFormat="of" target="section-5.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-using-the-request_u">Request Using the "request_uri" Request Parameter</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.3.1"><xref derivedContent="5.2.3" format="counter" sectionFormat="of" target="section-5.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-server-fetche">Authorization Server Fetches Request Object</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-validating-jwt-based-reques">Validating JWT-Based Requests</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-jwe-encrypted-request-objec">JWE Encrypted Request Object</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-jws-signed-request-object">JWS-Signed Request Object</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-parameter-assembly-">Request Parameter Assembly and Validation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-server-respon">Authorization Server Response</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-requirements">TLS Requirements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oauth-parameters-registrati">OAuth Parameters Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oauth-authorization-server-">OAuth Authorization Server Metadata Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.3">
+                <t indent="0" pn="section-toc.1-1.9.2.3.1"><xref derivedContent="9.3" format="counter" sectionFormat="of" target="section-9.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-oauth-dynamic-client-regist">OAuth Dynamic Client Registration Metadata Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.4">
+                <t indent="0" pn="section-toc.1-1.9.2.4.1"><xref derivedContent="9.4" format="counter" sectionFormat="of" target="section-9.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-media-type-registration">Media Type Registration</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2.4.2">
+                  <li pn="section-toc.1-1.9.2.4.2.1">
+                    <t indent="0" pn="section-toc.1-1.9.2.4.2.1.1"><xref derivedContent="9.4.1" format="counter" sectionFormat="of" target="section-9.4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-registry-contents">Registry Contents</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-choice-of-algorithms">Choice of Algorithms</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-source-authenticati">Request Source Authentication</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.3">
+                <t indent="0" pn="section-toc.1-1.10.2.3.1"><xref derivedContent="10.3" format="counter" sectionFormat="of" target="section-10.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-explicit-endpoints">Explicit Endpoints</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.4">
+                <t indent="0" pn="section-toc.1-1.10.2.4.1"><xref derivedContent="10.4" format="counter" sectionFormat="of" target="section-10.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-risks-associated-with-reque">Risks Associated with request_uri</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2.4.2">
+                  <li pn="section-toc.1-1.10.2.4.2.1">
+                    <t indent="0" pn="section-toc.1-1.10.2.4.2.1.1"><xref derivedContent="10.4.1" format="counter" sectionFormat="of" target="section-10.4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ddos-attack-on-the-authoriz">DDoS Attack on the Authorization Server</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.10.2.4.2.2">
+                    <t indent="0" pn="section-toc.1-1.10.2.4.2.2.1"><xref derivedContent="10.4.2" format="counter" sectionFormat="of" target="section-10.4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-uri-rewrite">Request URI Rewrite</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.10.2.5">
+                <t indent="0" pn="section-toc.1-1.10.2.5.1"><xref derivedContent="10.5" format="counter" sectionFormat="of" target="section-10.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-downgrade-attack">Downgrade Attack</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.6">
+                <t indent="0" pn="section-toc.1-1.10.2.6.1"><xref derivedContent="10.6" format="counter" sectionFormat="of" target="section-10.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-security-considerations">TLS Security Considerations</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.7">
+                <t indent="0" pn="section-toc.1-1.10.2.7.1"><xref derivedContent="10.7" format="counter" sectionFormat="of" target="section-10.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-parameter-mismatches">Parameter Mismatches</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.8">
+                <t indent="0" pn="section-toc.1-1.10.2.8.1"><xref derivedContent="10.8" format="counter" sectionFormat="of" target="section-10.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cross-jwt-confusion">Cross-JWT Confusion</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-collection-limitation">Collection Limitation</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-disclosure-limitation">Disclosure Limitation</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2.2.2">
+                  <li pn="section-toc.1-1.11.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.11.2.2.2.1.1"><xref derivedContent="11.2.1" format="counter" sectionFormat="of" target="section-11.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-disclosure">Request Disclosure</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.11.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.11.2.2.2.2.1"><xref derivedContent="11.2.2" format="counter" sectionFormat="of" target="section-11.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tracking-using-request-obje">Tracking Using Request Object URI</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+	  The authorization request in <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0</xref>
+	  utilizes query parameter
+      serialization and is typically sent through user agents such as web browsers.
+      </t>
+      <t indent="0" pn="section-1-2">
+	  For example, the parameters <tt>response_type</tt>, <tt>client_id</tt>, <tt>state</tt>, and <tt>redirect_uri</tt> are encoded in the URI of the request:
+      </t>
+      <sourcecode type="http-message" markers="false" pn="section-1-3">
+    GET /authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;state=xyz
+    &amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/1.1
+    Host: server.example.com
+</sourcecode>
+      <t indent="0" pn="section-1-4">
+	  While it is easy to implement,  the encoding in the URI 
+	  does not allow application-layer security to be used to
+	  provide confidentiality and integrity protection. 
+	  While TLS is used to offer communication security 
+	  between the client and the user agent as well as the user agent and the
+	  authorization server, TLS sessions are terminated in the user agent.
+	  In addition, TLS sessions may be terminated 
+      prematurely at some middlebox (such as a load balancer). 
+      </t>
+      <t indent="0" pn="section-1-5">
+	  As a result, the authorization request of <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/> has
+	  shortcomings in that:
+      </t>
+      <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-1-6">
+        <li pn="section-1-6.1" derivedCounter="(a)">the communication through the user agents is
+		not integrity protected, and thus, the parameters can be tainted
+		(integrity protection failure);</li>
+        <li pn="section-1-6.2" derivedCounter="(b)">the source of the communication is not authenticated  
+		(source authentication failure);</li>
+        <li pn="section-1-6.3" derivedCounter="(c)">the communication through the user agents can be monitored
+		(containment/confidentiality failure). </li>
+      </ol>
+      <t indent="0" pn="section-1-7">
+	  Due to these inherent weaknesses, several attacks against the
+	  protocol, such as redirection URI rewriting, have been identified.
+      </t>
+      <t indent="0" pn="section-1-8">
+	  The use of application-layer security mitigates these issues. 
+      </t>
+      <t indent="0" pn="section-1-9">
+      The use of application-layer security allows requests to be prepared by
+      a trusted third party so that a client application cannot request more
+      permissions than previously agreed upon.
+      </t>
+      <t indent="0" pn="section-1-10">
+      Furthermore, passing the request by reference allows the reduction of over-the-wire overhead.
+      </t>
+      <t indent="0" pn="section-1-11">The <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref> encoding has been chosen because of:</t>
+      <ol spacing="normal" type="(%d)" indent="adaptive" start="1" pn="section-1-12">
+        <li pn="section-1-12.1" derivedCounter="(1)">its close relationship with JSON,
+        which is used as OAuth's response format </li>
+        <li pn="section-1-12.2" derivedCounter="(2)">its developer friendliness due to its textual nature</li>
+        <li pn="section-1-12.3" derivedCounter="(3)">its relative compactness compared to XML </li>
+        <li pn="section-1-12.4" derivedCounter="(4)">its development status as a Proposed Standard,  along
+		with the associated signing and encryption methods
+        <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/> <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516"/></li>
+        <li pn="section-1-12.5" derivedCounter="(5)">the relative ease of JWS and JWE compared to XML Signature and Encryption. </li>
+      </ol>
+      <t indent="0" pn="section-1-13">The parameters <tt>request</tt> and <tt>request_uri</tt> are
+      introduced as additional authorization request parameters for the <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0</xref> flows. The <tt>request</tt> parameter
+      is a <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JSON Web Token (JWT)</xref> whose JWT Claims
+      Set holds the JSON-encoded OAuth 2.0 authorization request parameters.
+      Note that, in contrast to RFC 7519, the elements of the Claims Set are
+      encoded OAuth request parameters <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>,
+      supplemented with only a few of the IANA-managed JSON Web Token Claims
+      <xref target="IANA.JWT.Claims" format="default" sectionFormat="of" derivedContent="IANA.JWT.Claims"/>, in particular, <tt>iss</tt> and
+      <tt>aud</tt>.  The JWT in the <tt>request</tt> parameter is integrity
+      protected and source authenticated using JWS.
+      </t>
+      <t indent="0" pn="section-1-14">
+	  The <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref> can be passed to the authorization endpoint by reference,
+      in which case the parameter <tt>request_uri</tt> is
+      used instead of <tt>request</tt>.</t>
+      <t indent="0" pn="section-1-15">Using <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref> as the request encoding instead of query
+      parameters has several advantages:</t>
+      <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-1-16">
+        <li pn="section-1-16.1" derivedCounter="(a)">Integrity protection.
+		  The request can be signed so that the integrity of the request can be checked.</li>
+        <li pn="section-1-16.2" derivedCounter="(b)">Source authentication.
+		  The request can be signed so that the signer can be authenticated.</li>
+        <li pn="section-1-16.3" derivedCounter="(c)">Confidentiality protection.
+		  The request can be encrypted so that end-to-end 
+		  confidentiality can be provided even if the TLS connection is 
+		  terminated at one point or another (including at and before user agents). </li>
+        <li pn="section-1-16.4" derivedCounter="(d)">Collection minimization.  The request can be signed by a trusted
+        third party attesting that the authorization request is compliant with
+        a certain policy.  For example, a request can be pre-examined by a
+        trusted third party to confirm that all the personal data requested is
+        strictly necessary to perform the process that the end user asked for;
+        the request would then be signed by that trusted third party.  The
+        authorization server then examines the signature and shows the
+        conformance status to the end user who would have some assurance as to
+        the legitimacy of the request when authorizing it.  In some cases, it
+        may even be desirable to skip the authorization dialogue under such
+        circumstances.
+		  </li>
+      </ol>
+      <t indent="0" pn="section-1-17">There are a few cases where request by reference is useful, such as:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-1-18">
+        <li pn="section-1-18.1" derivedCounter="1.">when it is desirable to reduce the size of a transmitted request.
+        The use of application-layer security increases the size of the
+        request particularly when public-key cryptography is used. </li>
+        <li pn="section-1-18.2" derivedCounter="2.">when the client does not want to do the application-level
+        cryptography.  The authorization server may provide an endpoint to
+        accept the authorization request through direct communication with the
+        client, so that the client is authenticated and the channel is TLS
+        protected. </li>
+      </ol>
+      <t indent="0" pn="section-1-19">This capability is in use by OpenID Connect <xref target="OpenID.Core" format="default" sectionFormat="of" derivedContent="OpenID.Core"/>.</t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are
+    to be interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+          <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals,
+    as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="Terminology" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">For the purposes of this specification, the following terms and
+      definitions apply in addition to what is defined in 
+	  <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0 Framework</xref>, 
+	  <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515">JSON Web Signature</xref>, and 
+	  <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JSON Web Encryption</xref>.</t>
+      <section anchor="request_object" numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-request-object">Request Object</name>
+        <t indent="0" pn="section-2.1-1">
+	  A Request Object is a <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JSON Web Token
+	  (JWT)</xref> whose JWT Claims
+	  Set holds the JSON-encoded OAuth 2.0 authorization request
+	  parameters.
+        </t>
+      </section>
+      <section anchor="request_uri" numbered="true" removeInRFC="false" toc="include" pn="section-2.2">
+        <name slugifiedName="name-request-object-uri">Request Object URI</name>
+        <t indent="0" pn="section-2.2-1">A Request Object URI is an absolute URI that references the set of
+        parameters comprising an OAuth 2.0 authorization request.  The content
+        of the resource referenced by the URI is a <xref target="request_object" format="default" sectionFormat="of" derivedContent="Section 2.1">Request Object</xref>, unless the URI was
+        provided to the client by the same authorization server, in which case
+        the content is an implementation detail at the discretion of the
+        authorization server. The content being a Request Object is to ensure interoperability in
+        cases where the provider of the <tt>request_uri</tt> is a separate
+        entity from the consumer, such as when a client provides a URI
+        referencing a Request Object stored on the client's backend service
+        that is made accessible via HTTPS. In the latter case, where the
+        authorization server is both provider and consumer of the URI, such as
+        when it offers an endpoint that provides a URI in exchange for a
+        Request Object, this interoperability concern does not apply.</t>
+      </section>
+    </section>
+    <section anchor="abbreviation" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-symbols-and-abbreviated-ter">Symbols and Abbreviated Terms</name>
+      <t indent="0" pn="section-3-1">
+	The following abbreviations are common to this specification.
+      </t>
+      <dl newline="false" spacing="normal" indent="3" pn="section-3-2">
+        <dt pn="section-3-2.1">JSON:</dt>
+        <dd pn="section-3-2.2">JavaScript Object Notation</dd>
+        <dt pn="section-3-2.3">JWT:</dt>
+        <dd pn="section-3-2.4">JSON Web Token</dd>
+        <dt pn="section-3-2.5">JWS:</dt>
+        <dd pn="section-3-2.6">JSON Web Signature</dd>
+        <dt pn="section-3-2.7">JWE:</dt>
+        <dd pn="section-3-2.8">JSON Web Encryption</dd>
+        <dt pn="section-3-2.9">URI:</dt>
+        <dd pn="section-3-2.10">Uniform Resource Identifier</dd>
+        <dt pn="section-3-2.11">URL:</dt>
+        <dd pn="section-3-2.12">Uniform Resource Locator</dd>
+      </dl>
+    </section>
+    <section anchor="authorization_request_object" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-request-object-2">Request Object</name>
+      <t indent="0" pn="section-4-1">A <xref target="request_object" format="default" sectionFormat="of" derivedContent="Section 2.1">Request Object</xref> is used to
+      provide authorization request parameters for an OAuth 2.0 authorization
+      request. It <bcp14>MUST</bcp14> contain all the parameters (including extension
+      parameters) used to process the <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0</xref>
+      authorization request except the <tt>request</tt> and
+      <tt>request_uri</tt> parameters that are defined in
+      this document.
+	  The parameters are represented as the JWT Claims of the object.
+	  Parameter names and string values <bcp14>MUST</bcp14> be included as JSON strings. 
+	  Since Request Objects are handled across domains and potentially 
+	  outside of a closed ecosystem, per <xref target="RFC8259" sectionFormat="of" section="8.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8259#section-8.1" derivedContent="RFC8259"/>, 
+	  these JSON strings <bcp14>MUST</bcp14> be encoded using UTF-8 <xref target="RFC3629" format="default" sectionFormat="of" derivedContent="RFC3629"/>. 
+	  Numerical values <bcp14>MUST</bcp14> be included as JSON numbers. 
+	  The Request Object <bcp14>MAY</bcp14> include any extension parameters. 
+
+	  This <xref target="RFC8259" format="default" sectionFormat="of" derivedContent="RFC8259">JSON</xref> object constitutes the
+      JWT Claims Set defined in <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref>.
+	  The JWT Claims Set is then signed or signed and encrypted. </t>
+      <t indent="0" pn="section-4-2">To sign, <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515">JSON Web Signature (JWS)</xref> is
+      used.  The result is a JWS-signed <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref>. If
+      signed, the Authorization Request Object <bcp14>SHOULD</bcp14> contain
+      the Claims <tt>iss</tt> (issuer) and <tt>aud</tt> (audience) as members
+      with their semantics being the same as defined in the <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519">JWT</xref> specification.  The value of <tt>aud</tt>
+      should be the value of the authorization server (AS) <tt>issuer</tt>, as
+      defined in <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414">RFC 8414</xref>.</t>
+      <t indent="0" pn="section-4-3">To encrypt, <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref> is used. 
+	  When both signature and encryption are being applied, 
+	  the JWT <bcp14>MUST</bcp14> be signed, then encrypted, as described in
+	  <xref target="RFC7519" sectionFormat="of" section="11.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-11.2" derivedContent="RFC7519"/>.
+	  The result is a Nested JWT, as defined in
+	  <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519"/>.
+      </t>
+      <t indent="0" pn="section-4-4">
+	    The client determines the algorithms used to sign and encrypt
+	    Request Objects.  The algorithms chosen need to be supported by
+	    both the client and the authorization server.  The client can
+	    inform the authorization server of the algorithms that it supports
+	    in its dynamic client registration metadata <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>, specifically, the metadata values
+	    <tt>request_object_signing_alg</tt>,
+	    <tt>request_object_encryption_alg</tt>, and
+	    <tt>request_object_encryption_enc</tt>.  Likewise, the
+	    authorization server can inform the client of the algorithms that
+	    it supports in its authorization server metadata <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414"/>, specifically, the metadata values
+	    <tt>request_object_signing_alg_values_supported</tt>,
+	    <tt>request_object_encryption_alg_values_supported</tt>, and
+	    <tt>request_object_encryption_enc_values_supported</tt>.
+      </t>
+      <t indent="0" pn="section-4-5">
+	    The Request Object <bcp14>MAY</bcp14> be sent by value, as
+	    described in <xref target="RequestParameter" format="default" sectionFormat="of" derivedContent="Section 5.1"/>,
+	    or by reference, as described in <xref target="RequestUriParameter" format="default" sectionFormat="of" derivedContent="Section 5.2"/>.
+	    <tt>request</tt> and
+	    <tt>request_uri</tt> parameters
+	    <bcp14>MUST NOT</bcp14> be included in Request Objects.
+      </t>
+      <t indent="0" pn="section-4-6">
+	  A <xref target="request_object" format="default" sectionFormat="of" derivedContent="Section 2.1">Request Object</xref> has the media
+	  type <xref target="RFC2046" format="default" sectionFormat="of" derivedContent="RFC2046"/>
+        <tt>application/oauth-authz-req+jwt</tt>.  Note that some existing
+	  deployments may alternatively be using the type
+	  <tt>application/jwt</tt>.
+      </t>
+      <t keepWithNext="true" indent="0" pn="section-4-7">
+	      The following is an example of the Claims in
+	      a Request Object before base64url <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/> encoding and signing. 
+		  Note that it includes the extension parameters
+		  <tt>nonce</tt> and <tt>max_age</tt>.
+      </t>
+      <sourcecode type="json" markers="false" pn="section-4-8">
+  {
+   "iss": "s6BhdRkqt3",
+   "aud": "https://server.example.com",
+   "response_type": "code id_token",
+   "client_id": "s6BhdRkqt3",
+   "redirect_uri": "https://client.example.org/cb",
+   "scope": "openid",
+   "state": "af0ifjsldkj",
+   "nonce": "n-0S6_WzA2Mj",
+   "max_age": 86400
+  }
+</sourcecode>
+      <t keepWithNext="true" indent="0" pn="section-4-9">
+	      Signing it with the <tt>RS256</tt> algorithm <xref target="RFC7518" format="default" sectionFormat="of" derivedContent="RFC7518"/>
+	      results in this Request Object value
+	      (with line wraps within values for display purposes only):
+      </t>
+      <sourcecode type="jwt" markers="false" pn="section-4-10">
+  eyJhbGciOiJSUzI1NiIsImtpZCI6ImsyYmRjIn0.ewogICAgImlzcyI6ICJzNkJoZF
+  JrcXQzIiwKICAgICJhdWQiOiAiaHR0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLAog
+  ICAgInJlc3BvbnNlX3R5cGUiOiAiY29kZSBpZF90b2tlbiIsCiAgICAiY2xpZW50X2
+  lkIjogInM2QmhkUmtxdDMiLAogICAgInJlZGlyZWN0X3VyaSI6ICJodHRwczovL2Ns
+  aWVudC5leGFtcGxlLm9yZy9jYiIsCiAgICAic2NvcGUiOiAib3BlbmlkIiwKICAgIC
+  JzdGF0ZSI6ICJhZjBpZmpzbGRraiIsCiAgICAibm9uY2UiOiAibi0wUzZfV3pBMk1q
+  IiwKICAgICJtYXhfYWdlIjogODY0MDAKfQ.Nsxa_18VUElVaPjqW_ToI1yrEJ67BgK
+  b5xsuZRVqzGkfKrOIX7BCx0biSxYGmjK9KJPctH1OC0iQJwXu5YVY-vnW0_PLJb1C2
+  HG-ztVzcnKZC2gE4i0vgQcpkUOCpW3SEYXnyWnKzuKzqSb1wAZALo5f89B_p6QA6j6
+  JwBSRvdVsDPdulW8lKxGTbH82czCaQ50rLAg3EYLYaCb4ik4I1zGXE4fvim9FIMs8O
+  CMmzwIB5S-ujFfzwFjoyuPEV4hJnoVUmXR_W9typPf846lGwA8h9G9oNTIuX8Ft2jf
+  pnZdFmLg3_wr3Wa5q3a-lfbgF3S9H_8nN3j1i7tLR_5Nz-g
+</sourcecode>
+      <t keepWithNext="true" indent="0" pn="section-4-11">
+	      The following RSA public key, represented in JSON Web Key (JWK)
+	      format, can be used to validate the Request Object signature in
+	      this and subsequent Request Object examples (with line wraps
+	      within values for display purposes only):
+      </t>
+      <sourcecode type="json" markers="false" pn="section-4-12">
+  {
+   "kty":"RSA",
+   "kid":"k2bdc",
+   "n":"x5RbkAZkmpRxia65qRQ1wwSMSxQUnS7gcpVTV_cdHmfmG2ltd2yabEO9XadD8
+        pJNZubINPpmgHh3J1aD9WRwS05ucmFq3CfFsluLt13_7oX5yDRSKX7poXmT_5
+        ko8k4NJZPMAO8fPToDTH7kHYbONSE2FYa5GZ60CUsFhSonI-dcMDJ0Ary9lxI
+        w5k2z4TAdARVWcS7sD07VhlMMshrwsPHBQgTatlkxyIHXbYdtak8fqvNAwr7O
+        lVEvM_Ipf5OfmdB8Sd-wjzaBsyP4VhJKoi_qdgSzpC694XZeYPq45Sw-q51iF
+        UlcOlTCI7z6jltUtnR6ySn6XDGFnzH5Fe5ypw",
+   "e":"AQAB"
+  }
+</sourcecode>
+    </section>
+    <section anchor="authreq" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-authorization-request">Authorization Request</name>
+      <t indent="0" pn="section-5-1">The client constructs the authorization request URI 
+	  by adding the following parameters
+	  to the query component of the authorization
+      endpoint URI using the <tt>application/x-www-form-urlencoded</tt>
+      format:</t>
+      <dl newline="true" spacing="normal" indent="3" pn="section-5-2">
+        <dt pn="section-5-2.1">request</dt>
+        <dd pn="section-5-2.2">
+          <bcp14>REQUIRED</bcp14> unless <tt>request_uri</tt>
+          is specified. The <xref target="request_object" format="default" sectionFormat="of" derivedContent="Section 2.1">Request Object</xref> that
+          holds authorization request parameters stated in
+          <xref target="RFC6749" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-4" derivedContent="RFC6749"/> (OAuth 2.0). 
+		  If this parameter is present in the authorization request, 
+		  <tt>request_uri</tt> <bcp14>MUST NOT</bcp14> be present. 
+		  </dd>
+        <dt pn="section-5-2.3">request_uri</dt>
+        <dd pn="section-5-2.4">
+          <bcp14>REQUIRED</bcp14> unless <tt>request</tt>
+          is specified. The absolute URI, as defined by <xref target="RFC3986" format="default" sectionFormat="of" derivedContent="RFC3986">RFC 3986</xref>, that is the <xref target="request_uri" format="default" sectionFormat="of" derivedContent="Section 2.2">Request Object URI</xref> referencing the
+	  authorization request
+          parameters stated in <xref target="RFC6749" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-4" derivedContent="RFC6749"/> (OAuth
+          2.0).
+		  If this parameter is present in the authorization request, 
+		  <tt>request</tt> <bcp14>MUST NOT</bcp14> be present.
+		  </dd>
+        <dt pn="section-5-2.5">client_id</dt>
+        <dd pn="section-5-2.6">
+          <bcp14>REQUIRED</bcp14>. <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0</xref>
+          <tt>client_id</tt>. The value <bcp14>MUST</bcp14> match the
+          <tt>request</tt> or <tt>request_uri</tt>
+          <xref target="request_object" format="default" sectionFormat="of" derivedContent="Section 2.1">Request Object's</xref>
+          <tt>client_id</tt>.</dd>
+      </dl>
+      <t indent="0" pn="section-5-3">The client directs the resource owner to the constructed URI
+      using an HTTP redirection response or by other means available to it
+      via the user agent.</t>
+      <t indent="0" pn="section-5-4">For example, the client directs the end user's user agent to make the
+      following HTTPS request:</t>
+      <sourcecode type="http-message" markers="false" pn="section-5-5">
+GET /authz?client_id=s6BhdRkqt3&amp;request=eyJhbG..AlMGzw HTTP/1.1
+Host: server.example.com
+</sourcecode>
+      <t keepWithPrevious="true" indent="0" pn="section-5-6">
+		The value for the request parameter is abbreviated 
+		for brevity. 
+      </t>
+      <t indent="0" pn="section-5-7">The Authorization Request Object <bcp14>MUST</bcp14> be one of the following: </t>
+      <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-5-8">
+        <li pn="section-5-8.1" derivedCounter="(a)">JWS signed </li>
+        <li pn="section-5-8.2" derivedCounter="(b)">JWS signed and JWE encrypted</li>
+      </ol>
+      <t indent="0" pn="section-5-9">The client <bcp14>MAY</bcp14> send the parameters included in 
+	  the Request Object duplicated in the query parameters as well 
+	  for backward compatibility, etc. 
+	  However, the authorization server supporting this specification 
+	  <bcp14>MUST</bcp14> only use the parameters included in the Request Object. 
+      </t>
+      <section anchor="RequestParameter" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-passing-a-request-object-by">Passing a Request Object by Value</name>
+        <t indent="0" pn="section-5.1-1">The client sends the authorization request as a 
+	  Request Object to the authorization endpoint as the 
+	  <tt>request</tt> parameter value.</t>
+        <t keepWithNext="true" indent="0" pn="section-5.1-2">The following is an example of an
+	      authorization request using the <tt>request</tt>
+	      parameter
+	      (with line wraps within values for display purposes only):
+        </t>
+        <sourcecode type="url" markers="false" pn="section-5.1-3">
+  https://server.example.com/authorize?client_id=s6BhdRkqt3&amp;
+    request=eyJhbGciOiJSUzI1NiIsImtpZCI6ImsyYmRjIn0.ewogICAgImlzcyI6
+    ICJzNkJoZFJrcXQzIiwKICAgICJhdWQiOiAiaHR0cHM6Ly9zZXJ2ZXIuZXhhbXBs
+    ZS5jb20iLAogICAgInJlc3BvbnNlX3R5cGUiOiAiY29kZSBpZF90b2tlbiIsCiAg
+    ICAiY2xpZW50X2lkIjogInM2QmhkUmtxdDMiLAogICAgInJlZGlyZWN0X3VyaSI6
+    ICJodHRwczovL2NsaWVudC5leGFtcGxlLm9yZy9jYiIsCiAgICAic2NvcGUiOiAi
+    b3BlbmlkIiwKICAgICJzdGF0ZSI6ICJhZjBpZmpzbGRraiIsCiAgICAibm9uY2Ui
+    OiAibi0wUzZfV3pBMk1qIiwKICAgICJtYXhfYWdlIjogODY0MDAKfQ.Nsxa_18VU
+    ElVaPjqW_ToI1yrEJ67BgKb5xsuZRVqzGkfKrOIX7BCx0biSxYGmjK9KJPctH1OC
+    0iQJwXu5YVY-vnW0_PLJb1C2HG-ztVzcnKZC2gE4i0vgQcpkUOCpW3SEYXnyWnKz
+    uKzqSb1wAZALo5f89B_p6QA6j6JwBSRvdVsDPdulW8lKxGTbH82czCaQ50rLAg3E
+    YLYaCb4ik4I1zGXE4fvim9FIMs8OCMmzwIB5S-ujFfzwFjoyuPEV4hJnoVUmXR_W
+    9typPf846lGwA8h9G9oNTIuX8Ft2jfpnZdFmLg3_wr3Wa5q3a-lfbgF3S9H_8nN3
+    j1i7tLR_5Nz-g
+</sourcecode>
+      </section>
+      <section anchor="RequestUriParameter" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-passing-a-request-object-by-">Passing a Request Object by Reference</name>
+        <t indent="0" pn="section-5.2-1">
+	  The <tt>request_uri</tt> authorization request parameter enables
+	  OAuth authorization requests to be passed by reference rather than
+	  by value.  This parameter is used identically to the
+	  <tt>request</tt> parameter, except that the Request Object value is
+	  retrieved from the resource identified by the specified URI rather
+	  than passed by value.
+        </t>
+        <t indent="0" pn="section-5.2-2">
+	  The entire Request URI <bcp14>SHOULD NOT</bcp14> exceed 512 ASCII characters.
+	  There are two reasons for this restriction: 
+        </t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.2-3">
+          <li pn="section-5.2-3.1" derivedCounter="1.">Many phones on the market as of this writing still do not accept
+          large payloads.  The restriction is typically either 512 or 1024
+          ASCII characters.</li>
+          <li pn="section-5.2-3.2" derivedCounter="2.">On a slow connection such as a 2G mobile connection, a large URL
+          would cause a slow response; therefore, the use of such is not
+          advisable from the user-experience point of view.
+		  </li>
+        </ol>
+        <t indent="0" pn="section-5.2-4">
+	  The contents of the resource referenced by the <tt>request_uri</tt>
+          <bcp14>MUST</bcp14> be a Request Object and <bcp14>MUST</bcp14> be reachable by the authorization server
+	  unless the URI was provided to the client by the authorization server.
+	  In the first case, the <tt>request_uri</tt> <bcp14>MUST</bcp14> be
+	  an <tt>https</tt> URI,
+	  as specified in <xref target="RFC7230" sectionFormat="of" section="2.7.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7230#section-2.7.2" derivedContent="RFC7230"/>.
+	  In the second case, it <bcp14>MUST</bcp14> be a URN,
+	  as specified in <xref target="RFC8141" format="default" sectionFormat="of" derivedContent="RFC8141"/>.
+        </t>
+        <t keepWithNext="true" indent="0" pn="section-5.2-5">The following is an example of
+	    the contents of a Request Object resource that can be
+	    referenced by a <tt>request_uri</tt>
+	    (with line wraps within values for display purposes only):</t>
+        <sourcecode type="jwt" markers="false" pn="section-5.2-6">
+  eyJhbGciOiJSUzI1NiIsImtpZCI6ImsyYmRjIn0.ewogICAgImlzcyI6ICJzNkJoZF
+  JrcXQzIiwKICAgICJhdWQiOiAiaHR0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLAog
+  ICAgInJlc3BvbnNlX3R5cGUiOiAiY29kZSBpZF90b2tlbiIsCiAgICAiY2xpZW50X2
+  lkIjogInM2QmhkUmtxdDMiLAogICAgInJlZGlyZWN0X3VyaSI6ICJodHRwczovL2Ns
+  aWVudC5leGFtcGxlLm9yZy9jYiIsCiAgICAic2NvcGUiOiAib3BlbmlkIiwKICAgIC
+  JzdGF0ZSI6ICJhZjBpZmpzbGRraiIsCiAgICAibm9uY2UiOiAibi0wUzZfV3pBMk1q
+  IiwKICAgICJtYXhfYWdlIjogODY0MDAKfQ.Nsxa_18VUElVaPjqW_ToI1yrEJ67BgK
+  b5xsuZRVqzGkfKrOIX7BCx0biSxYGmjK9KJPctH1OC0iQJwXu5YVY-vnW0_PLJb1C2
+  HG-ztVzcnKZC2gE4i0vgQcpkUOCpW3SEYXnyWnKzuKzqSb1wAZALo5f89B_p6QA6j6
+  JwBSRvdVsDPdulW8lKxGTbH82czCaQ50rLAg3EYLYaCb4ik4I1zGXE4fvim9FIMs8O
+  CMmzwIB5S-ujFfzwFjoyuPEV4hJnoVUmXR_W9typPf846lGwA8h9G9oNTIuX8Ft2jf
+  pnZdFmLg3_wr3Wa5q3a-lfbgF3S9H_8nN3j1i7tLR_5Nz-g
+</sourcecode>
+        <section anchor="CreateRequestUri" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.1">
+          <name slugifiedName="name-uri-referencing-the-request">URI Referencing the Request Object</name>
+          <t indent="0" pn="section-5.2.1-1">
+	    The client stores the Request Object resource either
+	    locally or remotely at a URI the authorization server can access. 
+		Such a facility may be provided by the authorization server 
+		or a trusted third party. For example, the authorization server may 
+		provide a URL to which the client POSTs the Request Object and 
+		obtains the Request URI. 
+	    This URI is the Request Object URI, <tt>request_uri</tt>. 
+          </t>
+          <t indent="0" pn="section-5.2.1-2">
+	    It is possible for the Request Object to include values that 
+	    are to be revealed only to the authorization server.
+	    As such, the <tt>request_uri</tt> <bcp14>MUST</bcp14> have
+	    appropriate entropy for its lifetime
+	    so that the URI is not guessable if publicly retrievable.
+	    For the guidance, refer to 
+	    <xref target="RFC6819" sectionFormat="of" section="5.1.4.2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6819#section-5.1.4.2.2" derivedContent="RFC6819"/> and
+	    "<xref target="CapURLs" format="title" sectionFormat="of" derivedContent="Good Practices for Capability URLs"/>" <xref target="CapURLs" format="default" sectionFormat="of" derivedContent="CapURLs"/>.
+	    It is <bcp14>RECOMMENDED</bcp14> that the <tt>request_uri</tt> be removed
+		after a reasonable timeout
+	    unless access control measures are taken.
+          </t>
+          <t keepWithNext="true" indent="0" pn="section-5.2.1-3">The following is an example
+	    of a Request Object URI value
+	      (with line wraps within values for display purposes only).
+	      In this example, a trusted third-party service hosts the Request Object.
+          </t>
+          <sourcecode type="url" markers="false" pn="section-5.2.1-4">
+  https://tfp.example.org/request.jwt/
+    GkurKxf5T0Y-mnPFCHqWOMiZi4VS138cQO_V7PZHAdM
+</sourcecode>
+        </section>
+        <section anchor="UseRequestUri" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.2">
+          <name slugifiedName="name-request-using-the-request_u">Request Using the "request_uri" Request Parameter</name>
+          <t indent="0" pn="section-5.2.2-1">The client sends the authorization request to the
+	  authorization endpoint.</t>
+          <t keepWithNext="true" indent="0" pn="section-5.2.2-2">The following is an example
+	    of an authorization request using the <tt>request_uri</tt> parameter
+	    (with line wraps within values for display purposes only):</t>
+          <sourcecode type="url" markers="false" pn="section-5.2.2-3">
+  https://server.example.com/authorize?
+    client_id=s6BhdRkqt3
+    &amp;request_uri=https%3A%2F%2Ftfp.example.org%2Frequest.jwt
+    %2FGkurKxf5T0Y-mnPFCHqWOMiZi4VS138cQO_V7PZHAdM
+</sourcecode>
+        </section>
+        <section anchor="GetRequestUri" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.3">
+          <name slugifiedName="name-authorization-server-fetche">Authorization Server Fetches Request Object</name>
+          <t indent="0" pn="section-5.2.3-1">Upon receipt of the Request, the authorization server
+          <bcp14>MUST</bcp14> send an HTTP <tt>GET</tt> request to the
+          <tt>request_uri</tt> to retrieve the referenced Request Object
+          unless the Request Object is stored in a way so that the server can
+          retrieve it through other mechanisms securely and parse it to
+          recreate the authorization request parameters.</t>
+          <t keepWithNext="true" indent="0" pn="section-5.2.3-2">The following is an example of this fetch
+          process.  In this example, a trusted third-party service hosts the
+          Request Object.
+          </t>
+          <sourcecode type="http-message" markers="false" pn="section-5.2.3-3">
+GET /request.jwt/GkurKxf5T0Y-mnPFCHqWOMiZi4VS138cQO_V7PZHAdM HTTP/1.1
+Host: tfp.example.org
+</sourcecode>
+          <t keepWithNext="true" indent="0" pn="section-5.2.3-4">The following is an example of the fetch
+	    response:</t>
+          <sourcecode type="http-message" markers="false" pn="section-5.2.3-5">
+  HTTP/1.1 200 OK
+  Date: Thu, 20 Aug 2020 23:52:39 GMT
+  Server: Apache/2.4.43 (tfp.example.org)
+  Content-type: application/oauth-authz-req+jwt
+  Content-Length: 797
+  Last-Modified: Wed, 19 Aug 2020 23:52:32 GMT
+
+  eyJhbGciOiJSUzI1NiIsImtpZCI6ImsyYmRjIn0.ewogICAgImlzcyI6ICJzNkJoZF
+  JrcXQzIiwKICAgICJhdWQiOiAiaHR0cHM6Ly9zZXJ2ZXIuZXhhbXBsZS5jb20iLAog
+  ICAgInJlc3BvbnNlX3R5cGUiOiAiY29kZSBpZF90b2tlbiIsCiAgICAiY2xpZW50X2
+  lkIjogInM2QmhkUmtxdDMiLAogICAgInJlZGlyZWN0X3VyaSI6ICJodHRwczovL2Ns
+  aWVudC5leGFtcGxlLm9yZy9jYiIsCiAgICAic2NvcGUiOiAib3BlbmlkIiwKICAgIC
+  JzdGF0ZSI6ICJhZjBpZmpzbGRraiIsCiAgICAibm9uY2UiOiAibi0wUzZfV3pBMk1q
+  IiwKICAgICJtYXhfYWdlIjogODY0MDAKfQ.Nsxa_18VUElVaPjqW_ToI1yrEJ67BgK
+  b5xsuZRVqzGkfKrOIX7BCx0biSxYGmjK9KJPctH1OC0iQJwXu5YVY-vnW0_PLJb1C2
+  HG-ztVzcnKZC2gE4i0vgQcpkUOCpW3SEYXnyWnKzuKzqSb1wAZALo5f89B_p6QA6j6
+  JwBSRvdVsDPdulW8lKxGTbH82czCaQ50rLAg3EYLYaCb4ik4I1zGXE4fvim9FIMs8O
+  CMmzwIB5S-ujFfzwFjoyuPEV4hJnoVUmXR_W9typPf846lGwA8h9G9oNTIuX8Ft2jf
+  pnZdFmLg3_wr3Wa5q3a-lfbgF3S9H_8nN3j1i7tLR_5Nz-g
+</sourcecode>
+        </section>
+      </section>
+    </section>
+    <section anchor="JWTRequestValidation" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-validating-jwt-based-reques">Validating JWT-Based Requests</name>
+      <section anchor="EncryptedRequestObject" numbered="true" removeInRFC="false" toc="include" pn="section-6.1">
+        <name slugifiedName="name-jwe-encrypted-request-objec">JWE Encrypted Request Object</name>
+        <t indent="0" pn="section-6.1-1">
+	    If the Request Object is encrypted, 
+	    the authorization server <bcp14>MUST</bcp14> decrypt the JWT in accordance with
+	    the <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JSON Web Encryption</xref> 
+	    specification. 
+        </t>
+        <t indent="0" pn="section-6.1-2">
+		The result is a signed Request Object.
+        </t>
+        <t indent="0" pn="section-6.1-3">
+	    If decryption fails, the authorization server <bcp14>MUST</bcp14>
+	    return an <tt>invalid_request_object</tt> error to the client in
+	    response to the authorization request.
+        </t>
+      </section>
+      <section anchor="SignedRequestObject" numbered="true" removeInRFC="false" toc="include" pn="section-6.2">
+        <name slugifiedName="name-jws-signed-request-object">JWS-Signed Request Object</name>
+        <t indent="0" pn="section-6.2-1">
+	    The authorization server <bcp14>MUST</bcp14> validate the
+	    signature of the JWS-signed <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/> Request
+	    Object. If a <tt>kid</tt> Header Parameter is present, the key identified
+	    <bcp14>MUST</bcp14> be the key used and <bcp14>MUST</bcp14> be a
+	    key associated with the client. The signature <bcp14>MUST</bcp14>
+	    be validated using a key associated with the client and the
+	    algorithm specified in the <tt>alg</tt> Header Parameter. Algorithm verification <bcp14>MUST</bcp14> be performed, as specified in Sections <xref target="RFC8725" format="default" sectionFormat="bare" section="3.1" derivedLink="https://rfc-editor.org/rfc/rfc8725#section-3.1" derivedContent="RFC8725"/> and <xref target="RFC8725" format="default" sectionFormat="bare" section="3.2" derivedLink="https://rfc-editor.org/rfc/rfc8725#section-3.2" derivedContent="RFC8725"/> of <xref target="RFC8725" format="default" sectionFormat="of" derivedContent="RFC8725"/>. 
+        </t>
+        <t indent="0" pn="section-6.2-2">
+	    If the key is not associated with the client or if signature
+	    validation fails, the authorization server <bcp14>MUST</bcp14>
+	    return an <tt>invalid_request_object</tt> error to the client in response to the authorization request.
+        </t>
+      </section>
+      <section anchor="RequestParameterValidation" numbered="true" removeInRFC="false" toc="include" pn="section-6.3">
+        <name slugifiedName="name-request-parameter-assembly-">Request Parameter Assembly and Validation</name>
+        <t indent="0" pn="section-6.3-1">
+	    The authorization server <bcp14>MUST</bcp14> extract 
+	    the set of authorization request parameters 
+	    from the Request Object value.
+	    The authorization server <bcp14>MUST</bcp14> only use the 
+	    parameters in the Request Object, even if the 
+	    same parameter is provided in the query parameter.
+	    The client ID values in the <tt>client_id</tt> request parameter
+	    and in the Request Object <tt>client_id</tt> claim <bcp14>MUST</bcp14> be identical.
+	    The authorization server then validates the request,
+	    as specified in <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth 2.0</xref>.
+        </t>
+        <t indent="0" pn="section-6.3-2">
+	    If the Client ID check or the request validation fails, then the
+	    authorization server <bcp14>MUST</bcp14> return an error to the
+	    client in response to the authorization request, as specified in
+	    <xref target="RFC6749" section="5.2" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-5.2" derivedContent="RFC6749"/> (OAuth 2.0).
+        </t>
+      </section>
+    </section>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-authorization-server-respon">Authorization Server Response</name>
+      <t indent="0" pn="section-7-1">The authorization server response is created and sent to the client as in
+      <xref target="RFC6749" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-4" derivedContent="RFC6749"/> (OAuth 2.0).</t>
+      <t indent="0" pn="section-7-2">In addition, this document uses these additional error values:
+      </t>
+      <dl newline="true" spacing="normal" indent="3" pn="section-7-3">
+        <dt pn="section-7-3.1">invalid_request_uri</dt>
+        <dd pn="section-7-3.2">
+	  The <tt>request_uri</tt> in the 
+	authorization request returns an error or contains invalid data.</dd>
+        <dt pn="section-7-3.3">invalid_request_object</dt>
+        <dd pn="section-7-3.4">
+	    The request parameter contains
+          an invalid Request Object.</dd>
+        <dt pn="section-7-3.5">request_not_supported</dt>
+        <dd pn="section-7-3.6">
+		  The authorization server does not support 
+		  the use of the <tt>request</tt> parameter.</dd>
+        <dt pn="section-7-3.7">request_uri_not_supported</dt>
+        <dd pn="section-7-3.8">
+		  The authorization server does not support the use of 
+		  the <tt>request_uri</tt> parameter.</dd>
+      </dl>
+    </section>
+    <section anchor="tlsreq" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-tls-requirements">TLS Requirements</name>
+      <t indent="0" pn="section-8-1">
+	Client implementations supporting the Request Object URI method 
+	<bcp14>MUST</bcp14> support TLS, following  
+	<xref target="RFC7525" format="default" sectionFormat="of" derivedContent="RFC7525">"Recommendations for Secure Use 
+	of Transport Layer Security (TLS) and 
+	Datagram Transport Layer Security (DTLS)"</xref>. 
+      </t>
+      <t indent="0" pn="section-8-2">
+			To protect against information disclosure and tampering,
+			confidentiality protection <bcp14>MUST</bcp14> be applied using TLS with a 
+			cipher suite that provides confidentiality and integrity protection.
+      </t>
+      <t indent="0" pn="section-8-3"> HTTP clients <bcp14>MUST</bcp14> also verify the TLS server certificate, using
+            DNS-ID 
+  			<xref target="RFC6125" format="default" sectionFormat="of" derivedContent="RFC6125"/>, to avoid man-in-the-middle attacks.
+  			  The rules and guidelines defined in
+              <xref target="RFC6125" format="default" sectionFormat="of" derivedContent="RFC6125"/> apply here, with the following considerations:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-8-4">
+        <li pn="section-8-4.1">
+	  Support for DNS-ID identifier type (that is, the dNSName identity
+     	  in the subjectAltName extension) is <bcp14>REQUIRED</bcp14>.  Certification
+     	  authorities that issue server certificates
+	  <bcp14>MUST</bcp14> support
+     	  the DNS-ID identifier type, and the DNS-ID identifier type <bcp14>MUST</bcp14>
+     	be present in server certificates.</li>
+        <li pn="section-8-4.2">
+     	  DNS names in server certificates <bcp14>MAY</bcp14> contain the
+     	wildcard character <tt>*</tt>. </li>
+        <li pn="section-8-4.3">
+     	  Clients <bcp14>MUST NOT</bcp14> use CN-ID identifiers; a Common Name
+     	  field (CN field) may be present in the server certificate's subject
+     	  name but <bcp14>MUST NOT</bcp14> be used for authentication within
+     	  the rules described in <xref target="RFC7525" format="default" sectionFormat="of" derivedContent="RFC7525"/>. </li>
+        <li pn="section-8-4.4">
+     	  SRV-ID and URI-ID as described in <xref target="RFC6125" sectionFormat="of" section="6.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6125#section-6.5" derivedContent="RFC6125"/>
+          <bcp14>MUST NOT</bcp14> be used for comparison.
+     	</li>
+      </ul>
+    </section>
+    <section anchor="IANA" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="OAuthParametersRegistry" numbered="true" removeInRFC="false" toc="include" pn="section-9.1">
+        <name slugifiedName="name-oauth-parameters-registrati">OAuth Parameters Registration</name>
+        <t indent="0" pn="section-9.1-1">Since the Request Object is a JWT, the core JWT claims cannot be
+        used for any purpose in the Request Object other than for what JWT
+        dictates.  Thus, they have been registered as OAuth
+        authorization request parameters to avoid future OAuth extensions
+        using them with different meanings.</t>
+        <t indent="0" pn="section-9.1-2">This specification adds the following values to the "OAuth
+        Parameters" registry <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>
+        established by <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/>.</t>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-3">
+          <dt pn="section-9.1-3.1">Name:</dt>
+          <dd pn="section-9.1-3.2">
+            <tt>iss</tt></dd>
+          <dt pn="section-9.1-3.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-3.4">authorization request</dd>
+          <dt pn="section-9.1-3.5">Change Controller:</dt>
+          <dd pn="section-9.1-3.6">IETF</dd>
+          <dt pn="section-9.1-3.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-3.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.1" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-4">
+          <dt pn="section-9.1-4.1">Name:</dt>
+          <dd pn="section-9.1-4.2">
+            <tt>sub</tt></dd>
+          <dt pn="section-9.1-4.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-4.4">authorization request</dd>
+          <dt pn="section-9.1-4.5">Change Controller:</dt>
+          <dd pn="section-9.1-4.6">IETF</dd>
+          <dt pn="section-9.1-4.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-4.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.2" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-5">
+          <dt pn="section-9.1-5.1">Name:</dt>
+          <dd pn="section-9.1-5.2">
+            <tt>aud</tt></dd>
+          <dt pn="section-9.1-5.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-5.4">authorization request</dd>
+          <dt pn="section-9.1-5.5">Change Controller:</dt>
+          <dd pn="section-9.1-5.6">IETF</dd>
+          <dt pn="section-9.1-5.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-5.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.3" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-6">
+          <dt pn="section-9.1-6.1">Name:</dt>
+          <dd pn="section-9.1-6.2">
+            <tt>exp</tt></dd>
+          <dt pn="section-9.1-6.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-6.4">authorization request</dd>
+          <dt pn="section-9.1-6.5">Change Controller:</dt>
+          <dd pn="section-9.1-6.6">IETF</dd>
+          <dt pn="section-9.1-6.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-6.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-7">
+          <dt pn="section-9.1-7.1">Name:</dt>
+          <dd pn="section-9.1-7.2">
+            <tt>nbf</tt></dd>
+          <dt pn="section-9.1-7.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-7.4">authorization request</dd>
+          <dt pn="section-9.1-7.5">Change Controller:</dt>
+          <dd pn="section-9.1-7.6">IETF</dd>
+          <dt pn="section-9.1-7.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-7.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.5" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.5" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-8">
+          <dt pn="section-9.1-8.1">Name:</dt>
+          <dd pn="section-9.1-8.2">
+            <tt>iat</tt></dd>
+          <dt pn="section-9.1-8.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-8.4">authorization request</dd>
+          <dt pn="section-9.1-8.5">Change Controller:</dt>
+          <dd pn="section-9.1-8.6">IETF</dd>
+          <dt pn="section-9.1-8.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-8.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.6" derivedContent="RFC7519"/>.</dd>
+        </dl>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.1-9">
+          <dt pn="section-9.1-9.1">Name:</dt>
+          <dd pn="section-9.1-9.2">
+            <tt>jti</tt></dd>
+          <dt pn="section-9.1-9.3">Parameter Usage Location:</dt>
+          <dd pn="section-9.1-9.4">authorization request</dd>
+          <dt pn="section-9.1-9.5">Change Controller:</dt>
+          <dd pn="section-9.1-9.6">IETF</dd>
+          <dt pn="section-9.1-9.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-9.8">This document and <xref target="RFC7519" sectionFormat="of" section="4.1.7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7519#section-4.1.7" derivedContent="RFC7519"/>.</dd>
+        </dl>
+      </section>
+      <section anchor="OAuthAuthorizationServerMetadataRegistry" numbered="true" removeInRFC="false" toc="include" pn="section-9.2">
+        <name slugifiedName="name-oauth-authorization-server-">OAuth Authorization Server Metadata Registry</name>
+        <t indent="0" pn="section-9.2-1">This specification adds the following value to the "OAuth
+        Authorization Server Metadata" registry <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/> established by <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414"/>.</t>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.2-2">
+          <dt pn="section-9.2-2.1">Metadata Name:</dt>
+          <dd pn="section-9.2-2.2">
+            <tt>require_signed_request_object</tt></dd>
+          <dt pn="section-9.2-2.3">Metadata Description:</dt>
+          <dd pn="section-9.2-2.4">Indicates where authorization
+	  request needs to be protected as Request Object and provided through
+	  either <tt>request</tt> or <tt>request_uri parameter</tt>.</dd>
+          <dt pn="section-9.2-2.5">Change Controller:</dt>
+          <dd pn="section-9.2-2.6">IETF</dd>
+          <dt pn="section-9.2-2.7">Specification Document(s):</dt>
+          <dd pn="section-9.2-2.8">
+            <xref target="require_signed_request_object" format="default" sectionFormat="of" derivedContent="Section 10.5"/> of this document.</dd>
+        </dl>
+      </section>
+      <section anchor="OAuthDynamicClientRegistrationMetadataRegistry" numbered="true" removeInRFC="false" toc="include" pn="section-9.3">
+        <name slugifiedName="name-oauth-dynamic-client-regist">OAuth Dynamic Client Registration Metadata Registry</name>
+        <t indent="0" pn="section-9.3-1">This specification adds the following value to the "OAuth Dynamic
+        Client Registration Metadata" registry <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/> established by <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>.</t>
+        <dl spacing="compact" indent="3" newline="false" pn="section-9.3-2">
+          <dt pn="section-9.3-2.1">Metadata Name:</dt>
+          <dd pn="section-9.3-2.2">
+            <tt>require_signed_request_object</tt></dd>
+          <dt pn="section-9.3-2.3">Metadata Description:</dt>
+          <dd pn="section-9.3-2.4">Indicates where authorization
+	  request needs to be protected as Request Object and provided through
+	  either <tt>request</tt> or <tt>request_uri parameter</tt>. </dd>
+          <dt pn="section-9.3-2.5">Change Controller:</dt>
+          <dd pn="section-9.3-2.6">IETF</dd>
+          <dt pn="section-9.3-2.7">Specification Document(s):</dt>
+          <dd pn="section-9.3-2.8">
+            <xref target="require_signed_request_object" format="default" sectionFormat="of" derivedContent="Section 10.5"/> of this document.</dd>
+        </dl>
+      </section>
+      <section anchor="MediaReg" numbered="true" removeInRFC="false" toc="include" pn="section-9.4">
+        <name slugifiedName="name-media-type-registration">Media Type Registration</name>
+        <section anchor="MediaContents" numbered="true" removeInRFC="false" toc="include" pn="section-9.4.1">
+          <name slugifiedName="name-registry-contents">Registry Contents</name>
+          <t indent="0" pn="section-9.4.1-1">
+                    This section registers the
+                    <tt>application/oauth-authz-req+jwt</tt>
+                    media type <xref target="RFC2046" format="default" sectionFormat="of" derivedContent="RFC2046"/> in the "Media Types"
+                    registry <xref target="IANA.MediaTypes" format="default" sectionFormat="of" derivedContent="IANA.MediaTypes"/> in the manner
+                    described in <xref target="RFC6838" format="default" sectionFormat="of" derivedContent="RFC6838"/>. It can be used to
+                    indicate that the content is a JWT containing Request
+                    Object claims.
+          </t>
+          <dl spacing="compact" indent="3" newline="false" pn="section-9.4.1-2">
+            <dt pn="section-9.4.1-2.1">Type name:</dt>
+            <dd pn="section-9.4.1-2.2">application</dd>
+            <dt pn="section-9.4.1-2.3">Subtype name:</dt>
+            <dd pn="section-9.4.1-2.4">oauth-authz-req+jwt</dd>
+            <dt pn="section-9.4.1-2.5">Required parameters:</dt>
+            <dd pn="section-9.4.1-2.6">N/A</dd>
+            <dt pn="section-9.4.1-2.7">Optional parameters:</dt>
+            <dd pn="section-9.4.1-2.8">N/A</dd>
+            <dt pn="section-9.4.1-2.9">Encoding considerations:</dt>
+            <dd pn="section-9.4.1-2.10">binary;
+            a Request Object is a JWT;
+            JWT values are encoded as a
+            series of base64url-encoded values (some of which may be the
+            empty string) separated by period (<tt>.</tt>) characters.</dd>
+            <dt pn="section-9.4.1-2.11">Security considerations:</dt>
+            <dd pn="section-9.4.1-2.12">See <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 10"/>
+	    of RFC 9101</dd>
+            <dt pn="section-9.4.1-2.13">Interoperability considerations:</dt>
+            <dd pn="section-9.4.1-2.14">N/A</dd>
+            <dt pn="section-9.4.1-2.15">Published specification:</dt>
+            <dd pn="section-9.4.1-2.16">
+              <xref target="authorization_request_object" format="default" sectionFormat="of" derivedContent="Section 4"/> of RFC 9101</dd>
+            <dt pn="section-9.4.1-2.17">Applications that use this media type:</dt>
+            <dd pn="section-9.4.1-2.18">Applications
+	    that use Request Objects to make an OAuth 2.0 authorization
+	    request</dd>
+            <dt pn="section-9.4.1-2.19">Fragment identifier considerations:</dt>
+            <dd pn="section-9.4.1-2.20">N/A</dd>
+            <dt pn="section-9.4.1-2.21">Additional information:</dt>
+            <dd pn="section-9.4.1-2.22">
+              <t indent="0" pn="section-9.4.1-2.22.1"><br/></t>
+              <dl spacing="compact" indent="3" newline="false" pn="section-9.4.1-2.22.2">
+                <dt pn="section-9.4.1-2.22.2.1">Deprecated alias names for this type:</dt>
+                <dd pn="section-9.4.1-2.22.2.2">N/A</dd>
+                <dt pn="section-9.4.1-2.22.2.3">Magic number(s):</dt>
+                <dd pn="section-9.4.1-2.22.2.4">N/A</dd>
+                <dt pn="section-9.4.1-2.22.2.5">File extension(s):</dt>
+                <dd pn="section-9.4.1-2.22.2.6">N/A</dd>
+                <dt pn="section-9.4.1-2.22.2.7">Macintosh file type code(s):</dt>
+                <dd pn="section-9.4.1-2.22.2.8">N/A</dd>
+              </dl>
+            </dd>
+            <dt pn="section-9.4.1-2.23">Person &amp; email address to contact for further
+	    information:</dt>
+            <dd pn="section-9.4.1-2.24">
+              <br/>Nat Sakimura &lt;nat@nat.consulting&gt;</dd>
+            <dt pn="section-9.4.1-2.25">Intended usage:</dt>
+            <dd pn="section-9.4.1-2.26">COMMON</dd>
+            <dt pn="section-9.4.1-2.27">Restrictions on usage:</dt>
+            <dd pn="section-9.4.1-2.28">none</dd>
+            <dt pn="section-9.4.1-2.29">Author:</dt>
+            <dd pn="section-9.4.1-2.30">Nat Sakimura &lt;nat@nat.consulting&gt;</dd>
+            <dt pn="section-9.4.1-2.31">Change controller:</dt>
+            <dd pn="section-9.4.1-2.32">IETF</dd>
+            <dt pn="section-9.4.1-2.33">Provisional registration?</dt>
+            <dd pn="section-9.4.1-2.34">No</dd>
+          </dl>
+        </section>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1">In addition to all the <xref target="RFC6819" format="default" sectionFormat="of" derivedContent="RFC6819"> security
+      considerations discussed in OAuth 2.0</xref>, the security
+      considerations in <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515"/>, <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516"/>,
+      <xref target="RFC7518" format="default" sectionFormat="of" derivedContent="RFC7518"/>, and <xref target="RFC8725" format="default" sectionFormat="of" derivedContent="RFC8725"/> need to be
+      considered.  Also, there are several academic papers such as <xref target="BASIN" format="default" sectionFormat="of" derivedContent="BASIN"/> that provide useful insight into the security
+      properties of protocols like OAuth.
+      </t>
+      <t indent="0" pn="section-10-2">
+	  In consideration of the above, this document advises taking the
+	  following security considerations into account.
+      </t>
+      <section anchor="alg_choice" numbered="true" removeInRFC="false" toc="include" pn="section-10.1">
+        <name slugifiedName="name-choice-of-algorithms">Choice of Algorithms</name>
+        <t indent="0" pn="section-10.1-1">When sending the Authorization Request Object through the
+	<tt>request</tt> parameter, it <bcp14>MUST</bcp14> be either
+	signed using <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515">JWS</xref>
+	or signed and then encrypted using <xref target="RFC7515" format="default" sectionFormat="of" derivedContent="RFC7515">JWS</xref> and
+	<xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref>, respectively,
+	with algorithms considered appropriate at the time. </t>
+      </section>
+      <section anchor="src_authn" numbered="true" removeInRFC="false" toc="include" pn="section-10.2">
+        <name slugifiedName="name-request-source-authenticati">Request Source Authentication</name>
+        <t indent="0" pn="section-10.2-1">
+	  The source of the authorization request <bcp14>MUST</bcp14> always be 
+	  verified. There are several ways to do it:
+        </t>
+        <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-10.2-2">
+          <li pn="section-10.2-2.1" derivedCounter="(a)">Verifying the JWS Signature of the Request Object.</li>
+          <li pn="section-10.2-2.2" derivedCounter="(b)">Verifying that the symmetric key for the JWE encryption is the
+          correct one if the JWE is using symmetric encryption. Note, however,
+          that if public key encryption is used, no source authentication is
+          enabled by the encryption, as any party can encrypt to the public
+          key.</li>
+          <li pn="section-10.2-2.3" derivedCounter="(c)">Verifying the TLS Server Identity of the Request Object URI.
+	  In this case, the authorization server <bcp14>MUST</bcp14> know 
+	  out-of-band that the client uses the Request Object URI and 
+	  only the client is covered by the TLS certificate. 
+	  In general, this is not a reliable method. 
+	  </li>
+          <li pn="section-10.2-2.4" derivedCounter="(d)">When an authorization server implements a service
+	  that returns a Request Object URI in exchange for
+	  a Request Object, the authorization
+	  server <bcp14>MUST</bcp14> perform client authentication to accept 
+	  the Request Object and bind the client identifier 
+	  to the Request Object URI it is providing.
+	  It <bcp14>MUST</bcp14> validate the signature, per (a).
+	  Since the Request Object URI can be replayed, the lifetime 
+	  of the Request Object URI <bcp14>MUST</bcp14> be short and preferably 
+	  one-time use. The entropy of the Request Object URI 
+			<bcp14>MUST</bcp14> be sufficiently large. 
+            The adequate shortness of the validity and 
+            the entropy of the Request Object URI depends 
+            on the risk calculation based on the value  
+            of the resource being protected. A general guidance 
+            for the validity time would be less than a minute, 
+            and the Request Object URI is to include a cryptographic  
+            random value of 128 bits or more at the time of the 
+            writing of this specification. 
+			</li>
+          <li pn="section-10.2-2.5" derivedCounter="(e)">When a trusted third-party service returns a Request Object URI
+          in exchange for a Request Object, it <bcp14>MUST</bcp14> validate
+          the signature, per (a).  In addition, the authorization server
+          <bcp14>MUST</bcp14> be trusted by the third-party service and
+          <bcp14>MUST</bcp14> know out-of-band that the client is also trusted by it.
+	</li>
+        </ol>
+      </section>
+      <section anchor="explicit_endpoints" numbered="true" removeInRFC="false" toc="include" pn="section-10.3">
+        <name slugifiedName="name-explicit-endpoints">Explicit Endpoints</name>
+        <t indent="0" pn="section-10.3-1">
+	      Although this specification does not require them, 
+	      research such as <xref target="BASIN" format="default" sectionFormat="of" derivedContent="BASIN"/> points out that 
+	      it is a good practice to explicitly state 
+	      the intended interaction endpoints and the message 
+	      position in the sequence in a tamper-evident 
+	      manner so that the intent of the initiator is unambiguous. It
+	      is <bcp14>RECOMMENDED</bcp14> by this specification to use this
+	      practice for the following endpoints defined in <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/>, <xref target="RFC6750" format="default" sectionFormat="of" derivedContent="RFC6750"/>, and <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414"/>:
+        </t>
+        <ol spacing="normal" type="(%c)" indent="adaptive" start="1" pn="section-10.3-2">
+          <li pn="section-10.3-2.1" derivedCounter="(a)">Protected resources (<tt>protected_resources</tt>)</li>
+          <li pn="section-10.3-2.2" derivedCounter="(b)">Authorization endpoint (<tt>authorization_endpoint</tt>)</li>
+          <li pn="section-10.3-2.3" derivedCounter="(c)">Redirection URI (<tt>redirect_uri</tt>)</li>
+          <li pn="section-10.3-2.4" derivedCounter="(d)">Token endpoint (<tt>token_endpoint</tt>)</li>
+        </ol>
+        <t indent="0" pn="section-10.3-3">
+	      Further, if dynamic discovery is used, then this practice also applies
+	      to the discovery-related endpoints.
+        </t>
+        <t indent="0" pn="section-10.3-4">
+	      In <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/>, 
+	      while the redirection URI is included in the authorization request, others
+	      are not. As a result, the same applies to the Authorization
+	      Request Object.
+        </t>
+      </section>
+      <section anchor="request_uri_threats" numbered="true" removeInRFC="false" toc="include" pn="section-10.4">
+        <name slugifiedName="name-risks-associated-with-reque">Risks Associated with request_uri</name>
+        <t indent="0" pn="section-10.4-1">
+	        The introduction of <tt>request_uri</tt>
+	        introduces several attack possibilities. 
+	        Consult the security considerations in
+	        <xref target="RFC3986" sectionFormat="of" section="7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3986#section-7" derivedContent="RFC3986"/> for more information
+		regarding
+	        risks associated with URIs.
+        </t>
+        <section anchor="ddos_on_authz_server" numbered="true" removeInRFC="false" toc="include" pn="section-10.4.1">
+          <name slugifiedName="name-ddos-attack-on-the-authoriz">DDoS Attack on the Authorization Server</name>
+          <t indent="0" pn="section-10.4.1-1">
+	        A set of malicious clients can launch a DoS attack 
+	        to the authorization server by pointing the 
+	        <tt>request_uri</tt> to a URI
+	        that returns extremely large content or is extremely slow to respond. 
+	        Under such an attack, the server may use up its resource 
+	        and start failing. 
+          </t>
+          <t indent="0" pn="section-10.4.1-2">
+	        Similarly, a malicious client can specify a 
+		<tt>request_uri</tt> value 
+		that itself points to an authorization request URI 
+		that uses <tt>request_uri</tt> to 
+		cause the recursive lookup. 
+          </t>
+          <t indent="0" pn="section-10.4.1-3">
+	        To prevent such an attack from succeeding, the server should 
+	        a) check that the value of the <tt>request_uri</tt> 
+	        parameter does not point to an unexpected location, 
+	        b) check that the media type of the response is 
+	        <tt>application/oauth-authz-req+jwt</tt>,
+	        c) implement a timeout for obtaining the content of 
+	        <tt>request_uri</tt>, and 
+		d) not perform recursive GET on the
+		<tt>request_uri</tt>.
+          </t>
+        </section>
+        <section anchor="request_uri_rewrite" numbered="true" removeInRFC="false" toc="include" pn="section-10.4.2">
+          <name slugifiedName="name-request-uri-rewrite">Request URI Rewrite</name>
+          <t indent="0" pn="section-10.4.2-1">
+	        The value of <tt>request_uri</tt> is not signed; 
+	        thus, it can be tampered with by a man-in-the-browser attacker. 
+	        Several attack possibilities arise because of this. For
+		example, 
+	        a) an attacker may create another file that the rewritten 
+	        URI points to, making it possible to request extra scope, or 
+	        b) an attacker may launch a DoS attack on a victim site 
+	        by setting the value of <tt>request_uri</tt> 
+	        to be that of the victim. 
+          </t>
+          <t indent="0" pn="section-10.4.2-2">
+	        To prevent such an attack from succeeding, the server should 
+	        a) check that the value of the <tt>request_uri</tt> 
+	        parameter does not point to an unexpected location, 
+	        b) check that the media type of the response is 
+	        <tt>application/oauth-authz-req+jwt</tt>, and
+	        c) implement a timeout for obtaining the content of 
+	        <tt>request_uri</tt>.
+          </t>
+        </section>
+      </section>
+      <section anchor="require_signed_request_object" numbered="true" removeInRFC="false" toc="include" pn="section-10.5">
+        <name slugifiedName="name-downgrade-attack">Downgrade Attack</name>
+        <t indent="0" pn="section-10.5-1">
+            Unless the protocol used by the client and the server is locked down to 
+            use an OAuth JWT-Secured Authorization Request (JAR), it is possible
+	    for an attacker to use RFC 6749 requests 
+            to bypass all the protection provided by this specification. 
+        </t>
+        <t indent="0" pn="section-10.5-2">
+	  To prevent this kind of attack, this specification defines new
+	  client metadata and server metadata values, both named
+	  <tt>require_signed_request_object</tt>, whose values are both
+	  booleans.
+        </t>
+        <t indent="0" pn="section-10.5-3">
+            When the value of it as client metadata is <tt>true</tt>, then the
+            server <bcp14>MUST</bcp14> reject the authorization request from
+            the client that does not conform to this specification.  It
+            <bcp14>MUST</bcp14> also reject the request if the Request Object
+            uses an <tt>alg</tt> value of <tt>none</tt> when this server
+            metadata value is <tt>true</tt>.  If omitted, the default value is
+            <tt>false</tt>.
+        </t>
+        <t indent="0" pn="section-10.5-4">
+            When the value of it as server metadata is <tt>true</tt>, then the
+            server <bcp14>MUST</bcp14> reject the authorization request from
+            any client that does not conform to this specification.  It
+            <bcp14>MUST</bcp14> also reject the request if the Request Object
+            uses an <tt>alg</tt> value of <tt>none</tt>. If omitted, the
+            default value is <tt>false</tt>.
+        </t>
+        <t indent="0" pn="section-10.5-5">Note that even if <tt>require_signed_request_object</tt> metadata
+	values are not present, the client <bcp14>MAY</bcp14> use signed Request Objects,
+	provided that there are signing algorithms mutually supported by the
+	client and the server.  Use of signing algorithm metadata is described
+	in <xref target="authorization_request_object" format="default" sectionFormat="of" derivedContent="Section 4"/>.</t>
+      </section>
+      <section anchor="tls_sec" numbered="true" removeInRFC="false" toc="include" pn="section-10.6">
+        <name slugifiedName="name-tls-security-considerations">TLS Security Considerations</name>
+        <t indent="0" pn="section-10.6-1">Current security
+      considerations can be found in "<xref target="RFC7525" format="title" sectionFormat="of" derivedContent="Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)"/>" <xref target="RFC7525" format="default" sectionFormat="of" derivedContent="RFC7525"/>.  This 
+      supersedes the TLS version recommendations in <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749">OAuth
+        2.0</xref>.</t>
+      </section>
+      <section anchor="ParameterMismatches" numbered="true" removeInRFC="false" toc="include" pn="section-10.7">
+        <name slugifiedName="name-parameter-mismatches">Parameter Mismatches</name>
+        <t indent="0" pn="section-10.7-1">
+	  Given that OAuth parameter values are being sent in two different places,
+	  as normal OAuth parameters and as Request Object claims,
+	  implementations must guard against attacks that could use mismatching
+	  parameter values to obtain unintended outcomes.
+	  That is the reason that the two client ID values <bcp14>MUST</bcp14> match,
+	  the reason that only the parameter values from the Request Object are to be used,
+	  and the reason that neither <tt>request</tt> nor
+	  <tt>request_uri</tt> can appear in a Request Object.
+        </t>
+      </section>
+      <section anchor="CrossJWT" numbered="true" removeInRFC="false" toc="include" pn="section-10.8">
+        <name slugifiedName="name-cross-jwt-confusion">Cross-JWT Confusion</name>
+        <t indent="0" pn="section-10.8-1">
+	  As described in <xref target="RFC8725" sectionFormat="of" section="2.8" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8725#section-2.8" derivedContent="RFC8725"/>,
+	  attackers may attempt to use a JWT issued for one purpose in a context that it was not intended for.
+	  The mitigations described for these attacks can be applied to Request Objects.
+        </t>
+        <t indent="0" pn="section-10.8-2">
+	  One way that an attacker might attempt to repurpose a Request Object
+	  is to try to use it as a client authentication JWT,
+	  as described in <xref target="RFC7523" sectionFormat="of" section="2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7523#section-2.2" derivedContent="RFC7523"/>.
+	  A simple way to prevent this is to never use the client ID
+	  as the <tt>sub</tt> value in a Request Object.
+        </t>
+        <t indent="0" pn="section-10.8-3">
+	  Another way to prevent cross-JWT confusion is to use explicit typing,
+	  as described in <xref target="RFC8725" sectionFormat="of" section="3.11" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8725#section-3.11" derivedContent="RFC8725"/>.
+	  One would explicitly type a Request Object by including a
+	  <tt>typ</tt> Header Parameter with the value
+	  <tt>oauth-authz-req+jwt</tt>
+	  (which is registered in <xref target="MediaContents" format="default" sectionFormat="of" derivedContent="Section 9.4.1"/>).
+	  Note, however, that requiring explicitly typed Request Objects
+	  at existing authorization servers will break most existing deployments,
+	  as existing clients are already commonly using untyped Request Objects,
+	  especially with OpenID Connect <xref target="OpenID.Core" format="default" sectionFormat="of" derivedContent="OpenID.Core"/>.
+	  However, requiring explicit typing would be a good idea
+	  for new OAuth deployment profiles where compatibility with existing deployments
+	  is not a consideration.
+        </t>
+        <t indent="0" pn="section-10.8-4">
+  Finally, yet another way to prevent cross-JWT confusion is to use a key
+  management regime in which keys used to sign Request Objects are
+  identifiably distinct from those used for other purposes.  Then, if an
+  adversary attempts to repurpose the Request Object in another context, a key
+  mismatch will occur, thwarting the attack.
+</t>
+      </section>
+    </section>
+    <section anchor="Privacy" numbered="true" removeInRFC="false" toc="include" pn="section-11">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-11-1">
+			When the client is being granted access to a protected resource 
+			containing personal data, both the client 
+			and the authorization server need to adhere to 
+			Privacy Principles. 
+			"<xref target="RFC6973" format="title" sectionFormat="of" derivedContent="Privacy Considerations for Internet Protocols"/>"
+			<xref target="RFC6973" format="default" sectionFormat="of" derivedContent="RFC6973"/>
+			gives excellent guidance on the
+			enhancement of protocol design and implementation.  
+			The provisions listed in it should be followed. 
+      </t>
+      <t indent="0" pn="section-11-2">
+			Most of the provisions would apply to 
+			"<xref target="RFC6749" format="title" sectionFormat="of" derivedContent="The OAuth 2.0 Authorization Framework"/>" <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/>
+			and "<xref target="RFC6750" format="title" sectionFormat="of" derivedContent="The OAuth 2.0 Authorization Framework: Bearer Token Usage"/>" <xref target="RFC6750" format="default" sectionFormat="of" derivedContent="RFC6750"/>
+			and are not specific to this specification.
+			In what follows, only the provisions specific
+			to this specification are noted. 
+      </t>
+      <section anchor="collection_limitation" numbered="true" removeInRFC="false" toc="include" pn="section-11.1">
+        <name slugifiedName="name-collection-limitation">Collection Limitation</name>
+        <t indent="0" pn="section-11.1-1">
+	When the client is being granted access to a protected resource
+	containing personal data, the client <bcp14>SHOULD</bcp14> limit the
+	collection of personal data to that which is within the bounds of
+	applicable law and strictly necessary for the specified purpose(s).
+        </t>
+        <t indent="0" pn="section-11.1-2">
+	It is often hard for the user to find out if the personal data asked
+	for is strictly necessary.  A trusted third-party service can help the
+	user by examining the client request, comparing it to the proposed
+	processing by the client, and certifying the request. After the
+	certification, the client, when making an authorization request, can
+	submit an authorization request to the trusted third-party service to
+	obtain the Request Object URI.  This process has two steps:
+        </t>
+        <ol spacing="normal" type="(%d)" indent="adaptive" start="1" pn="section-11.1-3">
+          <li pn="section-11.1-3.1" derivedCounter="(1)">(Certification Process) The trusted third-party service examines
+          the business process of the client and determines what claims they
+          need; this is the certification process. Once the client is
+          certified, they are issued a client credential to authenticate
+          against to push Request Objects to the trusted third-party service
+          to get the <tt>request_uri</tt>.</li>
+          <li pn="section-11.1-3.2" derivedCounter="(2)">(Translation Process) The client uses the client credential that
+          it got to push the Request Object to the trusted third-party service
+          to get the <tt>request_uri</tt>.  The trusted third-party service
+          also verifies that the Request Object is consistent with the claims
+          that the client is eligible for, per the prior step.
+				</li>
+        </ol>
+        <t indent="0" pn="section-11.1-4">
+	Upon receiving such a Request Object URI in the authorization request,
+	the authorization server first verifies that the authority portion of
+	the Request Object URI is a legitimate one for the trusted third-party
+	service.  Then, the authorization server issues an HTTP GET request to
+	the Request Object URI.  Upon connecting, the authorization server
+	<bcp14>MUST</bcp14> verify that the server identity represented in the
+	TLS certificate is legitimate for the Request Object URI.  Then, the
+	authorization server can obtain the Request Object, which includes the
+	<tt>client_id</tt> representing the client.
+        </t>
+        <t indent="0" pn="section-11.1-5">
+	The Consent screen <bcp14>MUST</bcp14> indicate the client and
+	<bcp14>SHOULD</bcp14> indicate that the request has been vetted by the
+	trusted third-party service for the adherence to the collection
+	limitation principle.
+        </t>
+      </section>
+      <section anchor="disclosure_limitation" numbered="true" removeInRFC="false" toc="include" pn="section-11.2">
+        <name slugifiedName="name-disclosure-limitation">Disclosure Limitation</name>
+        <section anchor="request_disclosure" numbered="true" removeInRFC="false" toc="include" pn="section-11.2.1">
+          <name slugifiedName="name-request-disclosure">Request Disclosure</name>
+          <t indent="0" pn="section-11.2.1-1">
+	    This specification allows extension parameters. 
+	    These may include potentially sensitive information. 
+	    Since URI query parameters may leak through various 
+	    means but most notably through referrer and browser history, 
+	    if the authorization request contains a potentially sensitive 
+	    parameter, the client <bcp14>SHOULD</bcp14> encrypt
+	    the Request Object using <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref>.
+          </t>
+          <t indent="0" pn="section-11.2.1-2">
+	    Where the Request Object URI method is being used, if the Request
+	    Object contains personally identifiable or sensitive information,
+	    the <tt>request_uri</tt> <bcp14>SHOULD</bcp14> be used only once
+	    and have a short validity period, and it <bcp14>MUST</bcp14> have
+	    sufficient entropy for the applicable security policies unless the
+	    Request Object itself is encrypted using <xref target="RFC7516" format="default" sectionFormat="of" derivedContent="RFC7516">JWE</xref>. The adequate shortness of the
+	    validity and the entropy of the Request Object URI depends on the
+	    risk calculation based on the value of the resource being
+	    protected. A general guidance for the validity time would be less
+	    than a minute, and the Request Object URI is to include a
+	    cryptographic random value of 128 bits or more at the time of the
+	    writing of this specification.
+
+          </t>
+        </section>
+        <section anchor="tracking" numbered="true" removeInRFC="false" toc="include" pn="section-11.2.2">
+          <name slugifiedName="name-tracking-using-request-obje">Tracking Using Request Object URI</name>
+          <t indent="0" pn="section-11.2.2-1">
+	    Even if the protected resource does not include
+	    personally identifiable information, 
+	    it is sometimes possible to identify the user 
+	    through the Request Object URI if persistent static per-user
+	    Request Object URIs are used. A third party may observe
+	    it through browser history, etc. and start correlating 
+	    the user's activity using it. 
+	    In a way, it is a data disclosure as well and
+	    should be avoided. 
+          </t>
+          <t indent="0" pn="section-11.2.2-2">
+	    Therefore, per-user persistent Request Object URIs should be avoided.
+	    Single-use Request Object URIs are one alternative.
+          </t>
+        </section>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-12">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-12.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3629" target="https://www.rfc-editor.org/info/rfc3629" quoteTitle="true" derivedAnchor="RFC3629">
+          <front>
+            <title>UTF-8, a transformation format of ISO 10646</title>
+            <author initials="F." surname="Yergeau" fullname="F. Yergeau">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2003" month="November"/>
+            <abstract>
+              <t indent="0">ISO/IEC 10646-1 defines a large character set called the Universal Character Set (UCS) which encompasses most of the world's writing systems.  The originally proposed encodings of the UCS, however, were not compatible with many current applications and protocols, and this has led to the development of UTF-8, the object of this memo.  UTF-8 has the characteristic of preserving the full US-ASCII range, providing compatibility with file systems, parsers and other software that rely on US-ASCII values but are transparent to other values.  This memo obsoletes and replaces RFC 2279.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="63"/>
+          <seriesInfo name="RFC" value="3629"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3629"/>
+        </reference>
+        <reference anchor="RFC3986" target="https://www.rfc-editor.org/info/rfc3986" quoteTitle="true" derivedAnchor="RFC3986">
+          <front>
+            <title>Uniform Resource Identifier (URI): Generic Syntax</title>
+            <author initials="T." surname="Berners-Lee" fullname="T. Berners-Lee">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Fielding" fullname="R. Fielding">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Masinter" fullname="L. Masinter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="January"/>
+            <abstract>
+              <t indent="0">A Uniform Resource Identifier (URI) is a compact sequence of characters that identifies an abstract or physical resource.  This specification defines the generic URI syntax and a process for resolving URI references that might be in relative form, along with guidelines and security considerations for the use of URIs on the Internet.  The URI syntax defines a grammar that is a superset of all valid URIs, allowing an implementation to parse the common components of a URI reference without knowing the scheme-specific requirements of every possible identifier.  This specification does not define a generative grammar for URIs; that task is performed by the individual specifications of each URI scheme.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="66"/>
+          <seriesInfo name="RFC" value="3986"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3986"/>
+        </reference>
+        <reference anchor="RFC6125" target="https://www.rfc-editor.org/info/rfc6125" quoteTitle="true" derivedAnchor="RFC6125">
+          <front>
+            <title>Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)</title>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hodges" fullname="J. Hodges">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="March"/>
+            <abstract>
+              <t indent="0">Many application technologies enable secure communication between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS). This document specifies procedures for representing and verifying the identity of application services in such interactions.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6125"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6125"/>
+        </reference>
+        <reference anchor="RFC6749" target="https://www.rfc-editor.org/info/rfc6749" quoteTitle="true" derivedAnchor="RFC6749">
+          <front>
+            <title>The OAuth 2.0 Authorization Framework</title>
+            <author initials="D." surname="Hardt" fullname="D. Hardt" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="October"/>
+            <abstract>
+              <t indent="0">The OAuth 2.0 authorization framework enables a third-party application to obtain limited access to an HTTP service, either on behalf of a resource owner by orchestrating an approval interaction between the resource owner and the HTTP service, or by allowing the third-party application to obtain access on its own behalf.  This specification replaces and obsoletes the OAuth 1.0 protocol described in RFC 5849.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6749"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6749"/>
+        </reference>
+        <reference anchor="RFC6750" target="https://www.rfc-editor.org/info/rfc6750" quoteTitle="true" derivedAnchor="RFC6750">
+          <front>
+            <title>The OAuth 2.0 Authorization Framework: Bearer Token Usage</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Hardt" fullname="D. Hardt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="October"/>
+            <abstract>
+              <t indent="0">This specification describes how to use bearer tokens in HTTP requests to access OAuth 2.0 protected resources.  Any party in possession of a bearer token (a "bearer") can use it to get access to the associated resources (without demonstrating possession of a cryptographic key).  To prevent misuse, bearer tokens need to be protected from disclosure in storage and in transport.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6750"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6750"/>
+        </reference>
+        <reference anchor="RFC7230" target="https://www.rfc-editor.org/info/rfc7230" quoteTitle="true" derivedAnchor="RFC7230">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems.  This document provides an overview of HTTP architecture and its associated terminology, defines the "http" and "https" Uniform Resource Identifier (URI) schemes, defines the HTTP/1.1 message syntax and parsing requirements, and describes related security concerns for implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7230"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7230"/>
+        </reference>
+        <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515" quoteTitle="true" derivedAnchor="RFC7515">
+          <front>
+            <title>JSON Web Signature (JWS)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Signature (JWS) represents content secured with digital signatures or Message Authentication Codes (MACs) using JSON-based data structures.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and an IANA registry defined by that specification.  Related encryption capabilities are described in the separate JSON Web Encryption (JWE) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7515"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7515"/>
+        </reference>
+        <reference anchor="RFC7516" target="https://www.rfc-editor.org/info/rfc7516" quoteTitle="true" derivedAnchor="RFC7516">
+          <front>
+            <title>JSON Web Encryption (JWE)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Hildebrand" fullname="J. Hildebrand">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Encryption (JWE) represents encrypted content using JSON-based data structures.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and IANA registries defined by that specification.  Related digital signature and Message Authentication Code (MAC) capabilities are described in the separate JSON Web Signature (JWS) specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7516"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7516"/>
+        </reference>
+        <reference anchor="RFC7518" target="https://www.rfc-editor.org/info/rfc7518" quoteTitle="true" derivedAnchor="RFC7518">
+          <front>
+            <title>JSON Web Algorithms (JWA)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">This specification registers cryptographic algorithms and identifiers to be used with the JSON Web Signature (JWS), JSON Web Encryption (JWE), and JSON Web Key (JWK) specifications.  It defines several IANA registries for these identifiers.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7518"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7518"/>
+        </reference>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519" quoteTitle="true" derivedAnchor="RFC7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties.  The claims in a JWT are encoded as a JSON object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or integrity protected with a Message Authentication Code (MAC) and/or encrypted.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        <reference anchor="RFC7525" target="https://www.rfc-editor.org/info/rfc7525" quoteTitle="true" derivedAnchor="RFC7525">
+          <front>
+            <title>Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="Y." surname="Sheffer" fullname="Y. Sheffer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Holz" fullname="R. Holz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) are widely used to protect data exchanged over application protocols such as HTTP, SMTP, IMAP, POP, SIP, and XMPP.  Over the last few years, several serious attacks on TLS have emerged, including attacks on its most commonly used cipher suites and their modes of operation.  This document provides recommendations for improving the security of deployed services that use TLS and DTLS. The recommendations are applicable to the majority of use cases.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="195"/>
+          <seriesInfo name="RFC" value="7525"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7525"/>
+        </reference>
+        <reference anchor="RFC8141" target="https://www.rfc-editor.org/info/rfc8141" quoteTitle="true" derivedAnchor="RFC8141">
+          <front>
+            <title>Uniform Resource Names (URNs)</title>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Klensin" fullname="J. Klensin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="April"/>
+            <abstract>
+              <t indent="0">A Uniform Resource Name (URN) is a Uniform Resource Identifier (URI) that is assigned under the "urn" URI scheme and a particular URN namespace, with the intent that the URN will be a persistent, location-independent resource identifier.  With regard to URN syntax, this document defines the canonical syntax for URNs (in a way that is consistent with URI syntax), specifies methods for determining URN-equivalence, and discusses URI conformance.  With regard to URN namespaces, this document specifies a method for defining a URN namespace and associating it with a namespace identifier, and it describes procedures for registering namespace identifiers with the Internet Assigned Numbers Authority (IANA).  This document obsoletes both RFCs 2141 and 3406.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8141"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8141"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259" quoteTitle="true" derivedAnchor="RFC8259">
+          <front>
+            <title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author initials="T." surname="Bray" fullname="T. Bray" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="December"/>
+            <abstract>
+              <t indent="0">JavaScript Object Notation (JSON) is a lightweight, text-based, language-independent data interchange format.  It was derived from the ECMAScript Programming Language Standard.  JSON defines a small set of formatting rules for the portable representation of structured data.</t>
+              <t indent="0">This document removes inconsistencies with other specifications of JSON, repairs specification errors, and offers experience-based interoperability guidance.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8259"/>
+        </reference>
+        <reference anchor="RFC8414" target="https://www.rfc-editor.org/info/rfc8414" quoteTitle="true" derivedAnchor="RFC8414">
+          <front>
+            <title>OAuth 2.0 Authorization Server Metadata</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="June"/>
+            <abstract>
+              <t indent="0">This specification defines a metadata format that an OAuth 2.0 client can use to obtain the information needed to interact with an OAuth 2.0 authorization server, including its endpoint locations and authorization server capabilities.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8414"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8414"/>
+        </reference>
+      </references>
+      <references pn="section-12.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="BASIN" target="https://www.cs.ox.ac.uk/people/cas.cremers/downloads/papers/BCM2012-iso9798.pdf" quoteTitle="true" derivedAnchor="BASIN">
+          <front>
+            <title>Provably Repairing the ISO/IEC 9798 Standard for Entity Authentication</title>
+            <author fullname="David Basin" initials="D." surname="Basin"/>
+            <author fullname="Cas Cremers" initials="C." surname="Cremers"/>
+            <author fullname="Simon Meier" initials="S." surname="Meier"/>
+            <date month="November" year="2013"/>
+          </front>
+          <refcontent>Journal of Computer Security - Security and Trust Principles, Volume 21, Issue 6, pp. 817-846</refcontent>
+        </reference>
+        <reference anchor="CapURLs" target="https://www.w3.org/TR/capability-urls/" quoteTitle="true" derivedAnchor="CapURLs">
+          <front>
+            <title>Good Practices for Capability URLs</title>
+            <author fullname="Jeni Tennison" initials="J." surname="Tennison" role="editor"/>
+            <date day="18" month="February" year="2014"/>
+          </front>
+          <refcontent>W3C First Public Working Draft</refcontent>
+        </reference>
+        <reference anchor="IANA.JWT.Claims" target="https://www.iana.org/assignments/jwt" quoteTitle="true" derivedAnchor="IANA.JWT.Claims">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="IANA.MediaTypes" target="https://www.iana.org/assignments/media-types" quoteTitle="true" derivedAnchor="IANA.MediaTypes">
+          <front>
+            <title>Media Types</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="IANA.OAuth.Parameters" target="https://www.iana.org/assignments/oauth-parameters" quoteTitle="true" derivedAnchor="IANA.OAuth.Parameters">
+          <front>
+            <title>OAuth Parameters</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="OpenID.Core" target="http://openid.net/specs/openid-connect-core-1_0.html" quoteTitle="true" derivedAnchor="OpenID.Core">
+          <front>
+            <title>OpenID Connect Core 1.0 incorporating errata set 1</title>
+            <author fullname="Nat Sakimura" initials="N." surname="Sakimura">
+              <organization abbrev="NAT Consulting" showOnFrontPage="true">NAT Consulting</organization>
+            </author>
+            <author fullname="John Bradley" initials="J." surname="Bradley">
+              <organization abbrev="Ping Identity" showOnFrontPage="true">Ping Identity</organization>
+            </author>
+            <author fullname="Michael B. Jones" initials="M.B." surname="Jones">
+              <organization abbrev="Microsoft" showOnFrontPage="true">Microsoft</organization>
+            </author>
+            <author fullname="Breno de Medeiros" initials="B." surname="de Medeiros">
+              <organization abbrev="Google" showOnFrontPage="true">Google</organization>
+            </author>
+            <author fullname="Chuck Mortimore" initials="C." surname="Mortimore">
+              <organization abbrev="Salesforce" showOnFrontPage="true">Salesforce</organization>
+            </author>
+            <date day="8" month="November" year="2014"/>
+          </front>
+          <refcontent>OpenID Foundation Standards</refcontent>
+        </reference>
+        <reference anchor="RFC2046" target="https://www.rfc-editor.org/info/rfc2046" quoteTitle="true" derivedAnchor="RFC2046">
+          <front>
+            <title>Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types</title>
+            <author initials="N." surname="Freed" fullname="N. Freed">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Borenstein" fullname="N. Borenstein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1996" month="November"/>
+            <abstract>
+              <t indent="0">This second document defines the general structure of the MIME media typing system and defines an initial set of media types.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2046"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2046"/>
+        </reference>
+        <reference anchor="RFC6819" target="https://www.rfc-editor.org/info/rfc6819" quoteTitle="true" derivedAnchor="RFC6819">
+          <front>
+            <title>OAuth 2.0 Threat Model and Security Considerations</title>
+            <author initials="T." surname="Lodderstedt" fullname="T. Lodderstedt" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="McGloin" fullname="M. McGloin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hunt" fullname="P. Hunt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t indent="0">This document gives additional security considerations for OAuth, beyond those in the OAuth 2.0 specification, based on a comprehensive threat model for the OAuth 2.0 protocol.  This document is not an  Internet Standards Track specification; it is published for  informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6819"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6819"/>
+        </reference>
+        <reference anchor="RFC6838" target="https://www.rfc-editor.org/info/rfc6838" quoteTitle="true" derivedAnchor="RFC6838">
+          <front>
+            <title>Media Type Specifications and Registration Procedures</title>
+            <author initials="N." surname="Freed" fullname="N. Freed">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Klensin" fullname="J. Klensin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Hansen" fullname="T. Hansen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t indent="0">This document defines procedures for the specification and registration of media types for use in HTTP, MIME, and other Internet protocols.  This memo documents an Internet Best Current Practice.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="13"/>
+          <seriesInfo name="RFC" value="6838"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6838"/>
+        </reference>
+        <reference anchor="RFC6973" target="https://www.rfc-editor.org/info/rfc6973" quoteTitle="true" derivedAnchor="RFC6973">
+          <front>
+            <title>Privacy Considerations for Internet Protocols</title>
+            <author initials="A." surname="Cooper" fullname="A. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Peterson" fullname="J. Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Morris" fullname="J. Morris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Hansen" fullname="M. Hansen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Smith" fullname="R. Smith">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="July"/>
+            <abstract>
+              <t indent="0">This document offers guidance for developing privacy considerations for inclusion in protocol specifications.  It aims to make designers, implementers, and users of Internet protocols aware of privacy-related design choices.  It suggests that whether any individual RFC warrants a specific privacy considerations section will depend on the document's content.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6973"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6973"/>
+        </reference>
+        <reference anchor="RFC7523" target="https://www.rfc-editor.org/info/rfc7523" quoteTitle="true" derivedAnchor="RFC7523">
+          <front>
+            <title>JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Campbell" fullname="B. Campbell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Mortimore" fullname="C. Mortimore">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">This specification defines the use of a JSON Web Token (JWT) Bearer Token as a means for requesting an OAuth 2.0 access token as well as for client authentication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7523"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7523"/>
+        </reference>
+        <reference anchor="RFC7591" target="https://www.rfc-editor.org/info/rfc7591" quoteTitle="true" derivedAnchor="RFC7591">
+          <front>
+            <title>OAuth 2.0 Dynamic Client Registration Protocol</title>
+            <author initials="J." surname="Richer" fullname="J. Richer" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Machulak" fullname="M. Machulak">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hunt" fullname="P. Hunt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="July"/>
+            <abstract>
+              <t indent="0">This specification defines mechanisms for dynamically registering OAuth 2.0 clients with authorization servers.  Registration requests send a set of desired client metadata values to the authorization server.  The resulting registration responses return a client identifier to use at the authorization server and the client metadata values registered for the client.  The client can then use this registration information to communicate with the authorization server using the OAuth 2.0 protocol.  This specification also defines a set of common client metadata fields and values for clients to use during registration.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7591"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7591"/>
+        </reference>
+        <reference anchor="RFC8725" target="https://www.rfc-editor.org/info/rfc8725" quoteTitle="true" derivedAnchor="RFC8725">
+          <front>
+            <title>JSON Web Token Best Current Practices</title>
+            <author initials="Y." surname="Sheffer" fullname="Y. Sheffer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Hardt" fullname="D. Hardt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="February"/>
+            <abstract>
+              <t indent="0">JSON Web Tokens, also known as JWTs, are URL-safe JSON-based security tokens that contain a set of claims that can be signed and/or encrypted. JWTs are being widely used and deployed as a simple security token format in numerous protocols and applications, both in the area of digital identity and in other application areas.  This Best Current Practices document updates RFC 7519 to provide actionable guidance leading to secure implementation and deployment of JWTs.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="225"/>
+          <seriesInfo name="RFC" value="8725"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8725"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="Acknowledgements" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">
+	    The following people contributed to the creation of this document
+	    in the OAuth Working Group and other IETF roles.
+	    (Affiliations at the time of the contribution are used.)
+      </t>
+      <t indent="0" pn="section-appendix.a-2">
+	    <contact fullname="Annabelle Backman"/> (Amazon),
+	    <contact fullname="Dirk Balfanz"/> (Google),
+	    <contact fullname="Sergey Beryozkin"/>, 
+	    <contact fullname="Ben Campbell"/> (as AD),
+	    <contact fullname="Brian Campbell"/> (Ping Identity),
+	    <contact fullname="Roman Danyliw"/> (as AD),
+	    <contact fullname="Martin Duke"/> (as AD),
+	    <contact fullname="Vladimir Dzhuvinov"/> (Connect2id),
+	    <contact fullname="Lars Eggert"/> (as AD),
+	    <contact fullname="Joel Halpern"/> (as GENART),
+	    <contact fullname="Benjamin Kaduk"/> (as AD),
+	    <contact fullname="Stephen Kent"/> (as SECDIR),
+	    <contact fullname="Murray Kucherawy"/> (as AD),
+	    <contact fullname="Warren Kumari"/> (as OPSDIR),
+	    <contact fullname="Watson Ladd"/> (as SECDIR),
+	    <contact fullname="Torsten Lodderstedt"/> (yes.com),
+	    <contact fullname="Jim Manico"/>,
+	    <contact fullname="James H. Manger"/> (Telstra),
+	    <contact fullname="Kathleen Moriarty"/> (as AD),
+	    <contact fullname="Axel Nennker"/> (Deutsche Telecom),
+	    <contact fullname="John Panzer"/> (Google),
+	    <contact fullname="Francesca Palombini"/> (as AD),
+	    <contact fullname="David Recordon"/> (Facebook),
+	    <contact fullname="Marius Scurtescu"/> (Google),
+	    <contact fullname="Luke Shepard"/> (Facebook),
+	    <contact fullname="Filip Skokan"/> (Auth0),
+	    <contact fullname="Hannes Tschofenig"/> (ARM),
+	    <contact fullname="Éric Vyncke"/> (as AD),
+	    and
+	    <contact fullname="Robert Wilton"/> (as AD).
+      </t>
+      <t indent="0" pn="section-appendix.a-3">The following people contributed to creating this document through
+      the <xref target="OpenID.Core" format="default" sectionFormat="of" derivedContent="OpenID.Core">OpenID Connect Core 1.0</xref>.</t>
+      <t indent="0" pn="section-appendix.a-4">
+	  <contact fullname="Brian Campbell"/> (Ping Identity), <contact fullname="George Fletcher"/> (AOL), <contact fullname="Ryo Itou"/>
+	  (Mixi), <contact fullname="Edmund Jay"/> (Illumila), <contact fullname="Breno de Medeiros"/> (Google), <contact fullname="Hideki    Nara"/> (TACT), and <contact fullname="Justin Richer"/> (MITRE).
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Nat Sakimura" initials="N." surname="Sakimura">
+        <organization showOnFrontPage="true">NAT.Consulting</organization>
+        <address>
+          <postal>
+            <street>Kunitachi</street>
+            <region>Tokyo 186-0004</region>
+            <extaddr>2-22-17 Naka</extaddr>
+            <country>Japan</country>
+          </postal>
+          <phone>+81-42-580-7401</phone>
+          <email>nat@nat.consulting</email>
+          <uri>https://nat.sakimura.org/</uri>
+        </address>
+      </author>
+      <author fullname="John Bradley" initials="J." surname="Bradley">
+        <organization showOnFrontPage="true">Yubico</organization>
+        <address>
+          <postal>
+            <street>Casilla 177</street>
+            <extaddr>Sucursal Talagante</extaddr>
+            <city>Talagante</city>
+            <region>RM</region>
+            <code/>
+            <country>Chile</country>
+          </postal>
+          <phone>+1.202.630.5272</phone>
+          <email>rfc9101@ve7jtb.com</email>
+          <uri>http://www.thread-safe.com/</uri>
+        </address>
+      </author>
+      <author fullname="Michael B. Jones" surname="Jones" initials="M.">
+        <organization showOnFrontPage="true">Microsoft</organization>
+        <address>
+          <postal>
+            <street>One Microsoft Way</street>
+            <city>Redmond</city>
+            <region>Washington</region>
+            <code>98052</code>
+            <country>United States of America</country>
+          </postal>
+          <email>mbj@microsoft.com</email>
+          <uri>https://self-issued.info/</uri>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,1260 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="info" consensus="true" docName="draft-ietf-emu-eaptlscert-08" indexInclude="true" ipr="trust200902" number="9191" prepTime="2022-02-15T18:26:46" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-emu-eaptlscert-08" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9191" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="Certificates in TLS-Based EAP Methods">Handling Large Certificates and Long Certificate Chains in TLS‑Based EAP Methods</title>
+    <seriesInfo name="RFC" value="9191" stream="IETF"/>
+    <author initials="M" surname="Sethi" fullname="Mohit Sethi">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Jorvas</city>
+          <code>02420</code>
+          <country>Finland</country>
+        </postal>
+        <email>mohit@iki.fi</email>
+      </address>
+    </author>
+    <author initials="J." surname="Preuß Mattsson" fullname="John Preuß Mattsson">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street/>
+          <city>Kista</city>
+          <code/>
+          <country>Sweden</country>
+        </postal>
+        <email>john.mattsson@ericsson.com</email>
+      </address>
+    </author>
+    <author initials="S" surname="Turner" fullname="Sean Turner">
+      <organization showOnFrontPage="true">sn3rd</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <code/>
+          <country/>
+        </postal>
+        <email>sean@sn3rd.com</email>
+      </address>
+    </author>
+    <date month="02" year="2022"/>
+    <workgroup>Network Working Group</workgroup>
+    <keyword>EAP-TLS</keyword>
+    <keyword>X.509</keyword>
+    <keyword>EAP authenticator</keyword>
+    <keyword>Maximum Transmission Unit</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+		The Extensible Authentication Protocol (EAP), defined in RFC
+		3748, provides a standard mechanism for support of multiple
+		authentication methods. EAP-TLS and other TLS-based EAP
+		methods are widely deployed and used for network access
+		authentication. Large certificates and long certificate chains
+		combined with authenticators that drop an EAP session after
+		only 40 - 50 round trips is a major deployment problem. This
+		document looks at this problem in detail and describes the
+		potential solutions available.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This document is not an Internet Standards Track specification; it is
+            published for informational purposes.  
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by the
+            Internet Engineering Steering Group (IESG).  Not all documents
+            approved by the IESG are candidates for any level of Internet
+            Standard; see Section 2 of RFC 7841. 
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9191" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-experience-with-deployments">Experience with Deployments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-of-large-certifica">Handling of Large Certificates and Long Certificate Chains</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updating-certificates-and-c">Updating Certificates and Certificate Chains</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.1.2">
+                  <li pn="section-toc.1-1.4.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.1.1"><xref derivedContent="4.1.1" format="counter" sectionFormat="of" target="section-4.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-guidelines-for-certificates">Guidelines for Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.2.1"><xref derivedContent="4.1.2" format="counter" sectionFormat="of" target="section-4.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pre-distributing-and-omitti">Pre-distributing and Omitting CA Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.1.2.3.1"><xref derivedContent="4.1.3" format="counter" sectionFormat="of" target="section-4.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-fewer-intermediate-ce">Using Fewer Intermediate Certificates</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updating-tls-and-eap-tls-co">Updating TLS and EAP-TLS Code</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.2.2">
+                  <li pn="section-toc.1-1.4.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.1.1"><xref derivedContent="4.2.1" format="counter" sectionFormat="of" target="section-4.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-urls-for-client-certificate">URLs for Client Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.2.1"><xref derivedContent="4.2.2" format="counter" sectionFormat="of" target="section-4.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-caching-certificates">Caching Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.3">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.3.1"><xref derivedContent="4.2.3" format="counter" sectionFormat="of" target="section-4.2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compressing-certificates">Compressing Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.4">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.4.1"><xref derivedContent="4.2.4" format="counter" sectionFormat="of" target="section-4.2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-compact-tls-13">Compact TLS 1.3</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.5">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.5.1"><xref derivedContent="4.2.5" format="counter" sectionFormat="of" target="section-4.2.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-suppressing-intermediate-ce">Suppressing Intermediate Certificates</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.6">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.6.1"><xref derivedContent="4.2.6" format="counter" sectionFormat="of" target="section-4.2.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-raw-public-keys">Raw Public Keys</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.7">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.7.1"><xref derivedContent="4.2.7" format="counter" sectionFormat="of" target="section-4.2.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-certificate-types-and-c">New Certificate Types and Compression Algorithms</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-updating-authenticators">Updating Authenticators</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+
+
+The Extensible Authentication Protocol (EAP), defined in <xref target="RFC3748" format="default" sectionFormat="of" derivedContent="RFC3748"/>, provides a standard mechanism for support
+of multiple authentication methods. EAP-TLS <xref target="RFC5216" format="default" sectionFormat="of" derivedContent="RFC5216"/> <xref target="RFC9190" format="default" sectionFormat="of" derivedContent="RFC9190"/> relies on TLS
+<xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> to provide strong mutual
+authentication with certificates <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/> and
+is widely deployed and often used for network access authentication.
+
+
+There are also many other standardized TLS-based EAP methods such as Flexible
+Authentication via Secure Tunneling (EAP-FAST) <xref target="RFC4851" format="default" sectionFormat="of" derivedContent="RFC4851"/>, Tunneled Transport Layer Security (EAP-TTLS) <xref target="RFC5281" format="default" sectionFormat="of" derivedContent="RFC5281"/>, the Tunnel Extensible Authentication Protocol
+(TEAP) <xref target="RFC7170" format="default" sectionFormat="of" derivedContent="RFC7170"/>, as well as several
+vendor-specific EAP methods such as the Protected Extensible Authentication Protocol (PEAP) <xref target="PEAP" format="default" sectionFormat="of" derivedContent="PEAP"/>.
+
+
+
+
+      </t>
+      <t indent="0" pn="section-1-2">
+			Certificates in EAP deployments can be relatively large, and the certificate chains can be long. Unlike the use of TLS on the web, where typically only the TLS server is authenticated, EAP-TLS deployments typically authenticate both the EAP peer and the EAP server. Also, from deployment experience, EAP peers typically have longer certificate chains than servers. This is because EAP peers often follow organizational hierarchies and tend to have many intermediate certificates. Thus, EAP-TLS authentication usually involves exchange of significantly more octets than when TLS is used as part of HTTPS.
+      </t>
+      <t indent="0" pn="section-1-3">
+			<xref target="RFC3748" sectionFormat="of" section="3.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc3748#section-3.1" derivedContent="RFC3748"/> states that EAP implementations can
+			assume a Maximum Transmission Unit (MTU) of at least
+			1020 octets from lower layers. The EAP fragment size
+			in typical deployments is just 1020 - 1500 octets
+			(since the maximum Ethernet frame size is ~ 1500
+			bytes). Thus, EAP-TLS authentication needs to be
+			fragmented into many smaller packets for
+			transportation over the lower layers. Such
+			fragmentation not only can negatively affect the
+			latency, but also results in other challenges.
+
+
+			For example, some EAP authenticator (e.g., an access
+			point) implementations will drop an EAP session if it
+			has not finished after 40 - 50 round trips. This is a
+			major problem and means that, in many situations, the
+			EAP peer cannot perform network access authentication
+			even though both the sides have valid credentials for
+			successful authentication and key derivation.
+      </t>
+      <t indent="0" pn="section-1-4">
+			Not all EAP deployments are constrained by the MTU of
+			the lower layer. For example, some implementations
+			support EAP over Ethernet "jumbo" frames that can
+			easily allow very large EAP packets. Larger packets
+			will naturally help lower the number of round trips
+			required for successful EAP-TLS
+			authentication. However, deployment experience has
+			shown that these jumbo frames are not always
+			implemented correctly. Additionally, EAP fragment size
+			is also restricted by protocols such as RADIUS <xref target="RFC2865" format="default" sectionFormat="of" derivedContent="RFC2865"/>, which are
+			responsible for transporting EAP messages between an
+			authenticator and an EAP server. RADIUS can generally
+			transport only about 4000 octets of EAP in a single
+			message (the maximum length of a RADIUS packet is
+			restricted to 4096 octets in <xref target="RFC2865" format="default" sectionFormat="of" derivedContent="RFC2865"/>).
+      </t>
+      <t indent="0" pn="section-1-5">
+			This document looks at related work and potential
+			tools available for overcoming the deployment
+			challenges induced by large certificates and long
+			certificate chains.
+
+			 It then discusses the solutions available to overcome
+			 these challenges. Many of the solutions require TLS
+			 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>. The IETF has
+			 standardized EAP-TLS 1.3 <xref target="RFC9190" format="default" sectionFormat="of" derivedContent="RFC9190"/> and
+			 is working on specifications such as <xref target="TLS-EAP-TYPES" format="default" sectionFormat="of" derivedContent="TLS-EAP-TYPES"/> for how other TLS-based EAP
+			 methods use TLS 1.3.
+
+
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-2-1">
+			The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>",
+			"<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+			"<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+			"<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", "<bcp14>MAY</bcp14>", and
+			"<bcp14>OPTIONAL</bcp14>" in this document are to be
+			interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+			when, they appear in all capitals, as shown here.
+      </t>
+      <t indent="0" pn="section-2-2">
+			Readers are expected to be familiar with the terms and
+			concepts used in EAP <xref target="RFC3748" format="default" sectionFormat="of" derivedContent="RFC3748"/>, EAP-TLS <xref target="RFC5216" format="default" sectionFormat="of" derivedContent="RFC5216"/>, and TLS <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>. In particular, this document
+			frequently uses the following terms as they have been
+			defined in <xref target="RFC5216" format="default" sectionFormat="of" derivedContent="RFC5216"/>:
+      </t>
+      <dl newline="false" spacing="normal" indent="6" pn="section-2-3">
+        <dt pn="section-2-3.1">Authenticator:</dt>
+        <dd pn="section-2-3.2">
+					The entity initiating EAP
+					authentication. Typically implemented
+					as part of a network switch or a
+					wireless access point.
+					</dd>
+        <dt pn="section-2-3.3">EAP peer:</dt>
+        <dd pn="section-2-3.4">
+					The entity that responds to the
+					authenticator. In <xref target="IEEE-802.1X" format="default" sectionFormat="of" derivedContent="IEEE-802.1X"/>, this entity is
+					known as the supplicant. In EAP-TLS,
+					the EAP peer implements the TLS client
+					role.
+					</dd>
+        <dt pn="section-2-3.5">EAP server:</dt>
+        <dd pn="section-2-3.6">
+					The entity that terminates the EAP
+					authentication method with the
+					peer. In the case where no backend
+					authentication server is used, the EAP
+					server is part of the
+					authenticator. In the case where the
+					authenticator operates in pass-through
+					mode, the EAP server is located on the
+					backend authentication server. In
+					EAP-TLS, the EAP server implements the
+					TLS server role.
+					</dd>
+      </dl>
+      <t indent="0" pn="section-2-4">
+			The document additionally uses the terms "trust anchor" and "certification path" defined in <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-experience-with-deployments">Experience with Deployments</name>
+      <t indent="0" pn="section-3-1">
+		As stated earlier, the EAP fragment size in typical deployments is just 1020 - 1500 octets. A certificate can, however, be large for a number of reasons:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3-2">
+        <li pn="section-3-2.1">It can have a long Subject Alternative Name field.</li>
+        <li pn="section-3-2.2">It can have long Public Key and Signature fields.</li>
+        <li pn="section-3-2.3">It can contain multiple object identifiers (OIDs) that indicate the
+        permitted uses of the certificate as noted in <xref target="RFC5216" sectionFormat="of" section="5.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5216#section-5.3" derivedContent="RFC5216"/>. Most implementations verify the
+        presence of these OIDs for successful authentication.</li>
+        <li pn="section-3-2.4">It can contain multiple organization naming fields to reflect the
+        multiple group memberships of a user (in a client certificate).</li>
+      </ul>
+      <t indent="0" pn="section-3-3">
+			A certificate chain (called a certification path in
+			<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>) in EAP-TLS
+			can commonly have 2 - 6 intermediate certificates
+			between the end-entity certificate and the trust
+			anchor.
+      </t>
+      <t indent="0" pn="section-3-4">
+			The size of certificates (and certificate chains) may
+			also increase manyfold in the future with the
+			introduction of post-quantum cryptography. For
+			example, lattice-based cryptography would have public
+			keys of approximately 1000 bytes and signatures of
+			approximately 2000 bytes.
+      </t>
+      <t indent="0" pn="section-3-5">
+			Many access point implementations drop EAP sessions
+			that do not complete within 40 - 50 round trips. This
+			means that if the chain is larger than ~ 60 kilobytes,
+			EAP-TLS authentication cannot complete successfully in
+			most deployments.
+      </t>
+    </section>
+    <section anchor="handle-large-cert-long-chain" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-handling-of-large-certifica">Handling of Large Certificates and Long Certificate Chains</name>
+      <t indent="0" pn="section-4-1">
+		This section discusses some possible alternatives for overcoming the challenge of large certificates and long certificate chains in EAP-TLS authentication. <xref target="update-certs" format="default" sectionFormat="of" derivedContent="Section 4.1"/> considers recommendations that require an update of the certificates or certificate chains used for EAP-TLS authentication without requiring changes to the existing EAP-TLS code base. It also provides some guidelines that should be followed when issuing certificates for use with EAP-TLS. <xref target="update-code" format="default" sectionFormat="of" derivedContent="Section 4.2"/> considers recommendations that rely on updates to the EAP-TLS implementations and can be deployed with existing certificates. Finally, <xref target="update-APs" format="default" sectionFormat="of" derivedContent="Section 4.3"/> briefly discusses what could be done to update or reconfigure authenticators when it is infeasible to replace deployed components giving a solution that can be deployed without changes to existing certificates or code.
+      </t>
+      <section anchor="update-certs" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-updating-certificates-and-c">Updating Certificates and Certificate Chains</name>
+        <t indent="0" pn="section-4.1-1">
+				Many IETF protocols now use elliptic curve cryptography (ECC) <xref target="RFC6090" format="default" sectionFormat="of" derivedContent="RFC6090"/> for the underlying cryptographic operations. The use of ECC can reduce the size of certificates and signatures. For example, at a 128-bit security level, the size of a public key with traditional RSA is about 384 bytes, while the size of a public key with ECC is only 32-64 bytes. Similarly, the size of a digital signature with traditional RSA is 384 bytes, while the size is only 64 bytes with the elliptic curve digital signature algorithm (ECDSA) and the Edwards-curve digital signature algorithm (EdDSA) <xref target="RFC8032" format="default" sectionFormat="of" derivedContent="RFC8032"/>. Using certificates that use ECC can reduce the number of messages in EAP-TLS authentication, which can alleviate the problem of authenticators dropping an EAP session because of too many round trips. In the absence of a standard application profile specifying otherwise, TLS 1.3 <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> requires implementations to support ECC. New cipher suites that use ECC are also specified for TLS 1.2 <xref target="RFC8422" format="default" sectionFormat="of" derivedContent="RFC8422"/>. Using ECC-based cipher suites with existing code can significantly reduce the number of messages in a single EAP session.
+        </t>
+        <section anchor="cert-guide" numbered="true" toc="include" removeInRFC="false" pn="section-4.1.1">
+          <name slugifiedName="name-guidelines-for-certificates">Guidelines for Certificates</name>
+          <t indent="0" pn="section-4.1.1-1">The general guideline of keeping the certificate size small by not populating fields with excessive information can help avert the problems of failed EAP-TLS authentication. More specific recommendations for certificates used with EAP-TLS are as follows:
+          </t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1.1-2">
+            <li pn="section-4.1.1-2.1">
+              <t indent="0" pn="section-4.1.1-2.1.1">
+		Object Identifier (OID) is an ASN.1 data type that defines
+		unique identifiers for objects. The OID's ASN.1 value, which
+		is a string of integers, is then used to name objects to which
+		they relate. The Distinguished Encoding Rules (DER) specify
+		that the first two integers always occupy one octet and
+		subsequent integers are base-128 encoded in the fewest
+		possible octets. OIDs are used lavishly in X.509 certificates
+		<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/> and while not all
+		can be avoided, e.g., OIDs for extensions or algorithms and
+		their associate parameters, some are well within the
+		certificate issuer's control:
+              </t>
+              <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1.1-2.1.2">
+                <li pn="section-4.1.1-2.1.2.1">
+		Each naming attribute in a DN (Distinguished Name) has one. DNs
+		are used in the issuer and subject fields as well as numerous
+		extensions. A shallower name will be smaller, e.g., C=FI,
+		O=Example, SN=B0A123499EFC as against C=FI, O=Example,
+		OU=Division 1, SOPN=Southern Finland, CN=Coolest IoT Gadget
+		Ever, and SN=B0A123499EFC.
+								</li>
+                <li pn="section-4.1.1-2.1.2.2">
+		Every certificate policy (and qualifier) and any mappings to
+		another policy uses identifiers. Consider carefully what
+		policies apply.
+								</li>
+              </ul>
+            </li>
+            <li pn="section-4.1.1-2.2">
+		DirectoryString and GeneralName types are used extensively to
+		name things, e.g., the DN naming attribute O= (the
+		organizational naming attribute) DirectoryString includes
+		"Example" for the Example organization and
+		uniformResourceIdentifier can be used to indicate the location
+		of the Certificate Revocation List (CRL), e.g.,
+		"http://crl.example.com/sfig2s1-128.crl", in the CRL
+		Distribution Point extension. For these particular examples,
+		each character is a single byte. For some non-ASCII character
+		strings, characters can be several bytes. Obviously, the names
+		need to be unique, but there is more than one way to
+		accomplish this without long strings. This is especially true
+		if the names are not meant to be meaningful to users.
+						</li>
+            <li pn="section-4.1.1-2.3">
+		Extensions are necessary to comply with <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>, but the vast majority are
+		optional. Include only those that are necessary to operate.
+						</li>
+            <li pn="section-4.1.1-2.4">As stated earlier, certificate chains of the EAP peer often
+            follow organizational hierarchies. In such cases, information in
+            intermediate certificates (such as postal addresses) do not
+            provide any additional value and they can be shortened (for
+            example, only including the department name instead of the full
+            postal address).</li>
+          </ul>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1.2">
+          <name slugifiedName="name-pre-distributing-and-omitti">Pre-distributing and Omitting CA Certificates</name>
+          <t indent="0" pn="section-4.1.2-1">
+
+		The TLS Certificate message conveys the sending endpoint's
+		certificate chain. TLS allows endpoints to reduce the size of
+		the Certificate message by omitting certificates that the
+		other endpoint is known to possess. When using TLS 1.3, all
+		certificates that specify a trust anchor known by the other
+		endpoint may be omitted (see <xref target="RFC8446" sectionFormat="of" section="4.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-4.4.2" derivedContent="RFC8446"/>). When using TLS 1.2 or
+		earlier, only the self-signed certificate that specifies the
+		root certificate authority may be omitted (see <xref target="RFC5246" sectionFormat="of" section="7.4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5246#section-7.4.2" derivedContent="RFC5246"/>).
+		Therefore, updating TLS implementations to version 1.3 can
+		help to significantly reduce the number of messages exchanged
+		for EAP-TLS authentication. The omitted certificates need to
+		be pre-distributed independently of TLS, and the TLS
+		implementations need to be configured to omit these
+		pre-distributed certificates.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.1.3">
+          <name slugifiedName="name-using-fewer-intermediate-ce">Using Fewer Intermediate Certificates</name>
+          <t indent="0" pn="section-4.1.3-1">
+					The EAP peer certificate chain does not have to mirror the organizational hierarchy. For successful EAP-TLS authentication, certificate chains <bcp14>SHOULD NOT</bcp14> contain more than 4 intermediate certificates.
+          </t>
+          <t indent="0" pn="section-4.1.3-2">
+	Administrators responsible for deployments using TLS-based EAP methods
+	can examine the certificate chains and make rough calculations about
+	the number of round trips required for successful authentication. For
+	example, dividing the total size of all the certificates in the peer
+	and server certificate chain (in bytes) by 1020 bytes will indicate
+	the number of round trips required. If this number exceeds 50,
+	then administrators can expect failures with many common authenticator
+	implementations.
+          </t>
+        </section>
+      </section>
+      <section anchor="update-code" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-updating-tls-and-eap-tls-co">Updating TLS and EAP-TLS Code</name>
+        <t indent="0" pn="section-4.2-1">This section discusses how the fragmentation problem can be avoided by updating the underlying TLS or EAP-TLS implementation. Note that in some cases, the new feature may already be implemented in the underlying library and simply needs to be enabled.</t>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.1">
+          <name slugifiedName="name-urls-for-client-certificate">URLs for Client Certificates</name>
+          <t indent="0" pn="section-4.2.1-1">
+					<xref target="RFC6066" format="default" sectionFormat="of" derivedContent="RFC6066"/> defines the "client_certificate_url" extension, which allows TLS clients to send a sequence of Uniform Resource Locators (URLs) instead of the client certificate chain. URLs can refer to a single certificate or a certificate chain. Using this extension can curtail the amount of fragmentation in EAP deployments thereby allowing EAP sessions to successfully complete.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.2">
+          <name slugifiedName="name-caching-certificates">Caching Certificates</name>
+          <t indent="0" pn="section-4.2.2-1">
+					The TLS Cached Information Extension <xref target="RFC7924" format="default" sectionFormat="of" derivedContent="RFC7924"/> specifies an extension where a server can exclude transmission of certificate information cached in an earlier TLS handshake. The client and the server would first execute the full TLS handshake. The client would then cache the certificate provided by the server. When the TLS client later connects to the same TLS server without using session resumption, it can attach the "cached_info" extension to the ClientHello message. This would allow the client to indicate that it has cached the certificate. The client would also include a fingerprint of the server certificate chain. If the server's certificate has not changed, then the server does not need to send its certificate and the corresponding certificate chain again. In case information has changed, which can be seen from the fingerprint provided by the client, the certificate payload is transmitted to the client to allow the client to update the cache. The extension, however, necessitates a successful full handshake before any caching. This extension can be useful when, for example, a successful authentication between an EAP peer and EAP server has occurred in the home network. If authenticators in a roaming network are stricter at dropping long EAP sessions, an EAP peer can use the Cached Information Extension to reduce the total number of messages.
+          </t>
+          <t indent="0" pn="section-4.2.2-2">
+					However, if all authenticators drop the EAP session for a given EAP peer and EAP server combination, a successful full handshake is not possible. An option in such a scenario would be to cache validated certificate chains even if the EAP-TLS exchange fails, but such caching is currently not specified in <xref target="RFC7924" format="default" sectionFormat="of" derivedContent="RFC7924"/>.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.3">
+          <name slugifiedName="name-compressing-certificates">Compressing Certificates</name>
+          <t indent="0" pn="section-4.2.3-1">
+	The TLS Working Group has standardized an extension for TLS 1.3 <xref target="RFC8879" format="default" sectionFormat="of" derivedContent="RFC8879"/> that allows compression of
+	certificates and certificate chains during full handshakes. The client
+	can indicate support for compressed server certificates by including
+	this extension in the ClientHello message. Similarly, the server can
+	indicate support for compression of client certificates by including
+	this extension in the CertificateRequest message. While such an
+	extension can alleviate the problem of excessive fragmentation in
+	EAP-TLS, it can only be used with TLS version 1.3 and
+	higher. Deployments that rely on older versions of TLS cannot benefit
+	from this extension.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.4">
+          <name slugifiedName="name-compact-tls-13">Compact TLS 1.3</name>
+          <t indent="0" pn="section-4.2.4-1">
+					<xref target="I-D.ietf-tls-ctls" format="default" sectionFormat="of" derivedContent="cTLS"/> defines a "compact" version of TLS 1.3 and reduces the message size of the protocol by removing obsolete material and using more efficient encoding. It also defines a compression profile with which either side can define a dictionary of "known certificates". Thus, cTLS could provide another mechanism for EAP-TLS deployments to reduce the size of messages and avoid excessive fragmentation.
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.5">
+          <name slugifiedName="name-suppressing-intermediate-ce">Suppressing Intermediate Certificates</name>
+          <t indent="0" pn="section-4.2.5-1">
+					For a client that has all intermediate certificates in the certificate chain, having the server send intermediates in the TLS handshake increases the size of the handshake unnecessarily. <xref target="I-D.thomson-tls-sic" format="default" sectionFormat="of" derivedContent="TLS-SIC"/> proposes an extension for TLS 1.3 that allows a TLS client that has access to the complete set of published intermediate certificates to inform servers of this fact so that the server can avoid sending intermediates, reducing the size of the TLS handshake. The mechanism is intended to be complementary with certificate compression.
+          </t>
+          <t indent="0" pn="section-4.2.5-2">
+					The Authority Information Access (AIA)
+					extension specified in <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>
+					can be used with end-entity and CA
+					certificates to access information
+					about the issuer of the certificate in
+					which the extension appears. For
+					example, it can be used to provide the
+					address of the Online Certificate
+					Status Protocol (OCSP) responder from
+					where revocation status of the
+					certificate (in which the extension
+					appears) can be checked. It can also
+					be used to obtain the issuer
+					certificate. Thus, the AIA extension
+					can reduce the size of the certificate
+					chain by only including a pointer to
+					the issuer certificate instead of
+					including the entire issuer
+					certificate. However, it requires the
+					side receiving the certificate
+					containing the extension to have
+					network connectivity (unless the
+					information is already cached
+					locally). Naturally, such indirection
+					cannot be used for the server
+					certificate (since EAP peers in most
+					deployments do not have network
+					connectivity before authentication and
+					typically do not maintain an
+					up-to-date local cache of issuer
+					certificates).
+          </t>
+        </section>
+        <section numbered="true" toc="include" removeInRFC="false" pn="section-4.2.6">
+          <name slugifiedName="name-raw-public-keys">Raw Public Keys</name>
+          <t indent="0" pn="section-4.2.6-1">
+					<xref target="RFC7250" format="default" sectionFormat="of" derivedContent="RFC7250"/> defines a new
+					certificate type and TLS extensions to
+					enable the use of raw public keys for
+					authentication. Raw public keys use
+					only a subset of information found in
+					typical certificates and are therefore
+					much smaller in size. However, raw
+					public keys require an out-of-band
+					mechanism to bind the public key with
+					the entity presenting the key. Using
+					raw public keys will obviously avoid
+					the fragmentation problems resulting
+					from large certificates and long
+					certificate chains. Deployments can
+					consider their use as long as an
+					appropriate out-of-band mechanism for
+					binding public keys with identifiers
+					is in place. Naturally, deployments
+					will also need to consider the
+					challenges of revocation and key
+					rotation with the use of raw public
+					keys.
+          </t>
+        </section>
+        <section anchor="new-cert-format" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.7">
+          <name slugifiedName="name-new-certificate-types-and-c">New Certificate Types and Compression Algorithms</name>
+          <t indent="0" pn="section-4.2.7-1">
+	There is ongoing work to specify new certificate types that are
+	smaller than traditional X.509 certificates. For example, <xref target="I-D.mattsson-cose-cbor-cert-compress" format="default" sectionFormat="of" derivedContent="CBOR-CERT"/>
+	defines a Concise Binary Object Representation (CBOR) <xref target="RFC8949" format="default" sectionFormat="of" derivedContent="RFC8949"/> encoding of X.509
+	Certificates. The CBOR encoding can be used to compress existing X.509
+	certificates or for natively signed CBOR certificates. <xref target="I-D.tschofenig-tls-cwt" format="default" sectionFormat="of" derivedContent="TLS-CWT"/> registers a new TLS
+	Certificate type that would enable TLS implementations to use CBOR
+	Web Tokens (CWTs) <xref target="RFC8392" format="default" sectionFormat="of" derivedContent="RFC8392"/> as
+	certificates. While these are early initiatives, future EAP-TLS
+	deployments can consider the use of these new certificate types and
+	compression algorithms to avoid large message sizes.
+          </t>
+        </section>
+      </section>
+      <section anchor="update-APs" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-updating-authenticators">Updating Authenticators</name>
+        <t indent="0" pn="section-4.3-1">
+	There are several legitimate reasons that authenticators may want to
+	limit the number of packets / octets / round trips that can be sent. The
+	main reason has been to work around issues where the EAP peer and EAP
+	server end up in an infinite loop ACKing their messages. Another
+	reason is that unlimited communication from an unauthenticated device
+	using EAP could provide a channel for inappropriate bulk data
+	transfer. A third reason is to prevent denial-of-service attacks.
+        </t>
+        <t indent="0" pn="section-4.3-2">
+				Updating the millions of already deployed
+				access points and switches is in many cases
+				not realistic. Vendors may be out of business
+				or no longer supporting the products and
+				administrators may have lost the login
+				information to the devices. For practical
+				purposes, the EAP infrastructure is ossified
+				for the time being.
+        </t>
+        <t indent="0" pn="section-4.3-3">
+				Vendors making new authenticators should
+				consider increasing the number of round trips
+				allowed to 100 before denying the EAP
+				authentication to complete. Based on the size
+				of the certificates and certificate chains
+				currently deployed, such an increase would
+				likely ensure that peers and servers can
+				complete EAP-TLS authentication. At the same
+				time, administrators responsible for EAP
+				deployments should ensure that this 100
+				round-trip limit is not exceeded in practice.
+        </t>
+      </section>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-5-1">This document has no IANA actions.</t>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">
+			Updating implementations to TLS version 1.3 allows
+			omitting all certificates with a trust anchor known by
+			the other endpoint. TLS 1.3 additionally provides
+			improved security, privacy, and reduced latency for
+			EAP-TLS <xref target="RFC9190" format="default" sectionFormat="of" derivedContent="RFC9190"/>.
+      </t>
+      <t indent="0" pn="section-6-2">
+			Security considerations when compressing certificates
+			are specified in <xref target="RFC8879" format="default" sectionFormat="of" derivedContent="RFC8879"/>.
+      </t>
+      <t indent="0" pn="section-6-3">
+			Specific security considerations of the referenced
+			documents apply when they are taken into use.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.thomson-tls-sic" to="TLS-SIC"/>
+    <displayreference target="I-D.ietf-tls-ctls" to="cTLS"/>
+    <displayreference target="I-D.tschofenig-tls-cwt" to="TLS-CWT"/>
+    <displayreference target="I-D.mattsson-cose-cbor-cert-compress" to="CBOR-CERT"/>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC3748" target="https://www.rfc-editor.org/info/rfc3748" quoteTitle="true" derivedAnchor="RFC3748">
+          <front>
+            <title>Extensible Authentication Protocol (EAP)</title>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Blunk" fullname="L. Blunk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Vollbrecht" fullname="J. Vollbrecht">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Carlson" fullname="J. Carlson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Levkowetz" fullname="H. Levkowetz" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="June"/>
+            <abstract>
+              <t indent="0">This document defines the Extensible Authentication Protocol (EAP), an authentication framework which supports multiple authentication methods.  EAP typically runs directly over data link layers such as Point-to-Point Protocol (PPP) or IEEE 802, without requiring IP.  EAP provides its own support for duplicate elimination and retransmission, but is reliant on lower layer ordering guarantees.  Fragmentation is not supported within EAP itself; however, individual EAP methods may support this.  This document obsoletes RFC 2284.  A summary of the changes between this document and RFC 2284 is available in Appendix A.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3748"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3748"/>
+        </reference>
+        <reference anchor="RFC4851" target="https://www.rfc-editor.org/info/rfc4851" quoteTitle="true" derivedAnchor="RFC4851">
+          <front>
+            <title>The Flexible Authentication via Secure Tunneling Extensible Authentication Protocol Method (EAP-FAST)</title>
+            <author initials="N." surname="Cam-Winget" fullname="N. Cam-Winget">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Zhou" fullname="H. Zhou">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="May"/>
+            <abstract>
+              <t indent="0">This document defines the Extensible Authentication Protocol (EAP) based Flexible Authentication via Secure Tunneling (EAP-FAST) protocol.  EAP-FAST is an EAP method that enables secure communication between a peer and a server by using the Transport Layer Security (TLS) to establish a mutually authenticated tunnel. Within the tunnel, Type-Length-Value (TLV) objects are used to convey authentication related data between the peer and the EAP server.  This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4851"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4851"/>
+        </reference>
+        <reference anchor="RFC5216" target="https://www.rfc-editor.org/info/rfc5216" quoteTitle="true" derivedAnchor="RFC5216">
+          <front>
+            <title>The EAP-TLS Authentication Protocol</title>
+            <author initials="D." surname="Simon" fullname="D. Simon">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Hurst" fullname="R. Hurst">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="March"/>
+            <abstract>
+              <t indent="0">The Extensible Authentication Protocol (EAP), defined in RFC 3748, provides support for multiple authentication methods.  Transport Layer Security (TLS) provides for mutual authentication, integrity-protected ciphersuite negotiation, and key exchange between two endpoints.  This document defines EAP-TLS, which includes support for certificate-based mutual authentication and key derivation.</t>
+              <t indent="0">This document obsoletes RFC 2716.  A summary of the changes between this document and RFC 2716 is available in Appendix A.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5216"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5216"/>
+        </reference>
+        <reference anchor="RFC5280" target="https://www.rfc-editor.org/info/rfc5280" quoteTitle="true" derivedAnchor="RFC5280">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+            <author initials="D." surname="Cooper" fullname="D. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Santesson" fullname="S. Santesson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Farrell" fullname="S. Farrell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Boeyen" fullname="S. Boeyen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Polk" fullname="W. Polk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="May"/>
+            <abstract>
+              <t indent="0">This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5280"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5280"/>
+        </reference>
+        <reference anchor="RFC5281" target="https://www.rfc-editor.org/info/rfc5281" quoteTitle="true" derivedAnchor="RFC5281">
+          <front>
+            <title>Extensible Authentication Protocol Tunneled Transport Layer Security Authenticated Protocol Version 0 (EAP-TTLSv0)</title>
+            <author initials="P." surname="Funk" fullname="P. Funk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Blake-Wilson" fullname="S. Blake-Wilson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">EAP-TTLS is an EAP (Extensible Authentication Protocol) method that encapsulates a TLS (Transport Layer Security) session, consisting of a handshake phase and a data phase.  During the handshake phase, the server is authenticated to the client (or client and server are mutually authenticated) using standard TLS procedures, and keying material is generated in order to create a cryptographically secure tunnel for information exchange in the subsequent data phase.  During the data phase, the client is authenticated to the server (or client and server are mutually authenticated) using an arbitrary authentication mechanism encapsulated within the secure tunnel.  The encapsulated authentication mechanism may itself be EAP, or it may be another authentication protocol such as PAP, CHAP, MS-CHAP, or MS-CHAP-V2.  Thus, EAP-TTLS allows legacy password-based authentication protocols to be used against existing authentication databases, while protecting the security of these legacy protocols against eavesdropping, man-in-the-middle, and other attacks.  The data phase may also be used for additional, arbitrary data exchange.  This memo  provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5281"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5281"/>
+        </reference>
+        <reference anchor="RFC7170" target="https://www.rfc-editor.org/info/rfc7170" quoteTitle="true" derivedAnchor="RFC7170">
+          <front>
+            <title>Tunnel Extensible Authentication Protocol (TEAP) Version 1</title>
+            <author initials="H." surname="Zhou" fullname="H. Zhou">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Cam-Winget" fullname="N. Cam-Winget">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Salowey" fullname="J. Salowey">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Hanna" fullname="S. Hanna">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="May"/>
+            <abstract>
+              <t indent="0">This document defines the Tunnel Extensible Authentication Protocol (TEAP) version 1.  TEAP is a tunnel-based EAP method that enables secure communication between a peer and a server by using the Transport Layer Security (TLS) protocol to establish a mutually authenticated tunnel.  Within the tunnel, TLV objects are used to convey authentication-related data between the EAP peer and the EAP server.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7170"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7170"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC9190" quoteTitle="true" target="https://www.rfc-editor.org/rfc/rfc9190" derivedAnchor="RFC9190">
+          <front>
+            <title>EAP-TLS 1.3: Using the Extensible Authentication Protocol with TLS 1.3</title>
+            <author initials="J." surname="Preuß Mattsson" fullname="John Preuß Mattsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M" surname="Sethi" fullname="Mohit Sethi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="February" year="2022"/>
+          </front>
+          <seriesInfo name="RFC" value="9190"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9190"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="I-D.mattsson-cose-cbor-cert-compress" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-mattsson-cose-cbor-cert-compress-08" derivedAnchor="CBOR-CERT">
+          <front>
+            <title>CBOR Encoded X.509 Certificates (C509 Certificates)</title>
+            <author initials="S." surname="Raza" fullname="Shahid Raza">
+              <organization showOnFrontPage="true">RISE AB</organization>
+            </author>
+            <author initials="J." surname="Höglund" fullname="Joel Höglund">
+              <organization showOnFrontPage="true">RISE AB</organization>
+            </author>
+            <author initials="G." surname="Selander" fullname="Göran Selander">
+              <organization showOnFrontPage="true">Ericsson AB</organization>
+            </author>
+            <author initials="J." surname="Preuß Mattsson" fullname="John Preuß Mattsson">
+              <organization showOnFrontPage="true">Ericsson AB</organization>
+            </author>
+            <author initials="M." surname="Furuhed" fullname="Martin Furuhed">
+              <organization showOnFrontPage="true">Nexus Group</organization>
+            </author>
+            <date month="February" day="22" year="2021"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-mattsson-cose-cbor-cert-compress-08"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-tls-ctls" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-tls-ctls-04" derivedAnchor="cTLS">
+          <front>
+            <title>Compact TLS 1.3</title>
+            <author fullname="Eric Rescorla">
+              <organization showOnFrontPage="true">Mozilla</organization>
+            </author>
+            <author fullname="Richard Barnes">
+              <organization showOnFrontPage="true">Cisco</organization>
+            </author>
+            <author fullname="Hannes Tschofenig">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <date month="October" day="25" year="2021"/>
+            <abstract>
+              <t indent="0">   This document specifies a "compact" version of TLS 1.3.  It is
+   isomorphic to TLS 1.3 but saves space by trimming obsolete material,
+   tighter encoding, a template-based specialization technique, and
+   alternative cryptographic techniques. cTLS is not directly
+   interoperable with TLS 1.3, but it should eventually be possible for
+   a cTLS/TLS 1.3 server to exist and successfully interoperate.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-ctls-04"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-ietf-tls-ctls-04.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="IEEE-802.1X" quoteTitle="true" target="https://doi.org/10.1109/IEEESTD.2020.9018454" derivedAnchor="IEEE-802.1X">
+          <front>
+            <title>IEEE Standard for Local and Metropolitan Area NNetworks--Port-Based Network Access Control</title>
+            <author>
+              <organization showOnFrontPage="true">IEEE</organization>
+            </author>
+            <date month="February" year="2020"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1109/IEEESTD.2020.9018454"/>
+          <seriesInfo name="IEEE Standard" value="802.1X-2020"/>
+        </reference>
+        <reference anchor="PEAP" quoteTitle="true" derivedAnchor="PEAP">
+          <front>
+            <title>[MS-PEAP]: Protected Extensible Authentication Protocol (PEAP)</title>
+            <author>
+              <organization showOnFrontPage="true">Microsoft Corporation</organization>
+            </author>
+            <date month="June" year="2021"/>
+          </front>
+        </reference>
+        <reference anchor="RFC2865" target="https://www.rfc-editor.org/info/rfc2865" quoteTitle="true" derivedAnchor="RFC2865">
+          <front>
+            <title>Remote Authentication Dial In User Service (RADIUS)</title>
+            <author initials="C." surname="Rigney" fullname="C. Rigney">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Willens" fullname="S. Willens">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Rubens" fullname="A. Rubens">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Simpson" fullname="W. Simpson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2000" month="June"/>
+            <abstract>
+              <t indent="0">This document describes a protocol for carrying authentication, authorization, and configuration information between a Network Access Server which desires to authenticate its links and a shared Authentication Server.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2865"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2865"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC6066" target="https://www.rfc-editor.org/info/rfc6066" quoteTitle="true" derivedAnchor="RFC6066">
+          <front>
+            <title>Transport Layer Security (TLS) Extensions: Extension Definitions</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="January"/>
+            <abstract>
+              <t indent="0">This document provides specifications for existing TLS extensions.  It is a companion document for RFC 5246, "The Transport Layer Security (TLS) Protocol Version 1.2".  The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6066"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6066"/>
+        </reference>
+        <reference anchor="RFC6090" target="https://www.rfc-editor.org/info/rfc6090" quoteTitle="true" derivedAnchor="RFC6090">
+          <front>
+            <title>Fundamental Elliptic Curve Cryptography Algorithms</title>
+            <author initials="D." surname="McGrew" fullname="D. McGrew">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Igoe" fullname="K. Igoe">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Salter" fullname="M. Salter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="February"/>
+            <abstract>
+              <t indent="0">This note describes the fundamental algorithms of Elliptic Curve Cryptography (ECC) as they were defined in some seminal references from 1994 and earlier.  These descriptions may be useful for implementing the fundamental algorithms without using any of the specialized methods that were developed in following years.  Only elliptic curves defined over fields of characteristic greater than three are in scope; these curves are those used in Suite B. This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6090"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6090"/>
+        </reference>
+        <reference anchor="RFC7250" target="https://www.rfc-editor.org/info/rfc7250" quoteTitle="true" derivedAnchor="RFC7250">
+          <front>
+            <title>Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="P." surname="Wouters" fullname="P. Wouters" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Gilmore" fullname="J. Gilmore">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Weiler" fullname="S. Weiler">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Kivinen" fullname="T. Kivinen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">This document specifies a new certificate type and two TLS extensions for exchanging raw public keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS).  The new certificate type allows raw public keys to be used for authentication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7250"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7250"/>
+        </reference>
+        <reference anchor="RFC7924" target="https://www.rfc-editor.org/info/rfc7924" quoteTitle="true" derivedAnchor="RFC7924">
+          <front>
+            <title>Transport Layer Security (TLS) Cached Information Extension</title>
+            <author initials="S." surname="Santesson" fullname="S. Santesson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="July"/>
+            <abstract>
+              <t indent="0">Transport Layer Security (TLS) handshakes often include fairly static information, such as the server certificate and a list of trusted certification authorities (CAs).  This information can be of considerable size, particularly if the server certificate is bundled with a complete certificate chain (i.e., the certificates of intermediate CAs up to the root CA).</t>
+              <t indent="0">This document defines an extension that allows a TLS client to inform a server of cached information, thereby enabling the server to omit already available information.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7924"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7924"/>
+        </reference>
+        <reference anchor="RFC8032" target="https://www.rfc-editor.org/info/rfc8032" quoteTitle="true" derivedAnchor="RFC8032">
+          <front>
+            <title>Edwards-Curve Digital Signature Algorithm (EdDSA)</title>
+            <author initials="S." surname="Josefsson" fullname="S. Josefsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="I." surname="Liusvaara" fullname="I. Liusvaara">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="January"/>
+            <abstract>
+              <t indent="0">This document describes elliptic curve signature scheme Edwards-curve Digital Signature Algorithm (EdDSA).  The algorithm is instantiated with recommended parameters for the edwards25519 and edwards448 curves.  An example implementation and test vectors are provided.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8032"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8032"/>
+        </reference>
+        <reference anchor="RFC8392" target="https://www.rfc-editor.org/info/rfc8392" quoteTitle="true" derivedAnchor="RFC8392">
+          <front>
+            <title>CBOR Web Token (CWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Wahlstroem" fullname="E. Wahlstroem">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Erdtman" fullname="S. Erdtman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="May"/>
+            <abstract>
+              <t indent="0">CBOR Web Token (CWT) is a compact means of representing claims to be transferred between two parties.  The claims in a CWT are encoded in the Concise Binary Object Representation (CBOR), and CBOR Object Signing and Encryption (COSE) is used for added application-layer security protection.  A claim is a piece of information asserted about a subject and is represented as a name/value pair consisting of a claim name and a claim value.  CWT is derived from JSON Web Token (JWT) but uses CBOR rather than JSON.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8392"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8392"/>
+        </reference>
+        <reference anchor="RFC8422" target="https://www.rfc-editor.org/info/rfc8422" quoteTitle="true" derivedAnchor="RFC8422">
+          <front>
+            <title>Elliptic Curve Cryptography (ECC) Cipher Suites for Transport Layer Security (TLS) Versions 1.2 and Earlier</title>
+            <author initials="Y." surname="Nir" fullname="Y. Nir">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Josefsson" fullname="S. Josefsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Pegourie-Gonnard" fullname="M. Pegourie-Gonnard">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document describes key exchange algorithms based on Elliptic Curve Cryptography (ECC) for the Transport Layer Security (TLS) protocol.  In particular, it specifies the use of Ephemeral Elliptic Curve Diffie-Hellman (ECDHE) key agreement in a TLS handshake and the use of the Elliptic Curve Digital Signature Algorithm (ECDSA) and Edwards-curve Digital Signature Algorithm (EdDSA) as authentication mechanisms.</t>
+              <t indent="0">This document obsoletes RFC 4492.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8422"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8422"/>
+        </reference>
+        <reference anchor="RFC8879" target="https://www.rfc-editor.org/info/rfc8879" quoteTitle="true" derivedAnchor="RFC8879">
+          <front>
+            <title>TLS Certificate Compression</title>
+            <author initials="A." surname="Ghedini" fullname="A. Ghedini">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="V." surname="Vasiliev" fullname="V. Vasiliev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="December"/>
+            <abstract>
+              <t indent="0">In TLS handshakes, certificate chains often take up the majority of the bytes transmitted.</t>
+              <t indent="0">This document describes how certificate chains can be compressed to reduce the amount of data transmitted and avoid some round trips.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8879"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8879"/>
+        </reference>
+        <reference anchor="RFC8949" target="https://www.rfc-editor.org/info/rfc8949" quoteTitle="true" derivedAnchor="RFC8949">
+          <front>
+            <title>Concise Binary Object Representation (CBOR)</title>
+            <author initials="C." surname="Bormann" fullname="C. Bormann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2020" month="December"/>
+            <abstract>
+              <t indent="0">The Concise Binary Object Representation (CBOR) is a data format whose design goals include the possibility of extremely small code size, fairly small message size, and extensibility without the need for version negotiation. These design goals make it different from earlier binary serializations such as ASN.1 and MessagePack.</t>
+              <t indent="0">This document obsoletes RFC 7049, providing editorial improvements, new details, and errata fixes while keeping full compatibility with the interchange format of RFC 7049.  It does not create a new version of the format.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="94"/>
+          <seriesInfo name="RFC" value="8949"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8949"/>
+        </reference>
+        <reference anchor="I-D.tschofenig-tls-cwt" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-tschofenig-tls-cwt-02" derivedAnchor="TLS-CWT">
+          <front>
+            <title>Using CBOR Web Tokens (CWTs) in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author fullname="Hannes Tschofenig">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <author fullname="Mathias Brossard">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <date month="July" day="13" year="2020"/>
+            <abstract>
+              <t indent="0">   The TLS protocol supports different credentials, including pre-shared
+   keys, raw public keys, and X.509 certificates.  For use with public
+   key cryptography developers have to decide between raw public keys,
+   which require out-of-band agreement and full-fletched X.509
+   certificates.  For devices where the reduction of code size is
+   important it is desirable to minimize the use of X.509-related
+   libraries.  With the CBOR Web Token (CWT) a structure has been
+   defined that allows CBOR-encoded claims to be protected with CBOR
+   Object Signing and Encryption (COSE).
+
+   This document registers a new value to the "TLS Certificate Types"
+   sub-registry to allow TLS and DTLS to use CWTs.  Conceptually, CWTs
+   can be seen as a certificate format (when with public key
+   cryptography) or a Kerberos ticket (when used with symmetric key
+   cryptography).
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-tschofenig-tls-cwt-02"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-tschofenig-tls-cwt-02.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="TLS-EAP-TYPES" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-emu-tls-eap-types-04" derivedAnchor="TLS-EAP-TYPES">
+          <front>
+            <title>TLS-based EAP types and TLS 1.3</title>
+            <author initials="A" surname="DeKok" fullname="Alan DeKok">
+              <organization showOnFrontPage="true">FreeRADIUS</organization>
+            </author>
+            <date month="January" day="22" year="2022"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-emu-tls-eap-types-04"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.thomson-tls-sic" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-thomson-tls-sic-00" derivedAnchor="TLS-SIC">
+          <front>
+            <title>Suppressing Intermediate Certificates in TLS</title>
+            <author fullname="Martin Thomson">
+              <organization showOnFrontPage="true">Mozilla</organization>
+            </author>
+            <date month="March" day="27" year="2019"/>
+            <abstract>
+              <t indent="0">   A TLS client that has access to the complete set of published
+   intermediate certificates can inform servers of this fact so that the
+   server can avoid sending intermediates, reducing the size of the TLS
+   handshake.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-thomson-tls-sic-00"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-thomson-tls-sic-00.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">
+		This document is a result of several useful discussions with
+		<contact fullname="Alan DeKok"/>, <contact fullname="Bernard   Aboba"/>, <contact fullname="Jari Arkko"/>, <contact fullname="Jouni Malinen"/>, <contact fullname="Darshak   Thakore"/>, and <contact fullname="Hannes Tschofening"/>.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="M" surname="Sethi" fullname="Mohit Sethi">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street/>
+            <city>Jorvas</city>
+            <code>02420</code>
+            <country>Finland</country>
+          </postal>
+          <email>mohit@iki.fi</email>
+        </address>
+      </author>
+      <author initials="J." surname="Preuß Mattsson" fullname="John Preuß Mattsson">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street/>
+            <city>Kista</city>
+            <code/>
+            <country>Sweden</country>
+          </postal>
+          <email>john.mattsson@ericsson.com</email>
+        </address>
+      </author>
+      <author initials="S" surname="Turner" fullname="Sean Turner">
+        <organization showOnFrontPage="true">sn3rd</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <code/>
+            <country/>
+          </postal>
+          <email>sean@sn3rd.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

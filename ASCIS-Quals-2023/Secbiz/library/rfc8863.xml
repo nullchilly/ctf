@@ -1,0 +1,507 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-ice-pac-06" indexInclude="true" ipr="trust200902" number="8863" prepTime="2021-01-18T14:18:36" scripts="Common,Latin" sortRefs="false" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="8445, 8838" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-ice-pac-06" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8863" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="ICE PAC">Interactive Connectivity Establishment Patiently Awaiting Connectivity (ICE PAC)</title>
+    <seriesInfo name="RFC" value="8863" stream="IETF"/>
+    <author initials="C." surname="Holmberg" fullname="Christer Holmberg">
+      <organization showOnFrontPage="true">Ericsson</organization>
+      <address>
+        <postal>
+          <street>Hirsalantie 11</street>
+          <code>02420</code>
+          <city>Jorvas</city>
+          <country>Finland</country>
+        </postal>
+        <email>christer.holmberg@ericsson.com</email>
+      </address>
+    </author>
+    <author initials="J." surname="Uberti" fullname="Justin Uberti">
+      <organization showOnFrontPage="true">Google</organization>
+      <address>
+        <postal>
+          <street>747 6th St W</street>
+          <code>98033</code>
+          <city>Kirkland</city>
+          <region>WA</region>
+          <country>United States of America</country>
+        </postal>
+        <email>justin@uberti.name</email>
+      </address>
+    </author>
+    <date month="01" year="2021"/>
+    <keyword>ICE</keyword>
+    <keyword>PAC</keyword>
+    <keyword>Candidate</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+        During the process of establishing peer-to-peer connectivity,
+        Interactive Connectivity Establishment (ICE) agents can encounter
+        situations where they have no candidate pairs to check, and, as a
+        result, conclude that ICE processing has failed. However, because
+        additional candidate pairs can be discovered during ICE processing,
+        declaring failure at this point may be premature. This document
+        discusses when these situations can occur.
+      </t>
+      <t indent="0" pn="section-abstract-2">
+        This document updates RFCs 8445 and 8838 by requiring that
+        an ICE agent wait a minimum amount of time before declaring
+        ICE failure, even if there are no candidate pairs left to check.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8863" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions">Conventions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relevant-scenarios">Relevant Scenarios</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-no-candidates-from-peer">No Candidates from Peer</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-all-candidates-discarded">All Candidates Discarded</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-immediate-candidate-pair-fa">Immediate Candidate Pair Failure</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-to-rfc-8445">Update to RFC 8445</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-to-rfc-8838">Update to RFC 8838</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section toc="include" numbered="true" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+        <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> describes a protocol, Interactive Connectivity Establishment (ICE),
+        for Network Address Translator (NAT) traversal for UDP-based communication.
+      </t>
+      <t indent="0" pn="section-1-2">
+        When using ICE, endpoints will typically exchange ICE candidates,
+        form a list of candidate pairs, and then test each candidate pair to see
+        if connectivity can be established. If the test for a given pair fails,
+        it is marked accordingly, and if all pairs have failed, the overall
+        ICE process typically is considered to have failed.
+      </t>
+      <t indent="0" pn="section-1-3">
+        During the process of connectivity checks, additional candidates may
+        be created as a result of successful inbound checks from the remote
+        peer. Such candidates are referred to as peer-reflexive candidates;
+        once discovered, these candidates will be used to form new candidate pairs, which will
+        be tested like any other. However, there is an inherent problem
+        here; if, before learning about any peer-reflexive candidates, an
+        endpoint runs out of candidate pairs to check, either because it has
+        none or it considers them all to have failed, it will prematurely
+        declare failure and terminate ICE processing. This problem can
+        occur in many common situations.
+      </t>
+      <t indent="0" pn="section-1-4">
+        This specification updates <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>
+        and <xref target="RFC8838" format="default" sectionFormat="of" derivedContent="RFC8838"/> by simply
+        requiring that an ICE agent wait a minimum amount of time before
+        declaring ICE failure, even if there are no candidate pairs to check
+        or all candidate pairs have failed. This delay provides enough time
+        for the discovery of peer-reflexive candidates, which may eventually
+        lead to ICE processing completing successfully.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-conventions">Conventions</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-relevant-scenarios">Relevant Scenarios</name>
+      <t indent="0" pn="section-3-1">
+          As noted above, the core problem this specification attempts to
+          address is the situation where even after local gathering and remote
+          candidate signaling have completed, the ICE agent immediately ends up
+          with no valid pairs and no candidate pairs left to check, resulting in
+          a premature ICE failure. This failure is premature because not
+          enough time has elapsed to allow for discovery of peer-reflexive
+          candidates from inbound connectivity checks; if discovered, these
+          candidates are very likely to result in a valid pair.
+      </t>
+      <t indent="0" pn="section-3-2">
+          In most ICE scenarios, the lengthy timeouts for connectivity check transactions,
+          typically tens of seconds, will prevent this problem from occurring. However, there
+          are certain specific cases where this problem will frequently occur.
+      </t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-no-candidates-from-peer">No Candidates from Peer</name>
+        <t indent="0" pn="section-3.1-1">
+            Per <xref target="RFC8838" format="default" sectionFormat="of" derivedContent="RFC8838"/>, an ICE agent can provide zero candidates of
+            its own. If the agent somehow knows that the remote endpoint is
+            directly reachable, gathering local candidates is unnecessary and
+            will only cause delays; the peer agent can discover the
+            appropriate local candidate via connectivity checks.
+        </t>
+        <t indent="0" pn="section-3.1-2">
+            However, following the procedures from
+            <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/> strictly will result in immediate
+            ICE failure, since the checklist at the peer agent will be
+            empty.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-all-candidates-discarded">All Candidates Discarded</name>
+        <t indent="0" pn="section-3.2-1">
+            Even if the ICE agent provides candidates, they may be discarded
+            by the peer agent if it does not know what to do with them.
+            For example, candidates may use an address family that the peer
+            agent does not support (e.g., a host candidate with an IPv6
+            address in a NAT64 scenario) or that may not be usable for some other
+            reason.
+        </t>
+        <t indent="0" pn="section-3.2-2">
+            In these scenarios, when the candidates are discarded, the
+            checklist at the peer agent will once again be empty, leading
+            to immediate ICE failure.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-immediate-candidate-pair-fa">Immediate Candidate Pair Failure</name>
+        <t indent="0" pn="section-3.3-1">
+            <xref target="RFC8445" sectionFormat="of" section="7.2.5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-7.2.5.2" derivedContent="RFC8445"/>
+            describes several
+            situations in which a candidate pair will be considered to have
+            failed, well before the connectivity check transaction timeout.
+        </t>
+        <t indent="0" pn="section-3.3-2">
+            As a result, even if the ICE agent provides usable candidates,
+            the pairs created by the peer agent may fail immediately when
+            checked, e.g., a check to a non-routable address that receives an
+            immediate ICMP error.
+        </t>
+        <t indent="0" pn="section-3.3-3">
+            In this situation, the checklist at the peer agent may contain
+            only failed pairs, resulting in immediate ICE failure.
+        </t>
+      </section>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-update-to-rfc-8445">Update to RFC 8445</name>
+      <t indent="0" pn="section-4-1">
+        In order to avoid the problem raised by this document, the ICE agent
+        needs to wait enough time to allow peer-reflexive candidates to be
+        discovered. Accordingly, when a full ICE implementation begins its
+        ICE processing, as described in <xref target="RFC8445" sectionFormat="comma" section="6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-6.1" derivedContent="RFC8445"/>, it <bcp14>MUST</bcp14> set a
+        timer, henceforth known as the "PAC timer" (Patiently Awaiting Connectivity), to 
+        ensure that ICE will run for a minimum amount of time before determining
+        failure.
+      </t>
+      <t indent="0" pn="section-4-2">
+        Specifically, the ICE agent will start its timer once it believes
+        ICE connectivity checks are starting. This occurs when the agent has
+        sent the values needed to perform connectivity checks
+        (e.g., the Username Fragment and Password denoted in
+        <xref target="RFC8445" sectionFormat="comma" section="5.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-5.3" derivedContent="RFC8445"/>)
+        and has received some indication that the remote side is
+        ready to start connectivity checks, typically via receipt of the values
+        mentioned above. Note that the agent will start the timer even if it
+        has not sent or received any ICE candidates.
+      </t>
+      <t indent="0" pn="section-4-3">
+        The <bcp14>RECOMMENDED</bcp14> duration for the PAC timer is equal to the agent's
+        connectivity check transaction timeout, including all retransmissions.
+        When using default values for retransmission timeout (RTO) and Rc, this amounts to 39.5 seconds,
+        as explained in <xref target="RFC5389" sectionFormat="comma" section="7.2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5389#section-7.2.1" derivedContent="RFC5389"/>.
+        This timeout value is chosen to roughly coincide with the maximum
+        possible duration of ICE connectivity checks from the remote peer,
+        which, if successful, could create peer-reflexive candidates. Because
+        the ICE agent doesn't know the exact number of candidate pairs and pacing
+        interval in use by the remote side, this timeout value is simply a
+        guess, albeit an educated one. Regardless, for this particular problem,
+        the desired benefits will be realized as long as the agent waits
+        some reasonable amount of time, and, as usual, the application is in
+        the best position to determine what is reasonable for its scenario.
+      </t>
+      <t indent="0" pn="section-4-4">
+        While the timer is still running, the ICE agent <bcp14>MUST NOT</bcp14> update a checklist state
+        from Running to Failed, even if there are no pairs left in the checklist to check.
+        As a result, the ICE agent will not remove any data streams or set the state of the
+        ICE session to Failed as long as the timer is running.
+      </t>
+      <t indent="0" pn="section-4-5">
+        When the timer period eventually elapses, the ICE agent <bcp14>MUST</bcp14> resume typical
+        ICE processing, including setting the state of any checklists to Failed if they
+        have no pairs left to check and handling any consequences as indicated
+        in <xref target="RFC8445" sectionFormat="comma" section="8.1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-8.1.2" derivedContent="RFC8445"/>.
+        Naturally, if there are no such checklists, no action is necessary.
+      </t>
+      <t indent="0" pn="section-4-6">
+        One consequence of this behavior is that in cases where ICE should fail,
+        e.g., where both sides provide candidates with unsupported address families,
+        ICE will no longer fail immediately -- it will only fail when the
+        PAC timer expires. However, because most ICE scenarios
+        require an extended period of time to determine failure, the
+        fact that some specific scenarios no longer fail quickly should have
+        minimal application impact, if any.
+      </t>
+      <t indent="0" pn="section-4-7">
+        Note also that the PAC timer is potentially relevant to the ICE nomination
+        procedure described in <xref target="RFC8445" sectionFormat="comma" section="8.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8445#section-8.1.1" derivedContent="RFC8445"/>. That
+        specification does not define a minimum duration for ICE processing
+        prior to nomination of a candidate pair, but in order to select the
+        best candidate pair, ICE needs to run for enough time in order to allow
+        peer-reflexive candidates to be discovered and checked, as noted above.
+        Accordingly, the controlling ICE agent <bcp14>SHOULD</bcp14> wait a sufficient amount
+        of time before nominating candidate pairs, and it <bcp14>MAY</bcp14> use the PAC timer
+        to do so. As always, the controlling ICE agent retains
+        full discretion and <bcp14>MAY</bcp14> decide, based on its own criteria, to nominate
+        pairs prior to the PAC timer period elapsing.
+      </t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-update-to-rfc-8838">Update to RFC 8838</name>
+      <t indent="0" pn="section-5-1">
+        Trickle ICE <xref target="RFC8838" format="default" sectionFormat="of" derivedContent="RFC8838"/>
+        considers a similar problem, namely whether an ICE agent should allow
+        a checklist to enter the Failed state if more candidates might
+        still be provided by the remote peer. The solution, specified in
+        <xref target="RFC8838" sectionFormat="comma" section="8" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8838#section-8" derivedContent="RFC8838"/>, is to
+        wait until an end-of-candidates indication has been received
+        before determining ICE failure.
+      </t>
+      <t indent="0" pn="section-5-2">
+        However, for the same reasons described above,
+        the ICE agent may discover peer-reflexive candidates after it has
+        received the end-of-candidates indication, and so the solution
+        proposed by this document <bcp14>MUST</bcp14> still be used even when
+        the ICE agent is using Trickle ICE.
+      </t>
+      <t indent="0" pn="section-5-3">
+        Note also that sending an end-of-candidates indication is only a
+        <bcp14>SHOULD</bcp14>-strength requirement, which means that ICE agents will need
+        to implement a backup mechanism to decide when all candidates
+        have been received, typically a timer. Accordingly, ICE agents
+        <bcp14>MAY</bcp14> use the PAC timer to also serve as an end-of-candidates fallback.
+      </t>
+    </section>
+    <section anchor="section.sec" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">
+        The security considerations for ICE are defined in <xref target="RFC8445" format="default" sectionFormat="of" derivedContent="RFC8445"/>.
+        This specification only recommends that ICE agents wait for a certain
+        period of time before they declare
+        ICE failure; it does not introduce new security considerations.
+      </t>
+    </section>
+    <section anchor="section.iana" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-7-1">
+        This document has no IANA actions.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-normative-references">Normative References</name>
+      <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner" fullname="S. Bradner">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="1997" month="March"/>
+          <abstract>
+            <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+      <reference anchor="RFC5389" target="https://www.rfc-editor.org/info/rfc5389" quoteTitle="true" derivedAnchor="RFC5389">
+        <front>
+          <title>Session Traversal Utilities for NAT (STUN)</title>
+          <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="R." surname="Mahy" fullname="R. Mahy">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="P." surname="Matthews" fullname="P. Matthews">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="D." surname="Wing" fullname="D. Wing">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2008" month="October"/>
+          <abstract>
+            <t indent="0">Session Traversal Utilities for NAT (STUN) is a protocol that serves as a tool for other protocols in dealing with Network Address Translator (NAT) traversal.  It can be used by an endpoint to determine the IP address and port allocated to it by a NAT.  It can also be used to check connectivity between two endpoints, and as a keep-alive protocol to maintain NAT bindings.  STUN works with many existing NATs, and does not require any special behavior from them.</t>
+            <t indent="0">STUN is not a NAT traversal solution by itself.  Rather, it is a tool to be used in the context of a NAT traversal solution.  This is an important change from the previous version of this specification (RFC 3489), which presented STUN as a complete solution.</t>
+            <t indent="0">This document obsoletes RFC 3489.  [STANDARDS-TRACK]</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="5389"/>
+        <seriesInfo name="DOI" value="10.17487/RFC5389"/>
+      </reference>
+      <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+        <front>
+          <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+          <author initials="B." surname="Leiba" fullname="B. Leiba">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2017" month="May"/>
+          <abstract>
+            <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="8174"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+      </reference>
+      <reference anchor="RFC8445" target="https://www.rfc-editor.org/info/rfc8445" quoteTitle="true" derivedAnchor="RFC8445">
+        <front>
+          <title>Interactive Connectivity Establishment (ICE): A Protocol for Network Address Translator (NAT) Traversal</title>
+          <author initials="A." surname="Keranen" fullname="A. Keranen">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="C." surname="Holmberg" fullname="C. Holmberg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J." surname="Rosenberg" fullname="J. Rosenberg">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date year="2018" month="July"/>
+          <abstract>
+            <t indent="0">This document describes a protocol for Network Address Translator (NAT) traversal for UDP-based communication.  This protocol is called Interactive Connectivity Establishment (ICE).  ICE makes use of the Session Traversal Utilities for NAT (STUN) protocol and its extension, Traversal Using Relay NAT (TURN).</t>
+            <t indent="0">This document obsoletes RFC 5245.</t>
+          </abstract>
+        </front>
+        <seriesInfo name="RFC" value="8445"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8445"/>
+      </reference>
+      <reference anchor="RFC8838" target="https://www.rfc-editor.org/info/rfc8838" quoteTitle="true" derivedAnchor="RFC8838">
+        <front>
+          <title>Trickle ICE: Incremental Provisioning of Candidates for the Interactive Connectivity Establishment (ICE) Protocol</title>
+          <author initials="E" surname="Ivov" fullname="Emil Ivov">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="J" surname="Uberti" fullname="Justin Uberti">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <author initials="P" surname="Saint-Andre" fullname="Peter Saint-Andre">
+            <organization showOnFrontPage="true"/>
+          </author>
+          <date month="January" year="2021"/>
+        </front>
+        <seriesInfo name="RFC" value="8838"/>
+        <seriesInfo name="DOI" value="10.17487/RFC8838"/>
+      </reference>
+    </references>
+    <section anchor="sec-acks" toc="include" numbered="false" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">
+        <contact fullname="Roman Shpount"/>, <contact fullname="Nils Ohlmeier"/>, and <contact fullname="Peter Thatcher"/> provided lots of useful input and
+        comments.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="C." surname="Holmberg" fullname="Christer Holmberg">
+        <organization showOnFrontPage="true">Ericsson</organization>
+        <address>
+          <postal>
+            <street>Hirsalantie 11</street>
+            <code>02420</code>
+            <city>Jorvas</city>
+            <country>Finland</country>
+          </postal>
+          <email>christer.holmberg@ericsson.com</email>
+        </address>
+      </author>
+      <author initials="J." surname="Uberti" fullname="Justin Uberti">
+        <organization showOnFrontPage="true">Google</organization>
+        <address>
+          <postal>
+            <street>747 6th St W</street>
+            <code>98033</code>
+            <city>Kirkland</city>
+            <region>WA</region>
+            <country>United States of America</country>
+          </postal>
+          <email>justin@uberti.name</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

@@ -1,0 +1,952 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tls-dtls-connection-id-13" indexInclude="true" ipr="pre5378Trust200902" number="9146" prepTime="2022-03-18T14:14:05" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" updates="6347" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tls-dtls-connection-id-13" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9146" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="DTLS 1.2 Connection ID">Connection Identifier for DTLS 1.2</title>
+    <seriesInfo name="RFC" value="9146" stream="IETF"/>
+    <author initials="E." surname="Rescorla" fullname="Eric Rescorla" role="editor">
+      <organization showOnFrontPage="true">Mozilla</organization>
+      <address>
+        <email>ekr@rtfm.com</email>
+      </address>
+    </author>
+    <author initials="H." surname="Tschofenig" fullname="Hannes Tschofenig" role="editor">
+      <organization showOnFrontPage="true">Arm Limited</organization>
+      <address>
+        <email>hannes.tschofenig@arm.com</email>
+      </address>
+    </author>
+    <author initials="T." surname="Fossati" fullname="Thomas Fossati">
+      <organization showOnFrontPage="true">Arm Limited</organization>
+      <address>
+        <email>thomas.fossati@arm.com</email>
+      </address>
+    </author>
+    <author initials="A." surname="Kraus" fullname="Achim Kraus">
+      <organization showOnFrontPage="true">Bosch.IO GmbH</organization>
+      <address>
+        <email>achim.kraus@bosch.io</email>
+      </address>
+    </author>
+    <date month="03" year="2022"/>
+    <area>Security</area>
+    <workgroup>TLS</workgroup>
+    <keyword>NAT rebinding</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document specifies the Connection ID (CID) construct for the Datagram Transport
+Layer Security (DTLS) protocol version 1.2.</t>
+      <t indent="0" pn="section-abstract-2">A CID is an identifier carried in the record layer header that gives the
+recipient additional information for selecting the appropriate security association.
+In "classical" DTLS, selecting a security association of an incoming DTLS record
+is accomplished with the help of the 5-tuple. If the source IP address and/or
+source port changes during the lifetime of an ongoing DTLS session, then the
+receiver will be unable to locate the correct security context.</t>
+      <t indent="0" pn="section-abstract-3">The new ciphertext record format with the CID also provides content type encryption
+and record layer padding.</t>
+      <t indent="0" pn="section-abstract-4">This document updates RFC 6347.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9146" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-3">
+            This document may contain material from IETF Documents or IETF
+            Contributions published or made publicly available before November
+            10, 2008. The person(s) controlling the copyright in some of this
+            material may not have granted the IETF Trust the right to allow
+            modifications of such material outside the IETF Standards Process.
+            Without obtaining an adequate license from the person(s)
+            controlling the copyright in such materials, this document may not
+            be modified outside the IETF Standards Process, and derivative
+            works of it may not be created outside the IETF Standards Process,
+            except to format it for publication as an RFC or to translate it
+            into languages other than English.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-conventions-and-terminology">Conventions and Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-connection_id-extension">The "connection_id" Extension</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-record-layer-extensions">Record Layer Extensions</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-record-payload-protection">Record Payload Protection</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-block-ciphers">Block Ciphers</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-block-ciphers-with-encrypt-">Block Ciphers with Encrypt-then-MAC Processing</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aead-ciphers">AEAD Ciphers</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-peer-address-update">Peer Address Update</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example">Example</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-extra-column-added-to-the-t">Extra Column Added to the TLS ExtensionType Values Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-entry-in-the-tls-extens">New Entry in the TLS ExtensionType Values Registry</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.3">
+                <t indent="0" pn="section-toc.1-1.10.2.3.1"><xref derivedContent="10.3" format="counter" sectionFormat="of" target="section-10.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-new-entry-in-the-tls-conten">New Entry in the TLS ContentType Registry</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.11.2">
+              <li pn="section-toc.1-1.11.2.1">
+                <t indent="0" pn="section-toc.1-1.11.2.1.1"><xref derivedContent="11.1" format="counter" sectionFormat="of" target="section-11.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.11.2.2">
+                <t indent="0" pn="section-toc.1-1.11.2.2.1"><xref derivedContent="11.2" format="counter" sectionFormat="of" target="section-11.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-contributors">Contributors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Datagram Transport Layer Security (DTLS) protocol <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/> was designed for
+securing data sent over datagram transports (e.g., UDP). DTLS, like TLS, starts
+with a handshake, which can be computationally demanding (particularly
+when public key cryptography is used). After a successful handshake,
+symmetric key cryptography is used to apply data origin
+authentication, integrity, and confidentiality protection. This
+two-step approach allows endpoints to amortize the cost of the initial
+handshake across subsequent application data protection. Ideally, the
+second phase where application data is protected lasts over a long
+period of time, since the established keys will only need to be updated
+once the key lifetime expires.</t>
+      <t indent="0" pn="section-1-2">In DTLS as specified in RFC 6347, the IP address and port of the peer are used to
+identify the DTLS association. Unfortunately, in some cases, such as NAT rebinding,
+these values are insufficient. This is a particular issue in the Internet of Things
+when devices enter extended sleep periods to increase their battery lifetime. The
+NAT rebinding leads to connection failure, with the resulting cost of a new handshake.</t>
+      <t indent="0" pn="section-1-3">This document defines an extension to DTLS 1.2 to add a Connection ID (CID) to the
+DTLS record layer. The presence of the CID is negotiated via a DTLS
+extension.</t>
+      <t indent="0" pn="section-1-4">Adding a CID to the ciphertext record format presents an opportunity to make
+other changes to the record format.  In keeping with the best practices
+established by TLS 1.3, the type of the record is encrypted, and
+a mechanism is provided for adding padding to obfuscate the plaintext length.</t>
+    </section>
+    <section anchor="conventions-and-terminology" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-conventions-and-terminology">Conventions and Terminology</name>
+      <t indent="0" pn="section-2-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+       "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+       "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+       "<bcp14>SHOULD NOT</bcp14>",
+       "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+       "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+       are to be interpreted as described in BCP 14
+       <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+       when, they appear in all capitals, as shown here.</t>
+      <t indent="0" pn="section-2-2">This document assumes familiarity with DTLS 1.2 <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/>. The presentation language
+used in this document is described in <xref target="RFC8446" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-3" derivedContent="RFC8446"/>.</t>
+    </section>
+    <section anchor="the-connectionid-extension" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-the-connection_id-extension">The "connection_id" Extension</name>
+      <t indent="0" pn="section-3-1">This document defines the "connection_id" extension, which
+is used in ClientHello and ServerHello messages.</t>
+      <t indent="0" pn="section-3-2">The extension type is specified as follows.</t>
+      <sourcecode name="" type="tls-presentation" markers="false" pn="section-3-3">
+  enum {
+     connection_id(54), (65535)
+  } ExtensionType;
+</sourcecode>
+      <t indent="0" pn="section-3-4">The extension_data field of this extension, when included in the
+ClientHello, <bcp14>MUST</bcp14> contain the ConnectionId structure. This structure
+contains the CID value the client wishes the server to use when sending
+messages to the client. A zero-length CID value indicates that the client
+is prepared to send using a CID but does not wish the server to use one when
+sending.</t>
+      <sourcecode name="" type="tls-presentation" markers="false" pn="section-3-5">
+  struct {
+      opaque cid&lt;0..2^8-1&gt;;
+  } ConnectionId;
+</sourcecode>
+      <t indent="0" pn="section-3-6">A server willing to use CIDs will respond with a "connection_id"
+extension in the ServerHello, containing the CID it wishes the
+client to use when sending messages towards it. A zero-length value
+indicates that the server will send using the client's CID but does not
+wish the client to include a CID when sending.</t>
+      <t indent="0" pn="section-3-7">Because each party sends the value in the "connection_id" extension it wants to
+receive as a CID in encrypted records, it is possible
+for an endpoint to use a deployment-specific constant length for such connection
+identifiers.  This can in turn ease parsing and connection lookup --
+for example, by having the length in question be a compile-time constant.
+Such implementations <bcp14>MUST</bcp14> still be able to send
+CIDs of different lengths to other parties.
+Since the CID length information is not included in the record itself,
+implementations that want to use variable-length CIDs are responsible
+for constructing the CID in such a way that its length can be determined
+on reception.</t>
+      <t indent="0" pn="section-3-8">In DTLS 1.2, CIDs are exchanged at the beginning of the DTLS
+session only. There is no dedicated "CID update" message
+that allows new CIDs to be established mid-session, because
+DTLS 1.2 in general does not allow TLS 1.3-style post-handshake messages
+that do not themselves begin other handshakes. When a DTLS session is
+resumed or renegotiated, the "connection_id" extension is negotiated afresh.</t>
+      <t indent="0" pn="section-3-9">If DTLS peers have not negotiated the use of CIDs, or a zero-length
+CID has been advertised for a given direction, then the record format and content type defined in RFC 6347 <bcp14>MUST</bcp14> be used to send in
+the indicated direction(s).</t>
+      <t indent="0" pn="section-3-10">If DTLS peers have negotiated the use of a non-zero-length CID for a
+given direction, then once encryption is enabled, they <bcp14>MUST</bcp14> send with
+the record format defined in <xref target="dtls-ciphertext" format="default" sectionFormat="of" derivedContent="Figure 3"/> (see <xref target="record-layer-extensions" format="default" sectionFormat="of" derivedContent="Section 4"/>) with the
+new Message Authentication Code (MAC) computation defined in <xref target="mac" format="default" sectionFormat="of" derivedContent="Section 5"/> and the content type tls12_cid.
+Plaintext payloads never use the new record format or the CID content
+type.</t>
+      <t indent="0" pn="section-3-11">When receiving, if the tls12_cid content type is set, then the CID is
+used to look up the connection and the security association. If the
+tls12_cid content type is not set, then the connection and the security
+association are looked up by the 5-tuple and a check <bcp14>MUST</bcp14> be made to
+determine whether a non-zero-length CID is expected.
+If a non-zero-length CID is expected for the retrieved association,
+then the datagram <bcp14>MUST</bcp14> be treated as invalid, as described
+in <xref target="RFC6347" sectionFormat="of" section="4.1.2.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6347#section-4.1.2.1" derivedContent="RFC6347"/>.</t>
+      <t indent="0" pn="section-3-12">When receiving a datagram with the tls12_cid content type,
+the new MAC computation defined in <xref target="mac" format="default" sectionFormat="of" derivedContent="Section 5"/> <bcp14>MUST</bcp14> be used. When receiving a datagram
+with the record format defined in RFC 6347, the MAC calculation defined in <xref target="RFC6347" sectionFormat="of" section="4.1.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6347#section-4.1.2" derivedContent="RFC6347"/> <bcp14>MUST</bcp14> be used.</t>
+    </section>
+    <section anchor="record-layer-extensions" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-record-layer-extensions">Record Layer Extensions</name>
+      <t indent="0" pn="section-4-1">This specification defines the CID-enhanced record layer format for DTLS 1.2, and
+<xref target="I-D.ietf-tls-dtls13" format="default" sectionFormat="of" derivedContent="DTLS13"/> specifies how to carry the CID in DTLS 1.3.</t>
+      <t indent="0" pn="section-4-2">To allow a receiver to determine whether a record has a CID or not,
+connections that have negotiated this extension use a distinguished
+record type tls12_cid(25). The use of this content type has the following
+three implications:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4-3">
+        <li pn="section-4-3.1">The CID field is present and contains one or more bytes.</li>
+        <li pn="section-4-3.2">The MAC calculation follows the process described in <xref target="mac" format="default" sectionFormat="of" derivedContent="Section 5"/>.</li>
+        <li pn="section-4-3.3">The real content type is inside the encryption envelope, as described
+below.</li>
+      </ul>
+      <t indent="0" pn="section-4-4">Plaintext records are not impacted by this extension. Hence, the format
+of the DTLSPlaintext structure is left unchanged, as shown in <xref target="dtls-plaintext" format="default" sectionFormat="of" derivedContent="Figure 1"/>.</t>
+      <figure anchor="dtls-plaintext" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-dtls-12-plaintext-record-pa">DTLS 1.2 Plaintext Record Payload</name>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-4-5.1">
+     struct {
+         ContentType type;
+         ProtocolVersion version;
+         uint16 epoch;
+         uint48 sequence_number;
+         uint16 length;
+         opaque fragment[DTLSPlaintext.length];
+     } DTLSPlaintext;
+</sourcecode>
+      </figure>
+      <t indent="0" pn="section-4-6">When CIDs are being used, the content to be sent
+is first wrapped along with its content type and optional padding into a
+DTLSInnerPlaintext structure. This newly introduced structure is shown in
+<xref target="dtls-innerplaintext" format="default" sectionFormat="of" derivedContent="Figure 2"/>.</t>
+      <figure anchor="dtls-innerplaintext" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-new-dtlsinnerplaintext-payl">New DTLSInnerPlaintext Payload Structure</name>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-4-7.1">
+     struct {
+         opaque content[length];
+         ContentType real_type;
+         uint8 zeros[length_of_padding];
+     } DTLSInnerPlaintext;
+</sourcecode>
+      </figure>
+      <dl indent="3" newline="false" spacing="normal" pn="section-4-8">
+        <dt pn="section-4-8.1">
+content:</dt>
+        <dd pn="section-4-8.2">
+          <t indent="0" pn="section-4-8.2.1">Corresponds to the fragment of a given length.</t>
+        </dd>
+        <dt pn="section-4-8.3">
+real_type:</dt>
+        <dd pn="section-4-8.4">
+          <t indent="0" pn="section-4-8.4.1">The content type describing the cleartext payload.</t>
+        </dd>
+        <dt pn="section-4-8.5">
+zeros:</dt>
+        <dd pn="section-4-8.6">
+          <t indent="0" pn="section-4-8.6.1">An arbitrary-length run of zero-valued bytes may appear in
+the cleartext after the type field.  This provides an opportunity
+for senders to pad any DTLS record by a chosen amount as long as
+the total stays within record size limits.  See <xref target="RFC8446" sectionFormat="of" section="5.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-5.4" derivedContent="RFC8446"/> for more details. (Note that the term TLSInnerPlaintext in
+RFC 8446 refers to DTLSInnerPlaintext in this specification.)</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-4-9">The DTLSInnerPlaintext byte sequence is then encrypted. To create the
+DTLSCiphertext structure shown in <xref target="dtls-ciphertext" format="default" sectionFormat="of" derivedContent="Figure 3"/>, the CID is added.</t>
+      <figure anchor="dtls-ciphertext" align="left" suppress-title="false" pn="figure-3">
+        <name slugifiedName="name-dtls-12-cid-enhanced-cipher">DTLS 1.2 CID-Enhanced Ciphertext Record</name>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-4-10.1">
+     struct {
+         ContentType outer_type = tls12_cid;
+         ProtocolVersion version;
+         uint16 epoch;
+         uint48 sequence_number;
+         opaque cid[cid_length];               // New field
+         uint16 length;
+         opaque enc_content[DTLSCiphertext.length];
+     } DTLSCiphertext;
+</sourcecode>
+      </figure>
+      <dl indent="3" newline="false" spacing="normal" pn="section-4-11">
+        <dt pn="section-4-11.1">
+outer_type:</dt>
+        <dd pn="section-4-11.2">
+          <t indent="0" pn="section-4-11.2.1">The outer content type of a DTLSCiphertext record carrying a CID
+is always set to tls12_cid(25). The real content
+type of the record is found in DTLSInnerPlaintext.real_type after
+decryption.</t>
+        </dd>
+        <dt pn="section-4-11.3">
+cid:</dt>
+        <dd pn="section-4-11.4">
+          <t indent="0" pn="section-4-11.4.1">The CID value, cid_length bytes long, as agreed at the time the extension
+has been negotiated.  Recall that each peer chooses
+the CID value it will receive and use to identify the connection, so an
+implementation can choose to always receive CIDs of a fixed length.  If,
+however, an implementation chooses to receive CIDs of different lengths,
+the assigned CID values must be self-delineating, since there is no other
+mechanism available to determine what connection (and thus, what CID length)
+is in use.</t>
+        </dd>
+        <dt pn="section-4-11.5">
+enc_content:</dt>
+        <dd pn="section-4-11.6">
+          <t indent="0" pn="section-4-11.6.1">The encrypted form of the serialized DTLSInnerPlaintext structure.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-4-12">All other fields are as defined in RFC 6347.</t>
+    </section>
+    <section anchor="mac" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-record-payload-protection">Record Payload Protection</name>
+      <t indent="0" pn="section-5-1">Several types of ciphers have been defined for use with TLS and DTLS, and the
+MAC calculations for those ciphers differ slightly.</t>
+      <t indent="0" pn="section-5-2">This specification modifies the MAC calculation as defined in <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/> and
+<xref target="RFC7366" format="default" sectionFormat="of" derivedContent="RFC7366"/>, as well as the definition of the additional data used with Authenticated Encryption with Associated Data (AEAD)
+ciphers provided in <xref target="RFC6347" format="default" sectionFormat="of" derivedContent="RFC6347"/>, for records with content type tls12_cid.  The
+modified algorithm <bcp14>MUST NOT</bcp14> be applied to records that do not carry a CID, i.e.,
+records with content type other than tls12_cid.</t>
+      <t indent="0" pn="section-5-3">The following fields are defined in this document; all other fields are as
+defined in the cited documents.</t>
+      <dl indent="3" newline="false" spacing="normal" pn="section-5-4">
+        <dt pn="section-5-4.1">
+cid:</dt>
+        <dd pn="section-5-4.2">
+          <t indent="0" pn="section-5-4.2.1">Value of the negotiated CID (variable length).</t>
+        </dd>
+        <dt pn="section-5-4.3">
+cid_length:</dt>
+        <dd pn="section-5-4.4">
+          <t indent="0" pn="section-5-4.4.1">The length (in bytes) of the negotiated CID (one-byte integer).</t>
+        </dd>
+        <dt pn="section-5-4.5">
+length_of_DTLSInnerPlaintext:</dt>
+        <dd pn="section-5-4.6">
+          <t indent="0" pn="section-5-4.6.1">The length (in bytes) of the serialized DTLSInnerPlaintext (two-byte integer).
+The length <bcp14>MUST NOT</bcp14> exceed 2^14.</t>
+        </dd>
+        <dt pn="section-5-4.7">
+seq_num_placeholder:</dt>
+        <dd pn="section-5-4.8">
+          <t indent="0" pn="section-5-4.8.1">8 bytes of 0xff.</t>
+        </dd>
+      </dl>
+      <t indent="0" pn="section-5-5">Note that "+" denotes concatenation.</t>
+      <section anchor="block-ciphers" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-block-ciphers">Block Ciphers</name>
+        <t indent="0" pn="section-5.1-1">The following MAC algorithm applies to block ciphers
+that do not use the Encrypt-then-MAC processing
+described in <xref target="RFC7366" format="default" sectionFormat="of" derivedContent="RFC7366"/>.</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-5.1-2">
+    MAC(MAC_write_key,
+        seq_num_placeholder +
+        tls12_cid +
+        cid_length +
+        tls12_cid +
+        DTLSCiphertext.version +
+        epoch +
+        sequence_number +
+        cid +
+        length_of_DTLSInnerPlaintext +
+        DTLSInnerPlaintext.content +
+        DTLSInnerPlaintext.real_type +
+        DTLSInnerPlaintext.zeros
+    );
+</sourcecode>
+        <t indent="0" pn="section-5.1-3">The rationale behind this construction is to separate the MAC input
+for DTLS without the connection ID from the MAC input with the
+connection ID. The former always consists of a sequence number
+followed by some content type other than tls12_cid; the latter
+always consists of the seq_num_placeholder followed by tls12_cid.
+Although 2^64-1 is potentially a valid sequence number, tls12_cid
+will never be a valid content type when the connection ID is not in use.
+In addition, the epoch and sequence_number are now fed into
+the MAC in the same order as they appear on the wire.</t>
+      </section>
+      <section anchor="block-ciphers-with-encrypt-then-mac-processing" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-block-ciphers-with-encrypt-">Block Ciphers with Encrypt-then-MAC Processing</name>
+        <t indent="0" pn="section-5.2-1">The following MAC algorithm applies to block ciphers
+that use the Encrypt-then-MAC processing
+described in <xref target="RFC7366" format="default" sectionFormat="of" derivedContent="RFC7366"/>.</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-5.2-2">
+    MAC(MAC_write_key,
+        seq_num_placeholder +
+        tls12_cid +
+        cid_length +
+        tls12_cid +
+        DTLSCiphertext.version +
+        epoch +
+        sequence_number +
+        cid +
+        DTLSCiphertext.length +
+        IV +
+        ENC(content + padding + padding_length)
+    );
+</sourcecode>
+      </section>
+      <section anchor="aead-ciphers" numbered="true" toc="include" removeInRFC="false" pn="section-5.3">
+        <name slugifiedName="name-aead-ciphers">AEAD Ciphers</name>
+        <t indent="0" pn="section-5.3-1">For ciphers utilizing AEAD,
+the following modification is made to the additional data calculation.</t>
+        <sourcecode name="" type="tls-presentation" markers="false" pn="section-5.3-2">
+    additional_data = seq_num_placeholder +
+                      tls12_cid +
+                      cid_length +
+                      tls12_cid +
+                      DTLSCiphertext.version +
+                      epoch +
+                      sequence_number +
+                      cid +
+                      length_of_DTLSInnerPlaintext;
+</sourcecode>
+      </section>
+    </section>
+    <section anchor="peer-address-update" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-peer-address-update">Peer Address Update</name>
+      <t indent="0" pn="section-6-1">When a record with a CID is received that has a source address
+different from the one currently associated with the DTLS connection,
+the receiver <bcp14>MUST NOT</bcp14> replace the address it uses for sending records
+to its peer with the source address specified in the received datagram,
+unless the following three conditions are met:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6-2">
+        <li pn="section-6-2.1">The received datagram has been cryptographically verified using
+the DTLS record layer processing procedures.</li>
+        <li pn="section-6-2.2">The received datagram is "newer" (in terms of both epoch and sequence
+number) than the newest datagram received. Reordered datagrams that are
+sent prior to a change in a peer address might otherwise cause a valid
+address change to be reverted. This also limits the ability of an attacker
+to use replayed datagrams to force a spurious address change, which
+could result in denial of service. An attacker might be able to succeed
+in changing a peer address if they are able to rewrite source addresses
+and if replayed packets are able to arrive before any original.</li>
+        <li pn="section-6-2.3">There is a strategy for ensuring that the new peer address is able to
+receive and process DTLS records. No strategy is mandated by this specification,
+but see note (*) below.</li>
+      </ul>
+      <t indent="0" pn="section-6-3">The conditions above are necessary to protect against attacks that use datagrams with
+spoofed addresses or replayed datagrams to trigger attacks. Note that there
+is no requirement for the use of the anti-replay window mechanism defined in
+<xref target="RFC6347" sectionFormat="of" section="4.1.2.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6347#section-4.1.2.6" derivedContent="RFC6347"/>. Both solutions, the "anti-replay window" or
+"newer" algorithm, will prevent address updates from replay attacks while the
+latter will only apply to peer address updates and the former applies to any
+application layer traffic.</t>
+      <t indent="0" pn="section-6-4">Note that datagrams that pass the DTLS cryptographic verification procedures
+but do not trigger a change of peer address are still valid DTLS records and
+are still to be passed to the application.</t>
+      <t indent="3" pn="section-6-5">(*) Note: Application protocols that implement protection against spoofed addresses
+depend on being aware of changes in peer addresses so that they can engage the necessary
+mechanisms. When delivered such an event, an address validation mechanism specific to the application layer can be triggered -- for example, one that is based on
+successful exchange of a minimal amount of ping-pong traffic with the peer.
+Alternatively, a DTLS-specific mechanism may be used, as described in
+<xref target="DTLS-RRC" format="default" sectionFormat="of" derivedContent="DTLS-RRC"/>.</t>
+      <t indent="0" pn="section-6-6">DTLS implementations <bcp14>MUST</bcp14> silently discard records with bad MACs or that are
+otherwise invalid.</t>
+    </section>
+    <section anchor="examples" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-example">Example</name>
+      <t indent="0" pn="section-7-1"><xref target="dtls-example2" format="default" sectionFormat="of" derivedContent="Figure 4"/> shows an example exchange where a CID is
+used unidirectionally from the client to the server. To indicate that
+a zero-length CID is present in the "connection_id" extension,
+we use the notation 'connection_id=empty'.</t>
+      <figure anchor="dtls-example2" align="left" suppress-title="false" pn="figure-4">
+        <name slugifiedName="name-example-dtls-12-exchange-wi">Example DTLS 1.2 Exchange with CID</name>
+        <artwork name="" type="" align="left" alt="" pn="section-7-2.1">
+Client                                             Server
+------                                             ------
+
+ClientHello                 --------&gt;
+(connection_id=empty)
+
+
+                            &lt;--------      HelloVerifyRequest
+                                                     (cookie)
+
+ClientHello                 --------&gt;
+(connection_id=empty)
+(cookie)
+
+                                                  ServerHello
+                                          (connection_id=100)
+                                                  Certificate
+                                            ServerKeyExchange
+                                           CertificateRequest
+                            &lt;--------         ServerHelloDone
+
+Certificate
+ClientKeyExchange
+CertificateVerify
+[ChangeCipherSpec]
+Finished                    --------&gt;
+&lt;CID=100&gt;
+
+                                           [ChangeCipherSpec]
+                            &lt;--------                Finished
+
+
+Application Data            ========&gt;
+&lt;CID=100&gt;
+
+                            &lt;========        Application Data
+
+Legend:
+
+&lt;...&gt; indicates that a connection ID is used in the record layer
+(...) indicates an extension
+[...] indicates a payload other than a handshake message
+</artwork>
+      </figure>
+      <t indent="3" pn="section-7-3">Note: In the example exchange, the CID is included in the record layer
+once encryption is enabled. In DTLS 1.2, only one handshake message is
+encrypted, namely the Finished message. Since the example shows how to
+use the CID for payloads sent from the client to the server, only the
+record layer payloads containing the Finished message or application data
+include a CID.</t>
+    </section>
+    <section anchor="priv-cons" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t indent="0" pn="section-8-1">The CID replaces the previously used 5-tuple and, as such, introduces
+an identifier that remains persistent during the lifetime of a DTLS connection.
+Every identifier introduces the risk of linkability, as explained in <xref target="RFC6973" format="default" sectionFormat="of" derivedContent="RFC6973"/>.</t>
+      <t indent="0" pn="section-8-2">An on-path adversary observing the DTLS protocol exchanges between the
+DTLS client and the DTLS server is able to link the observed payloads to all
+subsequent payloads carrying the same ID pair (for bidirectional
+communication).  Without multihoming or mobility, the use of the CID
+exposes the same information as the 5-tuple.</t>
+      <t indent="0" pn="section-8-3">With multihoming, a passive attacker is able to correlate the communication
+interaction over the two paths. The lack of a CID update mechanism
+in DTLS 1.2 makes this extension unsuitable for mobility scenarios where
+correlation must be considered. Deployments that use DTLS in multihoming
+environments and are concerned about these aspects <bcp14>SHOULD</bcp14> refuse to use CIDs in
+DTLS 1.2 and switch to DTLS 1.3 where a CID update mechanism is provided and
+sequence number encryption is available.</t>
+      <t indent="0" pn="section-8-4">This specification introduces record padding for the CID-enhanced record layer,
+which is a privacy feature not available with the original DTLS 1.2 specification.
+Padding allows the size of the ciphertext to be inflated, making traffic analysis
+more difficult. More details about record padding can be found in
+Section <xref target="RFC8446" section="5.4" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-5.4" derivedContent="RFC8446"/> and Appendix <xref target="RFC8446" section="E.3" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-E.3" derivedContent="RFC8446"/> of <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.</t>
+      <t indent="0" pn="section-8-5">Finally, endpoints can use the CID to attach arbitrary per-connection metadata
+to each record they receive on a given connection. This may be used as a mechanism to communicate
+per-connection information to on-path observers. There is no straightforward way to
+address this concern with CIDs that contain arbitrary values. Implementations
+concerned about this aspect <bcp14>SHOULD</bcp14> refuse to use CIDs.</t>
+    </section>
+    <section anchor="sec-cons" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-9-1">An on-path adversary can create reflection attacks
+against third parties because a DTLS peer has no means to distinguish a
+genuine address update event (for example, due to a NAT rebinding) from one
+that is malicious. This attack is of particular concern when the request is small
+and the response large. See <xref target="peer-address-update" format="default" sectionFormat="of" derivedContent="Section 6"/> for more
+on address updates.</t>
+      <t indent="0" pn="section-9-2">Additionally, an attacker able to observe the data traffic exchanged between
+two DTLS peers is able to replay datagrams with modified IP addresses / port numbers.</t>
+      <t indent="0" pn="section-9-3">The topic of peer address updates is discussed in <xref target="peer-address-update" format="default" sectionFormat="of" derivedContent="Section 6"/>.</t>
+    </section>
+    <section anchor="iana-considerations" numbered="true" toc="include" removeInRFC="false" pn="section-10">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-10-1">This document implements three IANA updates.</t>
+      <section anchor="extra-column-to-tls-extensiontype-values-registry" numbered="true" toc="include" removeInRFC="false" pn="section-10.1">
+        <name slugifiedName="name-extra-column-added-to-the-t">Extra Column Added to the TLS ExtensionType Values Registry</name>
+        <t indent="0" pn="section-10.1-1">IANA has added an extra column named "DTLS-Only" to the
+"TLS ExtensionType Values" registry to indicate whether an extension is only
+applicable to DTLS and to include this document as an additional reference
+for the registry.</t>
+      </section>
+      <section anchor="entry-to-the-tls-extensiontype-values-registry" numbered="true" toc="include" removeInRFC="false" pn="section-10.2">
+        <name slugifiedName="name-new-entry-in-the-tls-extens">New Entry in the TLS ExtensionType Values Registry</name>
+        <t indent="0" pn="section-10.2-1">IANA has allocated an entry in the existing "TLS ExtensionType
+Values" registry for connection_id(54), as described
+in the table below. Although the value 53 had been allocated by early allocation for a previous version of this document, it
+is incompatible with this document.
+Therefore, the early allocation has been deprecated
+in favor of this assignment.</t>
+        <table anchor="iana-tls-ext-entry" align="center" pn="table-1">
+          <name/>
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Value</th>
+              <th align="left" colspan="1" rowspan="1">Extension Name</th>
+              <th align="left" colspan="1" rowspan="1">TLS 1.3</th>
+              <th align="left" colspan="1" rowspan="1">DTLS-Only</th>
+              <th align="left" colspan="1" rowspan="1">Recommended</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">54</td>
+              <td align="left" colspan="1" rowspan="1">connection_id</td>
+              <td align="left" colspan="1" rowspan="1">CH, SH</td>
+              <td align="left" colspan="1" rowspan="1">Y</td>
+              <td align="left" colspan="1" rowspan="1">N</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9146</td>
+            </tr>
+          </tbody>
+        </table>
+        <t indent="0" pn="section-10.2-3">A new column, "DTLS-Only", has been added to the registry.
+The valid entries are "Y" if the extension is only applicable to DTLS, "N" otherwise.
+All the pre-existing entries are given the value "N".</t>
+        <t indent="3" pn="section-10.2-4">Note: The value "N" in the "Recommended" column is set because this
+extension is intended only for specific use cases. This document describes
+the behavior of this extension for DTLS 1.2 only; it is not applicable to TLS, and
+its usage for DTLS 1.3 is described in <xref target="I-D.ietf-tls-dtls13" format="default" sectionFormat="of" derivedContent="DTLS13"/>.</t>
+      </section>
+      <section anchor="entry-to-the-tls-contenttype-registry" numbered="true" toc="include" removeInRFC="false" pn="section-10.3">
+        <name slugifiedName="name-new-entry-in-the-tls-conten">New Entry in the TLS ContentType Registry</name>
+        <t indent="0" pn="section-10.3-1">IANA has allocated tls12_cid(25) in the "TLS ContentType"
+registry. The tls12_cid content type is only applicable to DTLS 1.2.</t>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-tls-dtls13" to="DTLS13"/>
+    <references pn="section-11">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-11.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC6347" target="https://www.rfc-editor.org/info/rfc6347" quoteTitle="true" derivedAnchor="RFC6347">
+          <front>
+            <title>Datagram Transport Layer Security Version 1.2</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Modadugu" fullname="N. Modadugu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="January"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.2 of the Datagram Transport Layer Security (DTLS) protocol.  The DTLS protocol provides communications privacy for datagram protocols.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  The DTLS protocol is based on the Transport Layer Security (TLS) protocol and provides equivalent security guarantees.  Datagram semantics of the underlying transport are preserved by the DTLS protocol.  This document updates DTLS 1.0 to work with TLS version 1.2.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6347"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6347"/>
+        </reference>
+        <reference anchor="RFC7366" target="https://www.rfc-editor.org/info/rfc7366" quoteTitle="true" derivedAnchor="RFC7366">
+          <front>
+            <title>Encrypt-then-MAC for Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="P." surname="Gutmann" fullname="P. Gutmann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="September"/>
+            <abstract>
+              <t indent="0">This document describes a means of negotiating the use of the encrypt-then-MAC security mechanism in place of the existing MAC-then-encrypt mechanism in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS).  The MAC-then-encrypt mechanism has been the subject of a number of security vulnerabilities over a period of many years.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7366"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7366"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+      </references>
+      <references pn="section-11.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="DTLS-RRC" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-tls-dtls-rrc-05" derivedAnchor="DTLS-RRC">
+          <front>
+            <title>Return Routability Check for DTLS 1.2 and DTLS 1.3</title>
+            <author initials="H" surname="Tschofenig" fullname="Hannes Tschofenig" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T" surname="Fossati" fullname="Thomas Fossati">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="March" day="7" year="2022"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-dtls-rrc-05"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="I-D.ietf-tls-dtls13" quoteTitle="true" target="https://datatracker.ietf.org/doc/html/draft-ietf-tls-dtls13-43" derivedAnchor="DTLS13">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author fullname="Eric Rescorla">
+              <organization showOnFrontPage="true">RTFM, Inc.</organization>
+            </author>
+            <author fullname="Hannes Tschofenig">
+              <organization showOnFrontPage="true">Arm Limited</organization>
+            </author>
+            <author fullname="Nagendra Modadugu">
+              <organization showOnFrontPage="true">Google, Inc.</organization>
+            </author>
+            <date month="April" day="30" year="2021"/>
+            <abstract>
+              <t indent="0">   This document specifies Version 1.3 of the Datagram Transport Layer
+   Security (DTLS) protocol.  DTLS 1.3 allows client/server applications
+   to communicate over the Internet in a way that is designed to prevent
+   eavesdropping, tampering, and message forgery.
+
+   The DTLS 1.3 protocol is intentionally based on the Transport Layer
+   Security (TLS) 1.3 protocol and provides equivalent security
+   guarantees with the exception of order protection/non-replayability.
+   Datagram semantics of the underlying transport are preserved by the
+   DTLS protocol.
+
+   This document obsoletes RFC 6347.
+
+              </t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-tls-dtls13-43"/>
+          <format type="TXT" target="https://www.ietf.org/archive/id/draft-ietf-tls-dtls13-43.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+        <reference anchor="RFC6973" target="https://www.rfc-editor.org/info/rfc6973" quoteTitle="true" derivedAnchor="RFC6973">
+          <front>
+            <title>Privacy Considerations for Internet Protocols</title>
+            <author initials="A." surname="Cooper" fullname="A. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Peterson" fullname="J. Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Morris" fullname="J. Morris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Hansen" fullname="M. Hansen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Smith" fullname="R. Smith">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="July"/>
+            <abstract>
+              <t indent="0">This document offers guidance for developing privacy considerations for inclusion in protocol specifications.  It aims to make designers, implementers, and users of Internet protocols aware of privacy-related design choices.  It suggests that whether any individual RFC warrants a specific privacy considerations section will depend on the document's content.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6973"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6973"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.a-1">We would like to thank <contact fullname="Hanno Becker"/>, <contact fullname="Martin Duke"/>, <contact fullname="Lars Eggert"/>, <contact fullname="Ben Kaduk"/>, <contact fullname="Warren Kumari"/>,
+<contact fullname="Francesca Palombini"/>, <contact fullname="Tom Petch"/>, <contact fullname="John Scudder"/>, <contact fullname="Sean Turner"/>, <contact fullname="Éric Vyncke"/>, and <contact fullname="Robert Wilton"/>
+for their review comments.</t>
+      <t indent="0" pn="section-appendix.a-2">Finally, we want to thank the IETF TLS Working Group chairs, <contact fullname="Chris Wood"/>, <contact fullname="Joseph Salowey"/>, and
+<contact fullname="Sean Turner"/>, for their patience, support, and feedback.</t>
+    </section>
+    <section anchor="contributors" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-contributors">Contributors</name>
+      <t indent="0" pn="section-appendix.b-1">Many people have contributed to this specification, and we would like to thank
+the following individuals for their contributions:</t>
+      <contact fullname="Yin Xinxing">
+        <organization showOnFrontPage="true">Huawei</organization>
+        <address>
+          <email>yinxinxing@huawei.com</email>
+        </address>
+      </contact>
+      <contact fullname="Nikos Mavrogiannopoulos">
+        <organization showOnFrontPage="true">RedHat</organization>
+        <address>
+          <email>nmav@redhat.com</email>
+        </address>
+      </contact>
+      <contact fullname="Tobias Gondrom">
+        <organization showOnFrontPage="true"/>
+        <address>
+          <email>tobias.gondrom@gondrom.org</email>
+        </address>
+      </contact>
+      <t indent="0" pn="section-appendix.b-2">Additionally, we would like to thank the Connection ID task force team members:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-appendix.b-3">
+        <li pn="section-appendix.b-3.1">
+          <t indent="0" pn="section-appendix.b-3.1.1"><contact fullname="Martin Thomson"/> (Mozilla)</t>
+        </li>
+        <li pn="section-appendix.b-3.2">
+          <t indent="0" pn="section-appendix.b-3.2.1"><contact fullname="Christian Huitema"/> (Private Octopus Inc.)</t>
+        </li>
+        <li pn="section-appendix.b-3.3">
+          <t indent="0" pn="section-appendix.b-3.3.1"><contact fullname="Jana Iyengar"/> (Google)</t>
+        </li>
+        <li pn="section-appendix.b-3.4">
+          <t indent="0" pn="section-appendix.b-3.4.1"><contact fullname="Daniel Kahn Gillmor"/> (ACLU)</t>
+        </li>
+        <li pn="section-appendix.b-3.5">
+          <t indent="0" pn="section-appendix.b-3.5.1"><contact fullname="Patrick McManus"/> (Mozilla)</t>
+        </li>
+        <li pn="section-appendix.b-3.6">
+          <t indent="0" pn="section-appendix.b-3.6.1"><contact fullname="Ian Swett"/> (Google)</t>
+        </li>
+        <li pn="section-appendix.b-3.7">
+          <t indent="0" pn="section-appendix.b-3.7.1"><contact fullname="Mark Nottingham"/> (Fastly)</t>
+        </li>
+      </ul>
+      <t indent="0" pn="section-appendix.b-4">The task force team discussed various design ideas, including cryptographically generated session
+IDs using hash chains and public key encryption, but dismissed them due to their
+inefficiency. The approach described in this specification is the
+simplest possible design that works, given the limitations of DTLS 1.2. DTLS 1.3 provides
+better privacy features, and developers are encouraged to switch to the new version of DTLS.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="E." surname="Rescorla" fullname="Eric Rescorla" role="editor">
+        <organization showOnFrontPage="true">Mozilla</organization>
+        <address>
+          <email>ekr@rtfm.com</email>
+        </address>
+      </author>
+      <author initials="H." surname="Tschofenig" fullname="Hannes Tschofenig" role="editor">
+        <organization showOnFrontPage="true">Arm Limited</organization>
+        <address>
+          <email>hannes.tschofenig@arm.com</email>
+        </address>
+      </author>
+      <author initials="T." surname="Fossati" fullname="Thomas Fossati">
+        <organization showOnFrontPage="true">Arm Limited</organization>
+        <address>
+          <email>thomas.fossati@arm.com</email>
+        </address>
+      </author>
+      <author initials="A." surname="Kraus" fullname="Achim Kraus">
+        <organization showOnFrontPage="true">Bosch.IO GmbH</organization>
+        <address>
+          <email>achim.kraus@bosch.io</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

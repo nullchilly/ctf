@@ -1,0 +1,896 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-dnsop-rfc7816bis-11" indexInclude="true" ipr="trust200902" number="9156" obsoletes="7816" prepTime="2021-11-18T22:12:17" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-dnsop-rfc7816bis-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9156" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="QNAME Minimisation">DNS Query Name Minimisation to Improve Privacy</title>
+    <seriesInfo name="RFC" value="9156" stream="IETF"/>
+    <author fullname="Stephane Bortzmeyer" initials="S." surname="Bortzmeyer">
+      <organization showOnFrontPage="true">AFNIC</organization>
+      <address>
+        <postal>
+          <street>1, rue Stephenson</street>
+          <code>78180</code>
+          <city>Montigny-le-Bretonneux</city>
+          <country>France</country>
+        </postal>
+        <phone>+33 1 39 30 83 46</phone>
+        <email>bortzmeyer+ietf@nic.fr</email>
+        <uri>https://www.afnic.fr/</uri>
+      </address>
+    </author>
+    <author fullname="Ralph Dolmans" initials="R." surname="Dolmans">
+      <organization showOnFrontPage="true">NLnet Labs</organization>
+      <address>
+        <email>ralph@nlnetlabs.nl</email>
+      </address>
+    </author>
+    <author fullname="Paul Hoffman" initials="P." surname="Hoffman">
+      <organization showOnFrontPage="true">ICANN</organization>
+      <address>
+        <email>paul.hoffman@icann.org</email>
+      </address>
+    </author>
+    <date month="11" year="2021"/>
+    <keyword>QNAME</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">This document describes a technique called "QNAME minimisation" to improve
+DNS privacy, where the DNS resolver no longer always sends the full
+original QNAME and original QTYPE to the upstream name server. This document
+obsoletes RFC 7816.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9156" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2021 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction-and-background">Introduction and Background</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-experience-from-rfc-7816">Experience from RFC 7816</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-description-of-qname-minimi">Description of QNAME Minimisation</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-qtype-selection">QTYPE Selection</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t indent="0" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-qname-selection">QNAME Selection</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t indent="0" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-limitation-of-the-number-of">Limitation of the Number of Queries</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.4">
+                <t indent="0" pn="section-toc.1-1.2.2.4.1"><xref derivedContent="2.4" format="counter" sectionFormat="of" target="section-2.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implementation-by-stub-and-">Implementation by Stub and Forwarding Resolvers</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-algorithm-to-perform-qname-">Algorithm to Perform QNAME Minimisation</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-qname-minimisation-examples">QNAME Minimisation Examples</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-performance-considerations">Performance Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="intro" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction-and-background">Introduction and Background</name>
+      <t indent="0" pn="section-1-1">The problem statement for this document is described in <xref target="RFC9076" format="default" sectionFormat="of" derivedContent="RFC9076"/>.
+This specific solution is not
+intended to fully solve the DNS privacy problem; instead, it
+should be viewed as one tool amongst many.</t>
+      <t indent="0" pn="section-1-2">QNAME minimisation follows the principle explained in
+      <xref target="RFC6973" sectionFormat="of" section="6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6973#section-6.1" derivedContent="RFC6973"/>: the less data you send out,
+      the fewer privacy problems you have.</t>
+      <t indent="0" pn="section-1-3">Before QNAME minimisation, when a resolver received the query "What is
+the AAAA record for www.example.com?", it sent to the root (assuming
+a resolver, whose cache is empty) the very same question. Sending
+the full QNAME to the authoritative name server was a tradition,
+not a protocol requirement. In a conversation with one of the authors in
+January 2015, Paul Mockapetris explained that this tradition comes
+from a desire to optimise the number of requests, when the same
+name server is authoritative for many zones in a given name
+(something that was more common in the old days, where the same
+name servers served .com and the root) or when the same
+name server is both recursive and authoritative (something that is
+strongly discouraged now). Whatever the merits of this choice at this
+time, the DNS is quite different now.</t>
+      <t indent="0" pn="section-1-4">QNAME minimisation is compatible with the current DNS system and
+      therefore can easily be deployed. Because it is only a change to
+      the way that the resolver operates, it does not change the DNS protocol itself.
+      The behaviour suggested here (minimising the
+      amount of data sent in QNAMEs from the resolver) is allowed by
+      <xref target="RFC1034" sectionFormat="of" section="5.3.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1034#section-5.3.3" derivedContent="RFC1034"/> and
+      <xref target="RFC1035" sectionFormat="of" section="7.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc1035#section-7.2" derivedContent="RFC1035"/>.</t>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-experience-from-rfc-7816">Experience from RFC 7816</name>
+        <t indent="0" pn="section-1.1-1">This document obsoletes <xref target="RFC7816" format="default" sectionFormat="of" derivedContent="RFC7816"/>.
+	<xref target="RFC7816" format="default" sectionFormat="of" derivedContent="RFC7816"/> was categorised "Experimental", but ideas
+	from it were widely deployed since its publication.
+	Many resolver implementations now support QNAME minimisation. The lessons 
+	learned from implementing QNAME minimisation were used to create this new
+	revision.</t>
+        <t indent="0" pn="section-1.1-2">Data from DNSThought <xref target="dnsthought-qnamemin" format="default" sectionFormat="of" derivedContent="dnsthought-qnamemin"/>,
+	Verisign <xref target="verisign-qnamemin" format="default" sectionFormat="of" derivedContent="verisign-qnamemin"/>, and APNIC <xref target="apnic-qnamemin" format="default" sectionFormat="of" derivedContent="apnic-qnamemin"/>
+	shows that a large percentage of the resolvers deployed on the Internet already support
+	QNAME minimisation in some way.</t>
+        <t indent="0" pn="section-1.1-3">Academic research has been performed on QNAME minimisation
+	<xref target="devries-qnamemin" format="default" sectionFormat="of" derivedContent="devries-qnamemin"/>. This
+	work shows that QNAME minimisation in relaxed mode causes almost no problems.
+	The paper recommends using the A QTYPE and limiting the number of queries in
+	some way. Some of the issues that the paper found are covered in <xref target="perf_cons" format="default" sectionFormat="of" derivedContent="Section 5"/>.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-1.2-1">The terminology used in this document is defined in  <xref target="RFC8499" format="default" sectionFormat="of" derivedContent="RFC8499"/>.</t>
+        <t indent="0" pn="section-1.2-2">In this document, a "cold" cache is one that is empty, having literally no
+	entries in it. A "warm" cache is one that has some entries in it.</t>
+        <t indent="0" pn="section-1.2-3">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="qname-main" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-description-of-qname-minimi">Description of QNAME Minimisation</name>
+      <t indent="0" pn="section-2-1">The idea behind QNAME minimisation is to minimise the amount of
+privacy-sensitive data sent from the DNS resolver to the authoritative
+name server. This section describes how to do QNAME minimisation. The algorithm
+is summarised in <xref target="zonecutalgo" format="default" sectionFormat="of" derivedContent="Section 3"/>.</t>
+      <t indent="0" pn="section-2-2">When a resolver is not able to answer a query from cache, it has
+to send a query to an authoritative name server. Traditionally, these
+queries would contain the full QNAME and the original QTYPE as received
+in the client query.</t>
+      <t indent="0" pn="section-2-3">The full QNAME and original QTYPE are only needed at the name server that
+is authoritative for the record requested by the client. All other name servers
+queried while resolving the query only need to receive enough of the QNAME to
+be able to answer with a delegation. The QTYPE in these queries is not
+relevant, as the name server is not able to authoritatively answer the records
+the client is looking for. Sending the full QNAME and original QTYPE to
+these name servers therefore exposes more privacy-sensitive data than
+necessary to resolve the client's request.</t>
+      <t indent="0" pn="section-2-4">A resolver that implements QNAME minimisation obscures the QNAME and QTYPE in
+      queries directed to an authoritative name server that is not known to be
+      responsible for the original QNAME. These queries contain:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-5">
+        <li pn="section-2-5.1">a QTYPE selected by the resolver to possibly obscure the original QTYPE</li>
+        <li pn="section-2-5.2">the QNAME that is the original QNAME, stripped to just one
+	label more than the longest matching domain name for which the
+	name server is known to be authoritative</li>
+      </ul>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-qtype-selection">QTYPE Selection</name>
+        <t indent="0" pn="section-2.1-1">Note that this document relaxes the recommendation in <xref target="RFC7816" format="default" sectionFormat="of" derivedContent="RFC7816"/> to use the NS
+	QTYPE to hide the original QTYPE. Using the NS QTYPE is
+	still allowed. The authority of NS records lies at the child side. The parent
+	side of the delegation will answer using a referral, like it will do for queries
+	with other QTYPEs. Using the NS QTYPE therefore has no added value over other
+	QTYPEs.</t>
+        <t indent="0" pn="section-2.1-2">The QTYPE to use while minimising queries can be any possible data type
+	(as defined in <xref target="RFC6895" section="3.1" sectionFormat="of" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6895#section-3.1" derivedContent="RFC6895"/>) for which the authority always lies below the zone cut
+	(i.e., not DS, NSEC, NSEC3, OPT, TSIG, TKEY, ANY, MAILA, MAILB,
+	AXFR, and IXFR), as long as there is no relation between the incoming QTYPE and
+	the selection of the QTYPE to use while minimising.
+	The A or AAAA QTYPEs are always good candidates to use because these 
+	are the least likely to raise issues in DNS software and middleboxes 
+	that do not properly support all QTYPEs.
+	QTYPE=A or QTYPE=AAAA queries will also blend into traffic from nonminimising
+	resolvers, making it in some cases harder to observe that the
+	resolver is using QNAME minimisation.  Using a QTYPE that occurs
+	most in incoming queries will slightly reduce the number of queries,
+	as there is no extra check needed for delegations on non-apex
+	records.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-qname-selection">QNAME Selection</name>
+        <t indent="0" pn="section-2.2-1">The minimising resolver works perfectly when it knows the zone cut
+	(zone cuts are described in 
+	<xref target="RFC2181" sectionFormat="of" section="6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc2181#section-6" derivedContent="RFC2181"/>).  But zone cuts do not
+	necessarily exist at every label boundary.  In the name
+	www.foo.bar.example, it is possible that there is a zone cut between
+	"foo" and "bar" but not between "bar" and "example". So, assuming
+	that the resolver already knows the name servers of example, when it
+	receives the query "What is the AAAA record of www.foo.bar.example?",
+	it does not always know where the zone cut will be.  To find the
+	zone cut, it will query the example name servers for a record for
+	bar.example. It will get a non-referral answer, so it has to query the
+	example name servers again with one more label, and so on.
+	(<xref target="zonecutalgo" format="default" sectionFormat="of" derivedContent="Section 3"/> describes this algorithm in deeper
+	detail.)</t>
+      </section>
+      <section anchor="number-of-queries" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-limitation-of-the-number-of">Limitation of the Number of Queries</name>
+        <t indent="0" pn="section-2.3-1">When using QNAME minimisation, the number of labels in the received QNAME can
+influence the number of queries sent from the resolver. This opens an attack
+vector and can decrease performance. Resolvers supporting QNAME minimisation
+<bcp14>MUST</bcp14> implement a mechanism to limit the number of outgoing queries per user
+request.</t>
+        <t indent="0" pn="section-2.3-2">Take for example an incoming QNAME with many labels, like
+www.host.group.department.example.com, where
+host.group.department.example.com is hosted on example.com's
+name servers.
+(Such deep domains are especially common under ip6.arpa.)
+Assume a resolver that knows only the
+name servers of example.com. Without QNAME minimisation, it would
+send these example.com name servers a query for
+www.host.group.department.example.com and immediately get a
+specific referral or an answer, without the need for more queries
+to probe for the zone cut. For such a name, a cold resolver with
+QNAME minimisation will send more queries, one per label. Once the cache is
+warm, there will be less difference with a traditional resolver.
+Testing of this is described in <xref target="Huque-QNAME-Min" format="default" sectionFormat="of" derivedContent="Huque-QNAME-Min"/>.
+</t>
+        <t indent="0" pn="section-2.3-3">The behaviour of sending multiple queries can be exploited by sending queries with a large number of
+labels in the QNAME that will be answered using a wildcard record. Take for
+example a record for *.example.com, hosted on example.com's name servers. An
+incoming query containing a QNAME with more than 100 labels, ending in
+example.com, will result in a query per label. By using random labels, the
+attacker can bypass the cache and always require the resolver to send many
+queries upstream. Note that <xref target="RFC8198" format="default" sectionFormat="of" derivedContent="RFC8198"/> can limit this attack in
+some cases.</t>
+        <t indent="0" pn="section-2.3-4">One mechanism that <bcp14>MAY</bcp14> be used to reduce this attack vector is by
+	appending  more than one label per iteration for QNAMEs with a large number of labels.
+	To do this, a maximum number of QNAME minimisation iterations <bcp14>MUST</bcp14> be
+	selected (MAX_MINIMISE_COUNT); a <bcp14>RECOMMENDED</bcp14> value is 10. Optionally, a
+	value for the number of
+	queries that should only have one label appended <bcp14>MAY</bcp14> be selected
+	(MINIMISE_ONE_LAB); a good value is 4. The assumption here is that the number
+	of labels on delegations higher in the hierarchy are rather small; therefore,
+	not exposing too many labels early on has the most privacy benefit.</t>
+        <t indent="0" pn="section-2.3-5">Another potential, optional mechanism for limiting the number of queries is to
+	assume that labels that begin with
+	an underscore (_) character do not represent privacy-relevant administrative
+	boundaries. For example, if the QNAME is "_25._tcp.mail.example.org" and the algorithm
+	has already searched for "mail.example.org", the next query can be for all the
+	underscore-prefixed names together, namely "_25._tcp.mail.example.org".</t>
+        <t indent="0" pn="section-2.3-6">When a resolver needs to send out a query, it will look for the closest-known
+	delegation point in its cache. The number of not-yet-exposed labels is
+	the difference between this closest name server and the incoming QNAME. The
+	first MINIMISE_ONE_LAB labels will be handled as described in
+	<xref target="qname-main" format="default" sectionFormat="of" derivedContent="Section 2"/>. The number of labels that are still not
+	exposed now need to be divided proportionally over the remaining iterations
+	(MAX_MINIMISE_COUNT - MINIMISE_ONE_LAB). If the not-yet-exposed labels cannot be
+	equally divided over the remaining iterations, the remainder of the division should 
+	be added to the last iterations. For example, when resolving a QNAME with 18
+	labels with MAX_MINIMISE_COUNT set to 10 and MINIMISE_ONE_LAB set to 4, the number of
+	labels added per iteration are: 1,1,1,1,2,2,2,2,3,3.</t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-2.4">
+        <name slugifiedName="name-implementation-by-stub-and-">Implementation by Stub and Forwarding Resolvers</name>
+        <t indent="0" pn="section-2.4-1">Stub and forwarding resolvers <bcp14>MAY</bcp14> implement QNAME minimisation.
+	Minimising queries that will be sent to an upstream resolver does not help in
+	hiding data from the upstream resolver because all information will end up there
+	anyway. It might however limit the data exposure between the upstream resolver
+	and the authoritative name server in the situation where the upstream resolver does
+	not support QNAME minimisation. Using QNAME minimisation in a stub or forwarding
+	resolver that does not have a mechanism to find and cache zone cuts will
+	drastically increase the number of outgoing queries.</t>
+      </section>
+    </section>
+    <section anchor="zonecutalgo" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-algorithm-to-perform-qname-">Algorithm to Perform QNAME Minimisation</name>
+      <t indent="0" pn="section-3-1">This algorithm performs name resolution with QNAME minimisation in
+      the presence of zone cuts that are not yet known.</t>
+      <t indent="0" pn="section-3-2">Although a validating resolver already has the logic to find the
+      zone cuts, implementers of resolvers may want to use
+      this algorithm to locate the zone cuts.</t>
+      <ol type="(%d)" start="0" indent="adaptive" spacing="normal" pn="section-3-3">
+	<li pn="section-3-3.1" derivedCounter="(0)">If the query can be answered from the cache, do so;
+	otherwise, iterate as follows:</li>
+        <li pn="section-3-3.2" derivedCounter="(1)">
+          <t indent="0" pn="section-3-3.2.1">Get the closest delegation point that can be used for
+	the original QNAME from the cache.</t>
+          <ol type="(1%c)" indent="adaptive" spacing="normal" start="1" pn="section-3-3.2.2">
+	    <li pn="section-3-3.2.2.1" derivedCounter="(1a)">For queries with a QTYPE for which the authority only lies at the
+	    parent side (like QTYPE=DS), this is the NS RRset with the owner matching the
+	    most labels with QNAME stripped by one label. QNAME will be a subdomain of
+	    (but not equal to) this NS RRset.  Call this ANCESTOR.</li>
+            <li pn="section-3-3.2.2.2" derivedCounter="(1b)">For queries with other original QTYPEs, this is the NS RRset with the
+	    owner matching the most labels with QNAME. QNAME will be equal to or a
+	    subdomain of this NS RRset.  Call this ANCESTOR.</li>
+          </ol>
+        </li>
+        <li pn="section-3-3.3" derivedCounter="(2)">Initialise CHILD to the same as ANCESTOR.</li>
+        <li pn="section-3-3.4" derivedCounter="(3)">If CHILD is the same as QNAME, or if CHILD is one
+	label shorter than QNAME and the original QTYPE can only be at the parent side
+	(like QTYPE=DS), resolve the original query as normal, starting from ANCESTOR's
+	name servers. Start over from step 0 if new names need to be resolved as a
+	result of this answer, for example, when the answer contains a CNAME or DNAME <xref target="RFC6672" format="default" sectionFormat="of" derivedContent="RFC6672"/> record.</li>
+        <li pn="section-3-3.5" derivedCounter="(4)">Otherwise, update the value of CHILD by adding the next relevant label or
+	labels from QNAME to the start
+	of CHILD. The number of labels to add is discussed in <xref target="number-of-queries" format="default" sectionFormat="of" derivedContent="Section 2.3"/>.</li>
+        <li pn="section-3-3.6" derivedCounter="(5)">Look for a cache entry for the RRset at CHILD with the original
+	QTYPE. If the cached response code is NXDOMAIN and the resolver has support for
+	<xref target="RFC8020" format="default" sectionFormat="of" derivedContent="RFC8020"/>,
+	the NXDOMAIN can be used in response to the original query, and stop. If the
+	cached response code is NOERROR (including NODATA), go back to step 3.
+	If the cached response code is NXDOMAIN and the resolver does not support
+	<xref target="RFC8020" format="default" sectionFormat="of" derivedContent="RFC8020"/>, go back to step 3.</li>
+        <li pn="section-3-3.7" derivedCounter="(6)">
+          <t indent="0" pn="section-3-3.7.1">Query for CHILD with the selected QTYPE using one of ANCESTOR's
+	name servers. The response can be:</t>
+          <ol type="(6%c)" indent="adaptive" spacing="normal" start="1" pn="section-3-3.7.2">
+	    <li pn="section-3-3.7.2.1" derivedCounter="(6a)">A referral. Cache the NS RRset from the authority
+	    section, and go back to step 1.</li>
+            <li pn="section-3-3.7.2.2" derivedCounter="(6b)">A DNAME response. Proceed as if a DNAME is received for the
+	    original query. Start over from step 0 to resolve the new name based on the
+	    DNAME target.</li>
+            <li pn="section-3-3.7.2.3" derivedCounter="(6c)">All other NOERROR answers (including NODATA).
+	    Cache this answer. Regardless of the answered RRset type, including CNAMEs,
+	    continue with the algorithm from step 3 by building the original QNAME.</li>
+            <li pn="section-3-3.7.2.4" derivedCounter="(6d)">An NXDOMAIN response.
+	    If the resolver supports <xref target="RFC8020" format="default" sectionFormat="of" derivedContent="RFC8020"/>, return an
+	    NXDOMAIN response to the original
+	    query, and stop. If the resolver does not support <xref target="RFC8020" format="default" sectionFormat="of" derivedContent="RFC8020"/>, go to step 3.</li>
+            <li pn="section-3-3.7.2.5" derivedCounter="(6e)">A timeout or response with another RCODE. The implementation
+	    may choose to retry step 6 with a different ANCESTOR name server.</li>
+          </ol>
+        </li>
+      </ol>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-qname-minimisation-examples">QNAME Minimisation Examples</name>
+      <t indent="0" pn="section-4-1">As a first example, assume that a resolver receives a request to resolve
+foo.bar.baz.example. Assume that the resolver already knows that
+ns1.nic.example is authoritative for .example and that the resolver does
+not know a more specific authoritative name server. It will send the
+query with QNAME=baz.example and the QTYPE selected to hide the original
+QTYPE to ns1.nic.example.</t>
+      <table align="left" pn="table-1">
+        <name slugifiedName="name-cold-cache-traditional-reso">Cold Cache, Traditional Resolution Algorithm without QNAME Minimisation,
+      Request for MX Record of a.b.example.org</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">QTYPE</th>
+            <th align="left" colspan="1" rowspan="1">QNAME</th>
+            <th align="left" colspan="1" rowspan="1">TARGET</th>
+            <th align="left" colspan="1" rowspan="1">NOTE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MX</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">root name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MX</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MX</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-4-3">The following are more detailed examples of requests for an MX record of
+a.b.example.org with QNAME minimisation, using A QTYPE to hide the original
+QTYPE and using other names and authoritative servers:</t>
+      <table align="left" pn="table-2">
+        <name slugifiedName="name-cold-cache-with-qname-minim">Cold Cache with QNAME Minimisation</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">QTYPE</th>
+            <th align="left" colspan="1" rowspan="1">QNAME</th>
+            <th align="left" colspan="1" rowspan="1">TARGET</th>
+            <th align="left" colspan="1" rowspan="1">NOTE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">org</td>
+            <td align="left" colspan="1" rowspan="1">root name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">example.org</td>
+            <td align="left" colspan="1" rowspan="1">org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1">"a" may be delegated</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MX</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-4-5">Note that, in the above example, one query would have been saved if the incoming QTYPE
+      was the same as the QTYPE selected by the resolver to hide the
+      original QTYPE. Only one query for a.b.example.org would have been needed if
+      the original QTYPE would have been A. Using the most-used QTYPE to hide the
+      original QTYPE therefore slightly reduces the number of outgoing queries compared to
+      using any other QTYPE to hide the original QTYPE.</t>
+      <table align="left" pn="table-3">
+        <name slugifiedName="name-warm-cache-with-qname-minim">Warm Cache with QNAME Minimisation</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">QTYPE</th>
+            <th align="left" colspan="1" rowspan="1">QNAME</th>
+            <th align="left" colspan="1" rowspan="1">TARGET</th>
+            <th align="left" colspan="1" rowspan="1">NOTE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">example.org</td>
+            <td align="left" colspan="1" rowspan="1">org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">A</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1">"a" may be delegated</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">MX</td>
+            <td align="left" colspan="1" rowspan="1">a.b.example.org</td>
+            <td align="left" colspan="1" rowspan="1">example.org name server</td>
+            <td align="left" colspan="1" rowspan="1"/>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="perf_cons" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-performance-considerations">Performance Considerations</name>
+      <t indent="0" pn="section-5-1">The main goal of QNAME minimisation is to improve privacy by
+      sending less data. However, it may have other advantages. For
+      instance, if a resolver sends a root name server queries
+      for A.example followed by B.example followed by C.example, the result
+      will be three NXDOMAINs, since .example does not exist in the root
+      zone. When using QNAME minimisation, the resolver would send
+      only one question (for .example itself) to which they could answer
+      NXDOMAIN. The resolver can cache this answer and use it to prove that
+      nothing below .example exists <xref target="RFC8020" format="default" sectionFormat="of" derivedContent="RFC8020"/>. A resolver now
+      knows a priori that neither B.example nor C.example exist. Thus, in this common case,
+      the total number of upstream
+      queries under QNAME minimisation could be counterintuitively less
+      than the number of queries under the traditional iteration (as
+      described in the DNS standard).</t>
+      <t indent="0" pn="section-5-2">QNAME minimisation can increase the number of queries based on the incoming
+      QNAME. This is described in <xref target="number-of-queries" format="default" sectionFormat="of" derivedContent="Section 2.3"/>.
+      As described in <xref target="devries-qnamemin" format="default" sectionFormat="of" derivedContent="devries-qnamemin"/>, QNAME minimisation
+      both increases the number of DNS lookups by up to 26% and leads to up to 5% more failed
+      lookups. Filling the cache in a production resolver will soften that overhead.</t>
+    </section>
+    <section numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">QNAME minimisation's benefits are clear in the case where you want
+      to decrease exposure of the queried name to the authoritative name server. But
+      minimising the amount of data sent also, in part, addresses the case of a wire
+      sniffer as well as the case of privacy invasion by the authoritative name
+      servers. Encryption is of course a better defense against wire
+      sniffers, but, unlike QNAME minimisation, it changes the protocol and
+      cannot be deployed unilaterally. Also, the effect of QNAME
+      minimisation on wire sniffers depends on whether the sniffer is on
+      the DNS path.</t>
+      <t indent="0" pn="section-6-2">QNAME minimisation offers no protection against the recursive
+      resolver, which still sees the full request coming from the stub
+      resolver.</t>
+      <t indent="0" pn="section-6-3">A resolver using QNAME minimisation can possibly be used to cause
+a query storm to be sent to servers when resolving queries containing a QNAME
+with a large number of labels, as described in
+<xref target="number-of-queries" format="default" sectionFormat="of" derivedContent="Section 2.3"/>. That section proposes methods to
+significantly dampen the effects of such attacks.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC1034" target="https://www.rfc-editor.org/info/rfc1034" quoteTitle="true" derivedAnchor="RFC1034">
+          <front>
+            <title>Domain names - concepts and facilities</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised basic definition of The Domain Name System.  It obsoletes RFC-882.  This memo describes the domain style names and their used for host address look up and electronic mail forwarding.  It discusses the clients and servers in the domain name system and the protocol used between them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1034"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1034"/>
+        </reference>
+        <reference anchor="RFC1035" target="https://www.rfc-editor.org/info/rfc1035" quoteTitle="true" derivedAnchor="RFC1035">
+          <front>
+            <title>Domain names - implementation and specification</title>
+            <author initials="P.V." surname="Mockapetris" fullname="P.V. Mockapetris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1987" month="November"/>
+            <abstract>
+              <t indent="0">This RFC is the revised specification of the protocol and format used in the implementation of the Domain Name System.  It obsoletes RFC-883. This memo documents the details of the domain name client - server communication.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="13"/>
+          <seriesInfo name="RFC" value="1035"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1035"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC6973" target="https://www.rfc-editor.org/info/rfc6973" quoteTitle="true" derivedAnchor="RFC6973">
+          <front>
+            <title>Privacy Considerations for Internet Protocols</title>
+            <author initials="A." surname="Cooper" fullname="A. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Aboba" fullname="B. Aboba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Peterson" fullname="J. Peterson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Morris" fullname="J. Morris">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Hansen" fullname="M. Hansen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Smith" fullname="R. Smith">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="July"/>
+            <abstract>
+              <t indent="0">This document offers guidance for developing privacy considerations for inclusion in protocol specifications.  It aims to make designers, implementers, and users of Internet protocols aware of privacy-related design choices.  It suggests that whether any individual RFC warrants a specific privacy considerations section will depend on the document's content.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6973"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6973"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8499" target="https://www.rfc-editor.org/info/rfc8499" quoteTitle="true" derivedAnchor="RFC8499">
+          <front>
+            <title>DNS Terminology</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Sullivan" fullname="A. Sullivan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Fujiwara" fullname="K. Fujiwara">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2019" month="January"/>
+            <abstract>
+              <t indent="0">The Domain Name System (DNS) is defined in literally dozens of different RFCs.  The terminology used by implementers and developers of DNS protocols, and by operators of DNS systems, has sometimes changed in the decades since the DNS was first defined.  This document gives current definitions for many of the terms used in the DNS in a single document.</t>
+              <t indent="0">This document obsoletes RFC 7719 and updates RFC 2308.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="219"/>
+          <seriesInfo name="RFC" value="8499"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8499"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="apnic-qnamemin" target="https://indico.dns-oarc.net/event/34/contributions/787/attachments/777/1326/2020-09-28-oarc33-qname-minimisation.pdf" quoteTitle="true" derivedAnchor="apnic-qnamemin">
+          <front>
+            <title>Measuring Query Name Minimization</title>
+            <author fullname="Geoff Huston" initials="G." surname="Huston"/>
+            <author fullname="Joao Damas" initials="J." surname="Damas"/>
+            <date month="September" year="2020"/>
+          </front>
+        </reference>
+        <reference anchor="devries-qnamemin" target="https://nlnetlabs.nl/downloads/publications/devries2019.pdf" quoteTitle="true" derivedAnchor="devries-qnamemin">
+          <front>
+            <title>A First Look at QNAME Minimization in the Domain Name System</title>
+            <author fullname="Wouter B. de Vries" initials="W" surname="de Vries"/>
+            <author fullname="Quirin Scheitle" initials="Q" surname="Scheitle"/>
+            <author fullname="Moritz Müller" initials="M" surname="Müller"/>
+            <author fullname="Willem Toorop" initials="W" surname="Toorop"/>
+            <author fullname="Ralph Dolmans" initials="R" surname="Dolmans"/>
+            <author fullname="Roland van Rijswijk-Deij" initials="R" surname="van                 Rijswijk-Deij"/>
+            <date month="March" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="dnsthought-qnamemin" target="https://dnsthought.nlnetlabs.nl/#qnamemin" quoteTitle="true" derivedAnchor="dnsthought-qnamemin">
+          <front>
+            <title>Qname Minimisation</title>
+            <author fullname="" initials="" surname=""/>
+            <date month="October" year="2021"/>
+          </front>
+        </reference>
+        <reference anchor="Huque-QNAME-Min" target="https://indico.dns-oarc.net/event/21/contribution/9" quoteTitle="true" derivedAnchor="Huque-QNAME-Min">
+          <front>
+            <title>Query name minimization and authoritative server behavior</title>
+            <author fullname="Shumon Huque" initials="S." surname="Huque"/>
+            <date month="May" year="2015"/>
+          </front>
+        </reference>
+        <reference anchor="RFC2181" target="https://www.rfc-editor.org/info/rfc2181" quoteTitle="true" derivedAnchor="RFC2181">
+          <front>
+            <title>Clarifications to the DNS Specification</title>
+            <author initials="R." surname="Elz" fullname="R. Elz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Bush" fullname="R. Bush">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="July"/>
+            <abstract>
+              <t indent="0">This document considers some areas that have been identified as problems with the specification of the Domain Name System, and proposes remedies for the defects identified. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2181"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2181"/>
+        </reference>
+        <reference anchor="RFC6672" target="https://www.rfc-editor.org/info/rfc6672" quoteTitle="true" derivedAnchor="RFC6672">
+          <front>
+            <title>DNAME Redirection in the DNS</title>
+            <author initials="S." surname="Rose" fullname="S. Rose">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Wijngaards" fullname="W. Wijngaards">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="June"/>
+            <abstract>
+              <t indent="0">The DNAME record provides redirection for a subtree of the domain name tree in the DNS.  That is, all names that end with a particular suffix are redirected to another part of the DNS.  This document obsoletes the original specification in RFC 2672 as well as updates the document on representing IPv6 addresses in DNS (RFC 3363). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6672"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6672"/>
+        </reference>
+        <reference anchor="RFC6895" target="https://www.rfc-editor.org/info/rfc6895" quoteTitle="true" derivedAnchor="RFC6895">
+          <front>
+            <title>Domain Name System (DNS) IANA Considerations</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="April"/>
+            <abstract>
+              <t indent="0">This document specifies Internet Assigned Numbers Authority (IANA) parameter assignment considerations for the allocation of Domain Name System (DNS) resource record types, CLASSes, operation codes, error codes, DNS protocol message header bits, and AFSDB resource record subtypes.  It obsoletes RFC 6195 and updates RFCs 1183, 2845, 2930, and 3597.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="42"/>
+          <seriesInfo name="RFC" value="6895"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6895"/>
+        </reference>
+        <reference anchor="RFC7816" target="https://www.rfc-editor.org/info/rfc7816" quoteTitle="true" derivedAnchor="RFC7816">
+          <front>
+            <title>DNS Query Name Minimisation to Improve Privacy</title>
+            <author initials="S." surname="Bortzmeyer" fullname="S. Bortzmeyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="March"/>
+            <abstract>
+              <t indent="0">This document describes a technique to improve DNS privacy, a technique called "QNAME minimisation", where the DNS resolver no longer sends the full original QNAME to the upstream name server.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7816"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7816"/>
+        </reference>
+        <reference anchor="RFC8020" target="https://www.rfc-editor.org/info/rfc8020" quoteTitle="true" derivedAnchor="RFC8020">
+          <front>
+            <title>NXDOMAIN: There Really Is Nothing Underneath</title>
+            <author initials="S." surname="Bortzmeyer" fullname="S. Bortzmeyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Huque" fullname="S. Huque">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="November"/>
+            <abstract>
+              <t indent="0">This document states clearly that when a DNS resolver receives a response with a response code of NXDOMAIN, it means that the domain name which is thus denied AND ALL THE NAMES UNDER IT do not exist.</t>
+              <t indent="0">This document clarifies RFC 1034 and modifies a portion of RFC 2308: it updates both of them.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8020"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8020"/>
+        </reference>
+        <reference anchor="RFC8198" target="https://www.rfc-editor.org/info/rfc8198" quoteTitle="true" derivedAnchor="RFC8198">
+          <front>
+            <title>Aggressive Use of DNSSEC-Validated Cache</title>
+            <author initials="K." surname="Fujiwara" fullname="K. Fujiwara">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Kato" fullname="A. Kato">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Kumari" fullname="W. Kumari">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="July"/>
+            <abstract>
+              <t indent="0">The DNS relies upon caching to scale; however, the cache lookup generally requires an exact match.  This document specifies the use of NSEC/NSEC3 resource records to allow DNSSEC-validating resolvers to generate negative answers within a range and positive answers from wildcards.  This increases performance, decreases latency, decreases resource utilization on both authoritative and recursive servers, and increases privacy.  Also, it may help increase resilience to certain DoS attacks in some circumstances.</t>
+              <t indent="0">This document updates RFC 4035 by allowing validating resolvers to generate negative answers based upon NSEC/NSEC3 records and positive answers in the presence of wildcards.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8198"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8198"/>
+        </reference>
+        <reference anchor="RFC9076" target="https://www.rfc-editor.org/info/rfc9076" quoteTitle="true" derivedAnchor="RFC9076">
+          <front>
+            <title>DNS Privacy Considerations</title>
+            <author initials="T." surname="Wicinski" fullname="T. Wicinski" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2021" month="July"/>
+            <abstract>
+              <t indent="0">This document describes the privacy issues associated with the use of the DNS by Internet users. It provides general observations about typical current privacy practices. It is intended to be an analysis of the present situation and does not prescribe solutions. This document obsoletes RFC 7626.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9076"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9076"/>
+        </reference>
+        <reference anchor="verisign-qnamemin" target="https://blog.verisign.com/security/maximizing-qname-minimization-a-new-chapter-in-dns-protocol-evolution/" quoteTitle="true" derivedAnchor="verisign-qnamemin">
+          <front>
+            <title>Maximizing Qname Minimization: A New Chapter in DNS Protocol Evolution</title>
+            <author fullname="Matt Thomas" initials="M." surname="Thomas"/>
+            <date month="September" year="2020"/>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">The acknowledgments from  RFC 7816 apply here.
+      In addition, many participants from the DNSOP Working Group helped
+      with proposals for simplification, clarification, and general
+      editorial help.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Stephane Bortzmeyer" initials="S." surname="Bortzmeyer">
+        <organization showOnFrontPage="true">AFNIC</organization>
+        <address>
+          <postal>
+            <street>1, rue Stephenson</street>
+            <code>78180</code>
+            <city>Montigny-le-Bretonneux</city>
+            <country>France</country>
+          </postal>
+          <phone>+33 1 39 30 83 46</phone>
+          <email>bortzmeyer+ietf@nic.fr</email>
+          <uri>https://www.afnic.fr/</uri>
+        </address>
+      </author>
+      <author fullname="Ralph Dolmans" initials="R." surname="Dolmans">
+        <organization showOnFrontPage="true">NLnet Labs</organization>
+        <address>
+          <email>ralph@nlnetlabs.nl</email>
+        </address>
+      </author>
+      <author fullname="Paul Hoffman" initials="P." surname="Hoffman">
+        <organization showOnFrontPage="true">ICANN</organization>
+        <address>
+          <email>paul.hoffman@icann.org</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

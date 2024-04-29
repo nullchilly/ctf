@@ -1,0 +1,1266 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" ipr="trust200902" docName="draft-ietf-pim-assert-packing-12" number="9466" submissionType="IETF" category="std" consensus="true" tocDepth="5" tocInclude="true" sortRefs="true" symRefs="true" updates="" obsoletes="" xml:lang="en" prepTime="2023-10-13T16:16:13" indexInclude="true" scripts="Common,Latin">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-pim-assert-packing-12" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9466" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="PIM Assert Packing">PIM Assert Message Packing</title>
+    <seriesInfo name="RFC" value="9466" stream="IETF"/>
+    <author initials="Y." surname="Liu" fullname="Yisong Liu" role="editor">
+      <organization showOnFrontPage="true">China Mobile</organization>
+      <address>
+        <postal>
+          <country>China</country>
+        </postal>
+        <email>liuyisong@chinamobile.com</email>
+      </address>
+    </author>
+    <author initials="T." surname="Eckert" fullname="Toerless Eckert" role="editor">
+      <organization showOnFrontPage="true">Futurewei</organization>
+      <address>
+        <postal>
+          <country>United States of America</country>
+        </postal>
+        <email>tte@cs.fau.de</email>
+      </address>
+    </author>
+    <author initials="M." surname="McBride" fullname="Mike McBride">
+      <organization showOnFrontPage="true">Futurewei</organization>
+      <address>
+        <postal>
+          <country>United States of America</country>
+        </postal>
+        <email>michael.mcbride@futurewei.com</email>
+      </address>
+    </author>
+    <author initials="Z." surname="Zhang" fullname="Zheng (Sandy) Zhang">
+      <organization showOnFrontPage="true">ZTE Corporation</organization>
+      <address>
+        <postal>
+          <country>China</country>
+        </postal>
+        <email>zhang.zheng@zte.com.cn</email>
+      </address>
+    </author>
+    <date month="10" year="2023"/>
+    <area>rtg</area>
+    <workgroup>pim</workgroup>
+    <workgroup>ip</workgroup>
+    <workgroup>ipv6</workgroup>
+    <workgroup>multicast</workgroup>
+    <workgroup>performance</workgroup>
+    <workgroup>scalability</workgroup>
+    <workgroup>subnet</workgroup>
+    <workgroup>lan</workgroup>
+    <workgroup>sparse-mode</workgroup>
+    <workgroup>ASM</workgroup>
+    <workgroup>SSM</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">When PIM Sparse Mode (PIM-SM), including PIM Source-Specific
+   Multicast (PIM-SSM), is used in shared LAN networks, there is often more
+   than one upstream router. This can lead to duplicate IP multicast packets
+   being forwarded by these PIM routers. PIM Assert messages
+   are used to elect a single forwarder for each IP multicast traffic
+   flow between these routers.</t>
+      <t indent="0" pn="section-abstract-2">This document defines a mechanism to send and receive information for
+      multiple IP multicast flows in a single PackedAssert message. This
+      optimization reduces the total number of PIM packets on the LAN and can
+      therefore speed up the election of the single forwarder, reducing the
+      number of duplicate IP multicast packets incurred.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9466" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2023 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-problem-statement">Problem Statement</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-specification">Specification</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pim-packed-assert-capabilit">PIM Packed Assert Capability Hello Option</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-assert-packing-message-form">Assert Packing Message Formats</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-packedassert-mechanism">PackedAssert Mechanism</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.3.2">
+                  <li pn="section-toc.1-1.3.2.3.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.3.2.1.1"><xref derivedContent="3.3.1" format="counter" sectionFormat="of" target="section-3.3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-sending-packedassert-messag">Sending PackedAssert Messages</xref></t>
+                    <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.3.2.1.2">
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.1">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.1.1"><xref derivedContent="3.3.1.1" format="counter" sectionFormat="of" target="section-3.3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-of-reception-trigg">Handling of Reception-Triggered Assert Records</xref></t>
+                      </li>
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.2">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.2.1"><xref derivedContent="3.3.1.2" format="counter" sectionFormat="of" target="section-3.3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-of-timer-expiry-tr">Handling of Timer Expiry-Triggered Assert Records</xref></t>
+                      </li>
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.3">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.3.1"><xref derivedContent="3.3.1.3" format="counter" sectionFormat="of" target="section-3.3.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-beneficial-delay-in-sending">Beneficial Delay in Sending PackedAssert Messages</xref></t>
+                      </li>
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.4">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.4.1"><xref derivedContent="3.3.1.4" format="counter" sectionFormat="of" target="section-3.3.1.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-handling-assert-packedasser">Handling Assert/PackedAssert Message Loss</xref></t>
+                      </li>
+                      <li pn="section-toc.1-1.3.2.3.2.1.2.5">
+                        <t indent="0" pn="section-toc.1-1.3.2.3.2.1.2.5.1"><xref derivedContent="3.3.1.5" format="counter" sectionFormat="of" target="section-3.3.1.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-optimal-degree-of-assert-re">Optimal Degree of Assert Record Packing</xref></t>
+                      </li>
+                    </ul>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.3.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.3.2.2.1"><xref derivedContent="3.3.2" format="counter" sectionFormat="of" target="section-3.3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-receiving-packedassert-mess">Receiving PackedAssert Messages</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-packet-formats">Packet Formats</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pim-packed-assert-capability">PIM Packed Assert Capability Hello Option</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-assert-message-format">Assert Message Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-simple-packedassert-message">Simple PackedAssert Message Format</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-aggregated-packedassert-mes">Aggregated PackedAssert Message Format</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.4.2">
+                  <li pn="section-toc.1-1.4.2.4.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.1.1"><xref derivedContent="4.4.1" format="counter" sectionFormat="of" target="section-4.4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-source-aggregated-assert-re">Source Aggregated Assert Record</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.4.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.4.2.2.1"><xref derivedContent="4.4.2" format="counter" sectionFormat="of" target="section-4.4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rp-aggregated-assert-record">RP Aggregated Assert Record</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-use-case-examples">Use Case Examples</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="A.1" format="counter" sectionFormat="of" target="section-appendix.a.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-enterprise-network">Enterprise Network</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="A.2" format="counter" sectionFormat="of" target="section-appendix.a.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-video-surveillance">Video Surveillance</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="A.3" format="counter" sectionFormat="of" target="section-appendix.a.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-financial-services">Financial Services</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.4">
+                <t indent="0" pn="section-toc.1-1.8.2.4.1"><xref derivedContent="A.4" format="counter" sectionFormat="of" target="section-appendix.a.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iptv-broadcast-video">IPTV Broadcast Video</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.5">
+                <t indent="0" pn="section-toc.1-1.8.2.5.1"><xref derivedContent="A.5" format="counter" sectionFormat="of" target="section-appendix.a.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mvpn-mdt">MVPN MDT</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.6">
+                <t indent="0" pn="section-toc.1-1.8.2.6.1"><xref derivedContent="A.6" format="counter" sectionFormat="of" target="section-appendix.a.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-special-l2-services">Special L2 Services</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">When PIM-SM is used in shared LAN networks, there is typically more than
+   one upstream router. When duplicate data packets appear on the LAN from
+   different upstream routers, assert packets are sent from these routers to
+   elect a single forwarder according to <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>. The PIM
+   Assert messages are sent periodically to keep the Assert state. The PIM
+   Assert message carries information about a single multicast source and
+   group, along with the corresponding Metric and Metric Preference of the
+   route towards the source or PIM Rendezvous Point (RP).</t>
+      <t indent="0" pn="section-1-2">This document defines a mechanism to encode the information of
+      multiple PIM Assert messages into a single PackedAssert message.  This
+      allows sending and receiving information for multiple IP multicast flows
+      in a single PackedAssert message without changing the PIM Assert state
+      machinery. It reduces the total number of PIM packets on the LAN and can
+      therefore speed up the election of the single forwarder, reducing the
+      number of duplicate IP multicast packets.  This can be particularly
+      helpful when there is traffic for a large number of multicast groups or
+      SSM channels and PIM packet processing performance of the routers is
+      slow.</t>
+      <section anchor="requirements-language" numbered="true" removeInRFC="false" toc="include" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section anchor="terminology" numbered="true" removeInRFC="false" toc="include" pn="section-1.2">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t indent="0" pn="section-1.2-1">The reader is expected to be familiar with the terminology of <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>. The following lists the abbreviations repeated in this document.</t>
+        <dl newline="false" spacing="normal" indent="6" pn="section-1.2-2">
+          <dt pn="section-1.2-2.1">AT:</dt>
+          <dd pn="section-1.2-2.2">Assert Timer</dd>
+          <dt pn="section-1.2-2.3">DR:</dt>
+          <dd pn="section-1.2-2.4">Designated Router</dd>
+          <dt pn="section-1.2-2.5">RP:</dt>
+          <dd pn="section-1.2-2.6">Rendezvous Point</dd>
+          <dt pn="section-1.2-2.7">RPF:</dt>
+          <dd pn="section-1.2-2.8">Reverse Path Forwarding</dd>
+          <dt pn="section-1.2-2.9">RPT:</dt>
+          <dd pn="section-1.2-2.10">RP Tree</dd>
+          <dt pn="section-1.2-2.11">SPT:</dt>
+          <dd pn="section-1.2-2.12">Shortest Path Tree</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="problem-statement" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-problem-statement">Problem Statement</name>
+      <t indent="0" pn="section-2-1">PIM Asserts occur in many deployments. See <xref target="use-case-examples" format="default" sectionFormat="of" derivedContent="Appendix A"/>
+for explicit examples and explanations of why it is often not possible to avoid.</t>
+      <t indent="0" pn="section-2-2">PIM Assert state depends mainly on the network topology.
+As long as there is a Layer 2 (L2) network with more than two PIM routers,
+there may be multiple upstream routers, which can cause duplicate
+multicast traffic to be forwarded and assert processing to occur.</t>
+      <t indent="0" pn="section-2-3">As the multicast services become widely deployed, the
+number of multicast entries increases, and a large number of Assert
+messages may be sent in a very short period when multicast data
+packets trigger PIM assert processing in the shared LAN networks.
+The PIM routers need to process a large number of small PIM assert
+packets in a very short time. As a result, the device load is very
+large. The assert packet may not be processed in time or even
+discarded, thus extending the time of traffic duplication in the
+network.</t>
+      <t indent="0" pn="section-2-4">The PIM Assert mechanism can only be avoided by designing the network
+    to be without transit subnets with multiple upstream routers. For example,
+    an L2 ring between routers can sometimes be reconfigured to be a ring of
+    point-to-point subnets connected by the routers. However, these Layer 2
+    (L2) and Layer 3 (L3) topology changes are undesirable when they are only
+    done to enable IP multicast with PIM because they increase the cost of
+    introducing IP multicast with PIM.</t>
+      <t indent="0" pn="section-2-5">These designs are also not feasible when specific L2 technologies are
+    needed.  For example, various L2 technologies for rings provide sub-50
+    msec failover mechanisms, something not possible equally with a ring
+    composed from L3 subnets. Likewise, IEEE Time-Sensitive Networking
+    mechanisms would require an L2 topology that cannot simply be replaced by
+    an L3 topology.  L2 sub-topologies can also significantly reduce the cost
+    of deployment.</t>
+    </section>
+    <section anchor="specification" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-specification">Specification</name>
+      <t indent="0" pn="section-3-1">This document defines three elements in support of PIM assert packing:</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-3-2">
+	<li pn="section-3-2.1" derivedCounter="1.">The PIM Packed Assert Capability Hello Option</li>
+        <li pn="section-3-2.2" derivedCounter="2.">The encoding of PackedAssert messages</li>
+        <li pn="section-3-2.3" derivedCounter="3.">How to send and receive PackedAssert messages</li>
+      </ol>
+      <section anchor="pim-assert-packing-hello-option" numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-pim-packed-assert-capabilit">PIM Packed Assert Capability Hello Option</name>
+        <t indent="0" pn="section-3.1-1">The PIM Packed Assert Capability Hello Option (<xref target="assert-packing-option" format="default" sectionFormat="of" derivedContent="Section 4.1"/>) is used to announce support
+for the assert packing mechanisms specified in this document.
+PackedAssert messages (<xref target="assert-packing-formats" format="default" sectionFormat="of" derivedContent="Section 3.2"/>) 
+<bcp14>MUST NOT</bcp14> be used unless all PIM routers in the same subnet announce this option.</t>
+      </section>
+      <section anchor="assert-packing-formats" numbered="true" removeInRFC="false" toc="include" pn="section-3.2">
+        <name slugifiedName="name-assert-packing-message-form">Assert Packing Message Formats</name>
+        <t indent="0" pn="section-3.2-1">The PIM Assert message, as defined in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>, describes the parameters of a
+        (*,G) or (S,G) assert using the following information elements:
+        Rendezvous Point Tree flag (R), Source Address, Group Address, Metric,
+        and Metric Preference. This document calls this information an "assert
+        record".</t>
+        <t indent="0" pn="section-3.2-2">This document introduces two new PIM Assert message encodings
+        through the allocation and use of two flags in the PIM Assert message
+        header <xref target="RFC9436" format="default" sectionFormat="of" derivedContent="RFC9436"/>: the Packed (P) and the Aggregated (A)
+        flags.</t>
+        <t indent="0" pn="section-3.2-3">If P=0, the message is a (non-packed) PIM Assert
+        message as specified in <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>. See <xref target="rfc7761-assert-message" format="default" sectionFormat="of" derivedContent="Section 4.2"/>. In this case, the A flag
+        <bcp14>MUST</bcp14> be set to 0 and <bcp14>MUST</bcp14> be ignored on
+        receipt.</t>
+        <t indent="0" pn="section-3.2-4">If P=1, then the message is called a "PackedAssert
+        message", and the type and hence encoding format of the payload are
+        determined by the A flag.</t>
+        <t indent="0" pn="section-3.2-5">If A=0, then the message body is a sequence of assert records. This
+        is called a "Simple PackedAssert message". See <xref target="simple-packedassert-message" format="default" sectionFormat="of" derivedContent="Section 4.3"/>.</t>
+        <t indent="0" pn="section-3.2-6">If A=1, then the message body is a sequence of aggregated assert
+        records. This is called an "Aggregated PackedAssert message". See <xref target="aggregated-packedassert-message" format="default" sectionFormat="of" derivedContent="Section 4.4"/>.</t>
+        <t indent="0" pn="section-3.2-7">Two aggregated assert record types are specified.</t>
+        <t indent="0" pn="section-3.2-8">The "Source Aggregated Assert Record" (see <xref target="s-assert-record" format="default" sectionFormat="of" derivedContent="Section 4.4.1"/>) encodes one (common) Source Address,
+        Metric, and Metric Preference as well as a list of one or more Group
+        Addresses.  Source Aggregated Assert Records provide a more compact
+        encoding than the Simple PackedAssert message format when multiple
+        (S,G) flows share the same source S.  A single Source Aggregated
+        Assert Record with n Group Addresses represents the information of
+        assert records for (S,G1)...(S,Gn).</t>
+        <t indent="0" pn="section-3.2-9">The "RP Aggregated Assert Record" (see <xref target="rp-assert-record" format="default" sectionFormat="of" derivedContent="Section 4.4.2"/>) encodes one common Metric and Metric
+        Preference as well as a list of "Group Records", each of which encodes
+        a Group Address and a list of zero or more Source Addresses with a
+        count. This is called an "RP Aggregated Assert Record", because with
+        standard RPF according to <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>, all the Group
+        Addresses that use the same RP will have the same Metric and Metric
+        Preference.</t>
+        <t indent="0" pn="section-3.2-10">RP Aggregation Assert Records provide a more compact encoding than
+        the Simple PackedAssert message format for (*,G) flows.  The Source
+        Address is optionally used in the assert procedures in <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> to indicate the source(s) that triggered the
+        assert; otherwise, the Source Address is set to 0 in the assert
+        record.</t>
+        <t indent="0" pn="section-3.2-11">Both Source Aggregated Assert Records and RP Aggregated Assert
+        Records also include the R flag, which maintains its semantics from
+        <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> but also distinguishes the encodings. Source
+        Aggregated Assert Records have R=0, as (S,G) assert records do in
+        <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>.  RP Aggregated Assert Records have R=1, as
+        (*,G) assert records do in <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>.</t>
+      </section>
+      <section anchor="packedassert-mechanism" numbered="true" removeInRFC="false" toc="include" pn="section-3.3">
+        <name slugifiedName="name-packedassert-mechanism">PackedAssert Mechanism</name>
+        <t indent="0" pn="section-3.3-1">PackedAsserts do not change the PIM Assert state machine
+        specification <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>. Instead, sending and
+        receiving of PackedAssert messages, as specified in the following
+        subsections, are logically new packetization options for assert records
+        in addition to the (non-packed) Assert message <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>.  There is no change to the assert record
+        information elements transmitted or their semantics. They are just
+        transmitted in fewer but larger packets, and a fewer total number of
+        bytes is used to encode the information elements. As a result, PIM
+        routers should be able to send and receive assert records faster
+        and/or with less processing overhead.</t>
+        <section anchor="sending-packedassert-messages" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1">
+          <name slugifiedName="name-sending-packedassert-messag">Sending PackedAssert Messages</name>
+          <t indent="0" pn="section-3.3.1-1">When using assert packing, the regular Assert message encoding
+          <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> with A=0 and P=0 is still allowed to be
+          sent.  Routers are free to choose which PackedAssert message format
+          they send -- simple (<xref target="simple-packedassert-message" format="default" sectionFormat="of" derivedContent="Section 4.3"/>)
+          and/or aggregated (<xref target="aggregated-packedassert-message" format="default" sectionFormat="of" derivedContent="Section 4.4"/>).</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.3.1-2">
+            <li pn="section-3.3.1-2.1">When any PIM routers on the LAN have not signaled support for
+            assert packing, implementations <bcp14>MUST</bcp14> only send 
+            Asserts and <bcp14>MUST NOT</bcp14> send PackedAsserts under any
+            condition.</li>
+            <li pn="section-3.3.1-2.2">The protocol or system conditions for which an implementation
+            sends PackedAsserts instead of Asserts are out of scope
+            for this specification. Protocol conditions include protocol
+            triggers such as data-triggered asserts or Assert Timer (AT)
+            expiry-triggered asserts, and system conditions include high or
+            low load or control plane packet reception rates.</li>
+            <li pn="section-3.3.1-2.3">Implementations are expected to specify in documentation
+            and/or management interfaces (such as a YANG data model) which
+            PackedAssert message formats they can send and under which
+            conditions they will send them.</li>
+            <li pn="section-3.3.1-2.4">Implementations <bcp14>SHOULD</bcp14> be able to indicate to
+            the operator (such as through a YANG data model) how many Assert
+            and PackedAssert messages were sent/received and how many assert
+            records were sent/received.</li>
+            <li pn="section-3.3.1-2.5">A configuration option <bcp14>SHOULD</bcp14> be available to
+         disable PackedAssert operations. PIM-SM implementations <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> that introduce support for assert packing from day
+         one <bcp14>MAY</bcp14> omit this configuration option.</li>
+          </ul>
+          <t indent="0" pn="section-3.3.1-3">When a PIM router has an assert record ready to send according to
+          <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>, it calls one of the following
+          functions:</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-3.3.1-4">
+            <li pn="section-3.3.1-4.1">send Assert(S,G) / send Assert(*,G) (<xref target="RFC7761" sectionFormat="comma" section="4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.2" derivedContent="RFC7761"/>)</li>
+            <li pn="section-3.3.1-4.2">send Assert(S,G) / send AssertCancel(S,G) (<xref target="RFC7761" sectionFormat="comma" section="4.6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.6.1" derivedContent="RFC7761"/>)</li>
+            <li pn="section-3.3.1-4.3">send Assert(*,G) / send AssertCancel(*,G) (<xref target="RFC7761" sectionFormat="comma" section="4.6.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.6.2" derivedContent="RFC7761"/>)</li>
+            <li pn="section-3.3.1-4.4">send Assert(S,G) (<xref target="RFC7761" sectionFormat="comma" section="4.8.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.8.2" derivedContent="RFC7761"/>)</li>
+          </ul>
+          <t indent="0" pn="section-3.3.1-5">If sending of PackedAsserts is possible on the network, instead of
+          sending an Assert message with an assert record, any of these calls
+          <bcp14>MAY</bcp14> instead result in the PIM implementation
+          remembering the assert record and continuing with further
+          processing for other flows, which may result in additional assert
+          records.</t>
+          <t indent="0" pn="section-3.3.1-6">PIM <bcp14>MUST</bcp14> then create PackedAssert messages from
+          the remembered assert records and schedule them for sending
+          according to the considerations in the following subsections.</t>
+          <section anchor="handling-of-reception-triggered-assert-records" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1.1">
+            <name slugifiedName="name-handling-of-reception-trigg">Handling of Reception-Triggered Assert Records</name>
+            <t indent="0" pn="section-3.3.1.1-1">Avoiding additional delay because of assert packing compared to
+            immediately scheduling Assert messages is most critical for
+            assert records that are triggered by reception of data or
+            reception of asserts against which the router is in the "I am
+            Assert Winner" state. In these cases, the router
+            <bcp14>SHOULD</bcp14> send out an Assert or PackedAssert message
+            containing this assert record as soon as possible to minimize the
+            time in which duplicate IP multicast packets can occur.</t>
+            <t indent="0" pn="section-3.3.1.1-2">To avoid additional delay in this case, the router should
+            employ appropriate assert packing and scheduling mechanisms, as
+            explained here.</t>
+            <t indent="0" pn="section-3.3.1.1-3">Asserts/PackedAsserts created from reception-triggered assert
+            records should be scheduled for serialization with a higher
+            priority than those created because of other protocol or system
+            conditions. They should also bypass other PIM messages that can
+            create significant bursts, such as PIM join/prune messages.</t>
+            <t indent="0" pn="section-3.3.1.1-4">When there are no reception-triggered Assert/PackedAssert
+            messages currently being serialized on the interface or scheduled
+            to be sent, the router should immediately generate and schedule an
+            Assert or PackedAssert message without further assert packing.</t>
+            <t indent="0" pn="section-3.3.1.1-5">If one or more reception-triggered Assert/PackedAssert messages
+            are already serializing or are scheduled to be serialized on the
+            outgoing interface, then the router can use the time until the
+            last of those messages has finished serializing for PIM processing
+            of further conditions. This may result in additional
+            reception-triggered assert records and the packing of these assert
+            records without introducing additional delay.</t>
+          </section>
+          <section anchor="handling-of-timer-expiry-triggered-assert-records" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1.2">
+            <name slugifiedName="name-handling-of-timer-expiry-tr">Handling of Timer Expiry-Triggered Assert Records</name>
+            <t indent="0" pn="section-3.3.1.2-1">Asserts triggered by expiry of the AT on an assert winner are
+            not time-critical because they can be scheduled in advance and
+            because the Assert_Override_Interval parameter <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> already creates a 3-second window in which such
+            assert records can be sent, received, and processed before an
+            assert loser's state expires and duplicate IP multicast
+            packets could occur.</t>
+            <t indent="0" pn="section-3.3.1.2-2">An example mechanism to allow packing of AT expiry-triggered
+            assert records on assert winners is to round the AT to an
+            appropriate granularity such as 100 msec.  This will cause the AT for
+            multiple (S,G) and/or (*,G) states to expire at the same time,
+            thus allowing them to be easily packed without changes to the
+            Assert state machinery.</t>
+            <t indent="0" pn="section-3.3.1.2-3">AssertCancel messages have assert records with an infinite
+            metric and can use assert packing like any other Assert. They are
+            sent on Override Timer (OT) expiry and can be packed, for example,
+            with the same considerations as AT expiry-triggered assert
+            records.</t>
+          </section>
+          <section anchor="beneficial" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1.3">
+            <name slugifiedName="name-beneficial-delay-in-sending">Beneficial Delay in Sending PackedAssert Messages</name>
+            <t indent="0" pn="section-3.3.1.3-1">Delay in sending PackedAsserts beyond what was discussed in
+            prior subsections can still be beneficial when it causes the
+            overall number of possible duplicate IP multicast packets to
+            decrease in a situation with a large number of (S,G) and/or (*,G),
+            compared to the situation where an implementation only sends
+            Assert messages.</t>
+            <t indent="0" pn="section-3.3.1.3-2">This delay can be used in implementations because it cannot
+            support the more advanced mechanisms described above, and this
+            longer delay can be achieved by some simpler mechanisms (such as
+            only periodic generation of PackedAsserts) and still achieves an
+            overall reduction in duplicate IP multicast packets compared to
+            sending only Asserts.</t>
+          </section>
+          <section anchor="handling-assertpackedassert-message-loss" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1.4">
+            <name slugifiedName="name-handling-assert-packedasser">Handling Assert/PackedAssert Message Loss</name>
+            <t indent="0" pn="section-3.3.1.4-1">When Asserts are sent, a single packet loss will result only in
+            continued or new duplicates from a single IP multicast flow.  Loss
+            of a (non-AssertCancel) PackedAssert impacts duplicates for all
+            flows packed into the PackedAssert and may result in the need for
+            resending more than one Assert/PackedAssert, because of the
+            possible inability to pack the assert records in this condition.
+            Therefore, routers <bcp14>SHOULD</bcp14> support mechanisms
+            that allow PackedAsserts and Asserts to be sent with an
+            appropriate Differentiated Services Code Point (DSCP) <xref target="RFC2475" format="default" sectionFormat="of" derivedContent="RFC2475"/> such as Expedited Forwarding (EF) to
+            minimize their loss, especially when duplicate IP multicast
+            packets could cause congestion and loss.</t>
+            <t indent="0" pn="section-3.3.1.4-2">Routers <bcp14>MAY</bcp14> support a configurable option for
+            sending PackedAssert messages twice in short order (such as 50
+            msec apart) to overcome possible loss, but only when the following
+            two conditions are met.</t>
+            <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-3.3.1.4-3">
+	      <li pn="section-3.3.1.4-3.1" derivedCounter="1.">The total size of the two PackedAsserts is less than the
+	      total size of equivalent Assert messages.</li>
+              <li pn="section-3.3.1.4-3.2" derivedCounter="2.">The condition of the assert record flows in the
+              PackedAssert is such that the router can expect that their
+              reception by PIM routers will not trigger Assert/PackedAsserts
+              replies.  This condition is true, for example, when sending an
+              assert record while becoming or being assert winner (Action
+              A1/A3 in <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>).</li>
+            </ol>
+          </section>
+          <section anchor="optimal-degree-of-assert-record-packing" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.1.5">
+            <name slugifiedName="name-optimal-degree-of-assert-re">Optimal Degree of Assert Record Packing</name>
+            <t indent="0" pn="section-3.3.1.5-1">The optimal target packing size will vary depending on factors
+            including implementation characteristics and the required
+            operating scale. At some point, as the target packing size is
+            varied from the size of a single non-packed Assert to the MTU
+            size, a size can be expected to be found where the router can
+            achieve the required operating scale of (S,G) and (*,G) flows with
+            minimum duplicates.  Beyond this size, a further increase in the
+            target packing size would not produce further benefits but might
+            introduce possible negative effects such as the incurrence of more
+            duplicates on loss.</t>
+            <t indent="0" pn="section-3.3.1.5-2">For example, in some router implementations, the total number
+            of packets that a control plane function such as PIM can
+            send/receive per unit of time is a more limiting factor than the
+            total amount of data across these packets. As soon as the packet
+            size is large enough for the maximum possible payload throughput,
+            increasing the packet size any further may still reduce the
+            processing overhead of the router but may increase latency
+            incurred in creating the packet in a way that may increase
+            duplicates compared to smaller packets.</t>
+          </section>
+        </section>
+        <section anchor="receiving-packedassert-messages" numbered="true" removeInRFC="false" toc="include" pn="section-3.3.2">
+          <name slugifiedName="name-receiving-packedassert-mess">Receiving PackedAssert Messages</name>
+          <t indent="0" pn="section-3.3.2-1">Upon reception of a PackedAssert message, the PIM router logically
+converts its payload into a sequence of assert records that are then processed
+as if an equivalent sequence of Assert messages were received according to <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>.</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="packet-formats" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-packet-formats">Packet Formats</name>
+      <t indent="0" pn="section-4-1">This section describes the format of new PIM extensions introduced by
+this document.</t>
+      <section anchor="assert-packing-option" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-pim-packed-assert-capability">PIM Packed Assert Capability Hello Option</name>
+        <t indent="0" pn="section-4.1-1">The PIM Packed Assert Capability Hello Option is a new option for PIM Hello
+        messages according to <xref target="RFC7761" sectionFormat="of" section="4.9.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.2" derivedContent="RFC7761"/>.</t>
+        <figure anchor="FIG-HELLO-OPTION" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-pim-packed-assert-capability-">PIM Packed Assert Capability Hello
+        Option</name>
+          <artwork align="left" pn="section-4.1-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      OptionType = 40          |      OptionLength = 0         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" newline="true" indent="3" pn="section-4.1-3">
+          <dt pn="section-4.1-3.1">OptionType 40 (Packed Assert Capability):</dt>
+          <dd pn="section-4.1-3.2">Indicates support for the ability to receive and process all the
+	  PackedAssert encodings defined in this document.</dd>
+          <dt pn="section-4.1-3.3">OptionLength 0:</dt>
+          <dd pn="section-4.1-3.4">The Packet Assert Capability has no OptionValue.</dd>
+        </dl>
+      </section>
+      <section anchor="rfc7761-assert-message" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-assert-message-format">Assert Message Format</name>
+        <t indent="0" pn="section-4.2-1"><xref target="FIG-MESSAGE-ASSERT" format="default" sectionFormat="of" derivedContent="Figure 2"/> shows a PIM Assert message as
+        specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>. The Encoded-Group and Encoded-Unicast address
+        formats are specified in <xref target="RFC7761" sectionFormat="of" section="4.9.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.1" derivedContent="RFC7761"/> for IPv4 and IPv6.</t>
+        <figure anchor="FIG-MESSAGE-ASSERT" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-assert-message-format-2">Assert Message Format</name>
+          <artwork align="left" pn="section-4.2-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|PIM Ver| Type  |7 6 5 4 3 2|A|P|           Checksum            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Group Address (Encoded-Group format)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Source Address (Encoded-Unicast format)            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|R|                      Metric Preference                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Metric                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <t indent="0" pn="section-4.2-3">This common header shows the "7 6 5 4 3 2" flag bits (as defined in
+        <xref target="RFC9436" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9436#section-4" derivedContent="RFC9436"/>) and the
+        location of the P and A flags (as described in <xref target="IANA" format="default" sectionFormat="of" derivedContent="Section 5"/>).
+        As specified in <xref target="assert-packing-formats" format="default" sectionFormat="of" derivedContent="Section 3.2"/>, both flags in
+        a (non-packed) PIM Assert message are required to be set to 0.</t>
+      </section>
+      <section anchor="simple-packedassert-message" numbered="true" removeInRFC="false" toc="include" pn="section-4.3">
+        <name slugifiedName="name-simple-packedassert-message">Simple PackedAssert Message Format</name>
+        <figure anchor="FIG-MESSAGE-SIMPLE" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-simple-packedassert-message-">Simple PackedAssert Message Format</name>
+          <artwork align="left" pn="section-4.3-1.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|PIM Ver| Type  |7 6 5 4 3 2|A|P|           Checksum            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Zero       |                     Reserved                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Assert Record [1]                      .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Assert Record [2]                      .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               .                               |
+.                               .                               .
+|                               .                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Assert Record [M]                      .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" newline="true" indent="3" pn="section-4.3-2">
+          <dt pn="section-4.3-2.1">PIM Version, Type, Checksum:</dt>
+          <dd pn="section-4.3-2.2">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+          <dt pn="section-4.3-2.3">"7 6 5 4 3 2":</dt>
+          <dd pn="section-4.3-2.4">Flag bits per <xref target="RFC9436" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9436#section-4" derivedContent="RFC9436"/>.</dd>
+          <dt pn="section-4.3-2.5">P:</dt>
+          <dd pn="section-4.3-2.6">Packed flag. <bcp14>MUST</bcp14> be 1.</dd>
+          <dt pn="section-4.3-2.7">A:</dt>
+          <dd pn="section-4.3-2.8">Aggregated flag. <bcp14>MUST</bcp14> be 0.</dd>
+          <dt pn="section-4.3-2.9">Zero:</dt>
+          <dd pn="section-4.3-2.10">Set to zero on transmission. Serves to make PIM routers that are
+	  not capable of assert packing to fail in parsing the message instead
+	  possible mis-parsing of the message as an Assert message <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> if this field was not
+	  zero-filled.</dd>
+          <dt pn="section-4.3-2.11">Reserved:</dt>
+          <dd pn="section-4.3-2.12">Set to zero on transmission.  Ignored upon receipt.</dd>
+          <dt pn="section-4.3-2.13">M:</dt>
+          <dd pn="section-4.3-2.14">The number of Assert Records in the message. Derived from the
+	  length of the packet carrying the message.</dd>
+          <dt pn="section-4.3-2.15">Assert Record:</dt>
+          <dd pn="section-4.3-2.16">Formatted according to <xref target="FIG-MESSAGE-SIMPLE" format="default" sectionFormat="of" derivedContent="Figure 3"/>,
+	  which is the same as the PIM Assert message body as specified in
+	  <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+        </dl>
+        <t indent="0" pn="section-4.3-3">The format of each Assert Record is the same as the PIM Assert
+        message body as specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</t>
+        <figure anchor="FIG-ASSERT-RECORD-FORMAT" align="left" suppress-title="false" pn="figure-4">
+          <name slugifiedName="name-assert-record">Assert Record</name>
+          <artwork align="left" pn="section-4.3-4.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Group Address (Encoded-Group format)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Source Address (Encoded-Unicast format)            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|R|                      Metric Preference                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Metric                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+      </section>
+      <section anchor="aggregated-packedassert-message" numbered="true" removeInRFC="false" toc="include" pn="section-4.4">
+        <name slugifiedName="name-aggregated-packedassert-mes">Aggregated PackedAssert Message Format</name>
+        <figure anchor="FIG-PACKET-FORMAT-SG" align="left" suppress-title="false" pn="figure-5">
+          <name slugifiedName="name-aggregated-packedassert-mess">Aggregated PackedAssert Message Format</name>
+          <artwork align="left" pn="section-4.4-1.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|PIM Ver| Type  |7 6 5 4 3 2|A|P|           Checksum            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    Zero       |                     Reserved                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                     Aggregated Assert Record [1]              .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                     Aggregated Assert Record [2]              .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               .                               |
+.                               .                               .
+|                               .                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                     Aggregated Assert Record [M]              .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+        </figure>
+        <dl spacing="normal" newline="true" indent="3" pn="section-4.4-2">
+          <dt pn="section-4.4-2.1">PIM Version, Type, Reserved, Checksum:</dt>
+          <dd pn="section-4.4-2.2">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+          <dt pn="section-4.4-2.3">"7 6 5 4 3 2":</dt>
+          <dd pn="section-4.4-2.4">Flag bits per <xref target="RFC9436" sectionFormat="of" section="4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc9436#section-4" derivedContent="RFC9436"/>.</dd>
+          <dt pn="section-4.4-2.5">P:</dt>
+          <dd pn="section-4.4-2.6">Packed flag. <bcp14>MUST</bcp14> be 1.</dd>
+          <dt pn="section-4.4-2.7">A:</dt>
+          <dd pn="section-4.4-2.8">Aggregated flag. <bcp14>MUST</bcp14> be 1.</dd>
+          <dt pn="section-4.4-2.9">Zero:</dt>
+          <dd pn="section-4.4-2.10">Set to zero on transmission. Serves to make PIM routers that are
+	  not capable of assert packing to fail in parsing the message instead
+	  possible mis-parsing of the message as an Assert message <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> if this field was not
+	  zero-filled.</dd>
+          <dt pn="section-4.4-2.11">Aggregated Assert Record:</dt>
+          <dd pn="section-4.4-2.12">Formatted according to <xref target="FIG-PACKET-FORMAT-SG" format="default" sectionFormat="of" derivedContent="Figure 5"/>.
+	  The number M of Aggregated Assert Records is determined from the
+	  packet size.</dd>
+        </dl>
+        <section anchor="s-assert-record" numbered="true" removeInRFC="false" toc="include" pn="section-4.4.1">
+          <name slugifiedName="name-source-aggregated-assert-re">Source Aggregated Assert Record</name>
+          <figure anchor="FIG-RECORD-FORMAT-SG" align="left" suppress-title="false" pn="figure-6">
+            <name slugifiedName="name-source-aggregated-assert-rec">Source Aggregated Assert Record</name>
+            <artwork align="left" pn="section-4.4.1-1.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|R|                      Metric Preference                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Metric                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Source Address (Encoded-Unicast format)            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        Number of Groups (N)   |           Reserved            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Group Address 1 (Encoded-Group format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Group Address 2 (Encoded-Group format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             .                                 |
+|                             .                                 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Group Address N (Encoded-Group format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+          </figure>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.4.1-2">
+            <dt pn="section-4.4.1-2.1">R:</dt>
+            <dd pn="section-4.4.1-2.2">
+              <t indent="0" pn="section-4.4.1-2.2.1"><bcp14>MUST</bcp14> be 0.</t>
+              <t indent="0" pn="section-4.4.1-2.2.2">R indicates both that the encoding format of the record is that
+            of a Source Aggregated Assert Record and that all assert
+            records represented by the Source Aggregated Assert Record have
+            R=0 and are therefore (S,G) assert records according to the
+            definition of R in <xref target="RFC7761" sectionFormat="comma" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</t>
+            </dd>
+            <dt pn="section-4.4.1-2.3">Metric Preference, Metric, Source Address:</dt>
+            <dd pn="section-4.4.1-2.4">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.  Source Address <bcp14>MUST NOT</bcp14> be
+	    zero.</dd>
+            <dt pn="section-4.4.1-2.5">Number of Groups:</dt>
+            <dd pn="section-4.4.1-2.6">The number of Group Address fields.</dd>
+            <dt pn="section-4.4.1-2.7">Reserved:</dt>
+            <dd pn="section-4.4.1-2.8"> Set to zero on transmission.  Ignored upon receipt.</dd>
+            <dt pn="section-4.4.1-2.9">Group Address:</dt>
+            <dd pn="section-4.4.1-2.10">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+          </dl>
+        </section>
+        <section anchor="rp-assert-record" numbered="true" removeInRFC="false" toc="include" pn="section-4.4.2">
+          <name slugifiedName="name-rp-aggregated-assert-record">RP Aggregated Assert Record</name>
+          <t indent="0" pn="section-4.4.2-1">An RP Aggregation Assert Record aggregates (*,G) assert records
+          with the same Metric Preference and Metric. Typically, this is the
+          case for all (*,G) using the same RP, but the encoding is not
+          limited to only (*,G) using the same RP because the RP address is
+          not encoded as it is also not present in assert records <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>.</t>
+          <figure anchor="FIG-RECORD-FORMAT-RP" align="left" suppress-title="false" pn="figure-7">
+            <name slugifiedName="name-rp-aggregated-assert-record-2">RP Aggregated Assert Record</name>
+            <artwork align="left" pn="section-4.4.2-2.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|R|                      Metric Preference                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             Metric                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|   Number of Group Records (K) |           Reserved            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Group Record [1]                       .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Group Record [2]                       .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               .                               |
+.                               .                               .
+|                               .                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+.                                                               .
+.                        Group Record [K]                       .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+          </figure>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.4.2-3">
+            <dt pn="section-4.4.2-3.1">R:</dt>
+            <dd pn="section-4.4.2-3.2">
+              <t indent="0" pn="section-4.4.2-3.2.1"><bcp14>MUST</bcp14> be 1.</t>
+              <t indent="0" pn="section-4.4.2-3.2.2">R indicates both that the encoding format of the record is
+              that of an RP Aggregated Assert Record and that all assert
+              records represented by the RP Aggregated Assert Record have R=1
+              and are therefore (*,G) assert records according to the
+              definition of R in <xref target="RFC7761" sectionFormat="comma" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</t>
+            </dd>
+            <dt pn="section-4.4.2-3.3">Metric Preference, Metric:</dt>
+            <dd pn="section-4.4.2-3.4">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+            <dt pn="section-4.4.2-3.5">Number of Group Records (K):</dt>
+            <dd pn="section-4.4.2-3.6">The number of packed Group Records. A record consists of a
+            Group Address and a Source Address list with a number of
+            sources.</dd>
+            <dt pn="section-4.4.2-3.7">Reserved:</dt>
+            <dd pn="section-4.4.2-3.8">Set to zero on transmission.  Ignored upon receipt.</dd>
+          </dl>
+          <t indent="0" pn="section-4.4.2-4">The format of each Group Record is:</t>
+          <figure anchor="FIG-GROUP-RECORD" align="left" suppress-title="false" pn="figure-8">
+            <name slugifiedName="name-group-record">Group Record</name>
+            <artwork align="left" pn="section-4.4.2-5.1">
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Group Address (Encoded-Group format)             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        Number of Sources (P)  |           Reserved            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Source Address 1 (Encoded-Unicast format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Source Address 2 (Encoded-Unicast format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                             .                                 |
+|                             .                                 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|              Source Address P (Encoded-Unicast format)        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</artwork>
+          </figure>
+          <dl spacing="normal" newline="true" indent="3" pn="section-4.4.2-6">
+            <dt pn="section-4.4.2-6.1">Group Address:</dt>
+            <dd pn="section-4.4.2-6.2">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.</dd>
+            <dt pn="section-4.4.2-6.3">Reserved:</dt>
+            <dd pn="section-4.4.2-6.4">Set to zero on transmission.  Ignored upon receipt.</dd>
+            <dt pn="section-4.4.2-6.5">Number of Sources (P):</dt>
+            <dd pn="section-4.4.2-6.6">The Number of Sources corresponds to the number of Source
+            Address fields in the Group Record. If this number is not 0 and
+            one of the (*,G) assert records to be encoded has Source Address
+            0, then 0 needs to be encoded as one of the Source Address
+            fields.</dd>
+            <dt pn="section-4.4.2-6.7">Reserved:</dt>
+            <dd pn="section-4.4.2-6.8"> Set to zero on transmission.  Ignored upon receipt.</dd>
+            <dt pn="section-4.4.2-6.9">Source Address:</dt>
+            <dd pn="section-4.4.2-6.10">As specified in <xref target="RFC7761" sectionFormat="of" section="4.9.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-4.9.6" derivedContent="RFC7761"/>.  But there can be multiple Source Address
+            fields in the Group Record.</dd>
+          </dl>
+        </section>
+      </section>
+    </section>
+    <section anchor="IANA" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-5-1">IANA has updated the "PIM Message Types" registry as follows to
+      include the Packed and Aggregated flag bits for the Assert message
+      type.</t>
+      <table anchor="FIG-IANA" align="left" pn="table-1">
+        <name slugifiedName="name-pim-hello-options">PIM-Hello Options</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Value</th>
+            <th align="left" colspan="1" rowspan="1">Length</th>
+            <th align="left" colspan="1" rowspan="1">Name</th>
+            <th align="left" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" colspan="1" rowspan="1">40</td>
+            <td align="center" colspan="1" rowspan="1">0</td>
+            <td align="left" colspan="1" rowspan="1">Packed Assert Capability</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9466</td>
+          </tr>
+        </tbody>
+      </table>
+      <t indent="0" pn="section-5-3">IANA has assigned the following two flag bits for PIM Assert messages
+in the "PIM Message Types" registry.</t>
+      <table anchor="FIG-IANA2" align="left" pn="table-2">
+        <name slugifiedName="name-pim-message-types">PIM Message Types</name>
+        <thead>
+          <tr>
+            <th align="left" colspan="1" rowspan="1">Type</th>
+            <th align="left" colspan="1" rowspan="1">Name</th>
+            <th align="left" colspan="1" rowspan="1">Flag Bits</th>
+            <th align="left" colspan="1" rowspan="1">Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td align="center" rowspan="3" colspan="1">5</td>
+            <td rowspan="3" align="left" colspan="1">Assert</td>
+            <td align="left" colspan="1" rowspan="1">0: Packed</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9466</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">1: Aggregated</td>
+            <td align="left" colspan="1" rowspan="1">RFC 9466</td>
+          </tr>
+          <tr>
+            <td align="left" colspan="1" rowspan="1">2-7: Unassigned</td>
+            <td align="left" colspan="1" rowspan="1">
+              <xref target="RFC3973" format="default" sectionFormat="of" derivedContent="RFC3973"/> <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <section anchor="security-considerations" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">The security considerations of <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> apply to the
+      extensions defined in this document.</t>
+      <t indent="0" pn="section-6-2">This document packs multiple assert records in a single message. As
+      described in <xref target="RFC7761" sectionFormat="of" section="6.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-6.1" derivedContent="RFC7761"/>,
+      a forged Assert message could cause the legitimate designated forwarder
+      to stop forwarding traffic to the LAN. The effect may be amplified when
+      using a PackedAssert message.</t>
+      <t indent="0" pn="section-6-3">Like other optional extensions of <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/> that are
+      active only when all routers indicate support for them, a single
+      misconfigured or malicious router emitting forged PIM Hello messages can
+      inhibit operations of this extension.</t>
+      <t indent="0" pn="section-6-4">Authentication of PIM messages, such as that explained in Sections
+      <xref target="RFC7761" section="6.2" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-6.2" derivedContent="RFC7761"/> and <xref target="RFC7761" section="6.3" sectionFormat="bare" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7761#section-6.3" derivedContent="RFC7761"/> of <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>, can protect against forged message attacks
+      attacks.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-7">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-7.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC7761" target="https://www.rfc-editor.org/info/rfc7761" quoteTitle="true" derivedAnchor="RFC7761">
+          <front>
+            <title>Protocol Independent Multicast - Sparse Mode (PIM-SM): Protocol Specification (Revised)</title>
+            <author fullname="B. Fenner" initials="B." surname="Fenner"/>
+            <author fullname="M. Handley" initials="M." surname="Handley"/>
+            <author fullname="H. Holbrook" initials="H." surname="Holbrook"/>
+            <author fullname="I. Kouvelas" initials="I." surname="Kouvelas"/>
+            <author fullname="R. Parekh" initials="R." surname="Parekh"/>
+            <author fullname="Z. Zhang" initials="Z." surname="Zhang"/>
+            <author fullname="L. Zheng" initials="L." surname="Zheng"/>
+            <date month="March" year="2016"/>
+            <abstract>
+              <t indent="0">This document specifies Protocol Independent Multicast - Sparse Mode (PIM-SM). PIM-SM is a multicast routing protocol that can use the underlying unicast routing information base or a separate multicast-capable routing information base. It builds unidirectional shared trees rooted at a Rendezvous Point (RP) per group, and it optionally creates shortest-path trees per source.</t>
+              <t indent="0">This document obsoletes RFC 4601 by replacing it, addresses the errata filed against it, removes the optional (*,*,RP), PIM Multicast Border Router features and authentication using IPsec that lack sufficient deployment experience (see Appendix A), and moves the PIM specification to Internet Standard.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="83"/>
+          <seriesInfo name="RFC" value="7761"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7761"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications. This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC9436" target="https://www.rfc-editor.org/info/rfc9436" quoteTitle="true" derivedAnchor="RFC9436">
+          <front>
+            <title>PIM Message Type Space Extension and Reserved Bits</title>
+            <author fullname="S. Venaas" initials="S." surname="Venaas"/>
+            <author fullname="A. Retana" initials="A." surname="Retana"/>
+            <date month="August" year="2023"/>
+            <abstract>
+              <t indent="0">The PIM version 2 messages share a common message header format. The common header definition contains eight reserved bits. This document specifies how these bits may be used by individual message types and extends the PIM type space.</t>
+              <t indent="0">This document updates RFCs 7761 and 3973 by defining the use of the Reserved field in the PIM common header. This document further updates RFCs 7761 and 3973, along with RFCs 5015, 5059, 6754, and 8364, by specifying the use of the bits for each PIM message.</t>
+              <t indent="0">This document obsoletes RFC 8736.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9436"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9436"/>
+        </reference>
+      </references>
+      <references pn="section-7.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC2475" target="https://www.rfc-editor.org/info/rfc2475" quoteTitle="true" derivedAnchor="RFC2475">
+          <front>
+            <title>An Architecture for Differentiated Services</title>
+            <author fullname="S. Blake" initials="S." surname="Blake"/>
+            <author fullname="D. Black" initials="D." surname="Black"/>
+            <author fullname="M. Carlson" initials="M." surname="Carlson"/>
+            <author fullname="E. Davies" initials="E." surname="Davies"/>
+            <author fullname="Z. Wang" initials="Z." surname="Wang"/>
+            <author fullname="W. Weiss" initials="W." surname="Weiss"/>
+            <date month="December" year="1998"/>
+            <abstract>
+              <t indent="0">This document defines an architecture for implementing scalable service differentiation in the Internet. This memo provides information for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2475"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2475"/>
+        </reference>
+        <reference anchor="RFC3973" target="https://www.rfc-editor.org/info/rfc3973" quoteTitle="true" derivedAnchor="RFC3973">
+          <front>
+            <title>Protocol Independent Multicast - Dense Mode (PIM-DM): Protocol Specification (Revised)</title>
+            <author fullname="A. Adams" initials="A." surname="Adams"/>
+            <author fullname="J. Nicholas" initials="J." surname="Nicholas"/>
+            <author fullname="W. Siadak" initials="W." surname="Siadak"/>
+            <date month="January" year="2005"/>
+            <abstract>
+              <t indent="0">This document specifies Protocol Independent Multicast - Dense Mode (PIM-DM). PIM-DM is a multicast routing protocol that uses the underlying unicast routing information base to flood multicast datagrams to all multicast routers. Prune messages are used to prevent future messages from propagating to routers without group membership information. This memo defines an Experimental Protocol for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3973"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3973"/>
+        </reference>
+        <reference anchor="RFC6037" target="https://www.rfc-editor.org/info/rfc6037" quoteTitle="true" derivedAnchor="RFC6037">
+          <front>
+            <title>Cisco Systems' Solution for Multicast in BGP/MPLS IP VPNs</title>
+            <author fullname="E. Rosen" initials="E." role="editor" surname="Rosen"/>
+            <author fullname="Y. Cai" initials="Y." role="editor" surname="Cai"/>
+            <author fullname="IJ. Wijnands" initials="IJ." surname="Wijnands"/>
+            <date month="October" year="2010"/>
+            <abstract>
+              <t indent="0">This document describes the MVPN (Multicast in BGP/MPLS IP VPNs) solution designed and deployed by Cisco Systems. The procedures specified in this document are largely a subset of the generalized MVPN framework recently standardized by the IETF. However, as the deployment of the procedures specified herein predates the publication of IETF standards (in some cases by over five years), an implementation based on these procedures differs in some respects from a fully standards-compliant implementation. These differences are pointed out in the document. This document defines a Historic Document for the Internet community.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6037"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6037"/>
+        </reference>
+        <reference anchor="RFC7431" target="https://www.rfc-editor.org/info/rfc7431" quoteTitle="true" derivedAnchor="RFC7431">
+          <front>
+            <title>Multicast-Only Fast Reroute</title>
+            <author fullname="A. Karan" initials="A." surname="Karan"/>
+            <author fullname="C. Filsfils" initials="C." surname="Filsfils"/>
+            <author fullname="IJ. Wijnands" initials="IJ." role="editor" surname="Wijnands"/>
+            <author fullname="B. Decraene" initials="B." surname="Decraene"/>
+            <date month="August" year="2015"/>
+            <abstract>
+              <t indent="0">As IPTV deployments grow in number and size, service providers are looking for solutions that minimize the service disruption due to faults in the IP network carrying the packets for these services. This document describes a mechanism for minimizing packet loss in a network when node or link failures occur. Multicast-only Fast Reroute (MoFRR) works by making simple enhancements to multicast routing protocols such as Protocol Independent Multicast (PIM) and Multipoint LDP (mLDP).</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7431"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7431"/>
+        </reference>
+        <reference anchor="RFC7490" target="https://www.rfc-editor.org/info/rfc7490" quoteTitle="true" derivedAnchor="RFC7490">
+          <front>
+            <title>Remote Loop-Free Alternate (LFA) Fast Reroute (FRR)</title>
+            <author fullname="S. Bryant" initials="S." surname="Bryant"/>
+            <author fullname="C. Filsfils" initials="C." surname="Filsfils"/>
+            <author fullname="S. Previdi" initials="S." surname="Previdi"/>
+            <author fullname="M. Shand" initials="M." surname="Shand"/>
+            <author fullname="N. So" initials="N." surname="So"/>
+            <date month="April" year="2015"/>
+            <abstract>
+              <t indent="0">This document describes an extension to the basic IP fast reroute mechanism, described in RFC 5286, that provides additional backup connectivity for point-to-point link failures when none can be provided by the basic mechanisms.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7490"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7490"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="use-case-examples" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-use-case-examples">Use Case Examples</name>
+      <t indent="0" pn="section-appendix.a-1">The PIM Assert mechanism can only be avoided by designing the network
+      to be without transit subnets with multiple upstream routers. For
+      example, an L2 ring between routers can sometimes be reconfigured to be
+      a ring of point-to-point subnets connected by the routers. However, these L2/L3
+      topology changes are undesirable when they are only done to
+      enable IP multicast with PIM because they increase the cost of
+      introducing IP multicast with PIM.</t>
+      <t indent="0" pn="section-appendix.a-2">These L3 ring designs are specifically undesirable when particular L2
+      technologies are needed.  For example, various L2 technologies for rings
+      provide sub-50 msec failover mechanisms that will benefit IP unicast and
+      multicast alike without any added complexity to the IP layer (forwarding
+      or routing). If such L2 rings were to be replaced by L3 rings just to
+      avoid PIM asserts, then this would result in the need for a complex
+      choice of a sub-50 msec IP unicast failover solution (such as <xref target="RFC7490" format="default" sectionFormat="of" derivedContent="RFC7490"/> with IP repair tunnels) as well as a
+      separate sub-50 msec IP multicast failover solution, (such as <xref target="RFC7431" format="default" sectionFormat="of" derivedContent="RFC7431"/> with dedicated ring support). The
+      mere fact that, by running at the IP layer, different solutions for IP
+      unicast and multicast are required makes them more difficult to operate,
+      and they typically require more expensive hardware. This often leads to
+      non-support of the IP multicast part.</t>
+      <t indent="0" pn="section-appendix.a-3">Likewise, IEEE Time-Sensitive Networking mechanisms would require an
+      L2 topology that cannot simply be replaced by an L3 topology.  L2
+      sub-topologies can also significantly reduce the cost of deployment.</t>
+      <t indent="0" pn="section-appendix.a-4">The following subsections give examples of the type of network and
+      use cases in which subnets with asserts have been observed or are
+      expected to require scaling as provided by this specification.</t>
+      <section anchor="enterprise-network" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.1">
+        <name slugifiedName="name-enterprise-network">Enterprise Network</name>
+        <t indent="0" pn="section-appendix.a.1-1">When an enterprise network is connected through an L2 network,
+        the intra-enterprise runs L3 PIM multicast. The different sites
+        of the enterprise are equivalent to the PIM connection through the
+        shared LAN network. Depending upon the locations and number of groups,
+        there could be many asserts on the first-hop routers.</t>
+      </section>
+      <section anchor="video-surveillance" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.2">
+        <name slugifiedName="name-video-surveillance">Video Surveillance</name>
+        <t indent="0" pn="section-appendix.a.2-1">Video surveillance deployments have migrated from analog-based
+        systems to IP-based systems oftentimes using multicast. In the shared
+        LAN network deployments, when there are many cameras streaming to many
+        groups, there may be issues with many asserts on first-hop routers.</t>
+      </section>
+      <section anchor="financial-services" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.3">
+        <name slugifiedName="name-financial-services">Financial Services</name>
+        <t indent="0" pn="section-appendix.a.3-1">Financial services extensively rely on IP Multicast to deliver
+        stock market data and its derivatives, and the current multicast
+        solution PIM is usually deployed. As the number of multicast flows
+        grow, many stock data with many groups may result in many PIM asserts
+        on a shared LAN network from the publisher to the subscribers.</t>
+      </section>
+      <section anchor="iptv-broadcast-video" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.4">
+        <name slugifiedName="name-iptv-broadcast-video">IPTV Broadcast Video</name>
+        <t indent="0" pn="section-appendix.a.4-1">PIM DR deployments are often used in host-side network for IPTV
+        broadcast video services. Host-side access network failure scenarios
+        may benefit from assert packing when many groups are being
+        used. According to <xref target="RFC7761" format="default" sectionFormat="of" derivedContent="RFC7761"/>, the DR will be elected to
+        forward multicast traffic in the shared access network. When the DR
+        recovers from a failure, the original DR starts to send traffic, and
+        the current DR is still forwarding traffic. In this situation, multicast
+        traffic duplication maybe happen in the shared access network and can
+        trigger the assert progress.</t>
+      </section>
+      <section anchor="mvpn-mdt" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.5">
+        <name slugifiedName="name-mvpn-mdt">MVPN MDT</name>
+        <t indent="0" pn="section-appendix.a.5-1">As described in <xref target="RFC6037" format="default" sectionFormat="of" derivedContent="RFC6037"/>, Multicast Distribution
+        Tree (MDT) is used as tunnels for Multicast VPN (MVPN). The
+        configuration of multicast-enabled VPN Routing and Forwarding (VRF) or
+        changes to an interface that is in a VRF may cause many assert packets
+        to be sent at the same time.</t>
+      </section>
+      <section anchor="special-l2-services" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a.6">
+        <name slugifiedName="name-special-l2-services">Special L2 Services</name>
+        <t indent="0" pn="section-appendix.a.6-1">Additionally, future backhaul, or fronthaul, networks may want to
+        connect L3 across an L2 underlay supporting Time-Sensitive Networks
+        (TSNs). The infrastructure may run Deterministic Networking (DetNet)
+        over TSN. These transit L2 LANs would have multiple upstreams and
+        downstreams. This document takes a proactive approach to
+        prevention of possible future assert issues in these types of
+        environments.</t>
+      </section>
+    </section>
+    <section anchor="acknowledgments" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.b-1">The authors would like to thank the following individuals: <contact fullname="Stig Venaas"/>
+      for the valuable contributions of this document, <contact fullname="Alvaro Retana"/> for his thorough and constructive RTG AD
+      review, <contact fullname="Ines Robles"/> for her Gen-ART review,
+      <contact fullname="Tommy Pauly"/> for his Transport Area review,
+      <contact fullname="Robert Sparks"/> for his SecDir review, <contact fullname="Shuping Peng"/> for her RtgDir review, <contact fullname="John       Scudder"/> for his RTG AD review, <contact fullname="Éric Vyncke"/> for
+      his INT AD review, <contact fullname="Eric Kline"/> for his INT AD
+      review, <contact fullname="Paul Wouter"/> for his SEC AD review,
+      <contact fullname="Zaheduzzaman Sarker"/> for his TSV AD review,
+      <contact fullname="Robert Wilton"/> for his OPS AD review, and <contact fullname="Martin Duke"/> for his TSV AD review.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="Y." surname="Liu" fullname="Yisong Liu" role="editor">
+        <organization showOnFrontPage="true">China Mobile</organization>
+        <address>
+          <postal>
+            <country>China</country>
+          </postal>
+          <email>liuyisong@chinamobile.com</email>
+        </address>
+      </author>
+      <author initials="T." surname="Eckert" fullname="Toerless Eckert" role="editor">
+        <organization showOnFrontPage="true">Futurewei</organization>
+        <address>
+          <postal>
+            <country>United States of America</country>
+          </postal>
+          <email>tte@cs.fau.de</email>
+        </address>
+      </author>
+      <author initials="M." surname="McBride" fullname="Mike McBride">
+        <organization showOnFrontPage="true">Futurewei</organization>
+        <address>
+          <postal>
+            <country>United States of America</country>
+          </postal>
+          <email>michael.mcbride@futurewei.com</email>
+        </address>
+      </author>
+      <author initials="Z." surname="Zhang" fullname="Zheng (Sandy) Zhang">
+        <organization showOnFrontPage="true">ZTE Corporation</organization>
+        <address>
+          <postal>
+            <country>China</country>
+          </postal>
+          <email>zhang.zheng@zte.com.cn</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

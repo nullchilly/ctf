@@ -1,0 +1,1980 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-oauth-mtls-17" indexInclude="true" ipr="trust200902" number="8705" prepTime="2020-02-28T15:43:50" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-oauth-mtls-17" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8705" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="OAuth Mutual TLS">OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens</title>
+    <seriesInfo name="RFC" value="8705" stream="IETF"/>
+    <author fullname="Brian Campbell" initials="B." surname="Campbell">
+      <organization showOnFrontPage="true">Ping Identity</organization>
+      <address>
+        <email>brian.d.campbell@gmail.com</email>
+      </address>
+    </author>
+    <author fullname="John Bradley" initials="J." surname="Bradley">
+      <organization showOnFrontPage="true">Yubico</organization>
+      <address>
+        <email>ve7jtb@ve7jtb.com</email>
+        <uri>http://www.thread-safe.com/</uri>
+      </address>
+    </author>
+    <author fullname="Nat Sakimura" initials="N." surname="Sakimura">
+      <organization showOnFrontPage="true">Nomura Research Institute</organization>
+      <address>
+        <email>n-sakimura@nri.co.jp</email>
+        <uri>https://nat.sakimura.org/</uri>
+      </address>
+    </author>
+    <author fullname="Torsten Lodderstedt" initials="T." surname="Lodderstedt">
+      <organization showOnFrontPage="true">YES.com AG</organization>
+      <address>
+        <email>torsten@lodderstedt.net</email>
+      </address>
+    </author>
+    <date month="02" year="2020"/>
+    <area>Security</area>
+    <workgroup>OAuth Working Group</workgroup>
+    <keyword>JSON Web Token</keyword>
+    <keyword>JWT</keyword>
+    <keyword>MTLS</keyword>
+    <keyword>Mutual TLS</keyword>
+    <keyword>proof-of-possession</keyword>
+    <keyword>proof-of-possession access token</keyword>
+    <keyword>key confirmed access token</keyword>
+    <keyword>certificate-bound access token</keyword>
+    <keyword>client certificate</keyword>
+    <keyword>X.509 Client Certificate Authentication</keyword>
+    <keyword>key confirmation</keyword>
+    <keyword>confirmation method</keyword>
+    <keyword>holder-of-key</keyword>
+    <keyword>OAuth</keyword>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+  This document describes OAuth client authentication and certificate-bound
+  access and refresh tokens using mutual Transport Layer Security (TLS)
+  authentication with X.509 certificates.  OAuth clients are provided a
+  mechanism for authentication to the authorization server using mutual TLS,
+  based on either self-signed certificates or public key infrastructure (PKI).
+  OAuth authorization servers are provided a mechanism for binding access
+  tokens to a client's mutual-TLS certificate, and OAuth protected resources
+  are provided a method for ensuring that such an access token presented to it
+  was issued to the client presenting the token.
+</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8705" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-notation-and-c">Requirements Notation and Conventions</xref></t>
+              </li>
+              <li pn="section-toc.1-1.1.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.2.1"><xref derivedContent="1.2" format="counter" sectionFormat="of" target="section-1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mutual-tls-for-oauth-client">Mutual TLS for OAuth Client Authentication</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pki-mutual-tls-method">PKI Mutual-TLS Method</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2.1.2">
+                  <li pn="section-toc.1-1.2.2.1.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.2.2.1.2.1.1"><xref derivedContent="2.1.1" format="counter" sectionFormat="of" target="section-2.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pki-method-metadata-value">PKI Method Metadata Value</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.2.2.1.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.2.2.1.2.2.1"><xref derivedContent="2.1.2" format="counter" sectionFormat="of" target="section-2.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-registration-metadat">Client Registration Metadata</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-self-signed-certificate-mut">Self-Signed Certificate Mutual-TLS Method</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2.2.2">
+                  <li pn="section-toc.1-1.2.2.2.2.1">
+                    <t keepWithNext="true" pn="section-toc.1-1.2.2.2.2.1.1"><xref derivedContent="2.2.1" format="counter" sectionFormat="of" target="section-2.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-self-signed-method-metadata">Self-Signed Method Metadata Value</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.2.2.2.2.2">
+                    <t keepWithNext="true" pn="section-toc.1-1.2.2.2.2.2.1"><xref derivedContent="2.2.2" format="counter" sectionFormat="of" target="section-2.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-registration-metadata">Client Registration Metadata</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-mutual-tls-client-certifica">Mutual-TLS Client Certificate-Bound Access Tokens</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-jwt-certificate-thumbprint-">JWT Certificate Thumbprint Confirmation Method</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-confirmation-method-for-tok">Confirmation Method for Token Introspection</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-server-metada">Authorization Server Metadata</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-client-registration-metadata-2">Client Registration Metadata</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-public-clients-and-certific">Public Clients and Certificate-Bound Tokens</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-metadata-for-mutual-tls-end">Metadata for Mutual-TLS Endpoint Aliases</xref></t>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implementation-consideratio">Implementation Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-server">Authorization Server</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-resource-server">Resource Server</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate-expiration-and-">Certificate Expiration and Bound Access Tokens</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-implicit-grant-unsupported">Implicit Grant Unsupported</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.6.2.5.1"><xref derivedContent="6.5" format="counter" sectionFormat="of" target="section-6.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-termination">TLS Termination</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate-bound-refresh-t">Certificate-Bound Refresh Tokens</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-certificate-thumbprint-bind">Certificate Thumbprint Binding</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-versions-and-best-pract">TLS Versions and Best Practices</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-x509-certificate-spoofing">X.509 Certificate Spoofing</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-x509-certificate-parsing-an">X.509 Certificate Parsing and Validation Complexity</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t keepWithNext="true" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-considerations">Privacy Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t keepWithNext="true" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-jwt-confirmation-methods-re">JWT Confirmation Methods Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authorization-server-metadat">Authorization Server Metadata Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.3.1"><xref derivedContent="9.3" format="counter" sectionFormat="of" target="section-9.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-token-endpoint-authenticati">Token Endpoint Authentication Method Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.4">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.4.1"><xref derivedContent="9.4" format="counter" sectionFormat="of" target="section-9.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-token-introspection-respons">Token Introspection Response Registration</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.5">
+                <t keepWithNext="true" pn="section-toc.1-1.9.2.5.1"><xref derivedContent="9.5" format="counter" sectionFormat="of" target="section-9.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-dynamic-client-registration">Dynamic Client Registration Metadata Registration</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t keepWithNext="true" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t keepWithNext="true" pn="section-toc.1-1.11.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-cnf-claim-certifica">Example "cnf" Claim, Certificate, and JWK</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t keepWithNext="true" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relationship-to-token-bindi">Relationship to Token Binding</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t keepWithNext="true" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t keepWithNext="true" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="Introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+  The OAuth 2.0 Authorization Framework <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/> enables third-party
+  client applications to obtain delegated access to protected resources.
+  In the prototypical abstract OAuth flow, illustrated in <xref target="protocol-flow-figure" format="default" sectionFormat="of" derivedContent="Figure 1"/>,
+  the client obtains an access token from an entity known as an
+  authorization server and then uses that token when accessing protected resources,
+  such as HTTPS APIs.
+</t>
+      <figure anchor="protocol-flow-figure" align="left" suppress-title="false" pn="figure-1">
+        <name slugifiedName="name-abstract-oauth-20-protocol-">Abstract OAuth 2.0 Protocol Flow</name>
+        <artwork name="" type="" align="left" alt="" pn="section-1-2.1">
+  +--------+                                 +---------------+
+  |        |                                 |               |
+  |        |&lt;--(A)-- Get an access token ---&gt;| Authorization |
+  |        |                                 |     Server    |
+  |        |                                 |               |
+  |        |                                 +---------------+
+  |        |                                         ^
+  |        |                                         |
+  |        |
+  |        |                               (C)       |
+  | Client |                           Validate the
+  |        |                           access token  |
+  |        |
+  |        |                                         |
+  |        |                                         v
+  |        |                                 +---------------+
+  |        |                                 |      (C)      |
+  |        |                                 |               |
+  |        |&lt;--(B)-- Use the access token --&gt;|   Protected   |
+  |        |                                 |    Resource   |
+  |        |                                 |               |
+  +--------+                                 +---------------+
+</artwork>
+      </figure>
+      <t pn="section-1-3">
+  The flow illustrated in <xref target="protocol-flow-figure" format="default" sectionFormat="of" derivedContent="Figure 1"/> includes the following steps:
+      </t>
+      <ol spacing="normal" type="(%C)" indent="5" start="1" pn="section-1-4">
+        <li pn="section-1-4.1" derivedCounter="(A)">
+      The client makes an HTTPS <tt>POST</tt> request to
+      the authorization server and presents
+      a credential representing the authorization grant. For
+      certain types of clients (those that have been issued or otherwise established
+      a set of client credentials) the request must be authenticated.
+      In the response, the authorization server issues an access token to the client.
+    </li>
+        <li pn="section-1-4.2" derivedCounter="(B)">
+      The client includes the access token when making a request to access a protected resource.
+    </li>
+        <li pn="section-1-4.3" derivedCounter="(C)">
+      The protected resource validates the access token in order to authorize the request.
+      In some cases, such as when the token is self-contained and cryptographically secured,
+      the validation can be done locally by the protected resource.  Other cases require
+      that the protected resource call out to the authorization server to determine the state
+      of the token and obtain metainformation about it.
+    </li>
+      </ol>
+      <t pn="section-1-5">
+  Layering on the abstract flow above, this document standardizes enhanced
+  security options for OAuth 2.0 utilizing client-certificate-based mutual
+  TLS. <xref target="mtlsca" format="default" sectionFormat="of" derivedContent="Section 2"/> provides options for
+  authenticating the request in Step
+  (A). Step (C) is supported with semantics
+  to express the binding of the token to the client certificate for both local
+  and remote processing in Sections <xref target="x5t" format="counter" sectionFormat="of" derivedContent="3.1"/> and
+  <xref target="introspect" format="counter" sectionFormat="of" derivedContent="3.2"/>, respectively. This ensures
+  that, as described in <xref target="CertificateBoundAccessTokens" format="default" sectionFormat="of" derivedContent="Section 3"/>, protected resource access in Step
+  (B) is only possible by the legitimate client using a
+  certificate-bound token and holding the private key corresponding to the
+  certificate.
+</t>
+      <t pn="section-1-6">
+  OAuth 2.0
+  defines a shared-secret method of client authentication but also
+  allows for defining and using additional client authentication mechanisms
+  when interacting directly with the authorization server.
+  This document describes an additional mechanism of client authentication utilizing
+  mutual-TLS certificate-based authentication that provides
+  better security characteristics than shared secrets.
+  While <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/> documents client authentication for requests to the token endpoint,
+  extensions to OAuth 2.0 (such as Introspection <xref target="RFC7662" format="default" sectionFormat="of" derivedContent="RFC7662"/>,
+  Revocation <xref target="RFC7009" format="default" sectionFormat="of" derivedContent="RFC7009"/>, and the Backchannel Authentication Endpoint
+  in <xref target="OpenID.CIBA" format="default" sectionFormat="of" derivedContent="OpenID.CIBA"/>) define endpoints that also utilize client authentication,
+  and the mutual-TLS methods defined herein are applicable to those endpoints as well.
+</t>
+      <t pn="section-1-7">
+  Mutual-TLS certificate-bound access tokens ensure that
+  only the party in possession of the
+  private key corresponding to the certificate can utilize the token to
+  access the associated resources. Such a constraint is
+  sometimes referred to as key confirmation, proof-of-possession, or holder-of-key
+  and is unlike the case of the
+  bearer token described in <xref target="RFC6750" format="default" sectionFormat="of" derivedContent="RFC6750"/>, where any party in
+  possession of the access token can use it to access the associated resources.
+  Binding an access token to the client's certificate
+  prevents the use of stolen access tokens or replay of access tokens
+  by unauthorized parties.
+</t>
+      <t pn="section-1-8">
+  Mutual-TLS certificate-bound access tokens and mutual-TLS client authentication
+  are distinct mechanisms that are complementary but don't necessarily need to be deployed or used together.
+</t>
+      <t pn="section-1-9">
+  Additional client metadata parameters are introduced by this document in support of
+  certificate-bound access tokens and mutual-TLS client authentication.
+  The authorization server can obtain client metadata via the
+  Dynamic Client Registration Protocol <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>, which defines mechanisms for dynamically registering
+  OAuth 2.0 client metadata with authorization servers.
+  Also the metadata defined by <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>, and registered extensions to
+  it, imply a general data model for clients that is useful for
+  authorization server implementations, even when the Dynamic Client
+  Registration Protocol isn't in play. Such implementations will typically have
+  some sort of user interface available for managing client configuration.
+</t>
+      <section anchor="RNC" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-requirements-notation-and-c">Requirements Notation and Conventions</name>
+        <t pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>", "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>", "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+      <section anchor="Terminology" numbered="true" toc="include" removeInRFC="false" pn="section-1.2">
+        <name slugifiedName="name-terminology">Terminology</name>
+        <t pn="section-1.2-1">
+  Throughout this document the term "mutual TLS" refers to the process whereby, in addition to the normal TLS
+  server authentication with a certificate, a client presents its X.509 certificate
+  and proves possession of the corresponding private key to a server when negotiating a TLS session.
+
+  In contemporary versions of TLS <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>, this requires that the client send
+  the Certificate and CertificateVerify messages during the handshake and
+  for the server to verify the CertificateVerify and Finished messages.
+</t>
+      </section>
+    </section>
+    <section anchor="mtlsca" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-mutual-tls-for-oauth-client">Mutual TLS for OAuth Client Authentication</name>
+      <t pn="section-2-1">
+  This section defines, as an extension of 
+  <xref target="RFC6749" sectionFormat="of" section="2.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-2.3" derivedContent="RFC6749">OAuth 2.0</xref>, two distinct methods of using
+  mutual-TLS X.509 client certificates as client credentials.
+  The requirement of mutual TLS for client authentication is determined by the authorization server,
+  based on policy or configuration for the given client (regardless of whether the client was dynamically
+  registered, statically configured, or otherwise established).
+</t>
+      <t pn="section-2-2">
+  In order to utilize TLS for OAuth client authentication, the TLS
+  connection between the client and the authorization server <bcp14>MUST</bcp14> have been established or re-established
+  with mutual-TLS X.509 certificate authentication
+  (i.e., the client Certificate and CertificateVerify messages are sent during
+  the TLS handshake).
+
+
+
+</t>
+      <t pn="section-2-3">
+  For all requests to the authorization server utilizing mutual-TLS client
+  authentication, the client <bcp14>MUST</bcp14> include the
+  <tt>client_id</tt> parameter described in <xref target="RFC6749" sectionFormat="of" section="2.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-2.2" derivedContent="RFC6749">OAuth 2.0</xref>.  The presence of the
+  <tt>client_id</tt> parameter enables the authorization server to easily
+  identify the client independently from the content of the certificate. The
+  authorization server can locate the client configuration using the client
+  identifier and check the certificate presented in the TLS handshake against
+  the expected credentials for that client.  The authorization server
+  <bcp14>MUST</bcp14> enforce the binding between client and certificate, as
+  described in either Section <xref target="pki_method" format="counter" sectionFormat="of" derivedContent="2.1"/> or <xref target="self_signed_method" format="counter" sectionFormat="of" derivedContent="2.2"/> below.  If no certificate is
+  presented, or that which is presented doesn't match that which is expected
+  for the given <tt>client_id</tt>, the authorization server returns a normal
+  OAuth 2.0 error response per <xref target="RFC6749" sectionFormat="of" section="5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6749#section-5.2" derivedContent="RFC6749"/> with the <tt>invalid_client</tt> error code to
+  indicate failed client authentication.
+</t>
+      <section anchor="pki_method" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-pki-mutual-tls-method">PKI Mutual-TLS Method</name>
+        <t pn="section-2.1-1">
+        The PKI (public key infrastructure) method of mutual-TLS OAuth client authentication
+        adheres to the way in which X.509 certificates are traditionally used
+        for authentication. It relies on a validated certificate chain <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>
+        and a single subject distinguished name (DN) or a single
+        subject alternative name (SAN) to authenticate the client.
+        Only one subject name value of any type is used for each client.
+        The TLS handshake is utilized to validate the client's possession
+        of the private key corresponding to the public key in the certificate and to
+        validate the corresponding certificate chain. The client is successfully authenticated
+        if the subject information in the certificate matches the single expected subject configured or
+        registered for that particular client
+        (note that a predictable treatment of DN values, such as the distinguishedNameMatch
+        rule from <xref target="RFC4517" format="default" sectionFormat="of" derivedContent="RFC4517"/>, is needed in comparing the
+        certificate's subject DN to the client's registered DN).
+        Revocation checking is possible with the PKI method but if and how to check a certificate's
+        revocation status is a deployment decision at the discretion of the authorization server.
+        Clients can rotate their X.509 certificates
+        without the need to modify the respective authentication data at the authorization
+        server by obtaining a new certificate with the same subject from a trusted certificate authority (CA).
+        </t>
+        <section anchor="metadata_auth_value_pki" numbered="true" toc="include" removeInRFC="false" pn="section-2.1.1">
+          <name slugifiedName="name-pki-method-metadata-value">PKI Method Metadata Value</name>
+          <t pn="section-2.1.1-1">
+          For the PKI method of mutual-TLS client authentication, this specification
+          defines and registers the following authentication method metadata
+          value into the "OAuth Token Endpoint Authentication Methods" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>.
+          </t>
+          <dl newline="true" spacing="normal" pn="section-2.1.1-2">
+            <dt pn="section-2.1.1-2.1">tls_client_auth</dt>
+            <dd pn="section-2.1.1-2.2">
+              Indicates that client authentication to the authorization server will occur with
+              mutual TLS utilizing the PKI method of associating a certificate to a client.
+            </dd>
+          </dl>
+        </section>
+        <section anchor="client_metadata_pki" numbered="true" toc="include" removeInRFC="false" pn="section-2.1.2">
+          <name slugifiedName="name-client-registration-metadat">Client Registration Metadata</name>
+          <t pn="section-2.1.2-1">
+          In order to convey the expected subject of the certificate,
+          the following metadata
+          parameters are introduced for the
+          OAuth 2.0 Dynamic Client Registration Protocol <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/> in support of
+          the PKI method of mutual-TLS client authentication.
+          A client using the <tt>tls_client_auth</tt> authentication method <bcp14>MUST</bcp14> use
+          exactly one of the below metadata parameters to indicate the certificate subject value that
+          the authorization server is to expect when authenticating the respective client.
+          </t>
+          <dl newline="true" spacing="normal" pn="section-2.1.2-2">
+            <dt pn="section-2.1.2-2.1">tls_client_auth_subject_dn</dt>
+            <dd pn="section-2.1.2-2.2">
+              A string representation -- as defined in <xref target="RFC4514" format="default" sectionFormat="of" derivedContent="RFC4514"/> -- of the expected subject distinguished
+              name of the certificate that the OAuth client will use in mutual-TLS authentication.
+            </dd>
+            <dt pn="section-2.1.2-2.3">tls_client_auth_san_dns</dt>
+            <dd pn="section-2.1.2-2.4">
+              A string containing the value of an expected dNSName SAN entry
+              in the certificate that the OAuth client will use in mutual-TLS
+              authentication.
+            </dd>
+            <dt pn="section-2.1.2-2.5">tls_client_auth_san_uri</dt>
+            <dd pn="section-2.1.2-2.6">
+              A string containing the value of an expected
+              uniformResourceIdentifier SAN entry in the certificate that
+              the OAuth client will use in mutual-TLS authentication.
+            </dd>
+            <dt pn="section-2.1.2-2.7">tls_client_auth_san_ip</dt>
+            <dd pn="section-2.1.2-2.8">
+              A string representation of an IP address in either dotted
+              decimal notation (for IPv4) or colon-delimited hexadecimal (for
+              IPv6, as defined in <xref target="RFC5952" format="default" sectionFormat="of" derivedContent="RFC5952"/>)
+              that is expected to be present as an iPAddress SAN entry in the
+              certificate that the OAuth client will use in mutual-TLS
+              authentication. Per <xref target="RFC5952" sectionFormat="of" section="8" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5952#section-8" derivedContent="RFC5952"/>, the IP address comparison of the value in
+              this parameter and the SAN entry in the certificate is to be
+              done in binary format.
+            </dd>
+            <dt pn="section-2.1.2-2.9">tls_client_auth_san_email</dt>
+            <dd pn="section-2.1.2-2.10">
+              A string containing the value of an expected rfc822Name SAN
+              entry in the certificate that the OAuth client will use in
+              mutual-TLS authentication.
+            </dd>
+          </dl>
+        </section>
+      </section>
+      <section anchor="self_signed_method" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-self-signed-certificate-mut">Self-Signed Certificate Mutual-TLS Method</name>
+        <t pn="section-2.2-1">
+        This method of mutual-TLS OAuth client authentication
+        is intended to support client authentication using self-signed certificates.
+        As a prerequisite, the client registers its X.509 certificates
+        (using <tt>jwks</tt> defined in <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>) or a reference to a trusted source
+        for its X.509 certificates (using <tt>jwks_uri</tt> from <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>)
+        with the authorization server. During authentication,
+        TLS is utilized to validate the client's possession of the private key
+        corresponding to the public key presented within the certificate in the respective TLS handshake. In
+        contrast to the PKI method, the client's certificate chain is not validated by the server in this case.
+        The client is successfully authenticated if the
+        certificate that it presented during the handshake matches one of the certificates
+        configured or registered for that particular client.
+        The Self-Signed Certificate method allows the use of mutual TLS to authenticate clients without
+        the need to maintain a PKI. When used in conjunction with a <tt>jwks_uri</tt> for the
+        client, it also allows the client to rotate its X.509 certificates without the
+        need to change its respective authentication data directly with the authorization server.
+        </t>
+        <section anchor="metadata_auth_value_self_signed" numbered="true" toc="include" removeInRFC="false" pn="section-2.2.1">
+          <name slugifiedName="name-self-signed-method-metadata">Self-Signed Method Metadata Value</name>
+          <t pn="section-2.2.1-1">
+          For the Self-Signed Certificate method of mutual-TLS client authentication, this specification
+          defines and registers the following authentication method metadata
+          value into the "OAuth Token Endpoint Authentication Methods" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>.
+          </t>
+          <dl newline="true" spacing="normal" pn="section-2.2.1-2">
+            <dt pn="section-2.2.1-2.1">self_signed_tls_client_auth</dt>
+            <dd pn="section-2.2.1-2.2">
+              Indicates that client authentication to the authorization server will occur using
+              mutual TLS with the client utilizing a self-signed certificate.
+            </dd>
+          </dl>
+        </section>
+        <section anchor="client_metadata_self_signed" numbered="true" toc="include" removeInRFC="false" pn="section-2.2.2">
+          <name slugifiedName="name-client-registration-metadata">Client Registration Metadata</name>
+          <t pn="section-2.2.2-1">
+          For the Self-Signed Certificate method of binding a certificate with
+          a client using mutual-TLS client authentication, the existing
+          <tt>jwks_uri</tt> or <tt>jwks</tt> metadata parameters from <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/> are used to convey the client's
+          certificates via JSON Web Key (JWK) in a JWK Set <xref target="RFC7517" format="default" sectionFormat="of" derivedContent="RFC7517"/>. The <tt>jwks</tt> metadata
+          parameter is a JWK Set containing the client's public keys as an
+          array of JWKs, while the <tt>jwks_uri</tt> parameter is a URL that
+          references a client's JWK Set. A certificate is represented with
+          the <tt>x5c</tt> parameter of an individual JWK within the set.
+          Note that the members of the JWK representing the public key
+          (e.g., "n" and "e" for RSA, "x" and "y" for Elliptic Curve (EC)) are required
+          parameters per <xref target="RFC7518" format="default" sectionFormat="of" derivedContent="RFC7518"/> so will be
+          present even though they are not utilized in this context. Also note
+          that <xref target="RFC7517" sectionFormat="of" section="4.7" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7517#section-4.7" derivedContent="RFC7517"/> requires that the key in the first certificate of
+          the <tt>x5c</tt> parameter match the public key represented by those
+          other members of the JWK.
+          </t>
+        </section>
+      </section>
+    </section>
+    <section anchor="CertificateBoundAccessTokens" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-mutual-tls-client-certifica">Mutual-TLS Client Certificate-Bound Access Tokens</name>
+      <t pn="section-3-1">
+  When mutual TLS is used by the client on the connection to the token endpoint,
+  the authorization server is able to bind the issued access token to the client certificate.
+  Such a binding is accomplished by associating the certificate with the token in
+  a way that can be accessed by the protected resource, such as embedding the certificate
+  hash in the issued access token directly, using the syntax described in <xref target="x5t" format="default" sectionFormat="of" derivedContent="Section 3.1"/>,
+  or through token introspection as described in <xref target="introspect" format="default" sectionFormat="of" derivedContent="Section 3.2"/>.
+  Binding the access token to the client certificate in that fashion has the benefit of
+  decoupling that binding from the client's authentication with the
+  authorization server, which enables mutual TLS during protected resource access to
+  serve purely as a proof-of-possession mechanism.
+  Other methods of associating a certificate with an access token are possible,
+  per agreement by the authorization server and the protected resource, but are
+  beyond the scope of this specification.
+</t>
+      <t pn="section-3-2">
+  In order for a resource server to use certificate-bound access tokens, it
+  must have advance knowledge that mutual TLS is to be used for some or all
+  resource accesses.  
+
+   In particular, the access token
+   itself cannot be used as input to the decision of whether or not to
+   request mutual TLS because (from the TLS perspective) it is
+   "Application Data", only exchanged after the TLS handshake has been
+   completed, and the initial CertificateRequest occurs during the
+   handshake, before the Application Data is available.
+
+   Although subsequent opportunities for a TLS client to
+  present a certificate may be available, e.g., via TLS 1.2 renegotiation
+  <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246"/> or TLS 1.3 post-handshake authentication <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>, this document
+  makes no provision for their usage.  It is expected to be common that a
+  mutual-TLS-using resource server will require mutual TLS for all resources hosted
+  thereupon or will serve mutual-TLS-protected and regular resources on separate
+  hostname and port combinations, though other workflows are possible. 
+
+How
+  resource server policy is synchronized with the authorization server (AS) is out of scope for this
+  document.
+</t>
+      <t pn="section-3-3">
+  Within the scope of a mutual-TLS-protected resource-access flow,
+  the client makes protected resource requests, as described in <xref target="RFC6750" format="default" sectionFormat="of" derivedContent="RFC6750"/>,
+  however, those requests <bcp14>MUST</bcp14> be made over a mutually authenticated TLS connection
+  using the same certificate that was used for mutual TLS at the token endpoint.
+</t>
+      <t pn="section-3-4">
+  The protected resource <bcp14>MUST</bcp14> obtain, from its TLS implementation layer, the client certificate
+  used for mutual TLS
+  and <bcp14>MUST</bcp14> verify that the certificate matches the
+  certificate associated with the access token. If they do not match,
+  the resource access attempt <bcp14>MUST</bcp14> be rejected with an error, per <xref target="RFC6750" format="default" sectionFormat="of" derivedContent="RFC6750"/>,
+  using an HTTP 401 status code and the <tt>invalid_token</tt> error code.
+</t>
+      <t pn="section-3-5">
+  Metadata to convey server and client capabilities for mutual-TLS client certificate-bound access tokens
+  is defined in Sections <xref target="server_metadata_at" format="counter" sectionFormat="of" derivedContent="3.3"/> and <xref target="client_metadata_at" format="counter" sectionFormat="of" derivedContent="3.4"/>, respectively.
+</t>
+      <section anchor="x5t" numbered="true" toc="include" removeInRFC="false" pn="section-3.1">
+        <name slugifiedName="name-jwt-certificate-thumbprint-">JWT Certificate Thumbprint Confirmation Method</name>
+        <t pn="section-3.1-1">
+    When access tokens are represented as JSON Web Tokens (JWT) <xref target="RFC7519" format="default" sectionFormat="of" derivedContent="RFC7519"/>,
+    the certificate hash information <bcp14>SHOULD</bcp14> be represented using
+    the <tt>x5t#S256</tt> confirmation method member defined herein.
+        </t>
+        <t pn="section-3.1-2">
+    To represent the hash of a certificate in a JWT, this specification
+    defines the new JWT Confirmation Method <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/> member <tt>x5t#S256</tt> for the X.509
+    Certificate SHA-256 Thumbprint. The value of the <tt>x5t#S256</tt> member
+    is a base64url-encoded <xref target="RFC4648" format="default" sectionFormat="of" derivedContent="RFC4648"/> SHA-256
+    <xref target="SHS" format="default" sectionFormat="of" derivedContent="SHS"/> hash (a.k.a., thumbprint, fingerprint,
+    or digest) of the DER encoding <xref target="X690" format="default" sectionFormat="of" derivedContent="X690"/> of
+    the X.509 certificate <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>. The
+    base64url-encoded value <bcp14>MUST</bcp14> omit all trailing pad '='
+    characters and <bcp14>MUST NOT</bcp14> include any line breaks,
+    whitespace, or other additional characters.
+        </t>
+        <t pn="section-3.1-3">
+    The following is an example of a JWT payload containing an <tt>x5t#S256</tt> certificate thumbprint
+    confirmation method. The new JWT content introduced by this specification is the <tt>cnf</tt>
+    confirmation method claim at the bottom of the example that has
+    the <tt>x5t#S256</tt> confirmation method member containing the value that is the hash
+    of the client certificate to which the access token is bound.
+        </t>
+        <figure anchor="eg_x5ts256jwt" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-example-jwt-claims-set-with">Example JWT Claims Set with an X.509 Certificate Thumbprint Confirmation Method</name>
+          <sourcecode type="json" markers="false" pn="section-3.1-4.1">
+  {
+    "iss": "https://server.example.com",
+    "sub": "ty.webb@example.com",
+    "exp": 1493726400,
+    "nbf": 1493722800,
+    "cnf":{
+      "x5t#S256": "bwcK0esc3ACC3DB2Y5_lESsXE8o9ltc05O89jdN-dg2"
+    }
+  }
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="introspect" numbered="true" toc="include" removeInRFC="false" pn="section-3.2">
+        <name slugifiedName="name-confirmation-method-for-tok">Confirmation Method for Token Introspection</name>
+        <t pn="section-3.2-1">
+          OAuth 2.0 Token Introspection <xref target="RFC7662" format="default" sectionFormat="of" derivedContent="RFC7662"/> defines a
+          method for a protected resource to query
+          an authorization server about the active state of an
+          access token as well as to determine metainformation about the token.
+        </t>
+        <t pn="section-3.2-2">
+          For a mutual-TLS client certificate-bound access token, the hash of the
+          certificate to which the token is bound
+          is conveyed to the protected resource as metainformation
+          in a token introspection response. The hash is conveyed using the same
+          <tt>cnf</tt> with <tt>x5t#S256</tt> member structure as the
+          certificate SHA-256 thumbprint confirmation method, described in
+          <xref target="x5t" format="default" sectionFormat="of" derivedContent="Section 3.1"/>, as a top-level member of the introspection response JSON.
+          The protected resource compares
+          that certificate hash to a hash of the client certificate used for
+          mutual-TLS authentication
+          and rejects the request if they do not match.
+        </t>
+        <t pn="section-3.2-3">
+          The following is an example of an introspection response for an active token with
+          an <tt>x5t#S256</tt> certificate thumbprint
+          confirmation method. The new introspection response content introduced by this specification is the <tt>cnf</tt>
+          confirmation method at the bottom of the example that has
+          the <tt>x5t#S256</tt> confirmation method member containing the value that is the hash
+          of the client certificate to which the access token is bound.
+        </t>
+        <figure anchor="eg_x5ts256intro" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-example-introspection-respo">Example Introspection Response for a Certificate-Bound Access Token</name>
+          <artwork name="" type="" align="left" alt="" pn="section-3.2-4.1">
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+
+  {
+    "active": true,
+    "iss": "https://server.example.com",
+    "sub": "ty.webb@example.com",
+    "exp": 1493726400,
+    "nbf": 1493722800,
+    "cnf":{
+      "x5t#S256": "bwcK0esc3ACC3DB2Y5_lESsXE8o9ltc05O89jdN-dg2"
+    }
+  }
+          </artwork>
+        </figure>
+      </section>
+      <section anchor="server_metadata_at" numbered="true" toc="include" removeInRFC="false" pn="section-3.3">
+        <name slugifiedName="name-authorization-server-metada">Authorization Server Metadata</name>
+        <t pn="section-3.3-1">This document introduces the following new authorization server
+            metadata <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414"/> parameter to signal the server's capability to issue certificate-bound access tokens:
+
+        </t>
+        <dl newline="true" spacing="normal" pn="section-3.3-2">
+          <dt pn="section-3.3-2.1">tls_client_certificate_bound_access_tokens</dt>
+          <dd pn="section-3.3-2.2">
+            <bcp14>OPTIONAL</bcp14>. Boolean value indicating server support for
+                mutual-TLS client certificate-bound access tokens. If omitted, the
+                default value is <tt>false</tt>.
+              </dd>
+        </dl>
+      </section>
+      <section anchor="client_metadata_at" numbered="true" toc="include" removeInRFC="false" pn="section-3.4">
+        <name slugifiedName="name-client-registration-metadata-2">Client Registration Metadata</name>
+        <t pn="section-3.4-1">The following new client
+          metadata parameter is introduced to convey the client's intention to use certificate-bound access tokens:
+
+        </t>
+        <dl newline="true" spacing="normal" pn="section-3.4-2">
+          <dt pn="section-3.4-2.1">tls_client_certificate_bound_access_tokens</dt>
+          <dd pn="section-3.4-2.2">
+            <bcp14>OPTIONAL</bcp14>. Boolean value used to indicate the client's intention
+              to use mutual-TLS client certificate-bound access tokens.
+              If omitted, the default value is <tt>false</tt>.
+            </dd>
+        </dl>
+        <t pn="section-3.4-3">
+
+          Note that if a client that has indicated the intention to use mutual-TLS client certificate-bound tokens
+          makes a request to the token endpoint over a non-mutual-TLS connection,
+          it is at the authorization server's discretion as to whether to return an error or issue an unbound token.
+        </t>
+      </section>
+    </section>
+    <section anchor="PubClient" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-public-clients-and-certific">Public Clients and Certificate-Bound Tokens</name>
+      <t pn="section-4-1">
+        Mutual-TLS OAuth client authentication and certificate-bound access tokens
+        can be used independently of each other.
+        Use of certificate-bound access tokens without mutual-TLS OAuth client authentication, for example,
+        is possible in support of binding access tokens to a TLS client certificate for public clients (those without
+        authentication credentials associated with the <tt>client_id</tt>).
+        The authorization server would configure the TLS stack in the same manner as for the Self-Signed Certificate method
+        such that it does not verify that the certificate presented by the client during the handshake is
+        signed by a trusted CA. Individual instances of a client would create a self-signed
+        certificate for mutual TLS with both the authorization server and resource server. The authorization
+        server would not use the mutual-TLS certificate to authenticate the client at the OAuth layer
+        but would bind the issued access token
+        to the certificate for which the client has proven possession of the corresponding private key.
+        The access token is then bound to the certificate and can only be used by the client
+        possessing the certificate and corresponding private key and utilizing them to negotiate mutual TLS on
+        connections to the resource server.
+        When the authorization server issues a refresh token to such a client, it <bcp14>SHOULD</bcp14> also bind the refresh token
+        to the respective certificate and check the binding when the refresh token is presented to get new
+        access tokens.
+        The implementation details of the binding of the refresh token are at the discretion of the authorization
+        server.
+      </t>
+    </section>
+    <section anchor="endpointAliases" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-metadata-for-mutual-tls-end">Metadata for Mutual-TLS Endpoint Aliases</name>
+      <t pn="section-5-1">
+        The process of negotiating client certificate-based mutual TLS involves a TLS server requesting a certificate
+        from the TLS client (the client does not provide one unsolicited). Although a server can be configured
+        such that client certificates are optional, meaning that the connection is allowed to continue when the client
+        does not provide a certificate, the act of a server requesting a certificate can result in undesirable
+        behavior from some clients. This is particularly true of web browsers as TLS clients, which will typically
+        present the end user with an intrusive certificate selection interface when the server requests a certificate.
+      </t>
+      <t pn="section-5-2">
+        Authorization servers supporting both clients using mutual TLS and conventional clients <bcp14>MAY</bcp14> chose to
+        isolate the server side mutual-TLS behavior to only clients intending to do mutual TLS, thus
+        avoiding any undesirable effects it might have on conventional clients. The following authorization server
+        metadata parameter is introduced to facilitate such separation:
+      </t>
+      <dl newline="true" spacing="normal" pn="section-5-3">
+        <dt pn="section-5-3.1">mtls_endpoint_aliases</dt>
+        <dd pn="section-5-3.2">
+          <bcp14>OPTIONAL</bcp14>.
+            A JSON object containing alternative authorization server endpoints that,
+            when present, an OAuth client intending to do mutual TLS
+            uses in preference to the conventional endpoints.
+            The parameter value itself consists of one or more endpoint parameters,
+            such as <tt>token_endpoint</tt>,
+            <tt>revocation_endpoint</tt>,
+            <tt>introspection_endpoint</tt>, etc., conventionally defined for the
+            top level of authorization server metadata.
+            An OAuth client intending to do mutual TLS
+            (for OAuth client authentication and/or to acquire or use certificate-bound tokens)
+            when making a request directly to the authorization server <bcp14>MUST</bcp14>
+            use the alias URL of the endpoint within the <tt>mtls_endpoint_aliases</tt>, when present,
+            in preference to the endpoint URL of the same name at the top level of metadata.
+            When an endpoint is not present in
+            <tt>mtls_endpoint_aliases</tt>, then the client uses the conventional endpoint URL
+            defined at the top level of the authorization server metadata. Metadata parameters within
+            <tt>mtls_endpoint_aliases</tt> that do not define
+            endpoints to which an OAuth client makes a direct request have no meaning and <bcp14>SHOULD</bcp14> be ignored.
+          </dd>
+      </dl>
+      <t pn="section-5-4">
+        Below is an example of an authorization server metadata document with the
+        <tt>mtls_endpoint_aliases</tt> parameter, which indicates aliases for the
+        token, revocation, and introspection endpoints that an OAuth client intending to do mutual TLS
+        would use in preference to the conventional token, revocation, and
+	introspection endpoints.
+        Note that the endpoints in <tt>mtls_endpoint_aliases</tt> use a different
+        host than their conventional counterparts, which allows the authorization server
+        (via TLS <tt>server_name</tt> extension <xref target="RFC6066" format="default" sectionFormat="of" derivedContent="RFC6066"/> or actual distinct hosts) to differentiate its TLS behavior as appropriate.
+
+      </t>
+      <figure anchor="as-meta" align="left" suppress-title="false" pn="figure-4">
+        <name slugifiedName="name-example-authorization-serve">Example Authorization Server Metadata with Mutual-TLS Endpoint Aliases</name>
+        <sourcecode type="json" markers="false" pn="section-5-5.1">
+{
+  "issuer": "https://server.example.com",
+  "authorization_endpoint": "https://server.example.com/authz",
+  "token_endpoint": "https://server.example.com/token",
+  "introspection_endpoint": "https://server.example.com/introspect",
+  "revocation_endpoint": "https://server.example.com/revo",
+  "jwks_uri": "https://server.example.com/jwks",
+  "response_types_supported": ["code"],
+  "response_modes_supported": ["fragment","query","form_post"],
+  "grant_types_supported": ["authorization_code", "refresh_token"],
+  "token_endpoint_auth_methods_supported":
+                  ["tls_client_auth","client_secret_basic","none"],
+  "tls_client_certificate_bound_access_tokens": true,
+  "mtls_endpoint_aliases": {
+    "token_endpoint": "https://mtls.example.com/token",
+    "revocation_endpoint": "https://mtls.example.com/revo",
+    "introspection_endpoint": "https://mtls.example.com/introspect"
+  }
+}
+</sourcecode>
+      </figure>
+    </section>
+    <section anchor="Impl" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-implementation-consideratio">Implementation Considerations</name>
+      <section anchor="ImplAS" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-authorization-server">Authorization Server</name>
+        <t pn="section-6.1-1">The authorization server needs to set up its TLS configuration appropriately
+    for the OAuth client authentication methods it supports.</t>
+        <t pn="section-6.1-2">An authorization server that supports mutual-TLS client authentication
+    and other client authentication methods or public clients in parallel would make mutual TLS
+    optional (i.e., allowing a handshake to continue after the server requests a client certificate
+    but the client does not send one).</t>
+        <t pn="section-6.1-3">In order to support the Self-Signed Certificate method alone, the authorization server
+    would configure the TLS stack in such a way that it does not verify whether the
+    certificate presented by the client during the handshake is signed by a trusted CA 
+    certificate.</t>
+        <t pn="section-6.1-4">As described in <xref target="CertificateBoundAccessTokens" format="default" sectionFormat="of" derivedContent="Section 3"/>, the authorization server
+    binds the issued access token to the TLS client certificate, which means that it
+    will only issue certificate-bound tokens for a
+    certificate that the client has proven possession of the corresponding private key.</t>
+        <t pn="section-6.1-5">The authorization server may also consider hosting the token endpoint
+    and other endpoints requiring client authentication on
+    a separate host name or port in order to prevent unintended impact on the TLS behavior of
+    its other endpoints, e.g., the authorization endpoint. As described in <xref target="endpointAliases" format="default" sectionFormat="of" derivedContent="Section 5"/>,
+    it may further isolate any potential impact of the server requesting client certificates by
+    offering a distinct set of endpoints on a separate host or port, which are aliases for
+    the originals that a client intending to do mutual TLS will use in preference to the conventional endpoints.</t>
+      </section>
+      <section anchor="ImplRS" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-resource-server">Resource Server</name>
+        <t pn="section-6.2-1">
+      OAuth divides the roles and responsibilities such that the resource server relies
+      on the authorization server to perform client authentication and obtain resource-owner (end-user)
+      authorization. The resource server makes authorization decisions based on the access token
+      presented by the client but does not directly authenticate the client per se.
+      The manner in which an access token is bound to the client certificate and how a protected resource verifies the proof-of-possession
+      decouples that from the specific method that the client used to authenticate with the
+      authorization server. Mutual TLS during protected resource access can, therefore,
+      serve purely as a proof-of-possession mechanism.
+      As such, it is not necessary for the resource server to validate
+      the trust chain of the client's certificate in any of the methods
+      defined in this document.
+      The resource server would, therefore, configure the TLS stack
+      in a way that it does not verify whether the certificate presented by the client
+      during the handshake is signed by a trusted CA certificate.
+        </t>
+      </section>
+      <section anchor="ImplExp" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-certificate-expiration-and-">Certificate Expiration and Bound Access Tokens</name>
+        <t pn="section-6.3-1">
+        As described in <xref target="CertificateBoundAccessTokens" format="default" sectionFormat="of" derivedContent="Section 3"/>,
+        an access token is bound to a specific client certificate, which means that
+        the same certificate must be used for mutual TLS on protected resource access.
+        It also implies that access tokens are invalidated when a client updates the certificate,
+        which can be handled similarly to expired access tokens where the client
+        requests a new access token (typically with a refresh token) and retries the protected resource
+        request.
+        </t>
+      </section>
+      <section anchor="ImplImplicit" numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-implicit-grant-unsupported">Implicit Grant Unsupported</name>
+        <t pn="section-6.4-1">
+      This document describes binding an access token to the
+      client certificate presented on the TLS connection from the client to the
+      authorization server's token endpoint,
+      however, such binding of access tokens issued directly from the authorization
+      endpoint via the implicit grant flow is explicitly out of scope.
+      End users interact directly with the authorization endpoint using a web browser,
+      and the use of client certificates in user's browsers bring operational and
+      usability issues that make it undesirable to support certificate-bound access
+      tokens issued in the implicit grant flow. Implementations wanting to employ
+      certificate-bound access tokens should utilize grant types
+      that involve the client making an access token request directly to the token endpoint
+      (e.g., the authorization code and refresh token grant types).
+        </t>
+      </section>
+      <section anchor="TTRP" numbered="true" toc="include" removeInRFC="false" pn="section-6.5">
+        <name slugifiedName="name-tls-termination">TLS Termination</name>
+        <t pn="section-6.5-1">
+      An authorization server or resource server <bcp14>MAY</bcp14> choose to terminate TLS connections at a load balancer,
+      reverse proxy, or other network intermediary. How the client certificate metadata is securely
+      communicated between the intermediary and the application server, in this case, is out of scope of this specification.
+        </t>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-7.1">
+        <name slugifiedName="name-certificate-bound-refresh-t">Certificate-Bound Refresh Tokens</name>
+        <t pn="section-7.1-1">The OAuth 2.0 Authorization Framework <xref target="RFC6749" format="default" sectionFormat="of" derivedContent="RFC6749"/> requires that an authorization server (AS)
+          bind refresh tokens to the client to which they were issued and that confidential clients
+          (those having established authentication credentials with the AS) authenticate to
+          the AS when presenting a refresh token. As a result, refresh tokens are indirectly certificate-bound by way of the
+          client ID and the associated requirement for (certificate-based) authentication to the AS when
+          issued to clients utilizing the <tt>tls_client_auth</tt> or
+          <tt>self_signed_tls_client_auth</tt> methods of client authentication.
+          <xref target="PubClient" format="default" sectionFormat="of" derivedContent="Section 4"/> describes certificate-bound refresh tokens issued to public clients (those without
+          authentication credentials associated with the <tt>client_id</tt>).
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-7.2">
+        <name slugifiedName="name-certificate-thumbprint-bind">Certificate Thumbprint Binding</name>
+        <t pn="section-7.2-1">
+          The binding between the certificate and access token specified in <xref target="x5t" format="default" sectionFormat="of" derivedContent="Section 3.1"/> uses
+          a cryptographic hash of the certificate. It relies on the hash function having sufficient
+          second-preimage resistance so as to make it computationally infeasible to
+          find or create another certificate that produces to the same hash output value.
+          The SHA-256 hash function was used because it meets the aforementioned requirement while being widely available.
+          If, in the future, certificate thumbprints need to be computed using
+          hash function(s) other than SHA-256, it is suggested that, for additional
+          related JWT confirmation methods, members be defined for that purpose
+          and registered in the IANA "JWT Confirmation Methods" registry
+          <xref target="IANA.JWT.Claims" format="default" sectionFormat="of" derivedContent="IANA.JWT.Claims"/>
+          for JWT <tt>cnf</tt> member values.
+        </t>
+        <t pn="section-7.2-2">
+          Community knowledge about the strength of various algorithms and
+          feasible attacks can change suddenly, and experience shows that a
+          document about security is a point-in-time
+          statement. Readers are advised to seek out any errata or updates
+          that apply to this document.
+        </t>
+      </section>
+      <section anchor="TLSV" numbered="true" toc="include" removeInRFC="false" pn="section-7.3">
+        <name slugifiedName="name-tls-versions-and-best-pract">TLS Versions and Best Practices</name>
+        <t pn="section-7.3-1">
+          This document is applicable with any TLS version supporting certificate-based client authentication.
+          Both <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446">TLS 1.3</xref> and <xref target="RFC5246" format="default" sectionFormat="of" derivedContent="RFC5246">TLS 1.2</xref> are cited herein, because,
+          at the time of writing, 1.3 is the newest version, while 1.2 is the most widely deployed.
+          General implementation and security considerations for TLS, including version recommendations,
+          can be found in <xref target="BCP195" format="default" sectionFormat="of" derivedContent="BCP195"/>.
+        </t>
+        <t pn="section-7.3-2">
+          TLS certificate validation
+          (for both client and server certificates) requires a local database of
+          trusted certificate authorities (CAs). Decisions about what CAs to trust
+          and how to make such a determination of trust are out of scope for this
+          document.
+        </t>
+      </section>
+      <section anchor="certspoofing" numbered="true" toc="include" removeInRFC="false" pn="section-7.4">
+        <name slugifiedName="name-x509-certificate-spoofing">X.509 Certificate Spoofing</name>
+        <t pn="section-7.4-1">
+          If the PKI method of client authentication is used, an attacker could try to impersonate a client using
+          a certificate with the same subject (DN or SAN) but issued by a
+	  different CA that the authorization server trusts.
+          To cope with that threat, the authorization server <bcp14>SHOULD</bcp14> only accept, as trust anchors,
+          a limited number of CAs whose certificate issuance policy meets its security requirements.
+          There is an assumption then that the client and server agree out of band on the set
+          of trust anchors that the server uses to create and validate the
+          certificate chain. Without this assumption the use of a subject
+          to identify the client certificate would open the server up to
+          certificate spoofing attacks.
+        </t>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-7.5">
+        <name slugifiedName="name-x509-certificate-parsing-an">X.509 Certificate Parsing and Validation Complexity</name>
+        <t pn="section-7.5-1">
+          Parsing and validation of X.509 certificates and certificate chains
+	  is complex, and implementation
+          mistakes have previously exposed security vulnerabilities.
+          Complexities of validation include (but are not limited to)
+          <xref target="CX5P" format="default" sectionFormat="of" derivedContent="CX5P"/> <xref target="DCW" format="default" sectionFormat="of" derivedContent="DCW"/> <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>:
+        </t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-7.5-2">
+          <li pn="section-7.5-2.1">checking of basic constraints, basic and extended key usage constraints, validity periods, and critical extensions;</li>
+          <li pn="section-7.5-2.2">handling of embedded NUL bytes in ASN.1 counted-length strings and non-canonical or non-normalized string representations in subject names;</li>
+          <li pn="section-7.5-2.3">handling of wildcard patterns in subject names;</li>
+          <li pn="section-7.5-2.4">recursive verification of certificate chains and checking certificate revocation.</li>
+        </ul>
+        <t pn="section-7.5-3">
+          For these reasons, implementors <bcp14>SHOULD</bcp14> use an established and well-tested X.509 library
+          (such as one used by an established TLS library) for validation of X.509 certificate chains
+          and <bcp14>SHOULD NOT</bcp14> attempt to write their own X.509 certificate validation procedures.
+        </t>
+      </section>
+    </section>
+    <section anchor="Privacy" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-privacy-considerations">Privacy Considerations</name>
+      <t pn="section-8-1">
+        In TLS versions prior to 1.3, the client's certificate is sent unencrypted in the initial handshake and
+        can potentially be used by third parties to monitor, track, and correlate client activity.
+        This is likely of little concern for clients that act on behalf of a
+	significant number of end users because
+        individual user activity will not be discernible amidst the client activity as a whole.
+        However, clients that act on behalf of a single end user, such as a native application on a mobile device,
+        should use TLS version 1.3 whenever possible or consider the potential privacy implications of using mutual TLS on
+        earlier versions.
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-9.1">
+        <name slugifiedName="name-jwt-confirmation-methods-re">JWT Confirmation Methods Registration</name>
+        <t pn="section-9.1-1">
+          Per this specification, the following value has been registered
+          in the IANA "JWT Confirmation Methods" registry
+          <xref target="IANA.JWT.Claims" format="default" sectionFormat="of" derivedContent="IANA.JWT.Claims"/>
+          for JWT <tt>cnf</tt> member values
+          established by <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/>.
+        </t>
+        <dl spacing="compact" newline="false" pn="section-9.1-2">
+          <dt pn="section-9.1-2.1">Confirmation Method Value:</dt>
+          <dd pn="section-9.1-2.2">
+            <tt>x5t#S256</tt></dd>
+          <dt pn="section-9.1-2.3">Confirmation Method Description:</dt>
+          <dd pn="section-9.1-2.4">X.509 Certificate SHA-256 Thumbprint</dd>
+          <dt pn="section-9.1-2.5">Change Controller:</dt>
+          <dd pn="section-9.1-2.6">IESG</dd>
+          <dt pn="section-9.1-2.7">Specification Document(s):</dt>
+          <dd pn="section-9.1-2.8">
+            <xref target="x5t" format="default" sectionFormat="of" derivedContent="Section 3.1"/>
+	  of RFC 8705</dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-9.2">
+        <name slugifiedName="name-authorization-server-metadat">Authorization Server Metadata Registration</name>
+        <t pn="section-9.2-1">
+          Per this specification, the following values have been registered 
+          in the IANA "OAuth Authorization Server Metadata" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/> established by <xref target="RFC8414" format="default" sectionFormat="of" derivedContent="RFC8414"/>.
+        </t>
+        <dl spacing="compact" newline="false" pn="section-9.2-2">
+          <dt pn="section-9.2-2.1">Metadata Name:</dt>
+          <dd pn="section-9.2-2.2">
+            <tt>tls_client_certificate_bound_access_tokens</tt></dd>
+          <dt pn="section-9.2-2.3">Metadata Description:</dt>
+          <dd pn="section-9.2-2.4">Indicates authorization server
+          support for mutual-TLS client certificate-bound access tokens.</dd>
+          <dt pn="section-9.2-2.5">Change Controller:</dt>
+          <dd pn="section-9.2-2.6">IESG</dd>
+          <dt pn="section-9.2-2.7">Specification Document(s):</dt>
+          <dd pn="section-9.2-2.8">
+            <xref target="server_metadata_at" format="default" sectionFormat="of" derivedContent="Section 3.3"/> of RFC 8705</dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.2-3">
+          <dt pn="section-9.2-3.1">Metadata Name:</dt>
+          <dd pn="section-9.2-3.2">
+            <tt>mtls_endpoint_aliases</tt></dd>
+          <dt pn="section-9.2-3.3">Metadata Description:</dt>
+          <dd pn="section-9.2-3.4">JSON object containing alternative
+	  authorization server endpoints, which a client
+              intending to do mutual TLS will use in preference to the conventional endpoints.</dd>
+          <dt pn="section-9.2-3.5">Change Controller:</dt>
+          <dd pn="section-9.2-3.6">IESG</dd>
+          <dt pn="section-9.2-3.7">Specification Document(s):</dt>
+          <dd pn="section-9.2-3.8">
+            <xref target="endpointAliases" format="default" sectionFormat="of" derivedContent="Section 5"/> of RFC 8705</dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-9.3">
+        <name slugifiedName="name-token-endpoint-authenticati">Token Endpoint Authentication Method Registration</name>
+        <t pn="section-9.3-1">
+	  Per this specification, the following values have been registered 
+          in the IANA "OAuth Token Endpoint Authentication Methods" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/> established by <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>.
+        </t>
+        <dl spacing="compact" newline="false" pn="section-9.3-2">
+          <dt pn="section-9.3-2.1">Token Endpoint Authentication Method Name:</dt>
+          <dd pn="section-9.3-2.2">
+            <tt>tls_client_auth</tt></dd>
+          <dt pn="section-9.3-2.3">Change Controller:</dt>
+          <dd pn="section-9.3-2.4">IESG</dd>
+          <dt pn="section-9.3-2.5">Specification Document(s):</dt>
+          <dd pn="section-9.3-2.6">
+            <xref target="metadata_auth_value_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.1"/> of RFC 8705</dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.3-3">
+          <dt pn="section-9.3-3.1">Token Endpoint Authentication Method Name:<br/></dt>
+          <dd pn="section-9.3-3.2">
+            <tt>self_signed_tls_client_​auth</tt></dd>
+          <dt pn="section-9.3-3.3">Change Controller:</dt>
+          <dd pn="section-9.3-3.4">IESG</dd>
+          <dt pn="section-9.3-3.5">Specification Document(s):</dt>
+          <dd pn="section-9.3-3.6">
+            <xref target="metadata_auth_value_self_signed" format="default" sectionFormat="of" derivedContent="Section 2.2.1"/> of RFC 8705</dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-9.4">
+        <name slugifiedName="name-token-introspection-respons">Token Introspection Response Registration</name>
+        <t pn="section-9.4-1">
+          "Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)" <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/> defined the
+          <tt>cnf</tt> (confirmation) claim that enables
+          confirmation key information to be carried in a JWT.
+          However, the same proof-of-possession semantics are also useful for introspected access tokens
+          whereby the protected resource obtains the confirmation key data as metainformation
+          of a token introspection response and uses that information in verifying proof-of-possession.
+          Therefore, this specification defines and registers proof-of-possession semantics for
+          OAuth 2.0 Token Introspection <xref target="RFC7662" format="default" sectionFormat="of" derivedContent="RFC7662"/> using the <tt>cnf</tt>
+          structure.
+          When included as a top-level member of an OAuth token introspection response, <tt>cnf</tt>
+          has the same semantics and format as the claim of the same name defined in <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/>.
+          While this specification only explicitly uses the <tt>x5t#S256</tt>
+          confirmation method member (see <xref target="introspect" format="default" sectionFormat="of" derivedContent="Section 3.2"/>), it needs to define and register
+          the higher-level <tt>cnf</tt>
+          structure as an introspection response member in order to define and use the more specific
+          certificate thumbprint confirmation method.
+        </t>
+        <t pn="section-9.4-2">
+          As such, the following values have been registered 
+          in the IANA "OAuth Token Introspection Response" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>
+          established by <xref target="RFC7662" format="default" sectionFormat="of" derivedContent="RFC7662"/>.
+        </t>
+        <dl spacing="compact" newline="false" pn="section-9.4-3">
+          <dt pn="section-9.4-3.1">Claim Name:</dt>
+          <dd pn="section-9.4-3.2">
+            <tt>cnf</tt></dd>
+          <dt pn="section-9.4-3.3">Claim Description:</dt>
+          <dd pn="section-9.4-3.4">Confirmation</dd>
+          <dt pn="section-9.4-3.5">Change Controller:</dt>
+          <dd pn="section-9.4-3.6">IESG</dd>
+          <dt pn="section-9.4-3.7">Specification Document(s):</dt>
+          <dd pn="section-9.4-3.8">
+            <xref target="RFC7800" format="default" sectionFormat="of" derivedContent="RFC7800"/> and RFC 8705</dd>
+        </dl>
+      </section>
+      <section numbered="true" toc="include" removeInRFC="false" pn="section-9.5">
+        <name slugifiedName="name-dynamic-client-registration">Dynamic Client Registration Metadata Registration</name>
+        <t pn="section-9.5-1">
+	  Per this specification, the following client metadata definitions
+          have been registered in the IANA "OAuth Dynamic Client Registration Metadata" registry
+          <xref target="IANA.OAuth.Parameters" format="default" sectionFormat="of" derivedContent="IANA.OAuth.Parameters"/>
+          established by <xref target="RFC7591" format="default" sectionFormat="of" derivedContent="RFC7591"/>:
+        </t>
+        <dl spacing="compact" newline="false" pn="section-9.5-2">
+          <dt pn="section-9.5-2.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-2.2">
+            <tt>tls_client_certificate_bound_access_tokens</tt>
+          </dd>
+          <dt pn="section-9.5-2.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-2.4">Indicates the client's
+              intention to use mutual-TLS client certificate-bound access
+              tokens.
+            </dd>
+          <dt pn="section-9.5-2.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-2.6">IESG
+            </dd>
+          <dt pn="section-9.5-2.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-2.8">
+            <xref target="client_metadata_at" format="default" sectionFormat="of" derivedContent="Section 3.4"/> of RFC 8705
+            </dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.5-3">
+          <dt pn="section-9.5-3.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-3.2">
+            <tt>tls_client_auth_subject_dn</tt>
+          </dd>
+          <dt pn="section-9.5-3.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-3.4">String value specifying
+              the expected subject DN of the client certificate.
+            </dd>
+          <dt pn="section-9.5-3.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-3.6">IESG
+            </dd>
+          <dt pn="section-9.5-3.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-3.8">
+            <xref target="client_metadata_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.2"/> of RFC 8705
+            </dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.5-4">
+          <dt pn="section-9.5-4.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-4.2">
+            <tt>tls_client_auth_san_dns</tt>
+          </dd>
+          <dt pn="section-9.5-4.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-4.4">String value specifying
+              the expected dNSName SAN entry in the client certificate.
+            </dd>
+          <dt pn="section-9.5-4.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-4.6">IESG
+            </dd>
+          <dt pn="section-9.5-4.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-4.8">
+            <xref target="client_metadata_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.2"/> of RFC 8705
+            </dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.5-5">
+          <dt pn="section-9.5-5.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-5.2">
+            <tt>tls_client_auth_san_uri</tt>
+          </dd>
+          <dt pn="section-9.5-5.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-5.4">String value specifying
+              the expected uniformResourceIdentifier SAN entry in the client
+              certificate.
+            </dd>
+          <dt pn="section-9.5-5.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-5.6">IESG
+            </dd>
+          <dt pn="section-9.5-5.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-5.8">
+            <xref target="client_metadata_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.2"/> of RFC 8705
+            </dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.5-6">
+          <dt pn="section-9.5-6.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-6.2">
+            <tt>tls_client_auth_san_ip</tt>
+          </dd>
+          <dt pn="section-9.5-6.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-6.4">String value specifying
+              the expected iPAddress SAN entry in the client certificate.
+            </dd>
+          <dt pn="section-9.5-6.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-6.6">IESG
+            </dd>
+          <dt pn="section-9.5-6.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-6.8">
+            <xref target="client_metadata_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.2"/> of RFC 8705
+            </dd>
+        </dl>
+        <dl spacing="compact" newline="false" pn="section-9.5-7">
+          <dt pn="section-9.5-7.1">
+              Client Metadata Name:</dt>
+          <dd pn="section-9.5-7.2">
+            <tt>tls_client_auth_san_email</tt>
+          </dd>
+          <dt pn="section-9.5-7.3">
+              Client Metadata Description:</dt>
+          <dd pn="section-9.5-7.4">String value specifying
+              the expected rfc822Name SAN entry in the client certificate.
+            </dd>
+          <dt pn="section-9.5-7.5">
+              Change Controller:</dt>
+          <dd pn="section-9.5-7.6">IESG
+            </dd>
+          <dt pn="section-9.5-7.7">
+              Specification Document(s):</dt>
+          <dd pn="section-9.5-7.8">
+            <xref target="client_metadata_pki" format="default" sectionFormat="of" derivedContent="Section 2.1.2"/> of RFC 8705
+            </dd>
+        </dl>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <displayreference target="I-D.ietf-oauth-token-binding" to="TOKEN"/>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="BCP195" target="https://www.rfc-editor.org/info/bcp195" quoteTitle="true" derivedAnchor="BCP195">
+          <front>
+            <title>Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author initials="Y." surname="Sheffer" fullname="Y. Sheffer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Holz" fullname="R. Holz">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Saint-Andre" fullname="P. Saint-Andre">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+          </front>
+          <seriesInfo name="BCP" value="195"/>
+          <seriesInfo name="RFC" value="7525"/>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC4514" target="https://www.rfc-editor.org/info/rfc4514" quoteTitle="true" derivedAnchor="RFC4514">
+          <front>
+            <title>Lightweight Directory Access Protocol (LDAP): String Representation of Distinguished Names</title>
+            <author initials="K." surname="Zeilenga" fullname="K. Zeilenga" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="June"/>
+            <abstract>
+              <t>The X.500 Directory uses distinguished names (DNs) as primary keys to entries in the directory.  This document defines the string representation used in the Lightweight Directory Access Protocol (LDAP) to transfer distinguished names.  The string representation is designed to give a clean representation of commonly used distinguished names, while being able to represent any distinguished name.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4514"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4514"/>
+        </reference>
+        <reference anchor="RFC4648" target="https://www.rfc-editor.org/info/rfc4648" quoteTitle="true" derivedAnchor="RFC4648">
+          <front>
+            <title>The Base16, Base32, and Base64 Data Encodings</title>
+            <author initials="S." surname="Josefsson" fullname="S. Josefsson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="October"/>
+            <abstract>
+              <t>This document describes the commonly used base 64, base 32, and base 16 encoding schemes.  It also discusses the use of line-feeds in encoded data, use of padding in encoded data, use of non-alphabet characters in encoded data, use of different encoding alphabets, and canonical encodings.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4648"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4648"/>
+        </reference>
+        <reference anchor="RFC5246" target="https://www.rfc-editor.org/info/rfc5246" quoteTitle="true" derivedAnchor="RFC5246">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+            <author initials="T." surname="Dierks" fullname="T. Dierks">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="August"/>
+            <abstract>
+              <t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5246"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5246"/>
+        </reference>
+        <reference anchor="RFC5280" target="https://www.rfc-editor.org/info/rfc5280" quoteTitle="true" derivedAnchor="RFC5280">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+            <author initials="D." surname="Cooper" fullname="D. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Santesson" fullname="S. Santesson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Farrell" fullname="S. Farrell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Boeyen" fullname="S. Boeyen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Polk" fullname="W. Polk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="May"/>
+            <abstract>
+              <t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5280"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5280"/>
+        </reference>
+        <reference anchor="RFC6749" target="https://www.rfc-editor.org/info/rfc6749" quoteTitle="true" derivedAnchor="RFC6749">
+          <front>
+            <title>The OAuth 2.0 Authorization Framework</title>
+            <author initials="D." surname="Hardt" fullname="D. Hardt" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="October"/>
+            <abstract>
+              <t>The OAuth 2.0 authorization framework enables a third-party application to obtain limited access to an HTTP service, either on behalf of a resource owner by orchestrating an approval interaction between the resource owner and the HTTP service, or by allowing the third-party application to obtain access on its own behalf.  This specification replaces and obsoletes the OAuth 1.0 protocol described in RFC 5849.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6749"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6749"/>
+        </reference>
+        <reference anchor="RFC6750" target="https://www.rfc-editor.org/info/rfc6750" quoteTitle="true" derivedAnchor="RFC6750">
+          <front>
+            <title>The OAuth 2.0 Authorization Framework: Bearer Token Usage</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Hardt" fullname="D. Hardt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="October"/>
+            <abstract>
+              <t>This specification describes how to use bearer tokens in HTTP requests to access OAuth 2.0 protected resources.  Any party in possession of a bearer token (a "bearer") can use it to get access to the associated resources (without demonstrating possession of a cryptographic key).  To prevent misuse, bearer tokens need to be protected from disclosure in storage and in transport.   [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6750"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6750"/>
+        </reference>
+        <reference anchor="RFC7517" target="https://www.rfc-editor.org/info/rfc7517" quoteTitle="true" derivedAnchor="RFC7517">
+          <front>
+            <title>JSON Web Key (JWK)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t>A JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data structure that represents a cryptographic key.  This specification also defines a JWK Set JSON data structure that represents a set of JWKs.  Cryptographic algorithms and identifiers for use with this specification are described in the separate JSON Web Algorithms (JWA) specification and IANA registries established by that specification.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7517"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7517"/>
+        </reference>
+        <reference anchor="RFC7519" target="https://www.rfc-editor.org/info/rfc7519" quoteTitle="true" derivedAnchor="RFC7519">
+          <front>
+            <title>JSON Web Token (JWT)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t>JSON Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties.  The claims in a JWT are encoded as a JSON object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or integrity protected with a Message Authentication Code (MAC) and/or encrypted.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7519"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7519"/>
+        </reference>
+        <reference anchor="RFC7591" target="https://www.rfc-editor.org/info/rfc7591" quoteTitle="true" derivedAnchor="RFC7591">
+          <front>
+            <title>OAuth 2.0 Dynamic Client Registration Protocol</title>
+            <author initials="J." surname="Richer" fullname="J. Richer" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Machulak" fullname="M. Machulak">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Hunt" fullname="P. Hunt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="July"/>
+            <abstract>
+              <t>This specification defines mechanisms for dynamically registering OAuth 2.0 clients with authorization servers.  Registration requests send a set of desired client metadata values to the authorization server.  The resulting registration responses return a client identifier to use at the authorization server and the client metadata values registered for the client.  The client can then use this registration information to communicate with the authorization server using the OAuth 2.0 protocol.  This specification also defines a set of common client metadata fields and values for clients to use during registration.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7591"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7591"/>
+        </reference>
+        <reference anchor="RFC7662" target="https://www.rfc-editor.org/info/rfc7662" quoteTitle="true" derivedAnchor="RFC7662">
+          <front>
+            <title>OAuth 2.0 Token Introspection</title>
+            <author initials="J." surname="Richer" fullname="J. Richer" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="October"/>
+            <abstract>
+              <t>This specification defines a method for a protected resource to query an OAuth 2.0 authorization server to determine the active state of an OAuth 2.0 token and to determine meta-information about this token. OAuth 2.0 deployments can use this method to convey information about the authorization context of the token from the authorization server to the protected resource.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7662"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7662"/>
+        </reference>
+        <reference anchor="RFC7800" target="https://www.rfc-editor.org/info/rfc7800" quoteTitle="true" derivedAnchor="RFC7800">
+          <front>
+            <title>Proof-of-Possession Key Semantics for JSON Web Tokens (JWTs)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Tschofenig" fullname="H. Tschofenig">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="April"/>
+            <abstract>
+              <t>This specification describes how to declare in a JSON Web Token (JWT) that the presenter of the JWT possesses a particular proof-of- possession key and how the recipient can cryptographically confirm proof of possession of the key by the presenter.  Being able to prove possession of a key is also sometimes described as the presenter being a holder-of-key.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7800"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7800"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8414" target="https://www.rfc-editor.org/info/rfc8414" quoteTitle="true" derivedAnchor="RFC8414">
+          <front>
+            <title>OAuth 2.0 Authorization Server Metadata</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="N." surname="Sakimura" fullname="N. Sakimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Bradley" fullname="J. Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="June"/>
+            <abstract>
+              <t>This specification defines a metadata format that an OAuth 2.0 client can use to obtain the information needed to interact with an OAuth 2.0 authorization server, including its endpoint locations and authorization server capabilities.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8414"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8414"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author initials="E." surname="Rescorla" fullname="E. Rescorla">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2018" month="August"/>
+            <abstract>
+              <t>This document specifies version 1.3 of the Transport Layer Security (TLS) protocol.  TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t>This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961.  This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="SHS" target="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf" quoteTitle="true" derivedAnchor="SHS">
+          <front>
+            <title>Secure Hash Standard (SHS)</title>
+            <author>
+              <organization showOnFrontPage="true">National Institute of Standards and Technology (NIST)</organization>
+            </author>
+            <date month="August" year="2015"/>
+          </front>
+          <seriesInfo name="FIPS" value="PUB 180-4"/>
+          <seriesInfo name="DOI" value="10.6028/NIST.FIPS.180-4"/>
+        </reference>
+        <reference anchor="X690" quoteTitle="true" derivedAnchor="X690">
+          <front>
+            <title>Information Technology - ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)</title>
+            <seriesInfo name="ITU-T" value="Recommendation X.690"/>
+            <author>
+              <organization showOnFrontPage="true">ITU-T</organization>
+            </author>
+            <date month="August" year="2015"/>
+          </front>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="CX5P" target="https://www.cryptologie.net/article/374/common-x509-certificate-validationcreation-pitfalls" quoteTitle="true" derivedAnchor="CX5P">
+          <front>
+            <title>Common x509 certificate validation/creation pitfalls</title>
+            <author fullname="David Wong" initials="D." surname="Wong">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="September" year="2016"/>
+          </front>
+        </reference>
+        <reference anchor="DCW" target="http://www.cs.utexas.edu/~shmat/shmat_ccs12.pdf" quoteTitle="true" derivedAnchor="DCW">
+          <front>
+            <title>The Most Dangerous Code in the World: Validating SSL Certificates in Non-Browser Software</title>
+            <author fullname="Martin Georgiev" initials="M." surname="Georgiev">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Subodh Iyengar" initials="S." surname="Iyengar">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Suman Jana" initials="S." surname="Jana">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Rishita Anubhai" initials="R." surname="Anubhai">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Dan Boneh" initials="D." surname="Boneh">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Vitaly Shmatikov" initials="V." surname="Shmatikov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" year="2012"/>
+          </front>
+          <seriesInfo name="DOI" value="10.1145/2382196.2382204"/>
+        </reference>
+        <reference anchor="IANA.JWT.Claims" target="https://www.iana.org/assignments/jwt" quoteTitle="true" derivedAnchor="IANA.JWT.Claims">
+          <front>
+            <title>JSON Web Token Claims</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="IANA.OAuth.Parameters" target="https://www.iana.org/assignments/oauth-parameters" quoteTitle="true" derivedAnchor="IANA.OAuth.Parameters">
+          <front>
+            <title>OAuth Parameters</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+          </front>
+        </reference>
+        <reference anchor="OpenID.CIBA" target="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html" quoteTitle="true" derivedAnchor="OpenID.CIBA">
+          <front>
+            <title abbrev="CIBA">OpenID Connect Client Initiated Backchannel Authentication Flow - Core 1.0</title>
+            <author fullname="Gonzalo Fernandez Rodriguez" initials="G." surname="Fernandez">
+              <organization abbrev="Telefonica" showOnFrontPage="true">Telefonica I+D</organization>
+              <address>
+                <email>gonzalo.fernandezrodriguez@telefonica.com</email>
+              </address>
+            </author>
+            <author fullname="Florian Walter" initials="F." surname="Walter">
+              <organization abbrev="" showOnFrontPage="true">Deutsche Telekom AG</organization>
+              <address>
+                <email>F.Walter@telekom.de</email>
+              </address>
+            </author>
+            <author fullname="Axel Nennker" initials="A." surname="Nennker">
+              <organization abbrev="" showOnFrontPage="true">Deutsche Telekom AG</organization>
+              <address>
+                <email>axel.nennker@telekom.de</email>
+              </address>
+            </author>
+            <author fullname="Dave Tonge" initials="D." surname="Tonge">
+              <organization abbrev="Moneyhub" showOnFrontPage="true">Moneyhub</organization>
+              <address>
+                <email>dave.tonge@moneyhub.com</email>
+              </address>
+            </author>
+            <author fullname="Brian Campbell" initials="B." surname="Campbell">
+              <organization abbrev="Ping Identity" showOnFrontPage="true">Ping Identity</organization>
+              <address>
+                <email>bcampbell@pingidentity.com</email>
+              </address>
+            </author>
+            <date day="16" month="January" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="RFC4517" target="https://www.rfc-editor.org/info/rfc4517" quoteTitle="true" derivedAnchor="RFC4517">
+          <front>
+            <title>Lightweight Directory Access Protocol (LDAP): Syntaxes and Matching Rules</title>
+            <author initials="S." surname="Legg" fullname="S. Legg" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2006" month="June"/>
+            <abstract>
+              <t>Each attribute stored in a Lightweight Directory Access Protocol (LDAP) directory, whose values may be transferred in the LDAP protocol, has a defined syntax that constrains the structure and format of its values.  The comparison semantics for values of a syntax are not part of the syntax definition but are instead provided through separately defined matching rules.  Matching rules specify an argument, an assertion value, which also has a defined syntax.  This document defines a base set of syntaxes and matching rules for use in defining attributes for LDAP directories.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4517"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4517"/>
+        </reference>
+        <reference anchor="RFC5952" target="https://www.rfc-editor.org/info/rfc5952" quoteTitle="true" derivedAnchor="RFC5952">
+          <front>
+            <title>A Recommendation for IPv6 Address Text Representation</title>
+            <author initials="S." surname="Kawamura" fullname="S. Kawamura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Kawashima" fullname="M. Kawashima">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="August"/>
+            <abstract>
+              <t>As IPv6 deployment increases, there will be a dramatic increase in the need to use IPv6 addresses in text.  While the IPv6 address architecture in Section 2.2 of RFC 4291 describes a flexible model for text representation of an IPv6 address, this flexibility has been causing problems for operators, system engineers, and users.  This document defines a canonical textual representation format.  It does not define a format for internal storage, such as within an application or database.  It is expected that the canonical format will be followed by humans and systems when representing IPv6 addresses as text, but all implementations must accept and be able to handle any legitimate RFC 4291 format.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5952"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5952"/>
+        </reference>
+        <reference anchor="RFC6066" target="https://www.rfc-editor.org/info/rfc6066" quoteTitle="true" derivedAnchor="RFC6066">
+          <front>
+            <title>Transport Layer Security (TLS) Extensions: Extension Definitions</title>
+            <author initials="D." surname="Eastlake 3rd" fullname="D. Eastlake 3rd">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2011" month="January"/>
+            <abstract>
+              <t>This document provides specifications for existing TLS extensions.  It is a companion document for RFC 5246, "The Transport Layer Security (TLS) Protocol Version 1.2".  The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6066"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6066"/>
+        </reference>
+        <reference anchor="RFC7009" target="https://www.rfc-editor.org/info/rfc7009" quoteTitle="true" derivedAnchor="RFC7009">
+          <front>
+            <title>OAuth 2.0 Token Revocation</title>
+            <author initials="T." surname="Lodderstedt" fullname="T. Lodderstedt" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Dronia" fullname="S. Dronia">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Scurtescu" fullname="M. Scurtescu">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="August"/>
+            <abstract>
+              <t>This document proposes an additional endpoint for OAuth authorization servers, which allows clients to notify the authorization server that a previously obtained refresh or access token is no longer needed. This allows the authorization server to clean up security credentials.  A revocation request will invalidate the actual token and, if applicable, other tokens based on the same authorization grant.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7009"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7009"/>
+        </reference>
+        <reference anchor="RFC7518" target="https://www.rfc-editor.org/info/rfc7518" quoteTitle="true" derivedAnchor="RFC7518">
+          <front>
+            <title>JSON Web Algorithms (JWA)</title>
+            <author initials="M." surname="Jones" fullname="M. Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t>This specification registers cryptographic algorithms and identifiers to be used with the JSON Web Signature (JWS), JSON Web Encryption (JWE), and JSON Web Key (JWK) specifications.  It defines several IANA registries for these identifiers.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7518"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7518"/>
+        </reference>
+        <reference anchor="I-D.ietf-oauth-token-binding" quoteTitle="true" target="https://tools.ietf.org/html/draft-ietf-oauth-token-binding-08" derivedAnchor="TOKEN">
+          <front>
+            <title>OAuth 2.0 Token Binding</title>
+            <author initials="M" surname="Jones" fullname="Michael Jones">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B" surname="Campbell" fullname="Brian Campbell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J" surname="Bradley" fullname="John Bradley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W" surname="Denniss" fullname="William Denniss">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="October" day="19" year="2018"/>
+            <abstract>
+              <t>This specification enables OAuth 2.0 implementations to apply Token Binding to Access Tokens, Authorization Codes, Refresh Tokens, JWT Authorization Grants, and JWT Client Authentication.  This cryptographically binds these tokens to a client's Token Binding key pair, possession of which is proven on the TLS connections over which the tokens are intended to be used.  This use of Token Binding protects these tokens from man-in-the-middle and token export and replay attacks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-ietf-oauth-token-binding-08"/>
+          <format type="TXT" target="http://www.ietf.org/internet-drafts/draft-ietf-oauth-token-binding-08.txt"/>
+          <refcontent>Work in Progress</refcontent>
+        </reference>
+      </references>
+    </references>
+    <section anchor="example" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-example-cnf-claim-certifica">Example "cnf" Claim, Certificate, and JWK</name>
+      <t pn="section-appendix.a-1">
+        For reference, an <tt>x5t#S256</tt> value and the X.509 certificate
+        from which it was calculated are provided in the following examples,
+        Figures <xref target="cnf" format="counter" sectionFormat="of" derivedContent="5"/> and <xref target="pem" format="counter" sectionFormat="of" derivedContent="6"/>, respectively. A JWK representation of the
+        certificate's public key along with the <tt>x5c</tt> member is also
+        provided in <xref target="jwk" format="default" sectionFormat="of" derivedContent="Figure 7"/>.
+
+      </t>
+      <figure anchor="cnf" align="left" suppress-title="false" pn="figure-5">
+        <name slugifiedName="name-x5ts256-confirmation-claim">x5t#S256 Confirmation Claim</name>
+        <sourcecode type="json" markers="false" pn="section-appendix.a-2.1">
+"cnf":{"x5t#S256":"A4DtL2JmUMhAsvJj5tKyn64SqzmuXbMrJa0n761y5v0"}
+</sourcecode>
+      </figure>
+      <figure anchor="pem" align="left" suppress-title="false" pn="figure-6">
+        <name slugifiedName="name-pem-encoded-self-signed-cer">PEM Encoded Self-Signed Certificate</name>
+        <artwork name="" type="" align="left" alt="" pn="section-appendix.a-3.1">
+-----BEGIN CERTIFICATE-----
+MIIBBjCBrAIBAjAKBggqhkjOPQQDAjAPMQ0wCwYDVQQDDARtdGxzMB4XDTE4MTAx
+ODEyMzcwOVoXDTIyMDUwMjEyMzcwOVowDzENMAsGA1UEAwwEbXRsczBZMBMGByqG
+SM49AgEGCCqGSM49AwEHA0IABNcnyxwqV6hY8QnhxxzFQ03C7HKW9OylMbnQZjjJ
+/Au08/coZwxS7LfA4vOLS9WuneIXhbGGWvsDSb0tH6IxLm8wCgYIKoZIzj0EAwID
+SQAwRgIhAP0RC1E+vwJD/D1AGHGzuri+hlV/PpQEKTWUVeORWz83AiEA5x2eXZOV
+bUlJSGQgjwD5vaUaKlLR50Q2DmFfQj1L+SY=
+-----END CERTIFICATE-----</artwork>
+      </figure>
+      <figure anchor="jwk" align="left" suppress-title="false" pn="figure-7">
+        <name slugifiedName="name-json-web-key">JSON Web Key</name>
+        <sourcecode type="json" markers="false" pn="section-appendix.a-4.1">
+{
+ "kty":"EC",
+ "x":"1yfLHCpXqFjxCeHHHMVDTcLscpb07KUxudBmOMn8C7Q",
+ "y":"8_coZwxS7LfA4vOLS9WuneIXhbGGWvsDSb0tH6IxLm8",
+ "crv":"P-256",
+ "x5c":[
+  "MIIBBjCBrAIBAjAKBggqhkjOPQQDAjAPMQ0wCwYDVQQDDARtdGxzMB4XDTE4MTA
+   xODEyMzcwOVoXDTIyMDUwMjEyMzcwOVowDzENMAsGA1UEAwwEbXRsczBZMBMGBy
+   qGSM49AgEGCCqGSM49AwEHA0IABNcnyxwqV6hY8QnhxxzFQ03C7HKW9OylMbnQZ
+   jjJ/Au08/coZwxS7LfA4vOLS9WuneIXhbGGWvsDSb0tH6IxLm8wCgYIKoZIzj0E
+   AwIDSQAwRgIhAP0RC1E+vwJD/D1AGHGzuri+hlV/PpQEKTWUVeORWz83AiEA5x2
+   eXZOVbUlJSGQgjwD5vaUaKlLR50Q2DmFfQj1L+SY="
+   ]
+ }</sourcecode>
+      </figure>
+    </section>
+    <section anchor="relation" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-relationship-to-token-bindi">Relationship to Token Binding</name>
+      <t pn="section-appendix.b-1">
+        OAuth 2.0 Token Binding <xref target="I-D.ietf-oauth-token-binding" format="default" sectionFormat="of" derivedContent="TOKEN"/>
+        enables the application of Token Binding to the various artifacts and tokens employed throughout OAuth.
+        That includes binding of an access token to a Token Binding key, which bears some similarities in motivation
+        and design to the mutual-TLS client certificate-bound access tokens defined in this document.
+        Both documents define what is often called a proof-of-possession security mechanism
+        for access tokens, whereby a client must demonstrate possession of cryptographic keying
+        material when accessing a protected resource. The details differ somewhat between the two documents but both
+        have the authorization server bind the access token that it issues to an asymmetric key pair
+        held by the client. The client then proves possession of the private key from that pair
+        with respect to the TLS connection over which the protected resource is accessed.
+      </t>
+      <t pn="section-appendix.b-2">
+        Token Binding uses bare keys that are generated on the client,
+        which avoids many of the difficulties of creating, distributing, and managing certificates
+        used in this specification. However, at the time of
+        writing, Token Binding is fairly new, and there is relatively little support for it in available
+        application development platforms and tooling. Until better support for the underlying
+        core Token Binding specifications exists, practical implementations of OAuth 2.0 Token Binding
+        are infeasible. 
+        Mutual TLS, on the other hand, has been around for some time and enjoys
+        widespread support in web servers and development platforms. As a consequence, OAuth 2.0 Mutual-TLS
+        Client Authentication and Certificate-Bound Access Tokens can be
+        built and deployed now using existing platforms and tools.
+        In the future, the two specifications are likely to be
+        deployed in parallel for solving similar problems in different environments.
+        Authorization servers may even support both specifications simultaneously using different
+        proof-of-possession mechanisms for tokens issued to different clients.
+      </t>
+    </section>
+    <section anchor="Acknowledgements" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t pn="section-appendix.c-1">
+        Scott "not Tomlinson" Tomilson and <contact fullname="Matt Peterson"/> were involved in
+        design and development work on a mutual-TLS OAuth client authentication
+        implementation that predates this document. Experience and learning from that work
+        informed some of the content of this document.
+      </t>
+      <t pn="section-appendix.c-2">
+        This specification was developed within the OAuth Working Group
+        under the chairmanship of <contact fullname="Hannes Tschofenig"/>
+        and <contact fullname="Rifaat Shekh-Yusef"/> with <contact fullname="Eric Rescorla"/>,
+	<contact fullname="Benjamin Kaduk"/>, and
+	<contact fullname="Roman Danyliw"/>
+        serving as Security Area Directors. Additionally, the following
+        individuals contributed ideas, feedback, and wording
+        that helped shape this specification:
+
+	<contact fullname="Vittorio Bertocci"/>,
+        <contact fullname="Sergey Beryozkin"/>,
+        <contact fullname="Ralph Bragg"/>,
+        <contact fullname="Sophie Bremer"/>,
+        <contact fullname="Roman Danyliw"/>,
+        <contact fullname="Vladimir Dzhuvinov"/>,
+        <contact fullname="Samuel Erdtman"/>,
+        <contact fullname="Evan Gilman"/>,
+        <contact fullname="Leif Johansson"/>,
+        <contact fullname="Michael Jones"/>,
+        <contact fullname="Phil Hunt"/>,
+        <contact fullname="Benjamin Kaduk"/>,
+        <contact fullname="Takahiko Kawasaki"/>,
+        <contact fullname="Sean Leonard"/>,
+        <contact fullname="Kepeng Li"/>,
+        <contact fullname="Neil Madden"/>,
+        <contact fullname="James Manger"/>,
+        <contact fullname="Jim Manico"/>,
+        <contact fullname="Nov Matake"/>,
+        <contact fullname="Sascha Preibisch"/>,
+        <contact fullname="Eric Rescorla"/>,
+        <contact fullname="Justin Richer"/>,
+        <contact fullname="Vincent Roca"/>,
+        <contact fullname="Filip Skokan"/>,
+        <contact fullname="Dave Tonge"/>,
+        and
+        <contact fullname="Hannes Tschofenig"/>.
+      </t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Brian Campbell" initials="B." surname="Campbell">
+        <organization showOnFrontPage="true">Ping Identity</organization>
+        <address>
+          <email>brian.d.campbell@gmail.com</email>
+        </address>
+      </author>
+      <author fullname="John Bradley" initials="J." surname="Bradley">
+        <organization showOnFrontPage="true">Yubico</organization>
+        <address>
+          <email>ve7jtb@ve7jtb.com</email>
+          <uri>http://www.thread-safe.com/</uri>
+        </address>
+      </author>
+      <author fullname="Nat Sakimura" initials="N." surname="Sakimura">
+        <organization showOnFrontPage="true">Nomura Research Institute</organization>
+        <address>
+          <email>n-sakimura@nri.co.jp</email>
+          <uri>https://nat.sakimura.org/</uri>
+        </address>
+      </author>
+      <author fullname="Torsten Lodderstedt" initials="T." surname="Lodderstedt">
+        <organization showOnFrontPage="true">YES.com AG</organization>
+        <address>
+          <email>torsten@lodderstedt.net</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

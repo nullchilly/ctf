@@ -1,0 +1,1928 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-nfsv4-rpc-tls-11" indexInclude="true" ipr="trust200902" number="9289" prepTime="2022-09-13T23:24:14" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="4" tocInclude="true" updates="5531" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-nfsv4-rpc-tls-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9289" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="RPC-With-TLS">Towards Remote Procedure Call Encryption by Default</title>
+    <seriesInfo name="RFC" value="9289" stream="IETF"/>
+    <author initials="T." surname="Myklebust" fullname="Trond Myklebust">
+      <organization abbrev="Hammerspace" showOnFrontPage="true">Hammerspace Inc.</organization>
+      <address>
+        <postal>
+          <street>4300 El Camino Real, Suite 105</street>
+          <city>Los Altos</city>
+          <region>CA</region>
+          <code>94022</code>
+          <country>United States of America</country>
+        </postal>
+        <email>trond.myklebust@hammerspace.com</email>
+      </address>
+    </author>
+    <author initials="C." surname="Lever" fullname="Charles Lever" role="editor">
+      <organization abbrev="Oracle" showOnFrontPage="true">Oracle Corporation</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <region/>
+          <code/>
+          <country>United States of America</country>
+        </postal>
+        <email>chuck.lever@oracle.com</email>
+      </address>
+    </author>
+    <date month="09" year="2022"/>
+    <area>Transport</area>
+    <workgroup>Network File System Version 4</workgroup>
+    <keyword>network file system</keyword>
+    <keyword>remote procedure call</keyword>
+    <keyword>transport layer security</keyword>
+    <keyword>X.509</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+This document describes a mechanism that, through the use of opportunistic
+Transport Layer Security (TLS), enables encryption of Remote Procedure Call
+(RPC) transactions while they are in transit.  The proposed mechanism
+interoperates with Open Network Computing (ONC) RPC implementations that do
+not support it.  This document updates RFC 5531.
+</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9289" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terminology">Terminology</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rpc-with-tls-in-operation">RPC-with-TLS in Operation</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-discovering-server-side-tls">Discovering Server-Side TLS Support</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-authentication">Authentication</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.2.2">
+                  <li pn="section-toc.1-1.4.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.1.1"><xref derivedContent="4.2.1" format="counter" sectionFormat="of" target="section-4.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-using-tls-with-rpcsec_gss">Using TLS with RPCSEC_GSS</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-requirements">TLS Requirements</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-base-transport-consideratio">Base Transport Considerations</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.1.2">
+                  <li pn="section-toc.1-1.5.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.1.1"><xref derivedContent="5.1.1" format="counter" sectionFormat="of" target="section-5.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protected-operation-on-tcp">Protected Operation on TCP</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.2.1"><xref derivedContent="5.1.2" format="counter" sectionFormat="of" target="section-5.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protected-operation-on-udp">Protected Operation on UDP</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.1.2.3">
+                    <t indent="0" pn="section-toc.1-1.5.2.1.2.3.1"><xref derivedContent="5.1.3" format="counter" sectionFormat="of" target="section-5.1.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-protected-operation-on-othe">Protected Operation on Other Transports</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-peer-authentication">TLS Peer Authentication</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.2.2">
+                  <li pn="section-toc.1-1.5.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.1.1"><xref derivedContent="5.2.1" format="counter" sectionFormat="of" target="section-5.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-x509-certificates-using-pki">X.509 Certificates Using PKIX Trust</xref></t>
+                    <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2.2.2.1.2">
+                      <li pn="section-toc.1-1.5.2.2.2.1.2.1">
+                        <t indent="0" pn="section-toc.1-1.5.2.2.2.1.2.1.1"><xref derivedContent="5.2.1.1" format="counter" sectionFormat="of" target="section-5.2.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-extended-key-usage-values">Extended Key Usage Values</xref></t>
+                      </li>
+                    </ul>
+                  </li>
+                  <li pn="section-toc.1-1.5.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.5.2.2.2.2.1"><xref derivedContent="5.2.2" format="counter" sectionFormat="of" target="section-5.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-pre-shared-keys">Pre-shared Keys</xref></t>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-the-limitations-of-opportun">The Limitations of Opportunistic Security</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2.1.2">
+                  <li pn="section-toc.1-1.6.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.6.2.1.2.1.1"><xref derivedContent="6.1.1" format="counter" sectionFormat="of" target="section-6.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-striptls-attacks">STRIPTLS Attacks</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.6.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.6.2.1.2.2.1"><xref derivedContent="6.1.2" format="counter" sectionFormat="of" target="section-6.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-privacy-leakage-before-sess">Privacy Leakage before Session Establishment</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tls-identity-management-on-">TLS Identity Management on Clients</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations-for">Security Considerations for AUTH_SYS on TLS</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t indent="0" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-best-security-policy-practi">Best Security Policy Practices</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-rpc-authentication-flavor">RPC Authentication Flavor</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alpn-identifier-for-sunrpc">ALPN Identifier for SunRPC</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-object-identifier-for-pkix-">Object Identifier for PKIX Extended Key Usage</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-object-identifier-for-asn1-">Object Identifier for ASN.1 Module</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-known-weaknesses-of-the-aut">Known Weaknesses of the AUTH_SYS Authentication Flavor</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-asn1-module">ASN.1 Module</xref></t>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="section_8F035331-8EB8-4FBC-973A-673FBA5FE952" numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+In 2014 the IETF published a document entitled "Pervasive Monitoring Is an
+Attack" <xref target="RFC7258" format="default" sectionFormat="of" derivedContent="RFC7258"/>, which
+recognized that unauthorized observation of network traffic had become
+widespread and was a subversive threat to all who make use of the Internet at
+large.  It strongly recommended that newly defined Internet protocols should
+make a genuine effort to mitigate monitoring attacks.  Typically, this
+mitigation includes encrypting data in transit.
+</t>
+      <t indent="0" pn="section-1-2">
+The Remote Procedure Call version 2 protocol has been a Proposed Standard for
+three decades (see
+<xref target="RFC5531" format="default" sectionFormat="of" derivedContent="RFC5531"/>
+and its antecedents).  Over twenty years ago, Eisler et al. first introduced
+RPCSEC_GSS as an in-transit encryption mechanism for RPC <xref target="RFC2203" format="default" sectionFormat="of" derivedContent="RFC2203"/>.  However, experience
+has shown that RPCSEC_GSS with in-transit encryption can be challenging to use
+in practice due to the following:
+</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-3">
+        <li pn="section-1-3.1">
+Parts of each RPC header remain in cleartext,
+constituting a loss of metadata confidentiality.
+</li>
+        <li pn="section-1-3.2">
+Offloading the Generic Security Service (GSS) privacy service is not practical
+in large multi-user deployments
+since each message is encrypted using a key based
+on the issuing RPC user.
+</li>
+      </ul>
+      <t indent="0" pn="section-1-4">
+However strong GSS-provided confidentiality is,
+it cannot provide any security if the challenges
+of using it result in choosing not to deploy it at all.
+</t>
+      <t indent="0" pn="section-1-5">
+Moreover, the use of AUTH_SYS
+remains common despite the adverse effects
+that acceptance of User Identifiers (UIDs) and Group Identifiers (GIDs)
+from unauthenticated clients brings with it.
+Continued use is in part because:
+</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-1-6">
+        <li pn="section-1-6.1">
+Per-client deployment and administrative costs
+for the only well-defined alternative to AUTH_SYS
+are expensive at scale.
+For instance, administrators must provide keying material
+for each RPC client, including transient clients.
+</li>
+        <li pn="section-1-6.2">
+GSS host identity management and user identity management typically must be
+enforced in the same security realm.  However, cloud providers, for instance,
+might prefer to remain authoritative for host identity but allow tenants to
+manage user identities within their private networks.
+</li>
+      </ul>
+      <t indent="0" pn="section-1-7">
+In view of the challenges with the currently available mechanisms for
+authenticating and protecting the confidentiality of RPC transactions, this
+document specifies a transport-layer security mechanism that complements the
+existing ones.  The TLS <xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/> and Datagram Transport Layer Security (DTLS)
+<xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>
+protocols are well-established Internet building blocks that protect many
+standard Internet protocols such as the Hypertext Transfer Protocol (HTTP)
+<xref target="RFC9110" format="default" sectionFormat="of" derivedContent="RFC9110"/>.
+</t>
+      <t indent="0" pn="section-1-8">
+Encrypting at the RPC transport layer accords several significant benefits:
+</t>
+      <dl spacing="normal" indent="3" newline="false" pn="section-1-9">
+        <dt pn="section-1-9.1">Encryption by Default:</dt>
+        <dd pn="section-1-9.2">
+Transport encryption can be enabled
+without additional administrative tasks such as
+identifying client systems to a trust authority
+and
+providing each with keying material.
+</dd>
+        <dt pn="section-1-9.3">Encryption Offload:</dt>
+        <dd pn="section-1-9.4">
+Hardware support for the GSS privacy service has not appeared in the marketplace.
+However, the use of a well-established transport encryption mechanism
+that is employed by other ubiquitous network protocols
+makes it more likely that encryption offload for RPC
+is practicable.
+</dd>
+        <dt pn="section-1-9.5">Securing AUTH_SYS:</dt>
+        <dd pn="section-1-9.6">
+Most critically, transport encryption can
+significantly reduce several security issues
+inherent in the current widespread use of AUTH_SYS
+(i.e., acceptance of UIDs and GIDs
+generated by an unauthenticated client).
+</dd>
+        <dt pn="section-1-9.7">Decoupled User and Host Identities:</dt>
+        <dd pn="section-1-9.8">
+TLS can be used to authenticate peer hosts
+while other security mechanisms can handle user authentication.
+</dd>
+        <dt pn="section-1-9.9">Compatibility:</dt>
+        <dd pn="section-1-9.10">
+The imposition of encryption at the transport layer
+protects any upper-layer protocol that employs RPC,
+without alteration of the upper-layer protocol.
+</dd>
+      </dl>
+      <t indent="0" pn="section-1-10">
+Further,
+<xref target="section_2AE49383-E6B2-4830-8407-995FEBF727F2" format="default" sectionFormat="of" derivedContent="Section 6"/>
+of the current document defines policies in line with
+<xref target="RFC7435" format="default" sectionFormat="of" derivedContent="RFC7435"/>
+that enable RPC-with-TLS to be deployed opportunistically in environments that
+contain RPC implementations that do not support TLS.  However, specifications
+for RPC-based upper-layer protocols should choose to require even stricter
+policies that guarantee encryption and host authentication are used for all RPC
+transactions to mitigate against pervasive monitoring attacks <xref target="RFC7258" format="default" sectionFormat="of" derivedContent="RFC7258"/>.  Enforcing the use of
+RPC-with-TLS is of particular importance for existing upper-layer protocols
+whose security infrastructure is weak.
+</t>
+      <t indent="0" pn="section-1-11">
+The protocol specification in the current document assumes that support for
+ONC RPC <xref target="RFC5531" format="default" sectionFormat="of" derivedContent="RFC5531"/>, TLS
+<xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>, PKIX <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>, DNSSEC/DNS-Based
+Authentication of Named Entities (DANE) <xref target="RFC6698" format="default" sectionFormat="of" derivedContent="RFC6698"/>, and optionally RPCSEC_GSS
+<xref target="RFC2203" format="default" sectionFormat="of" derivedContent="RFC2203"/>
+is available within the platform
+where RPC-with-TLS support is to be added.
+</t>
+    </section>
+    <section anchor="section_024237C9-5504-49B4-A2D3-2D2A5EFBB967" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-requirements-language">Requirements Language</name>
+      <t indent="0" pn="section-2-1">
+The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+"<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+"<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+"<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+"<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+interpreted as described in BCP 14
+<xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/>
+        <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/>
+when, and only when, they appear in all capitals, as shown here.
+</t>
+    </section>
+    <section anchor="section_0EB1100E-DAA8-4B2C-98AE-94258CFDCB1B" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-terminology">Terminology</name>
+      <t indent="0" pn="section-3-1">
+This document adopts the terminology introduced in
+<xref target="RFC6973" section="3" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc6973#section-3" derivedContent="RFC6973"/>
+and assumes a working knowledge of
+the RPC version 2 protocol
+<xref target="RFC5531" format="default" sectionFormat="of" derivedContent="RFC5531"/>
+and
+the TLS version 1.3 protocol
+<xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>.
+</t>
+      <t indent="0" pn="section-3-2">
+Note also that the NFS community long ago adopted the
+use of the term "privacy" from documents such as
+<xref target="RFC2203" format="default" sectionFormat="of" derivedContent="RFC2203"/>.
+In the current document, the authors use the term
+"privacy" only when referring specifically
+to the historic GSS privacy service defined in
+<xref target="RFC2203" format="default" sectionFormat="of" derivedContent="RFC2203"/>.
+Otherwise, the authors use the term "confidentiality",
+following the practices of contemporary security communities.
+</t>
+      <t indent="0" pn="section-3-3">
+We adhere to the convention that a "client"
+is a network host that actively initiates an association,
+and
+a "server" is a network host that passively accepts an association request.
+</t>
+      <t indent="0" pn="section-3-4">
+RPC documentation historically refers to
+the authentication of a connecting host as "machine authentication"
+or "host authentication".
+TLS documentation refers to the same as "peer authentication".
+In the current document, there is little distinction between these terms.
+</t>
+      <t indent="0" pn="section-3-5">
+The term "user authentication" in the current document refers specifically to
+the RPC caller's credential, provided in the "cred" and "verf" fields in each
+RPC Call.
+</t>
+    </section>
+    <section anchor="section_EC3FEED5-1DE0-454B-9AB3-CE47BA901583" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-rpc-with-tls-in-operation">RPC-with-TLS in Operation</name>
+      <section anchor="section_0A03673B-14BA-4228-8A8A-F76AA318CA73" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-discovering-server-side-tls">Discovering Server-Side TLS Support</name>
+        <t indent="0" pn="section-4.1-1">
+The mechanism described in the current document
+interoperates fully with RPC implementations
+that do not support RPC-with-TLS.
+When an RPC-with-TLS-enabled peer encounters a peer that
+does not support RPC-with-TLS,
+policy settings on the RPC-with-TLS-enabled peer determine
+whether RPC operation continues without the use of TLS
+or is discontinued altogether.
+</t>
+        <t indent="0" pn="section-4.1-2">
+To achieve this interoperability,
+we introduce a new RPC authentication flavor called AUTH_TLS.
+The AUTH_TLS authentication flavor signals that the client wants
+to initiate TLS negotiation if the server supports it.
+Except for the modifications described in this section,
+the RPC protocol is unaware of security encapsulation
+at the transport layer.
+The value of AUTH_TLS is defined in
+<xref target="section_2CD51855-CE40-4B8D-A220-F211C477964F" format="default" sectionFormat="of" derivedContent="Section 7.1"/>.
+</t>
+        <t indent="0" pn="section-4.1-3">
+An RPC client begins its communication with an RPC server
+by selecting a transport and destination port.
+The choice of transport and port is
+typically based on the RPC program that is to be used.
+The RPC client might query the RPC server's RPCBIND service
+to make this selection
+(The RPCBIND service is described in
+<xref target="RFC1833" format="default" sectionFormat="of" derivedContent="RFC1833"/>).
+The mechanism described in the current document
+does not support RPC transports other than TCP and UDP.
+In all cases, an RPC server <bcp14>MUST</bcp14> listen on the same ports
+for (D)TLS-protected RPC programs
+as the ports used when (D)TLS is not available.
+</t>
+        <t indent="0" pn="section-4.1-4">
+To protect RPC traffic to a TCP port,
+the RPC client opens a TCP connection to that port
+and sends a NULL RPC procedure
+with an auth_flavor of AUTH_TLS on that connection.
+To protect RPC traffic to a UDP port,
+the RPC client sends a UDP datagram to that port
+containing a NULL RPC procedure with an auth_flavor of AUTH_TLS.
+The client constructs this RPC procedure as follows:
+</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-4.1-5">
+          <li pn="section-4.1-5.1">
+The length of the opaque data constituting the credential
+sent in the RPC Call message <bcp14>MUST</bcp14> be zero.
+</li>
+          <li pn="section-4.1-5.2">
+The verifier accompanying the credential <bcp14>MUST</bcp14> be an AUTH_NONE
+verifier of length zero.
+</li>
+          <li pn="section-4.1-5.3">
+The flavor value of the verifier in the RPC Reply message
+received from the server <bcp14>MUST</bcp14> be AUTH_NONE.
+</li>
+          <li pn="section-4.1-5.4">
+The length of the verifier's body field is eight.
+</li>
+          <li pn="section-4.1-5.5">
+The bytes of the verifier's body field encode the ASCII characters
+"STARTTLS" as a fixed-length opaque.
+</li>
+        </ul>
+        <t indent="0" pn="section-4.1-6">
+The RPC server signals its corresponding support for RPC-with-TLS
+by replying with
+a reply_stat of MSG_ACCEPTED
+and
+an AUTH_NONE verifier containing the "STARTTLS" token.
+The client <bcp14>SHOULD</bcp14> proceed with TLS session establishment,
+even if the Reply's accept_stat is not SUCCESS.
+If the AUTH_TLS probe was done via TCP,
+the RPC client <bcp14>MUST</bcp14> send the "ClientHello" message
+on the same connection.
+If the AUTH_TLS probe was done via UDP,
+the RPC client <bcp14>MUST</bcp14> send the "ClientHello" message
+to the same UDP destination port.
+</t>
+        <t indent="0" pn="section-4.1-7">
+Conversely,
+if the Reply's reply_stat is not MSG_ACCEPTED,
+if its verifier flavor is not AUTH_NONE,
+or if its verifier does not contain the "STARTTLS" token,
+the RPC client <bcp14>MUST NOT</bcp14> send a "ClientHello" message.
+RPC operation may continue,
+depending on local policy, but without
+confidentiality,
+integrity,
+or
+peer authentication protection
+from (D)TLS.
+</t>
+        <t indent="0" pn="section-4.1-8">
+If, after a successful RPC AUTH_TLS probe,
+the subsequent (D)TLS handshake should fail for any reason,
+the RPC client reports this failure
+to the upper-layer application
+the same way it reports an AUTH_ERROR rejection
+from the RPC server.
+</t>
+        <t indent="0" pn="section-4.1-9">
+If an RPC client uses the AUTH_TLS authentication flavor
+on any procedure other than the NULL procedure,
+or an RPC client sends an RPC AUTH_TLS probe within
+an existing (D)TLS session,
+the RPC server <bcp14>MUST</bcp14> reject that RPC Call
+by returning a reply_stat of MSG_DENIED
+with a reject_stat of AUTH_ERROR
+and an auth_stat of AUTH_BADCRED.
+</t>
+        <t indent="0" pn="section-4.1-10">
+Once the TLS session handshake is complete,
+the RPC client and server have established
+a secure channel for exchanging RPC transactions.
+A successful AUTH_TLS probe on one particular port/transport tuple
+does not imply that RPC-with-TLS is available on that same server
+using a different port/transport tuple,
+nor does it imply that
+RPC-with-TLS will be available in the future
+using the successfully probed port.
+</t>
+      </section>
+      <section anchor="section_6EDEF553-C95A-47D7-ABBA-0B537FE3A959" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-authentication">Authentication</name>
+        <t indent="0" pn="section-4.2-1">
+There is some overlap between the authentication
+capabilities of RPC and TLS.
+The goal of interoperability with implementations
+that do not support TLS requires
+limiting the combinations that are allowed
+and
+precisely specifying the role that each layer plays.
+</t>
+        <t indent="0" pn="section-4.2-2">
+Each RPC server that supports RPC-with-TLS <bcp14>MUST</bcp14> possess a unique global identity
+(e.g., a certificate that is signed by a well-known trust anchor).
+Such an RPC server <bcp14>MUST</bcp14> request a TLS peer identity from each client
+upon first contact.
+There are two different modes of client deployment:
+</t>
+        <dl newline="true" spacing="normal" indent="3" pn="section-4.2-3">
+          <dt pn="section-4.2-3.1">Server-Only Host Authentication</dt>
+          <dd pn="section-4.2-3.2">
+In this type of deployment,
+the client can authenticate the server host
+using the presented server peer TLS identity,
+but the server cannot authenticate the client.
+In this situation,
+RPC-with-TLS clients are anonymous.
+They present no globally unique identifier to the server peer.
+</dd>
+          <dt pn="section-4.2-3.3">Mutual Host Authentication</dt>
+          <dd pn="section-4.2-3.4">
+In this type of deployment, the client possesses an identity that is backed by
+a trusted entity (e.g., a pre-shared key or a certificate validated with a
+certification path).  As part of the TLS handshake, both peers authenticate
+using the presented TLS identities.  If authentication of either peer fails,
+or if authorization based on those identities blocks access to the server, the
+peers <bcp14>MUST</bcp14> reject the association. Further explanation appears in <xref target="section_936921ED-67BB-46BF-B316-6740E07F6652" format="default" sectionFormat="of" derivedContent="Section 5.2"/>.
+</dd>
+        </dl>
+        <t indent="0" pn="section-4.2-4">
+In either of these modes, RPC user authentication is not affected by the use
+of transport layer security.  When a client presents a TLS peer identity to an
+RPC server, the protocol extension described in the current document provides
+no way for the server to know whether that identity represents one RPC user on
+that client or is shared amongst many RPC users.  Therefore, a server
+implementation cannot utilize the remote TLS peer identity to authenticate RPC
+users.
+</t>
+        <section anchor="section_12D92596-F310-48C8-A4E0-B6CA038524E5" numbered="true" removeInRFC="false" toc="include" pn="section-4.2.1">
+          <name slugifiedName="name-using-tls-with-rpcsec_gss">Using TLS with RPCSEC_GSS</name>
+          <t indent="0" pn="section-4.2.1-1">
+To use GSS, an RPC server has to possess a GSS service principal.
+On a TLS session, GSS mutual (peer) authentication occurs as usual,
+but only after a TLS session has been established for communication.
+Authentication of RPCSEC_GSS users is unchanged by the use of TLS.
+</t>
+          <t indent="0" pn="section-4.2.1-2">
+RPCSEC_GSS can also perform per-request integrity or confidentiality
+protection.  When operating over a TLS session, these GSS services become
+largely redundant.  An RPC implementation capable of concurrently using TLS
+and RPCSEC_GSS <bcp14>MUST</bcp14> use Generic Security Service Application
+Program Interface (GSS-API) channel binding, as defined in <xref target="RFC5056" format="default" sectionFormat="of" derivedContent="RFC5056"/>, to determine when an
+underlying transport provides a sufficient degree of confidentiality.
+RPC-with-TLS implementations <bcp14>MUST</bcp14> provide the "tls-exporter"
+channel binding type, as defined in <xref target="RFC9266" format="default" sectionFormat="of" derivedContent="RFC9266"/>.
+</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="section_D93526DA-7B9D-419B-BE84-4AD8DA48577E" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-tls-requirements">TLS Requirements</name>
+      <t indent="0" pn="section-5-1">
+When peers negotiate a TLS session that is to transport RPC,
+the following restrictions apply:
+</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5-2">
+        <li pn="section-5-2.1">
+Implementations <bcp14>MUST NOT</bcp14> negotiate TLS versions prior to 1.3
+(for TLS
+<xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>
+or DTLS <xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>,
+respectively).  Support for mandatory-to-implement cipher suites for the
+negotiated TLS version is <bcp14>REQUIRED</bcp14>.
+</li>
+        <li pn="section-5-2.2">
+Implementations <bcp14>MUST</bcp14> conform to the recommendations for TLS
+usage specified in BCP 195 <xref target="RFC7525" format="default" sectionFormat="of" derivedContent="RFC7525"/>.  
+Although RFC 7525 permits the use of TLS 1.2, the
+requirement to use TLS 1.3 or later for RPC-with-TLS takes precedence.
+Further, because TLS 1.3 ciphers are qualitatively different than cipher
+suites in previous versions of TLS, and RFC 7525 predates TLS 1.3, the cipher
+suite recommendations in RFC 7525 do not apply to RPC-with-(D)TLS.  A strict
+TLS mode for RPC-with-TLS that protects against STRIPTLS attacks is discussed
+in detail in <xref target="section_8894BDD2-0E0B-47A3-A2CB-70E4D93B55B0" format="default" sectionFormat="of" derivedContent="Section 6.1.1"/>.
+</li>
+        <li pn="section-5-2.3">
+Implementations <bcp14>MUST</bcp14> support certificate-based mutual
+authentication.  Support for Pre-Shared Key (PSK) mutual authentication is
+<bcp14>OPTIONAL</bcp14>; see
+<xref target="section_6DA9ED5F-BAD9-4126-95B7-E2331655A01E" format="default" sectionFormat="of" derivedContent="Section 5.2.2"/>
+for further details.
+</li>
+        <li pn="section-5-2.4">
+Negotiation of a cipher suite providing confidentiality as
+well as integrity protection is <bcp14>REQUIRED</bcp14>.
+</li>
+      </ul>
+      <t indent="0" pn="section-5-3">
+Client implementations <bcp14>MUST</bcp14> include the
+"application_layer_protocol_negotiation(16)" extension
+<xref target="RFC7301" format="default" sectionFormat="of" derivedContent="RFC7301"/>
+in their "ClientHello" message
+and <bcp14>MUST</bcp14> include the protocol identifier
+defined in
+<xref target="section_58905D7A-06B1-4469-964A-DAC607DAC500" format="default" sectionFormat="of" derivedContent="Section 7.2"/>
+in that message's ProtocolNameList value.
+</t>
+      <t indent="0" pn="section-5-4">
+Similarly, in response to the "ClientHello" message,
+server implementations <bcp14>MUST</bcp14> include the
+"application_layer_protocol_negotiation(16)" extension
+<xref target="RFC7301" format="default" sectionFormat="of" derivedContent="RFC7301"/>
+in their "ServerHello" message
+and <bcp14>MUST</bcp14> include only the protocol identifier
+defined in
+<xref target="section_58905D7A-06B1-4469-964A-DAC607DAC500" format="default" sectionFormat="of" derivedContent="Section 7.2"/>
+in that message's ProtocolNameList value.
+</t>
+      <t indent="0" pn="section-5-5">
+If the server responds incorrectly
+(for instance, if the "ServerHello" message does not conform to the above requirements),
+the client <bcp14>MUST NOT</bcp14> establish a TLS session for use with RPC
+on this connection.
+See
+<xref target="RFC7301" format="default" sectionFormat="of" derivedContent="RFC7301"/>
+for further details about how to form these messages properly.
+</t>
+      <section anchor="section_CC204592-F561-49BD-B1C9-DE0FF7F0E7AB" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-base-transport-consideratio">Base Transport Considerations</name>
+        <t indent="0" pn="section-5.1-1">
+There is frequently a strong association between an RPC program and a
+particular destination port number.  The use of TLS or DTLS does not change that
+association.  Thus, it is frequently, though not always, the case that a
+single TLS session carries traffic for only one RPC program.
+</t>
+        <section anchor="section_74B43C7E-5ADC-4FBD-B4EA-FF8F470994A8" numbered="true" removeInRFC="false" toc="include" pn="section-5.1.1">
+          <name slugifiedName="name-protected-operation-on-tcp">Protected Operation on TCP</name>
+          <t indent="0" pn="section-5.1.1-1">
+The use of the TLS protocol
+<xref target="RFC8446" format="default" sectionFormat="of" derivedContent="RFC8446"/>
+protects RPC on TCP connections.
+Typically,
+once an RPC client completes the TCP handshake,
+it uses the mechanism described in
+<xref target="section_0A03673B-14BA-4228-8A8A-F76AA318CA73" format="default" sectionFormat="of" derivedContent="Section 4.1"/>
+to discover RPC-with-TLS support for that RPC program on that connection.
+Until an AUTH_TLS probe is done on a connection,
+the RPC server treats all traffic as RPC messages.
+If spurious traffic appears on a TCP connection
+between the initial cleartext AUTH_TLS probe
+and
+the TLS session handshake,
+receivers <bcp14>MUST</bcp14> discard that data without response
+and then <bcp14>SHOULD</bcp14> drop the connection.
+</t>
+          <t indent="0" pn="section-5.1.1-2">
+The protocol convention specified in the current document
+assumes there can be no more than one concurrent TLS session
+per TCP connection.
+This is true of current generations of TLS,
+but might be different in a future version of TLS.
+</t>
+          <t indent="0" pn="section-5.1.1-3">
+Once a TLS session is established on a TCP connection,
+no further cleartext communication can occur on that connection
+until the session is terminated.
+The use of TLS does not alter RPC record framing used on TCP transports.
+</t>
+          <t indent="0" pn="section-5.1.1-4">
+Furthermore,
+if an RPC server responds with PROG_UNAVAIL
+to an RPC Call within an established TLS session,
+that does not imply that RPC server will subsequently
+reject the same RPC program on a different TCP connection.
+</t>
+          <t indent="0" pn="section-5.1.1-5">
+Reverse-direction operation occurs only on connected transports such as TCP
+(see <xref target="RFC8167" section="2" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc8167#section-2" derivedContent="RFC8167"/>).  To protect reverse-direction RPC operations, the RPC
+server does not establish a separate TLS session on the TCP connection but
+instead uses the existing TLS session on that connection to protect these
+operations.
+</t>
+          <t indent="0" pn="section-5.1.1-6">
+When operation is complete,
+an RPC peer terminates a TLS session by sending a TLS closure alert.
+It may then close the TCP connection.
+</t>
+        </section>
+        <section anchor="section_B8BF600E-96DC-4C82-AADF-D593826E9B75" numbered="true" removeInRFC="false" toc="include" pn="section-5.1.2">
+          <name slugifiedName="name-protected-operation-on-udp">Protected Operation on UDP</name>
+          <t indent="0" pn="section-5.1.2-1">
+The use of the DTLS protocol
+<xref target="RFC9147" format="default" sectionFormat="of" derivedContent="RFC9147"/>
+protects RPC carried in UDP datagrams.
+As soon as a client initializes a UDP socket
+for use with an RPC service,
+it uses the mechanism described in
+<xref target="section_0A03673B-14BA-4228-8A8A-F76AA318CA73" format="default" sectionFormat="of" derivedContent="Section 4.1"/>
+to discover RPC-with-DTLS support for that RPC program on that port.
+If spurious traffic appears on a 5-tuple between
+the initial cleartext AUTH_TLS probe
+and
+the DTLS association handshake,
+receivers
+<bcp14>MUST</bcp14>
+discard that traffic without response.
+</t>
+          <t indent="0" pn="section-5.1.2-2">
+Using DTLS does not introduce
+reliable
+or
+in-order
+semantics to RPC on UDP.
+The use of DTLS record replay protection is <bcp14>REQUIRED</bcp14>
+when transporting RPC traffic.
+</t>
+          <t indent="0" pn="section-5.1.2-3">
+Each RPC message <bcp14>MUST</bcp14> fit in a single DTLS record.
+DTLS encapsulation has overhead,
+which reduces the Packetization Layer Path MTU (PLPMTU)
+and thus the maximum RPC payload size.
+A possible PLPMTU discovery mechanism is offered in
+<xref target="RFC8899" format="default" sectionFormat="of" derivedContent="RFC8899"/>.
+</t>
+          <t indent="0" pn="section-5.1.2-4">
+The current document does not specify a mechanism
+that enables a server to distinguish between
+DTLS traffic
+and
+unprotected RPC traffic
+directed to the same port.
+To make this distinction,
+each peer matches ingress datagrams
+that appear to be DTLS traffic to existing DTLS session state.
+A peer treats any datagram that fails the matching process as an RPC message.
+</t>
+          <t indent="0" pn="section-5.1.2-5">
+Multihomed RPC clients and servers may send protected RPC messages
+via network interfaces that were not involved in the handshake that
+established the DTLS session.
+Therefore, when protecting RPC traffic,
+each DTLS handshake <bcp14>MUST</bcp14> include the "connection_id(54)" extension
+described in
+<xref target="RFC9147" section="9" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc9147#section-9" derivedContent="RFC9147"/>,
+and RPC-with-DTLS peer endpoints
+<bcp14>MUST</bcp14>
+provide a ConnectionID
+with a nonzero length.
+Endpoints implementing RPC programs
+that expect a significant number of concurrent clients
+<bcp14>SHOULD</bcp14>
+employ ConnectionIDs of at least 4 bytes in length.
+</t>
+          <t indent="0" pn="section-5.1.2-6">
+Sending a TLS closure alert terminates a DTLS session.  Because neither DTLS
+nor UDP provide in-order delivery, after session closure there can be
+ambiguity as to whether a datagram should be interpreted as DTLS protected or
+not.  Therefore, receivers <bcp14>MUST</bcp14> discard datagrams exchanged
+using the same 5-tuple that just terminated the DTLS session for a sufficient
+length of time to ensure that retransmissions have ceased and packets already
+in the network have been delivered.  In the absence of more specific data, a
+period of 60 seconds is expected to suffice.
+</t>
+        </section>
+        <section anchor="section_BFCC24B1-E6D4-4ABC-A5F3-B71E8E96878F" numbered="true" removeInRFC="false" toc="include" pn="section-5.1.3">
+          <name slugifiedName="name-protected-operation-on-othe">Protected Operation on Other Transports</name>
+          <t indent="0" pn="section-5.1.3-1">
+Transports that provide intrinsic TLS-level security
+(e.g., QUIC)
+need to be addressed separately from the current document.
+In such cases, the use of TLS is not opportunistic
+as it can be for TCP or UDP.
+</t>
+          <t indent="0" pn="section-5.1.3-2">
+
+RPC-over-RDMA can make use of transport layer security
+below the RDMA transport layer
+<xref target="RFC8166" format="default" sectionFormat="of" derivedContent="RFC8166"/>.
+The exact mechanism is not within the scope of the current document.
+Because there might not be other provisions
+to exchange client and server certificates,
+authentication material exchange
+needs to be provided by facilities
+within a future version
+of the RPC-over-RDMA transport protocol.
+</t>
+        </section>
+      </section>
+      <section anchor="section_936921ED-67BB-46BF-B316-6740E07F6652" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-tls-peer-authentication">TLS Peer Authentication</name>
+        <t indent="0" pn="section-5.2-1">
+TLS can perform peer authentication
+using any of the following mechanisms.
+</t>
+        <section anchor="section_7A68F518-2C02-4705-8218-4F13E51372F4" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.1">
+          <name slugifiedName="name-x509-certificates-using-pki">X.509 Certificates Using PKIX Trust</name>
+          <t indent="0" pn="section-5.2.1-1">
+X.509 certificates are specified in
+<xref target="X.509" format="default" sectionFormat="of" derivedContent="X.509"/>.
+<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>
+provides a profile of Internet PKI X.509 public key infrastructure.
+RPC-with-TLS implementations are
+<bcp14>REQUIRED</bcp14>
+to support the PKIX mechanism described in
+<xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>.
+</t>
+          <t indent="0" pn="section-5.2.1-2">
+The rules and guidelines defined in
+<xref target="RFC6125" format="default" sectionFormat="of" derivedContent="RFC6125"/>
+apply to RPC-with-TLS certificates
+with the following considerations:
+</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.2.1-3">
+            <li pn="section-5.2.1-3.1">
+The DNS-ID identifier type is a subjectAltName extension that contains a
+dNSName, as defined in <xref target="RFC5280" sectionFormat="of" section="4.2.1.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4.2.1.6" derivedContent="RFC5280"/>. Support for the DNS-ID identifier type
+is <bcp14>REQUIRED</bcp14> in RPC-with-TLS client and server implementations.
+Certification authorities that issue such certificates <bcp14>MUST</bcp14>
+support the DNS-ID identifier type.
+</li>
+            <li pn="section-5.2.1-3.2">
+To specify the identity of an RPC peer as a domain name, the certificate
+<bcp14>MUST</bcp14> contain a subjectAltName extension that contains a
+dNSName. DNS domain names in RPC-with-TLS certificates <bcp14>MUST NOT</bcp14>
+contain the wildcard character '*' within the identifier.
+</li>
+            <li pn="section-5.2.1-3.3">
+To specify the identity of an RPC peer as a network identifier (netid) or a universal network address (uaddr), the certificate <bcp14>MUST</bcp14> contain a subjectAltName extension that contains an iPAddress.
+</li>
+          </ul>
+          <t indent="0" pn="section-5.2.1-4">
+When validating a server certificate,
+an RPC-with-TLS client implementation
+takes the following into account:
+</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.2.1-5">
+            <li pn="section-5.2.1-5.1">
+Certificate validation
+<bcp14>MUST</bcp14>
+include the verification rules as per
+<xref target="RFC5280" section="6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-6" derivedContent="RFC5280"/>
+and
+<xref target="RFC6125" section="6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc6125#section-6" derivedContent="RFC6125"/>.
+</li>
+            <li pn="section-5.2.1-5.2">
+Server certificate validation
+<bcp14>MUST</bcp14>
+include a check on whether
+the locally configured expected
+DNS-ID
+or
+iPAddress subjectAltName
+of the server that is contacted
+matches its presented certificate.
+</li>
+            <li pn="section-5.2.1-5.3">
+For RPC services accessed by their
+netids
+and
+uaddrs,
+the iPAddress subjectAltName
+<bcp14>MUST</bcp14>
+be present in the certificate
+and
+<bcp14>MUST</bcp14>
+exactly match the address represented by the universal network address.
+</li>
+          </ul>
+          <t indent="0" pn="section-5.2.1-6">
+An RPC client's domain name and IP address are often assigned dynamically;
+thus, RPC servers cannot rely on those to verify client certificates.
+Therefore, when an RPC-with-TLS client presents a certificate to an
+RPC-with-TLS server, the server takes the following into account:
+</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-5.2.1-7">
+            <li pn="section-5.2.1-7.1">
+The server <bcp14>MUST</bcp14> use a procedure conformant to <xref target="RFC5280" section="6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-6" derivedContent="RFC5280"/> to
+validate the client certificate's certification path.
+</li>
+            <li pn="section-5.2.1-7.2">
+The tuple (serial number of the presented certificate; Issuer) uniquely
+identifies the RPC client.  The meaning and syntax of these fields is defined
+in <xref target="RFC5280" section="4" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4" derivedContent="RFC5280"/>.
+</li>
+          </ul>
+          <t indent="0" pn="section-5.2.1-8">
+RPC-with-TLS implementations
+<bcp14>MAY</bcp14>
+allow the configuration
+of a set of additional properties of the certificate
+to check for a peer's authorization to communicate
+(e.g.,
+a set of allowed values in subjectAltName:URI,
+a set of allowed X.509v3 Certificate Policies,
+or
+a set of extended key usages).
+</t>
+          <t indent="0" pn="section-5.2.1-9">
+When the configured set of trust anchors changes (e.g., removal of a
+Certification Authority (CA) from the list of trusted CAs; issuance of a new Certificate Revocation List (CRL)
+for a given CA), implementations <bcp14>SHOULD</bcp14> reevaluate the
+certificate originally presented in the context of the new configuration and
+terminate the TLS session if the certificate is no longer trustworthy.
+</t>
+          <section anchor="section_685D3F88-94FF-4C91-8CCB-860DBA602B2F" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.1.1">
+            <name slugifiedName="name-extended-key-usage-values">Extended Key Usage Values</name>
+            <t indent="0" pn="section-5.2.1.1-1">
+<xref target="RFC5280" section="4.2.1.12" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-4.2.1.12" derivedContent="RFC5280"/>
+specifies the extended key usage X.509 certificate extension.
+This extension, which may appear in end-entity certificates,
+indicates one or more purposes for which the certified public key may be used
+in addition to or in place of the basic purposes indicated in the key usage extension.
+</t>
+            <t indent="0" pn="section-5.2.1.1-2">
+The current document defines two new KeyPurposeId values:
+one that identifies the RPC-with-TLS peer as an RPC client,
+and
+one that identifies the RPC-with-TLS peer as an RPC server.
+</t>
+            <t indent="0" pn="section-5.2.1.1-3">
+The inclusion of the RPC server value (id-kp-rpcTLSServer)
+indicates that the certificate has been issued
+for allowing the holder to process RPC transactions.
+</t>
+            <t indent="0" pn="section-5.2.1.1-4">
+The inclusion of the RPC client value (id-kp-rpcTLSClient)
+indicates that the certificate has been issued
+for allowing the holder to request RPC transactions.
+</t>
+          </section>
+        </section>
+        <section anchor="section_6DA9ED5F-BAD9-4126-95B7-E2331655A01E" numbered="true" removeInRFC="false" toc="include" pn="section-5.2.2">
+          <name slugifiedName="name-pre-shared-keys">Pre-shared Keys</name>
+          <t indent="0" pn="section-5.2.2-1">
+This mechanism is <bcp14>OPTIONAL</bcp14> to implement.  In this mode, the RPC
+peer can be uniquely identified by keying material that has been shared
+out of band (see <xref target="RFC8446" section="2.2" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-2.2" derivedContent="RFC8446"/>). The PSK Identifier <bcp14>SHOULD</bcp14> be exposed at the RPC layer.
+</t>
+        </section>
+      </section>
+    </section>
+    <section anchor="section_2AE49383-E6B2-4830-8407-995FEBF727F2" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-6-1">
+One purpose of the mechanism described in the current document
+is to protect RPC-based applications against threats
+to the confidentiality of RPC transactions
+and
+RPC user identities.
+A taxonomy of these threats appears in
+<xref target="RFC6973" section="5" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc6973#section-5" derivedContent="RFC6973"/>.
+Also,
+<xref target="RFC7525" section="6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc7525#section-6" derivedContent="RFC7525"/>
+contains a detailed discussion
+of technologies used in conjunction with TLS.
+<xref target="RFC5280" section="8" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5280#section-8" derivedContent="RFC5280"/>
+covers important considerations about handling certificate material securely.
+Implementers should familiarize themselves with these materials.
+</t>
+      <t indent="0" pn="section-6-2">
+Once a TLS session is established,
+the RPC payload carried on TLS version 1.3 is forward secure.
+However, implementers need to be aware that replay attacks
+can occur during session establishment.
+Remedies for such attacks are discussed in detail in
+<xref target="RFC8446" section="8" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc8446#section-8" derivedContent="RFC8446"/>.
+Further, the current document does not
+provide a profile that defines the use of 0-RTT data
+(see
+<xref target="RFC8446" format="default" sectionFormat="of" section="E.5" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-E.5" derivedContent="RFC8446"/>).
+Therefore, RPC-with-TLS implementations <bcp14>MUST NOT</bcp14>
+use 0-RTT data.
+</t>
+      <section anchor="section_51737BB5-2B65-441E-AD1D-7EBF5123C079" numbered="true" removeInRFC="false" toc="include" pn="section-6.1">
+        <name slugifiedName="name-the-limitations-of-opportun">The Limitations of Opportunistic Security</name>
+        <t indent="0" pn="section-6.1-1">
+Readers can find the definition of Opportunistic Security in
+<xref target="RFC7435" format="default" sectionFormat="of" derivedContent="RFC7435"/>.
+A discussion of its underlying principles
+appears in Section <xref target="RFC7435" sectionFormat="bare" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7435#section-3" derivedContent="RFC7435"/> of that document.</t>
+        <t indent="0" pn="section-6.1-2">
+The purpose of using an explicitly opportunistic approach
+is to enable interoperation
+with implementations that do not support RPC-with-TLS.
+A range of options is allowed by this approach,
+from "no peer authentication or encryption"
+to
+"server-only authentication with encryption"
+to
+"mutual authentication with encryption".
+The actual security level may indeed
+be selected based on policy and without user intervention.
+</t>
+        <t indent="0" pn="section-6.1-3">
+In environments where interoperability is a priority,
+the security benefits of TLS are partially or entirely waived.
+Implementations of the mechanism described in the current document
+must take care to accurately represent to all RPC consumers
+the level of security that is actually in effect,
+and are <bcp14>REQUIRED</bcp14> to provide an audit log
+of RPC-with-TLS security mode selection.
+</t>
+        <t indent="0" pn="section-6.1-4">
+In all other cases,
+the adoption, implementation, and deployment of
+RPC-based upper-layer protocols that enforce the use of
+TLS authentication and encryption
+(when similar RPCSEC_GSS services are not in use)
+is strongly encouraged.
+</t>
+        <section anchor="section_8894BDD2-0E0B-47A3-A2CB-70E4D93B55B0" numbered="true" removeInRFC="false" toc="include" pn="section-6.1.1">
+          <name slugifiedName="name-striptls-attacks">STRIPTLS Attacks</name>
+          <t indent="0" pn="section-6.1.1-1">
+The initial AUTH_TLS probe occurs in cleartext.
+An on-path attacker can alter a cleartext handshake to make it
+appear as though TLS support is not available on one or both peers.
+
+Client implementers can choose from the following to mitigate
+STRIPTLS attacks:
+</t>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.1.1-2">
+            <li pn="section-6.1.1-2.1">
+A TLSA record
+<xref target="RFC6698" format="default" sectionFormat="of" derivedContent="RFC6698"/>
+can alert clients that TLS is expected to work, and provide a binding of
+a hostname to the X.509 identity.  If TLS cannot be negotiated or authentication
+fails, the client disconnects and reports the problem.  When an opportunistic
+security policy is in place, a client <bcp14>SHOULD</bcp14> check for the
+existence of a TLSA record for the target server before initiating an
+RPC-with-TLS association.
+</li>
+            <li pn="section-6.1.1-2.2">
+Client security policy can require
+that a TLS session is established on every connection.
+If an attacker spoofs the handshake,
+the client disconnects and reports the problem.
+
+This policy prevents an attacker from causing the association to
+fall back to cleartext silently.
+
+If TLSA records are not available, this approach is strongly encouraged.
+</li>
+          </ul>
+        </section>
+        <section anchor="section_9C03417D-1D3D-4D43-BC43-6F7387736AF7" numbered="true" removeInRFC="false" toc="include" pn="section-6.1.2">
+          <name slugifiedName="name-privacy-leakage-before-sess">Privacy Leakage before Session Establishment</name>
+          <t indent="0" pn="section-6.1.2-1">
+As mentioned earlier,
+communication between an RPC client and server
+appears in the clear on the network
+prior to the establishment of a TLS session.
+This cleartext information usually includes
+transport connection handshake exchanges,
+the RPC NULL procedure probing support for TLS,
+and the initial parts of TLS session establishment.
+<xref target="RFC8446" sectionFormat="of" section="C" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8446#appendix-C" derivedContent="RFC8446"/>
+discusses precautions that can mitigate exposure during the exchange of
+connection handshake information and TLS certificate material that might
+enable attackers to track the RPC client.  Note that when PSK authentication
+is used, the PSK identifier is exposed during the TLS handshake and can be
+used to track the RPC client.
+</t>
+          <t indent="0" pn="section-6.1.2-2">
+Any RPC traffic that appears on the network before
+a TLS session has been established is vulnerable to
+monitoring or undetected modification.
+A secure client implementation limits or prevents
+any RPC exchanges that are not protected.
+</t>
+          <t indent="0" pn="section-6.1.2-3">
+The exception to this edict is
+the initial RPC NULL procedure that acts as a STARTTLS message,
+which cannot be protected.
+This RPC NULL procedure contains no arguments or results,
+and the AUTH_TLS authentication flavor it uses
+does not contain user information,
+so there is negligible privacy impact from this exception.
+</t>
+        </section>
+      </section>
+      <section anchor="section_B9F8A982-CB0E-40FC-9460-680E89DB0001" numbered="true" removeInRFC="false" toc="include" pn="section-6.2">
+        <name slugifiedName="name-tls-identity-management-on-">TLS Identity Management on Clients</name>
+        <t indent="0" pn="section-6.2-1">
+The goal of RPC-with-TLS is to hide the content of RPC requests while they are
+in transit. RPC-with-TLS protocol by itself cannot protect against
+exposure of a user's RPC requests to other users on the same client.
+</t>
+        <t indent="0" pn="section-6.2-2">
+Moreover, client implementations are free to transmit RPC requests
+for more than one RPC user using the same TLS session.
+Depending on the details of the client RPC implementation,
+this means that the client's TLS credentials
+are potentially visible to every RPC user that shares a TLS session.
+Privileged users may also be able to access this TLS identity.
+</t>
+        <t indent="0" pn="section-6.2-3">
+As a result,
+client implementations need to carefully segregate
+TLS credentials so that local access to it
+is restricted to only the local users that are authorized
+to perform operations on the remote RPC server.
+</t>
+      </section>
+      <section anchor="section_552B02A0-F19E-4B46-809C-672A6AE931A1" numbered="true" removeInRFC="false" toc="include" pn="section-6.3">
+        <name slugifiedName="name-security-considerations-for">Security Considerations for AUTH_SYS on TLS</name>
+        <t indent="0" pn="section-6.3-1">
+Using a TLS-protected transport
+when the AUTH_SYS authentication flavor is in use
+addresses several longstanding weaknesses in AUTH_SYS
+(as detailed in
+<xref target="section_C7FB9DB5-5F4F-45AD-8BF7-74FFCA08BEBB" format="default" sectionFormat="of" derivedContent="Appendix A"/>).
+TLS augments AUTH_SYS by providing both
+integrity protection and confidentiality
+that AUTH_SYS lacks.
+TLS protects
+data payloads,
+RPC headers,
+and
+user identities
+against monitoring and alteration while in transit.
+</t>
+        <t indent="0" pn="section-6.3-2">
+TLS guards against in-transit insertion and deletion of RPC messages, thus
+ensuring the integrity of the message stream between RPC client and server.
+DTLS does not provide full message stream protection, but it does enable
+receivers to reject nonparticipant messages.  In particular, transport-layer
+encryption plus peer authentication protects receiving eXternal Data
+Representation (XDR) decoders from deserializing untrusted data, a common
+coding vulnerability.  However, these decoders would still be exposed to
+untrusted input in the case of the compromise of a trusted peer or Certification
+Authority.
+</t>
+        <t indent="0" pn="section-6.3-3">
+The use of TLS enables strong authentication
+of the communicating RPC peers,
+providing a degree of non-repudiation.
+When AUTH_SYS is used with TLS,
+but the RPC client is unauthenticated,
+the RPC server still acts on RPC requests
+for which there is no trustworthy authentication.
+In-transit traffic is protected, but the RPC client itself
+can still misrepresent user identity without server detection.
+TLS without authentication is an improvement
+from AUTH_SYS without encryption,
+but it leaves a critical security exposure.
+</t>
+        <t indent="0" pn="section-6.3-4">
+In light of the above, when AUTH_SYS is used,
+the use of a TLS mutual authentication mechanism is
+<bcp14>RECOMMENDED</bcp14>
+to prove that the RPC client is known to the RPC server.
+The server can then determine whether the UIDs and GIDs
+in AUTH_SYS requests from that client can be accepted,
+based on the authenticated identity of the client.
+</t>
+        <t indent="0" pn="section-6.3-5">
+The use of TLS does not enable RPC clients to detect compromise
+that leads to the impersonation of RPC users.
+Also, there continues to be a requirement
+that the mapping of 32-bit user and group ID values
+to user identities
+is the same on both the RPC client and server.
+</t>
+      </section>
+      <section anchor="section_55D006D3-8CA6-4D7F-AF0D-BFB0FFEF7595" numbered="true" removeInRFC="false" toc="include" pn="section-6.4">
+        <name slugifiedName="name-best-security-policy-practi">Best Security Policy Practices</name>
+        <t indent="0" pn="section-6.4-1">
+RPC-with-TLS implementations and deployments
+are strongly encouraged to adhere to the following policies
+to achieve the strongest possible security with RPC-with-TLS.
+</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.4-2">
+          <li pn="section-6.4-2.1">
+When using AUTH_NULL or AUTH_SYS, both peers are
+<bcp14>RECOMMENDED</bcp14>
+to have DNSSEC TLSA records,
+keys with which to perform mutual peer authentication
+using one of the methods described in
+<xref target="section_936921ED-67BB-46BF-B316-6740E07F6652" format="default" sectionFormat="of" derivedContent="Section 5.2"/>,
+and
+a security policy that requires mutual peer authentication
+and
+rejection of a connection when host authentication fails.
+</li>
+          <li pn="section-6.4-2.2">
+RPCSEC_GSS provides integrity and privacy services that are largely redundant
+when TLS is in use.  These services <bcp14>SHOULD</bcp14> be disabled in that
+case.
+</li>
+        </ul>
+      </section>
+    </section>
+    <section anchor="section_7B126473-2A13-453B-9BCA-66BC11B7B018" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <section anchor="section_2CD51855-CE40-4B8D-A220-F211C477964F" numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-rpc-authentication-flavor">RPC Authentication Flavor</name>
+        <t indent="0" pn="section-7.1-1">
+Following <xref target="RFC5531" format="default" section="B" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc5531#appendix-B" derivedContent="RFC5531"/>, an entry has been added to the "RPC
+Authentication Flavor Numbers" registry.  The purpose of the new authentication
+flavor is to signal the use of TLS with RPC.  This new flavor is not a
+pseudo-flavor.
+</t>
+        <t indent="0" pn="section-7.1-2">
+The fields in the new entry have been assigned as follows:
+</t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-7.1-3">
+          <dt pn="section-7.1-3.1">Identifier String:</dt>
+          <dd pn="section-7.1-3.2">
+AUTH_TLS
+</dd>
+          <dt pn="section-7.1-3.3">Flavor Name:</dt>
+          <dd pn="section-7.1-3.4">
+TLS
+</dd>
+          <dt pn="section-7.1-3.5">Value:</dt>
+          <dd pn="section-7.1-3.6">
+7 
+</dd>
+          <dt pn="section-7.1-3.7">Description:</dt>
+          <dd pn="section-7.1-3.8">
+Indicates support for RPC-with-TLS
+</dd>
+          <dt pn="section-7.1-3.9">Reference:</dt>
+          <dd pn="section-7.1-3.10">
+RFC 9289
+</dd>
+        </dl>
+      </section>
+      <section anchor="section_58905D7A-06B1-4469-964A-DAC607DAC500" numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-alpn-identifier-for-sunrpc">ALPN Identifier for SunRPC</name>
+        <t indent="0" pn="section-7.2-1">
+Following
+<xref target="RFC7301" section="6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc7301#section-6" derivedContent="RFC7301"/>,
+the following value has been allocated
+in the "TLS Application-Layer Protocol Negotiation (ALPN) Protocol IDs" registry.
+The "sunrpc" string identifies SunRPC when used over TLS.
+</t>
+        <dl newline="false" spacing="normal" indent="3" pn="section-7.2-2">
+          <dt pn="section-7.2-2.1">Protocol:</dt>
+          <dd pn="section-7.2-2.2">
+SunRPC
+</dd>
+          <dt pn="section-7.2-2.3">Identification Sequence:</dt>
+          <dd pn="section-7.2-2.4">
+0x73 0x75 0x6e 0x72 0x70 0x63 ("sunrpc")
+</dd>
+          <dt pn="section-7.2-2.5">Reference:</dt>
+          <dd pn="section-7.2-2.6">
+RFC 9289
+</dd>
+        </dl>
+      </section>
+      <section anchor="section_62E5E930-706A-4216-9A32-D7AC5952A507" numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-object-identifier-for-pkix-">Object Identifier for PKIX Extended Key Usage</name>
+        <t indent="0" pn="section-7.3-1">
+Per the Specification Required policy defined in <xref target="RFC8126" section="4.6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc8126#section-4.6" derivedContent="RFC8126"/>, the following new values
+have been registered in the "SMI Security for PKIX Extended Key Purpose"
+registry (1.3.6.1.5.5.7.3) (see
+<xref target="section_685D3F88-94FF-4C91-8CCB-860DBA602B2F" format="default" sectionFormat="of" derivedContent="Section 5.2.1.1"/>
+and
+<xref target="section_B08B45C1-1E10-4F7A-935B-1198BAF255C0" format="default" sectionFormat="of" derivedContent="Appendix B"/>).
+</t>
+        <table align="center" pn="table-1">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Decimal</th>
+              <th align="left" colspan="1" rowspan="1">Description</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">33</td>
+              <td align="left" colspan="1" rowspan="1">id-kp-rpcTLSClient</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9289</td>
+            </tr>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">34</td>
+              <td align="left" colspan="1" rowspan="1">id-kp-rpcTLSServer</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9289</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section anchor="section_1FB29AC3-A737-4822-B396-D33919905567" numbered="true" removeInRFC="false" toc="include" pn="section-7.4">
+        <name slugifiedName="name-object-identifier-for-asn1-">Object Identifier for ASN.1 Module</name>
+        <t indent="0" pn="section-7.4-1">
+Per the Specification Required policy defined in <xref target="RFC8126" section="4.6" format="default" sectionFormat="of" derivedLink="https://rfc-editor.org/rfc/rfc8126#section-4.6" derivedContent="RFC8126"/>, the following new value has been registered in the "SMI Security for PKIX Module Identifier" registry (1.3.6.1.5.5.7.0) (see <xref target="section_B08B45C1-1E10-4F7A-935B-1198BAF255C0" format="default" sectionFormat="of" derivedContent="Appendix B"/>).
+</t>
+        <table align="center" pn="table-2">
+          <thead>
+            <tr>
+              <th align="left" colspan="1" rowspan="1">Decimal</th>
+              <th align="left" colspan="1" rowspan="1">Description</th>
+              <th align="left" colspan="1" rowspan="1">Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td align="left" colspan="1" rowspan="1">105</td>
+              <td align="left" colspan="1" rowspan="1">id-mod-rpcWithTLS-2021</td>
+              <td align="left" colspan="1" rowspan="1">RFC 9289</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-8">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-8.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date month="March" year="1997"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized.  This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5056" target="https://www.rfc-editor.org/info/rfc5056" quoteTitle="true" derivedAnchor="RFC5056">
+          <front>
+            <title>On the Use of Channel Bindings to Secure Channels</title>
+            <author fullname="N. Williams" initials="N." surname="Williams"/>
+            <date month="November" year="2007"/>
+            <abstract>
+              <t indent="0">The concept of channel binding allows applications to establish that the two end-points of a secure channel at one network layer are the same as at a higher layer by binding authentication at the higher layer to the channel at the lower layer. This allows applications to delegate session protection to lower layers, which has various performance benefits.</t>
+              <t indent="0">This document discusses and formalizes the concept of channel binding to secure channels. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5056"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5056"/>
+        </reference>
+        <reference anchor="RFC5280" target="https://www.rfc-editor.org/info/rfc5280" quoteTitle="true" derivedAnchor="RFC5280">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+            <author fullname="D. Cooper" initials="D." surname="Cooper"/>
+            <author fullname="S. Santesson" initials="S." surname="Santesson"/>
+            <author fullname="S. Farrell" initials="S." surname="Farrell"/>
+            <author fullname="S. Boeyen" initials="S." surname="Boeyen"/>
+            <author fullname="R. Housley" initials="R." surname="Housley"/>
+            <author fullname="W. Polk" initials="W." surname="Polk"/>
+            <date month="May" year="2008"/>
+            <abstract>
+              <t indent="0">This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5280"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5280"/>
+        </reference>
+        <reference anchor="RFC5531" target="https://www.rfc-editor.org/info/rfc5531" quoteTitle="true" derivedAnchor="RFC5531">
+          <front>
+            <title>RPC: Remote Procedure Call Protocol Specification Version 2</title>
+            <author fullname="R. Thurlow" initials="R." surname="Thurlow"/>
+            <date month="May" year="2009"/>
+            <abstract>
+              <t indent="0">This document describes the Open Network Computing (ONC) Remote Procedure Call (RPC) version 2 protocol as it is currently deployed and accepted.  This document obsoletes RFC 1831. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5531"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5531"/>
+        </reference>
+        <reference anchor="RFC6125" target="https://www.rfc-editor.org/info/rfc6125" quoteTitle="true" derivedAnchor="RFC6125">
+          <front>
+            <title>Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)</title>
+            <author fullname="P. Saint-Andre" initials="P." surname="Saint-Andre"/>
+            <author fullname="J. Hodges" initials="J." surname="Hodges"/>
+            <date month="March" year="2011"/>
+            <abstract>
+              <t indent="0">Many application technologies enable secure communication between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS).  This document specifies procedures for representing and verifying the identity of application services in such interactions. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6125"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6125"/>
+        </reference>
+        <reference anchor="RFC7301" target="https://www.rfc-editor.org/info/rfc7301" quoteTitle="true" derivedAnchor="RFC7301">
+          <front>
+            <title>Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension</title>
+            <author fullname="S. Friedl" initials="S." surname="Friedl"/>
+            <author fullname="A. Popov" initials="A." surname="Popov"/>
+            <author fullname="A. Langley" initials="A." surname="Langley"/>
+            <author fullname="E. Stephan" initials="E." surname="Stephan"/>
+            <date month="July" year="2014"/>
+            <abstract>
+              <t indent="0">This document describes a Transport Layer Security (TLS) extension for application-layer protocol negotiation within the TLS handshake.  For instances in which multiple application protocols are supported on the same TCP or UDP port, this extension allows the application layer to negotiate which protocol will be used within the TLS connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7301"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7301"/>
+        </reference>
+        <reference anchor="RFC7525" target="https://www.rfc-editor.org/info/rfc7525" quoteTitle="true" derivedAnchor="RFC7525">
+          <front>
+            <title>Recommendations for Secure Use of Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)</title>
+            <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
+            <author fullname="R. Holz" initials="R." surname="Holz"/>
+            <author fullname="P. Saint-Andre" initials="P." surname="Saint-Andre"/>
+            <date month="May" year="2015"/>
+            <abstract>
+              <t indent="0">Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS) are widely used to protect data exchanged over application protocols such as HTTP, SMTP, IMAP, POP, SIP, and XMPP.  Over the last few years, several serious attacks on TLS have emerged, including attacks on its most commonly used cipher suites and their modes of operation.  This document provides recommendations for improving the security of deployed services that use TLS and DTLS.  The recommendations are applicable to the majority of use cases.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="195"/>
+          <seriesInfo name="RFC" value="7525"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7525"/>
+        </reference>
+        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126" quoteTitle="true" derivedAnchor="RFC8126">
+          <front>
+            <title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
+            <author fullname="M. Cotton" initials="M." surname="Cotton"/>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <author fullname="T. Narten" initials="T." surname="Narten"/>
+            <date month="June" year="2017"/>
+            <abstract>
+              <t indent="0">Many protocols make use of points of extensibility that use constants to identify various protocol parameters. To ensure that the values in these fields do not have conflicting uses and to promote interoperability, their allocations are often coordinated by a central record keeper. For IETF protocols, that role is filled by the Internet Assigned Numbers Authority (IANA).</t>
+              <t indent="0">To make assignments in a given registry prudently, guidance describing the conditions under which new values should be assigned, as well as when and how modifications to existing values can be made, is needed. This document defines a framework for the documentation of these guidelines by specification authors, in order to assure that the provided guidance for the IANA Considerations is clear and addresses the various issues that are likely in the operation of a registry.</t>
+              <t indent="0">This is the third edition of this document; it obsoletes RFC 5226.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="26"/>
+          <seriesInfo name="RFC" value="8126"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8126"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date month="May" year="2017"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8446" target="https://www.rfc-editor.org/info/rfc8446" quoteTitle="true" derivedAnchor="RFC8446">
+          <front>
+            <title>The Transport Layer Security (TLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <date month="August" year="2018"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Transport Layer Security (TLS) protocol. TLS allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">This document updates RFCs 5705 and 6066, and obsoletes RFCs 5077, 5246, and 6961. This document also specifies new requirements for TLS 1.2 implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8446"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8446"/>
+        </reference>
+        <reference anchor="RFC9147" target="https://www.rfc-editor.org/info/rfc9147" quoteTitle="true" derivedAnchor="RFC9147">
+          <front>
+            <title>The Datagram Transport Layer Security (DTLS) Protocol Version 1.3</title>
+            <author fullname="E. Rescorla" initials="E." surname="Rescorla"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="N. Modadugu" initials="N." surname="Modadugu"/>
+            <date month="April" year="2022"/>
+            <abstract>
+              <t indent="0">This document specifies version 1.3 of the Datagram Transport Layer Security (DTLS) protocol. DTLS 1.3 allows client/server applications to communicate over the Internet in a way that is designed to prevent eavesdropping, tampering, and message forgery.</t>
+              <t indent="0">The DTLS 1.3 protocol is based on the Transport Layer Security (TLS) 1.3 protocol and provides equivalent security guarantees with the exception of order protection / non-replayability. Datagram semantics of the underlying transport are preserved by the DTLS protocol.</t>
+              <t indent="0">This document obsoletes RFC 6347.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9147"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9147"/>
+        </reference>
+        <reference anchor="RFC9266" target="https://www.rfc-editor.org/info/rfc9266" quoteTitle="true" derivedAnchor="RFC9266">
+          <front>
+            <title>Channel Bindings for TLS 1.3</title>
+            <author fullname="S. Whited" initials="S." surname="Whited"/>
+            <date month="July" year="2022"/>
+            <abstract>
+              <t indent="0">This document defines a channel binding type, tls-exporter, that is compatible with TLS 1.3 in accordance with RFC 5056, "On the Use of Channel Bindings to Secure Channels".  Furthermore, it updates the default channel binding to the new binding for versions of TLS greater than 1.2.  This document updates RFCs 5801, 5802, 5929, and 7677.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="9266"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9266"/>
+        </reference>
+        <reference anchor="X.509" quoteTitle="true" derivedAnchor="X.509">
+          <front>
+            <title>Information technology - Open Systems Interconnection - The Directory: Public-key and attribute certificate frameworks</title>
+            <seriesInfo name="ISO/IEC" value="9594-8"/>
+            <seriesInfo name="ITU-T Recommendation" value="X.509"/>
+            <author>
+              <organization showOnFrontPage="true">International Telecommunication Union</organization>
+            </author>
+            <date month="October" year="2019"/>
+          </front>
+        </reference>
+        <reference anchor="X.680" target="https://www.itu.int/rec/T-REC-X.680" quoteTitle="true" derivedAnchor="X.680">
+          <front>
+            <title>Information technology - Abstract Syntax Notation One (ASN.1): Specification of basic notation</title>
+            <author>
+              <organization showOnFrontPage="true">ITU-T</organization>
+            </author>
+            <date year="2021" month="February"/>
+          </front>
+          <seriesInfo name="ITU-T Recommendation" value="X.680"/>
+        </reference>
+        <reference anchor="X.690" target="https://www.itu.int/rec/T-REC-X.690" quoteTitle="true" derivedAnchor="X.690">
+          <front>
+            <title>Information technology - ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)</title>
+            <author>
+              <organization showOnFrontPage="true">ITU-T</organization>
+            </author>
+            <date year="2021" month="February"/>
+          </front>
+          <seriesInfo name="ITU-T Recommendation" value="X.690"/>
+        </reference>
+      </references>
+      <references pn="section-8.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC1833" target="https://www.rfc-editor.org/info/rfc1833" quoteTitle="true" derivedAnchor="RFC1833">
+          <front>
+            <title>Binding Protocols for ONC RPC Version 2</title>
+            <author fullname="R. Srinivasan" initials="R." surname="Srinivasan"/>
+            <date month="August" year="1995"/>
+            <abstract>
+              <t indent="0">This document describes the binding protocols used in conjunction with the ONC Remote Procedure Call (ONC RPC Version 2) protocols. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="1833"/>
+          <seriesInfo name="DOI" value="10.17487/RFC1833"/>
+        </reference>
+        <reference anchor="RFC2203" target="https://www.rfc-editor.org/info/rfc2203" quoteTitle="true" derivedAnchor="RFC2203">
+          <front>
+            <title>RPCSEC_GSS Protocol Specification</title>
+            <author fullname="M. Eisler" initials="M." surname="Eisler"/>
+            <author fullname="A. Chiu" initials="A." surname="Chiu"/>
+            <author fullname="L. Ling" initials="L." surname="Ling"/>
+            <date month="September" year="1997"/>
+            <abstract>
+              <t indent="0">This memo describes an ONC/RPC security flavor that allows RPC protocols to access the Generic Security Services Application Programming Interface (referred to henceforth as GSS-API). [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2203"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2203"/>
+        </reference>
+        <reference anchor="RFC6698" target="https://www.rfc-editor.org/info/rfc6698" quoteTitle="true" derivedAnchor="RFC6698">
+          <front>
+            <title>The DNS-Based Authentication of Named Entities (DANE) Transport Layer Security (TLS) Protocol: TLSA</title>
+            <author fullname="P. Hoffman" initials="P." surname="Hoffman"/>
+            <author fullname="J. Schlyter" initials="J." surname="Schlyter"/>
+            <date month="August" year="2012"/>
+            <abstract>
+              <t indent="0">Encrypted communication on the Internet often uses Transport Layer Security (TLS), which depends on third parties to certify the keys used.  This document improves on that situation by enabling the administrators of domain names to specify the keys used in that domain's TLS servers.  This requires matching improvements in TLS client software, but no change in TLS server software. [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6698"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6698"/>
+        </reference>
+        <reference anchor="RFC6973" target="https://www.rfc-editor.org/info/rfc6973" quoteTitle="true" derivedAnchor="RFC6973">
+          <front>
+            <title>Privacy Considerations for Internet Protocols</title>
+            <author fullname="A. Cooper" initials="A." surname="Cooper"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <author fullname="B. Aboba" initials="B." surname="Aboba"/>
+            <author fullname="J. Peterson" initials="J." surname="Peterson"/>
+            <author fullname="J. Morris" initials="J." surname="Morris"/>
+            <author fullname="M. Hansen" initials="M." surname="Hansen"/>
+            <author fullname="R. Smith" initials="R." surname="Smith"/>
+            <date month="July" year="2013"/>
+            <abstract>
+              <t indent="0">This document offers guidance for developing privacy considerations for inclusion in protocol specifications.  It aims to make designers, implementers, and users of Internet protocols aware of privacy-related design choices.  It suggests that whether any individual RFC warrants a specific privacy considerations section will depend on the document's content.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6973"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6973"/>
+        </reference>
+        <reference anchor="RFC7258" target="https://www.rfc-editor.org/info/rfc7258" quoteTitle="true" derivedAnchor="RFC7258">
+          <front>
+            <title>Pervasive Monitoring Is an Attack</title>
+            <author fullname="S. Farrell" initials="S." surname="Farrell"/>
+            <author fullname="H. Tschofenig" initials="H." surname="Tschofenig"/>
+            <date month="May" year="2014"/>
+            <abstract>
+              <t indent="0">Pervasive monitoring is a technical attack that should be mitigated in the design of IETF protocols, where possible.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="188"/>
+          <seriesInfo name="RFC" value="7258"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7258"/>
+        </reference>
+        <reference anchor="RFC7435" target="https://www.rfc-editor.org/info/rfc7435" quoteTitle="true" derivedAnchor="RFC7435">
+          <front>
+            <title>Opportunistic Security: Some Protection Most of the Time</title>
+            <author fullname="V. Dukhovni" initials="V." surname="Dukhovni"/>
+            <date month="December" year="2014"/>
+            <abstract>
+              <t indent="0">This document defines the concept "Opportunistic Security" in the context of communications protocols.  Protocol designs based on Opportunistic Security use encryption even when authentication is not available, and use authentication when possible, thereby removing barriers to the widespread use of encryption on the Internet.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7435"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7435"/>
+        </reference>
+        <reference anchor="RFC8166" target="https://www.rfc-editor.org/info/rfc8166" quoteTitle="true" derivedAnchor="RFC8166">
+          <front>
+            <title>Remote Direct Memory Access Transport for Remote Procedure Call Version 1</title>
+            <author fullname="C. Lever" initials="C." role="editor" surname="Lever"/>
+            <author fullname="W. Simpson" initials="W." surname="Simpson"/>
+            <author fullname="T. Talpey" initials="T." surname="Talpey"/>
+            <date month="June" year="2017"/>
+            <abstract>
+              <t indent="0">This document specifies a protocol for conveying Remote Procedure Call (RPC) messages on physical transports capable of Remote Direct Memory Access (RDMA).  This protocol is referred to as the RPC-over- RDMA version 1 protocol in this document.  It requires no revision to application RPC protocols or the RPC protocol itself.  This document obsoletes RFC 5666.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8166"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8166"/>
+        </reference>
+        <reference anchor="RFC8167" target="https://www.rfc-editor.org/info/rfc8167" quoteTitle="true" derivedAnchor="RFC8167">
+          <front>
+            <title>Bidirectional Remote Procedure Call on RPC-over-RDMA Transports</title>
+            <author fullname="C. Lever" initials="C." surname="Lever"/>
+            <date month="June" year="2017"/>
+            <abstract>
+              <t indent="0">Minor versions of Network File System (NFS) version 4 newer than minor version 0 work best when Remote Procedure Call (RPC) transports can send RPC transactions in both directions on the same connection.  This document describes how RPC transport endpoints capable of Remote Direct Memory Access (RDMA) convey RPCs in both directions on a single connection.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8167"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8167"/>
+        </reference>
+        <reference anchor="RFC8899" target="https://www.rfc-editor.org/info/rfc8899" quoteTitle="true" derivedAnchor="RFC8899">
+          <front>
+            <title>Packetization Layer Path MTU Discovery for Datagram Transports</title>
+            <author fullname="G. Fairhurst" initials="G." surname="Fairhurst"/>
+            <author fullname="T. Jones" initials="T." surname="Jones"/>
+            <author fullname="M. Tüxen" initials="M." surname="Tüxen"/>
+            <author fullname="I. Rüngeler" initials="I." surname="Rüngeler"/>
+            <author fullname="T. Völker" initials="T." surname="Völker"/>
+            <date month="September" year="2020"/>
+            <abstract>
+              <t indent="0">This document specifies Datagram Packetization Layer Path MTU Discovery (DPLPMTUD). This is a robust method for Path MTU Discovery (PMTUD) for datagram Packetization Layers (PLs). It allows a PL, or a datagram application that uses a PL, to discover whether a network path can support the current size of datagram. This can be used to detect and reduce the message size when a sender encounters a packet black hole. It can also probe a network path to discover whether the maximum packet size can be increased. This provides functionality for datagram transports that is equivalent to the PLPMTUD specification for TCP, specified in RFC 4821, which it updates. It also updates the UDP Usage Guidelines to refer to this method for use with UDP datagrams and updates SCTP.</t>
+              <t indent="0">The document provides implementation notes for incorporating Datagram PMTUD into IETF datagram transports or applications that use datagram transports.</t>
+              <t indent="0">This specification updates RFC 4960, RFC 4821, RFC 6951, RFC 8085, and RFC 8261.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="8899"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8899"/>
+        </reference>
+        <reference anchor="RFC9110" target="https://www.rfc-editor.org/info/rfc9110" quoteTitle="true" derivedAnchor="RFC9110">
+          <front>
+            <title>HTTP Semantics</title>
+            <author fullname="R. Fielding" initials="R." role="editor" surname="Fielding"/>
+            <author fullname="M. Nottingham" initials="M." role="editor" surname="Nottingham"/>
+            <author fullname="J. Reschke" initials="J." role="editor" surname="Reschke"/>
+            <date month="June" year="2022"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems. This document describes the overall architecture of HTTP, establishes common terminology, and defines aspects of the protocol that are shared by all versions. In this definition are core protocol elements, extensibility mechanisms, and the "http" and "https" Uniform Resource Identifier (URI) schemes.</t>
+              <t indent="0">This document updates RFC 3864 and obsoletes RFCs 2818, 7231, 7232, 7233, 7235, 7538, 7615, 7694, and portions of 7230.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="97"/>
+          <seriesInfo name="RFC" value="9110"/>
+          <seriesInfo name="DOI" value="10.17487/RFC9110"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="section_C7FB9DB5-5F4F-45AD-8BF7-74FFCA08BEBB" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-known-weaknesses-of-the-aut">Known Weaknesses of the AUTH_SYS Authentication Flavor</name>
+      <t indent="0" pn="section-appendix.a-1">
+
+The ONC RPC protocol, as specified in <xref target="RFC5531" format="default" sectionFormat="of" derivedContent="RFC5531"/>, 
+provides several modes of security, commonly
+referred to as "authentication flavors".  Some of these flavors provide much
+more than an authentication service.  We refer to these as authentication
+flavors, security flavors, or simply, flavors.  One of the earliest and most
+basic flavors is AUTH_SYS, also known as AUTH_UNIX.
+<xref target="RFC5531" format="default" sectionFormat="of" section="A" derivedLink="https://rfc-editor.org/rfc/rfc5531#appendix-A" derivedContent="RFC5531"/>
+specifies AUTH_SYS.
+</t>
+      <t indent="0" pn="section-appendix.a-2">
+AUTH_SYS assumes that the RPC client and server
+both use POSIX-style user and group identifiers
+(each user and group can be distinctly represented
+as a 32-bit unsigned integer).
+It also assumes that the client and server
+both use the same mapping of user and group to an integer.
+One user ID, one primary group ID, and up to 16 supplemental group IDs
+are associated with each RPC request.
+The combination of these identifies the entity on the client
+that is making the request.
+</t>
+      <t indent="0" pn="section-appendix.a-3">
+A string identifies peers (hosts) in each RPC request.
+<xref target="RFC5531" format="default" sectionFormat="of" derivedContent="RFC5531"/>
+does not specify any requirements for this string
+other than that it is no longer than 255 octets.
+It does not have to be the same from request to request.
+Also, it does not have to match the DNS hostname of the sending host.
+For these reasons,
+even though most implementations fill in their hostname in this field,
+receivers typically ignore its content.
+</t>
+      <t indent="0" pn="section-appendix.a-4">
+<xref target="RFC5531" format="default" sectionFormat="of" section="A" derivedLink="https://rfc-editor.org/rfc/rfc5531#appendix-A" derivedContent="RFC5531"/>
+contains a brief explanation of security considerations:
+</t>
+      <blockquote pn="section-appendix.a-5">
+It should be noted that use of this flavor of authentication does not
+guarantee any security for the users or providers of a service, in
+itself.  The authentication provided by this scheme can be considered
+legitimate only when applications using this scheme and the network
+can be secured externally, and privileged transport addresses are
+used for the communicating end-points (an example of this is the use
+of privileged TCP/UDP ports in UNIX systems -- note that not all
+systems enforce privileged transport address mechanisms).
+</blockquote>
+      <t indent="0" pn="section-appendix.a-6">
+It should be clear, therefore, that AUTH_SYS by itself
+(i.e., without strong client authentication)
+offers little to no communication security:
+</t>
+      <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-appendix.a-7">
+<li pn="section-appendix.a-7.1" derivedCounter="1.">
+It does not protect the confidentiality or integrity of
+RPC requests,
+users,
+or
+payloads,
+relying instead on "external" security.
+</li>
+        <li pn="section-appendix.a-7.2" derivedCounter="2.">
+It does not provide authentication of RPC peer machines,
+other than inclusion of an unprotected domain name.
+</li>
+        <li pn="section-appendix.a-7.3" derivedCounter="3.">
+The use of 32-bit unsigned integers as user and group identifiers
+is problematic because these data types are
+not cryptographically signed or otherwise verified by any authority.
+In addition, the mapping of these integers to users and groups
+has to be consistent amongst a server and its cohort of clients.
+</li>
+        <li pn="section-appendix.a-7.4" derivedCounter="4.">
+Because the user and group ID fields are not integrity protected,
+AUTH_SYS does not provide non-repudiation.
+</li>
+      </ol>
+    </section>
+    <section anchor="section_B08B45C1-1E10-4F7A-935B-1198BAF255C0" numbered="true" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-asn1-module">ASN.1 Module</name>
+      <t indent="0" pn="section-appendix.b-1">
+  The following module adheres to ASN.1 specifications <xref target="X.680" format="default" sectionFormat="of" derivedContent="X.680"/> and <xref target="X.690" format="default" sectionFormat="of" derivedContent="X.690"/>.
+</t>
+      <sourcecode name="" type="asn.1" markers="true" pn="section-appendix.b-2">
+
+
+RPCwithTLS-2021
+  { iso(1) identified-organization(3) dod(6) internet(1)
+  security(5) mechanisms(5) pkix(7) id-mod(0)
+  id-mod-rpcWithTLS-2021(105) }
+
+DEFINITIONS IMPLICIT TAGS ::=
+BEGIN
+
+-- OID Arc
+
+id-kp OBJECT IDENTIFIER ::=
+  { iso(1) identified-organization(3) dod(6) internet(1)
+    security(5) mechanisms(5) pkix(7) kp(3) }
+
+-- Extended Key Usage Values
+
+id-kp-rpcTLSClient OBJECT IDENTIFIER ::= { id-kp 33 }
+id-kp-rpcTLSServer OBJECT IDENTIFIER ::= { id-kp 34 }
+
+END
+
+</sourcecode>
+    </section>
+    <section anchor="section_4959412F-37AD-42B8-9169-D477148F81A8" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.c-1">
+Special mention goes to
+<contact fullname="Charles Fisher"/>,
+author of
+<eref target="https://www.linuxjournal.com/content/encrypting-nfsv4-stunnel-tls" brackets="angle">
+"Encrypting NFSv4 with Stunnel TLS"</eref>.  His article inspired the
+mechanism described in the current document.
+</t>
+      <t indent="0" pn="section-appendix.c-2">
+Many thanks to
+
+<contact fullname="Benjamin Coddington"/>,
+<contact fullname="Tigran Mkrtchyan"/>,
+and
+<contact fullname="Rick Macklem"/>
+for their work on prototype implementations and feedback on the current document.
+
+Also, thanks to
+<contact fullname="Benjamin Kaduk"/>
+for his expert guidance on the use of PKIX and TLS
+and to <contact fullname="Russ Housley"/> for his ASN.1 expertise and for providing other proper finishing touches.
+In addition, the authors thank the other members of the IESG for
+their astute review comments. These contributors made this a significantly better document.
+
+</t>
+      <t indent="0" pn="section-appendix.c-3">
+Thanks to
+<contact fullname="Derrell Piper"/>
+for numerous suggestions that improved both
+this simple mechanism
+and
+the current document's security-related discussion.
+</t>
+      <t indent="0" pn="section-appendix.c-4">
+Many thanks to
+Transport Area Director
+<contact fullname="Magnus Westerlund"/>
+for his sharp questions and careful reading
+of the final revisions of the current document.
+The text of
+<xref target="section_B8BF600E-96DC-4C82-AADF-D593826E9B75" format="default" sectionFormat="of" derivedContent="Section 5.1.2"/>
+is mostly his contribution.
+
+</t>
+      <t indent="0" pn="section-appendix.c-5">
+The authors are additionally grateful to
+<contact fullname="Bill Baker"/>,
+<contact fullname="David Black"/>,
+<contact fullname="Alan DeKok"/>,
+<contact fullname="Lars Eggert"/>,
+<contact fullname="Olga Kornievskaia"/>,
+<contact fullname="Greg Marsden"/>,
+<contact fullname="Alex McDonald"/>,
+<contact fullname="Justin Mazzola Paluska"/>,
+<contact fullname="Tom Talpey"/>,
+<contact fullname="Martin Thomson"/>,
+and
+<contact fullname="Nico Williams"/>
+for their input and support of this work.
+</t>
+      <t indent="0" pn="section-appendix.c-6">
+Finally, special thanks to
+NFSV4 Working Group Chair and document shepherd
+<contact fullname="David Noveck"/>,
+NFSV4 Working Group Chairs
+<contact fullname="Spencer Shepler"/>
+and <contact fullname="Brian Pawlowski"/>, and NFSV4 Working Group Secretary
+<contact fullname="Thomas Haynes"/>
+for their guidance and oversight.
+</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="T." surname="Myklebust" fullname="Trond Myklebust">
+        <organization abbrev="Hammerspace" showOnFrontPage="true">Hammerspace Inc.</organization>
+        <address>
+          <postal>
+            <street>4300 El Camino Real, Suite 105</street>
+            <city>Los Altos</city>
+            <region>CA</region>
+            <code>94022</code>
+            <country>United States of America</country>
+          </postal>
+          <email>trond.myklebust@hammerspace.com</email>
+        </address>
+      </author>
+      <author initials="C." surname="Lever" fullname="Charles Lever" role="editor">
+        <organization abbrev="Oracle" showOnFrontPage="true">Oracle Corporation</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <region/>
+            <code/>
+            <country>United States of America</country>
+          </postal>
+          <email>chuck.lever@oracle.com</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

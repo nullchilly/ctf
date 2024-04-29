@@ -1,0 +1,3185 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-alto-incr-update-sse-22" indexInclude="true" ipr="trust200902" number="8895" prepTime="2020-11-06T11:28:13" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-alto-incr-update-sse-22" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8895" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="ALTO Incremental Updates">Application-Layer Traffic Optimization (ALTO) Incremental Updates Using Server-Sent Events (SSE)</title>
+    <seriesInfo name="RFC" value="8895" stream="IETF"/>
+    <author initials="W." surname="Roome" fullname="Wendy Roome">
+      <organization abbrev="Nokia Bell Labs" showOnFrontPage="true">Nokia Bell Labs (Retired)</organization>
+      <address>
+        <postal>
+          <street>124 Burlington Rd</street>
+          <city>Murray Hill</city>
+          <region>NJ</region>
+          <code>07974</code>
+          <country>United States of America</country>
+        </postal>
+        <phone>+1-908-464-6975</phone>
+        <email>wendy@wdroome.com</email>
+      </address>
+    </author>
+    <author fullname="Y. Richard Yang" initials="Y." surname="Yang">
+      <organization showOnFrontPage="true">Yale University</organization>
+      <address>
+        <postal>
+          <street>51 Prospect St</street>
+          <city>New Haven</city>
+          <region>CT</region>
+          <country>United States of America</country>
+        </postal>
+        <email>yry@cs.yale.edu</email>
+      </address>
+    </author>
+    <date month="11" year="2020"/>
+    <area>TSV</area>
+    <workgroup>ALTO</workgroup>
+    <keyword>ALTO</keyword>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">The Application-Layer Traffic Optimization (ALTO) protocol (RFC 7285)
+      provides network-related information, called 
+      network information resources, to client applications so that clients
+      can make informed decisions in utilizing network resources. 
+      This document presents a mechanism to allow an ALTO server to push
+      updates to ALTO clients to achieve two benefits: (1) updates can be
+      incremental, in that if only a small section of an information
+      resource changes, the ALTO server can send just the changes and (2)
+      updates can be immediate, in that the ALTO server can send updates
+      as soon as they are available.</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8895" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-terms">Terms</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-background">Background</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2">
+              <li pn="section-toc.1-1.3.2.1">
+                <t indent="0" pn="section-toc.1-1.3.2.1.1"><xref derivedContent="3.1" format="counter" sectionFormat="of" target="section-3.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-incremental-encoding-json-m">Incremental Encoding: JSON Merge Patch</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.1.2">
+                  <li pn="section-toc.1-1.3.2.1.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.1.1"><xref derivedContent="3.1.1" format="counter" sectionFormat="of" target="section-3.1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-json-merge-patch-encoding">JSON Merge Patch Encoding</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.1.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.1.2.2.1"><xref derivedContent="3.1.2" format="counter" sectionFormat="of" target="section-3.1.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-json-merge-patch-alto-messa">JSON Merge Patch ALTO Messages</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.2">
+                <t indent="0" pn="section-toc.1-1.3.2.2.1"><xref derivedContent="3.2" format="counter" sectionFormat="of" target="section-3.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-incremental-encoding-json-p">Incremental Encoding: JSON Patch</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.3.2.2.2">
+                  <li pn="section-toc.1-1.3.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.1.1"><xref derivedContent="3.2.1" format="counter" sectionFormat="of" target="section-3.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-json-patch-encoding">JSON Patch Encoding</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.3.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.3.2.2.2.2.1"><xref derivedContent="3.2.2" format="counter" sectionFormat="of" target="section-3.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-json-patch-alto-messages">JSON Patch ALTO Messages</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.3.2.3">
+                <t indent="0" pn="section-toc.1-1.3.2.3.1"><xref derivedContent="3.3" format="counter" sectionFormat="of" target="section-3.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-multiplexing-and-server-pus">Multiplexing and Server Push: HTTP/2</xref></t>
+              </li>
+              <li pn="section-toc.1-1.3.2.4">
+                <t indent="0" pn="section-toc.1-1.3.2.4.1"><xref derivedContent="3.4" format="counter" sectionFormat="of" target="section-3.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-server-push-server-sent-eve">Server Push: Server-Sent Event</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-overview-of-approach-and-hi">Overview of Approach and High-Level Protocol Message Flow</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-stream-service-messa">Update Stream Service Message Flow</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-stream-control-service-mess">Stream Control Service Message Flow</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-service-announcement-and-ma">Service Announcement and Management Message Flow</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-messages-data-update">Update Messages: Data Update and Control Update Messages</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-generic-alto-update-message">Generic ALTO Update Message Structure</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-data-update-message">ALTO Data Update Message</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.3">
+                <t indent="0" pn="section-toc.1-1.5.2.3.1"><xref derivedContent="5.3" format="counter" sectionFormat="of" target="section-5.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-control-update-message">ALTO Control Update Message</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-stream-service">Update Stream Service</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-media-type">Media Type</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-method">HTTP Method</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-capabilities">Capabilities</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t indent="0" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-uses">Uses</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.5">
+                <t indent="0" pn="section-toc.1-1.6.2.5.1"><xref derivedContent="6.5" format="counter" sectionFormat="of" target="section-6.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-accept-input-parame">Request: Accept Input Parameters</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.6">
+                <t indent="0" pn="section-toc.1-1.6.2.6.1"><xref derivedContent="6.6" format="counter" sectionFormat="of" target="section-6.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-response">Response</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.7">
+                <t indent="0" pn="section-toc.1-1.6.2.7.1"><xref derivedContent="6.7" format="counter" sectionFormat="of" target="section-6.7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-additional-requirements-on-">Additional Requirements on Update Stream Service</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2.7.2">
+                  <li pn="section-toc.1-1.6.2.7.2.1">
+                    <t indent="0" pn="section-toc.1-1.6.2.7.2.1.1"><xref derivedContent="6.7.1" format="counter" sectionFormat="of" target="section-6.7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-event-sequence-requirements">Event Sequence Requirements</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.6.2.7.2.2">
+                    <t indent="0" pn="section-toc.1-1.6.2.7.2.2.1"><xref derivedContent="6.7.2" format="counter" sectionFormat="of" target="section-6.7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-cross-stream-consistency-re">Cross-Stream Consistency Requirements</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.6.2.7.2.3">
+                    <t indent="0" pn="section-toc.1-1.6.2.7.2.3.1"><xref derivedContent="6.7.3" format="counter" sectionFormat="of" target="section-6.7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-multipart-update-requiremen">Multipart Update Requirements</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.6.2.8">
+                <t indent="0" pn="section-toc.1-1.6.2.8.1"><xref derivedContent="6.8" format="counter" sectionFormat="of" target="section-6.8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-keep-alive-messages">Keep-Alive Messages</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-stream-control-service">Stream Control Service</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.7.2">
+              <li pn="section-toc.1-1.7.2.1">
+                <t indent="0" pn="section-toc.1-1.7.2.1.1"><xref derivedContent="7.1" format="counter" sectionFormat="of" target="section-7.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-uri">URI</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.2">
+                <t indent="0" pn="section-toc.1-1.7.2.2.1"><xref derivedContent="7.2" format="counter" sectionFormat="of" target="section-7.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-media-type-2">Media Type</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.3">
+                <t indent="0" pn="section-toc.1-1.7.2.3.1"><xref derivedContent="7.3" format="counter" sectionFormat="of" target="section-7.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-http-method-2">HTTP Method</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.4">
+                <t indent="0" pn="section-toc.1-1.7.2.4.1"><xref derivedContent="7.4" format="counter" sectionFormat="of" target="section-7.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-ird-capabilities-uses">IRD Capabilities &amp; Uses</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.5">
+                <t indent="0" pn="section-toc.1-1.7.2.5.1"><xref derivedContent="7.5" format="counter" sectionFormat="of" target="section-7.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-request-accept-input-paramet">Request: Accept Input Parameters</xref></t>
+              </li>
+              <li pn="section-toc.1-1.7.2.6">
+                <t indent="0" pn="section-toc.1-1.7.2.6.1"><xref derivedContent="7.6" format="counter" sectionFormat="of" target="section-7.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-response-2">Response</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-examples">Examples</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.8.2">
+              <li pn="section-toc.1-1.8.2.1">
+                <t indent="0" pn="section-toc.1-1.8.2.1.1"><xref derivedContent="8.1" format="counter" sectionFormat="of" target="section-8.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-ird-announcing-upda">Example: IRD Announcing Update Stream Services</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.2">
+                <t indent="0" pn="section-toc.1-1.8.2.2.1"><xref derivedContent="8.2" format="counter" sectionFormat="of" target="section-8.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-simple-network-and-">Example: Simple Network and Cost Map Updates</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.3">
+                <t indent="0" pn="section-toc.1-1.8.2.3.1"><xref derivedContent="8.3" format="counter" sectionFormat="of" target="section-8.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-advanced-network-an">Example: Advanced Network and Cost Map Updates</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.4">
+                <t indent="0" pn="section-toc.1-1.8.2.4.1"><xref derivedContent="8.4" format="counter" sectionFormat="of" target="section-8.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-endpoint-property-u">Example: Endpoint Property Updates</xref></t>
+              </li>
+              <li pn="section-toc.1-1.8.2.5">
+                <t indent="0" pn="section-toc.1-1.8.2.5.1"><xref derivedContent="8.5" format="counter" sectionFormat="of" target="section-8.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-example-multipart-message-u">Example: Multipart Message Updates</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-operation-and-processing-co">Operation and Processing Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.9.2">
+              <li pn="section-toc.1-1.9.2.1">
+                <t indent="0" pn="section-toc.1-1.9.2.1.1"><xref derivedContent="9.1" format="counter" sectionFormat="of" target="section-9.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-choosing">Considerations for Choosing Data Update Messages</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.2">
+                <t indent="0" pn="section-toc.1-1.9.2.2.1"><xref derivedContent="9.2" format="counter" sectionFormat="of" target="section-9.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-client-p">Considerations for Client Processing Data Update Messages</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.3">
+                <t indent="0" pn="section-toc.1-1.9.2.3.1"><xref derivedContent="9.3" format="counter" sectionFormat="of" target="section-9.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-updates-">Considerations for Updates to Filtered Cost Maps</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.4">
+                <t indent="0" pn="section-toc.1-1.9.2.4.1"><xref derivedContent="9.4" format="counter" sectionFormat="of" target="section-9.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-updates-t">Considerations for Updates to Ordinal Mode Costs</xref></t>
+              </li>
+              <li pn="section-toc.1-1.9.2.5">
+                <t indent="0" pn="section-toc.1-1.9.2.5.1"><xref derivedContent="9.5" format="counter" sectionFormat="of" target="section-9.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-sse-text">Considerations for SSE Text Formatting and Processing</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-update-stream-server-denial">Update Stream Server: Denial-of-Service Attacks</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-alto-client-update-overload">ALTO Client: Update Overloading or Instability</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.3">
+                <t indent="0" pn="section-toc.1-1.10.2.3.1"><xref derivedContent="10.3" format="counter" sectionFormat="of" target="section-10.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-stream-control-spoofed-cont">Stream Control: Spoofed Control Requests and Information Breakdown</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="11" format="counter" sectionFormat="of" target="section-11"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-on-future-alto">Requirements on Future ALTO Services to Use This Design</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="12" format="counter" sectionFormat="of" target="section-12"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.12.2">
+              <li pn="section-toc.1-1.12.2.1">
+                <t indent="0" pn="section-toc.1-1.12.2.1.1"><xref derivedContent="12.1" format="counter" sectionFormat="of" target="section-12.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-application-alto-updatestre">application/alto-updatestreamparams+json Media Type</xref></t>
+              </li>
+              <li pn="section-toc.1-1.12.2.2">
+                <t indent="0" pn="section-toc.1-1.12.2.2.1"><xref derivedContent="12.2" format="counter" sectionFormat="of" target="section-12.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-application-alto-updatestrea">application/alto-updatestreamcontrol+json Media Type</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="13" format="counter" sectionFormat="of" target="section-13"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-appendix-design-decision-no">Appendix: Design Decision: Not Allowing Stream Restart</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="14" format="counter" sectionFormat="of" target="section-14"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.14.2">
+              <li pn="section-toc.1-1.14.2.1">
+                <t indent="0" pn="section-toc.1-1.14.2.1.1"><xref derivedContent="14.1" format="counter" sectionFormat="of" target="section-14.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.14.2.2">
+                <t indent="0" pn="section-toc.1-1.14.2.2.1"><xref derivedContent="14.2" format="counter" sectionFormat="of" target="section-14.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.15">
+            <t indent="0" pn="section-toc.1-1.15.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.16">
+            <t indent="0" pn="section-toc.1-1.16.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-contributors">Contributors</xref></t>
+          </li>
+          <li pn="section-toc.1-1.17">
+            <t indent="0" pn="section-toc.1-1.17.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section numbered="true" removeInRFC="false" toc="include" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">The Application-Layer Traffic Optimization (ALTO) protocol <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/> provides network-related information, called
+      network information resources, to client applications so that clients may
+      make informed decisions in utilizing network resources. For example, an
+      ALTO server provides network and cost maps, where a network map
+      partitions the set of endpoints into a manageable number of sets each
+      defined by a Provider-Defined Identifier (PID) and a cost map provides
+      directed costs between PIDs. Given network and cost maps, an ALTO client
+      can obtain costs between endpoints by first using the network map to get
+      the PID for each endpoint and then using the cost map to get the costs
+      between those PIDs. Such costs can be used by the client to choose
+      communicating endpoints with low network costs.</t>
+      <t indent="0" pn="section-1-2">The ALTO protocol defines only an ALTO client pull model without
+      defining a mechanism to allow an ALTO client to obtain updates to
+      network information resources, other than by periodically re-fetching
+      them. In settings where an information resource may be large but only
+      parts of it may change frequently (e.g., some entries of a cost map),
+      complete re-fetching can be inefficient.</t>
+      <t indent="0" pn="section-1-3">
+        This document presents a mechanism to allow an ALTO server
+        to push incremental updates to ALTO clients. Integrating server push
+	and incremental updates provides two benefits: 
+        (1) updates can be small, in that if only a small section of an
+	information resource changes, the ALTO server can send just the
+	changes and 
+        (2) updates can be immediate, in that the ALTO server can send updates
+        as soon as they are available.
+      </t>
+      <t indent="0" pn="section-1-4">While primarily intended to provide updates to GET-mode network and
+      cost maps, the mechanism defined in this document can also provide
+      updates to POST-mode ALTO services, such as the ALTO endpoint property
+      and endpoint cost services. The mechanism can also support new ALTO
+      services to be defined by future extensions, but a future service needs
+      to satisfy requirements specified in <xref target="FutureDesignConsiderations" format="default" sectionFormat="of" derivedContent="Section 11"/>.</t>
+      <t indent="0" pn="section-1-5">The rest of this document is organized as follows. <xref target="Background" format="default" sectionFormat="of" derivedContent="Section 3"/> gives background on the basic techniques used in
+      this design: (1) JSON merge patch and JSON patch to allow incremental
+      updates and (2) Server-Sent Events (SSE) <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> to allow
+      server push. With the background, <xref target="Overview" format="default" sectionFormat="of" derivedContent="Section 4"/> gives a
+      non-normative overview of the design. <xref target="ALTO.SSE.Events" format="default" sectionFormat="of" derivedContent="Section 5"/>
+      defines individual messages in an update stream. <xref target="UpdateStreamService" format="default" sectionFormat="of" derivedContent="Section 6"/> defines the update stream service. <xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/> defines the stream control service.
+      <xref target="Examples" format="default" sectionFormat="of" derivedContent="Section 8"/> gives several examples to illustrate the two
+      types of services. <xref target="OperationProcessingConsiderations" format="default" sectionFormat="of" derivedContent="Section 9"/>
+      describes operation and processing considerations by both ALTO servers
+      and clients. <xref target="DesignDecisions" format="default" sectionFormat="of" derivedContent="Section 13"/> discusses a design feature
+      that is not supported. <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 10"/> discusses security
+      issues. Sections <xref target="FutureDesignConsiderations" format="counter" sectionFormat="of" derivedContent="11"/> and <xref target="IANA" format="counter" sectionFormat="of" derivedContent="12"/> review the
+      requirements for future ALTO services to use SSE and IANA
+      considerations, respectively.</t>
+    </section>
+    <section anchor="Terms" numbered="true" removeInRFC="false" toc="include" pn="section-2">
+      <name slugifiedName="name-terms">Terms</name>
+      <t indent="0" pn="section-2-1">Besides the terminologies as defined in <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>,
+      this document also uses additional terminologies defined as follows: 
+      </t>
+      <dl newline="true" spacing="normal" indent="3" pn="section-2-2">
+        <dt pn="section-2-2.1">Update Stream:</dt>
+        <dd pn="section-2-2.2">A reliable, in-order connection compatible with HTTP/1.x between an ALTO
+  client and an ALTO server so that the server can push a sequence of update
+  messages using <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> to the client.</dd>
+        <dt pn="section-2-2.3">Update Stream Server:</dt>
+        <dd pn="section-2-2.4">This document refers to an ALTO server providing an update stream as an
+  ALTO update stream server, or update stream server for short. Note that the
+  ALTO server mentioned in this document refers to a general server that
+  provides various kinds of services; it can be an update stream server or
+  stream control server (see below). It can also be a server providing ALTO
+  Information Resource Directory (IRD).</dd>
+        <dt pn="section-2-2.5">Update Message:</dt>
+        <dd pn="section-2-2.6">A message that is either a data update message or a control update
+  message.</dd>
+        <dt pn="section-2-2.7">Data Update Message:</dt>
+        <dd pn="section-2-2.8">An update message that is for a single ALTO information resource and
+  sent from the update stream server to the ALTO client when the resource
+  changes. A data update message can be either a full-replacement message or
+  an incremental-change message. Full replacement is a shorthand for a
+  full-replacement message, and incremental change is a shorthand for an
+  incremental-change message.</dd>
+        <dt pn="section-2-2.9">Full Replacement:</dt>
+        <dd pn="section-2-2.10">A data update message for a resource that encodes the content of the
+  resource in its original ALTO encoding.</dd>
+        <dt pn="section-2-2.11">Incremental Change:</dt>
+        <dd pn="section-2-2.12">A data update message that specifies only the difference between the
+  new content and the previous version.  An incremental change can be encoded
+  using either JSON merge patch or JSON patch in this document.</dd>
+        <dt pn="section-2-2.13">Stream Control Service:</dt>
+        <dd pn="section-2-2.14">A service that provides an HTTP URI so that the ALTO client of an update
+  stream can use it to send stream control requests to the ALTO server on the
+  addition or removal of resources receiving update messages from the update
+  stream. The ALTO server creates a new stream control resource for each
+  update stream instance, assigns a unique URI to it, and sends the URI to the
+  client as the first event in the stream. (Note that the stream control
+  service in ALTO has no association with the similarly named Stream Control
+  Transmission Protocol <xref target="RFC4960" format="default" sectionFormat="of" derivedContent="RFC4960"/>.)</dd>
+        <dt pn="section-2-2.15">Stream Control:</dt>
+        <dd pn="section-2-2.16">A shorthand for stream control service.</dd>
+        <dt pn="section-2-2.17">Stream Control Server:</dt>
+        <dd pn="section-2-2.18">An ALTO server providing the stream control service.</dd>
+        <dt pn="section-2-2.19">Substream-ID:</dt>
+        <dd pn="section-2-2.20">An ALTO client can assign a unique substream-id when requesting the
+  addition of a resource receiving update messages from an update stream.  The
+  server puts the substream-id in each update event for that resource. The
+  substream-id allows a client to use one update stream to receive updates to 
+  multiple requests for the same resource (i.e., with the same resource-id in
+  an ALTO IRD), for example, for a POST-mode resource with different input
+  parameters.</dd>
+        <dt pn="section-2-2.21">Data-ID:</dt>
+        <dd pn="section-2-2.22">A subfield of the "event" field of <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> to identify the
+  ALTO data (object) to be updated. For an ALTO resource returning a multipart
+  response, the data-id to identify the data (object) is the substream-id, in
+  addition to the Content-ID of the object in the multipart response. The
+  data-id of a single-part response is just the substream-id.</dd>
+        <dt pn="section-2-2.23">Control Update Message:</dt>
+        <dd pn="section-2-2.24">An update message for the update stream server to notify the ALTO client
+  of related control information of the update stream. A control update
+  message may be triggered by an internal event at the server, such as server
+  overloading and hence the update stream server will no longer send updates
+  for an information resource, or as a result of a client sending a request
+  through the stream control service. 
+The first message of an update stream is a control update message that
+provides 
+a control URI to the ALTO client. The ALTO client can use the URI to send 
+stream control requests to the stream control server.
+
+      </dd>
+      </dl>
+      <section anchor="ReqLang" numbered="true" removeInRFC="false" toc="include" pn="section-2.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-2.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>", 
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be interpreted as
+    described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> 
+    when, and only when, they appear in all capitals, as shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="Background" numbered="true" removeInRFC="false" toc="include" pn="section-3">
+      <name slugifiedName="name-background">Background</name>
+      <t indent="0" pn="section-3-1">The design requires two basic techniques: encoding of incremental
+      changes and server push.  For incremental changes, existing techniques
+      include JSON merge patch and JSON patch; this design uses both. For
+      server push, existing techniques include HTTP/2 and <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>; this design adopts some design features of HTTP/2 but
+      uses <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> as the basic server-push design. The rest of
+      this section gives a non-normative summary of JSON merge patch, JSON
+      patch, HTTP/2, and <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>.</t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-3.1">
+        <name slugifiedName="name-incremental-encoding-json-m">Incremental Encoding: JSON Merge Patch</name>
+        <t indent="0" pn="section-3.1-1">To avoid always sending complete data, a server needs mechanisms to
+	encode incremental changes, and JSON merge patch is one
+	mechanism. <xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/> defines the encoding of
+	incremental changes (called JSON merge patch objects) to be used by
+	the HTTP PATCH method <xref target="RFC5789" format="default" sectionFormat="of" derivedContent="RFC5789"/>. From <xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/>, this document adopts only the JSON merge patch
+	object 
+	encoding and does not use the HTTP PATCH method, as the updates are
+	sent as events instead of HTTP methods; also, the updates are
+	server to client, and PATCH semantics are more for
+	client to server. Below is a non-normative summary of JSON merge patch
+	objects; see <xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/> for the normative
+	definition.</t>
+        <section anchor="MergePatchOverview" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.1">
+          <name slugifiedName="name-json-merge-patch-encoding">JSON Merge Patch Encoding</name>
+          <t indent="0" pn="section-3.1.1-1"> Informally, a JSON merge patch message consists of a JSON merge
+	  patch object (referred to as a patch in <xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/>),
+	  which defines how to transform one JSON value into another using a
+	  recursive merge patch algorithm. Specifically, the patch is computed
+	  by treating two JSON values (first one being the original and the
+	  second being the updated) as trees of nested JSON objects
+	  (dictionaries of name/value pairs), where the leaves are values
+	  (e.g., JSON arrays, strings, and numbers), other than JSON objects, and
+	  the path for each leaf is the sequence of keys leading to that
+	  leaf. When the second tree has a different value for a leaf at a
+	  path or adds a new leaf, the patch has a leaf, at that path, with
+	  the new value. When a leaf in the first tree does not exist in the
+	  second tree, the JSON merge patch tree has a leaf with a JSON "null"
+	  value. Hence, in the patch, null as the value of a name/value pair
+	  will delete the element with "name" in the original JSON value. The
+	  patch does not have an entry for any leaf that has the same value in
+	  both versions. See the MergePatch pseudocode at the beginning of
+	  <xref target="RFC7396" sectionFormat="of" section="2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7396#section-2" derivedContent="RFC7396"/> for the
+	  formal specification of how to apply a given patch. As a result, if
+	  all leaf values are simple scalars, JSON merge patch is a quite
+	  efficient representation of incremental changes. It is less
+	  efficient when leaf values are arrays, because JSON merge patch
+	  replaces arrays in their entirety, even if only one entry
+	  changes.</t>
+        </section>
+        <section anchor="MergePatchALTO" numbered="true" removeInRFC="false" toc="include" pn="section-3.1.2">
+          <name slugifiedName="name-json-merge-patch-alto-messa">JSON Merge Patch ALTO Messages</name>
+          <t indent="0" pn="section-3.1.2-1">
+          To provide both examples of JSON merge patch and a demonstration of
+	  the feasibility of applying JSON merge patch to ALTO, the sections
+	  below show the application of JSON merge patch to two key ALTO
+	  messages. 
+          </t>
+          <section anchor="MergePatchNetMapExample" numbered="true" removeInRFC="false" toc="exclude" pn="section-3.1.2.1">
+            <name slugifiedName="name-json-merge-patch-network-ma">JSON Merge Patch Network Map Messages</name>
+            <t indent="0" pn="section-3.1.2.1-1"><xref target="RFC7285" sectionFormat="of" section="11.2.1.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.2.1.6" derivedContent="RFC7285"/>
+	    defines the format of an ALTO network map message. Assume a simple
+	    example ALTO message sending an initial network map:</t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.1-2">
+  {
+    "meta" : {
+      "vtag": {
+        "resource-id" : "my-network-map",
+        "tag" : "da65eca2eb7a10ce8b059740b0b2e3f8eb1d4785"
+      }
+    },
+    "network-map" : {
+      "PID1" : {
+        "ipv4" : [ "192.0.2.0/24", "198.51.100.0/25" ]
+      },
+      "PID2" : {
+        "ipv4" : [ "198.51.100.128/25" ]
+      },
+      "PID3" : {
+        "ipv4" : [ "0.0.0.0/0" ],
+        "ipv6" : [ "::/0" ]
+      }
+    }
+  }
+</sourcecode>
+            <t indent="0" pn="section-3.1.2.1-3">Consider the following JSON merge patch update message, which
+	    (1) adds an ipv4 prefix "203.0.113.0/25" and an ipv6 prefix
+	    "2001:db8:8000::/33" to "PID1", (2) deletes "PID2", and (3)
+	    assigns a new "tag" to the network map:</t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.1-4">
+  {
+    "meta" : {
+      "vtag" : {
+        "tag" : "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+      }
+    },
+    "network-map": {
+      "PID1" : {
+        "ipv4" : [ "192.0.2.0/24", "198.51.100.0/25",
+                   "203.0.113.0/25" ],
+        "ipv6" : [ "2001:db8:8000::/33" ]
+      },
+      "PID2" : null
+    }
+  }
+</sourcecode>
+            <t indent="0" pn="section-3.1.2.1-5">Applying the JSON merge patch update to the initial network map
+	    is equivalent to the following ALTO network map:</t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.1-6">
+  {
+    "meta" : {
+      "vtag": {
+        "resource-id" : "my-network-map",
+        "tag" : "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+      }
+    },
+    "network-map" : {
+      "PID1" : {
+        "ipv4" : [ "192.0.2.0/24", "198.51.100.0/25",
+                   "203.0.113.0/25" ],
+        "ipv6" : [ "2001:db8:8000::/33" ]
+      },
+      "PID3" : {
+        "ipv4" : [ "0.0.0.0/0" ],
+        "ipv6" : [ "::/0" ]
+      }
+    }
+  }
+</sourcecode>
+          </section>
+          <section anchor="MergePatchCostMapExample" numbered="true" removeInRFC="false" toc="exclude" pn="section-3.1.2.2">
+            <name slugifiedName="name-json-merge-patch-cost-map-m">JSON Merge Patch Cost Map Messages</name>
+            <t indent="0" pn="section-3.1.2.2-1"><xref target="RFC7285" sectionFormat="of" section="11.2.3.6" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-11.2.3.6" derivedContent="RFC7285"/>
+	    defines the format of an ALTO cost map message. Assume a simple
+	    example ALTO message for an initial cost map:</t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.2-2">
+  {
+    "meta" : {
+      "dependent-vtags" : [
+        {"resource-id": "my-network-map",
+         "tag": "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+        }
+      ],
+      "cost-type" : {
+        "cost-mode"  : "numerical",
+        "cost-metric": "routingcost"
+      },
+      "vtag": {
+        "resource-id" : "my-cost-map",
+        "tag" : "3ee2cb7e8d63d9fab71b9b34cbf764436315542e"
+      }
+    },
+    "cost-map" : {
+      "PID1": { "PID1": 1,  "PID2": 5,  "PID3": 10 },
+      "PID2": { "PID1": 5,  "PID2": 1,  "PID3": 15 },
+      "PID3": { "PID1": 20, "PID2": 15  }
+    }
+  }
+</sourcecode>
+            <t indent="0" pn="section-3.1.2.2-3">The following JSON merge patch message updates the example cost
+	    map so that (1) the "tag" field of the cost map is updated, (2)
+	    the cost of PID1-&gt;PID2 is 9 instead of 5, (3) the cost of
+	    PID3-&gt;PID1 is no longer available, and (4) the cost of
+	    PID3-&gt;PID3 is defined as 1. 
+            </t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.2-4">
+  {
+    "meta" : {
+      "vtag": {
+        "tag": "c0ce023b8678a7b9ec00324673b98e54656d1f6d"
+      }
+    }
+    "cost-map" : {
+      "PID1" : { "PID2" : 9 },
+      "PID3" : { "PID1" : null, "PID3" : 1 }
+    }
+  }
+</sourcecode>
+            <t indent="0" pn="section-3.1.2.2-5">Hence, applying the JSON merge patch to the initial cost map is
+	    equivalent to the following ALTO cost map:</t>
+            <sourcecode type="json" markers="false" pn="section-3.1.2.2-6">
+  {
+    "meta" : {
+      "dependent-vtags" : [
+        {"resource-id": "my-network-map",
+         "tag": "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+        }
+      ],
+      "cost-type" : {
+        "cost-mode"  : "numerical",
+        "cost-metric": "routingcost"
+      },
+      "vtag": {
+        "resource-id": "my-cost-map",
+        "tag": "c0ce023b8678a7b9ec00324673b98e54656d1f6d"
+      }
+    },
+    "cost-map" : {
+      "PID1": { "PID1": 1,  "PID2": 9,  "PID3": 10 },
+      "PID2": { "PID1": 5,  "PID2": 1,  "PID3": 15 },
+      "PID3": {             "PID2": 15, "PID3": 1  }
+    }
+  }
+</sourcecode>
+          </section>
+        </section>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-3.2">
+        <name slugifiedName="name-incremental-encoding-json-p">Incremental Encoding: JSON Patch</name>
+        <section anchor="JSONPatchOverview" numbered="true" removeInRFC="false" toc="include" pn="section-3.2.1">
+          <name slugifiedName="name-json-patch-encoding">JSON Patch Encoding</name>
+          <t indent="0" pn="section-3.2.1-1">One issue of JSON merge patch is that it does not handle array
+	  changes well. In particular, JSON merge patch considers an array as
+	  a single object and hence can only replace an array in its
+	  entirety. When the change is to make a small change to an array, such
+	  as the deletion of an element from a large array, whole-array
+	  replacement is inefficient. Consider the example in <xref target="MergePatchNetMapExample" format="default" sectionFormat="of" derivedContent="Section 3.1.2.1"/>. To add a new entry to the ipv4
+	  array for PID1, the server needs to send a whole new array. Another
+	  issue is that JSON merge patch cannot change a value to be null, as
+	  the JSON merge patch processing algorithm (MergePatch in <xref target="MergePatchOverview" format="default" sectionFormat="of" derivedContent="Section 3.1.1"/>) interprets a null as a removal
+	  instruction. On the other hand, some ALTO resources can have null
+	  values, and it is possible that the update will want to change the
+	  new value to be null.</t>
+          <t indent="0" pn="section-3.2.1-2">JSON patch <xref target="RFC6902" format="default" sectionFormat="of" derivedContent="RFC6902"/> can address the preceding
+	  issues. It defines a set of operators to modify a JSON object. See
+	  <xref target="RFC6902" format="default" sectionFormat="of" derivedContent="RFC6902"/> for the normative definition.</t>
+        </section>
+        <section numbered="true" removeInRFC="false" toc="include" pn="section-3.2.2">
+          <name slugifiedName="name-json-patch-alto-messages">JSON Patch ALTO Messages</name>
+          <t indent="0" pn="section-3.2.2-1">To provide both examples of JSON patch and a demonstration of the
+	  difference between JSON patch and JSON merge patch, the sections
+	  below show the application of JSON patch to the same updates shown
+	  in <xref target="MergePatchALTO" format="default" sectionFormat="of" derivedContent="Section 3.1.2"/>.</t>
+          <section numbered="true" removeInRFC="false" toc="exclude" pn="section-3.2.2.1">
+            <name slugifiedName="name-json-patch-network-map-mess">JSON Patch Network Map Messages</name>
+            <t indent="0" pn="section-3.2.2.1-1">First, consider the same update as in <xref target="MergePatchNetMapExample" format="default" sectionFormat="of" derivedContent="Section 3.1.2.1"/> for the network map. Below is
+	    the encoding using JSON patch:</t>
+            <sourcecode type="json" markers="false" pn="section-3.2.2.1-2">
+  [
+    {
+      "op": "replace",
+      "path": "/meta/vtag/tag",
+      "value": "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+    },
+    {
+      "op": "add",
+      "path": "/network-map/PID1/ipv4/2",
+      "value": "203.0.113.0/25"
+    }
+    {
+      "op": "add",
+      "path": "/network-map/PID1/ipv6",
+      "value": ["2001:db8:8000::/33"]
+    },
+    {
+      "op": "remove",
+      "path": "/network-map/PID2"
+    }
+  ]
+</sourcecode>
+          </section>
+          <section numbered="true" removeInRFC="false" toc="exclude" pn="section-3.2.2.2">
+            <name slugifiedName="name-json-patch-cost-map-message">JSON Patch Cost Map Messages</name>
+            <t indent="0" pn="section-3.2.2.2-1">Compared with JSON merge patch, JSON patch does not encode cost
+	    map updates efficiently. Consider the cost map update shown in
+	    <xref target="MergePatchCostMapExample" format="default" sectionFormat="of" derivedContent="Section 3.1.2.2"/>, the encoding using JSON
+	    patch is:</t>
+            <sourcecode type="json" markers="false" pn="section-3.2.2.2-2">
+  [
+    {
+      "op": "replace",
+      "path": "/meta/vtag/tag",
+      "value": "c0ce023b8678a7b9ec00324673b98e54656d1f6d"
+    },
+    {
+      "op": "replace",
+      "path": "/cost-map/PID1/PID2",
+      "value": 9
+    },
+    {
+      "op": "remove",
+      "path": "/cost-map/PID3/PID1"
+    },
+    {
+      "op": "replace",
+      "path": "/cost-map/PID3/PID3",
+      "value": 1
+    }
+  ]
+</sourcecode>
+          </section>
+        </section>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-3.3">
+        <name slugifiedName="name-multiplexing-and-server-pus">Multiplexing and Server Push: HTTP/2</name>
+        <t indent="0" pn="section-3.3-1">HTTP/2 <xref target="RFC7540" format="default" sectionFormat="of" derivedContent="RFC7540"/> provides two related features:
+	multiplexing and server push.  In particular, HTTP/2 allows a client
+	and a server to multiplex multiple HTTP requests and responses over a
+	single TCP connection. The requests and responses can be interleaved
+	on a block (frame) by block (frame) basis, by indicating the requests
+	and responses in HTTP/2 messages, avoiding the head-of-line blocking
+	problem encountered with HTTP/1.1. To achieve the same goal, this
+	design introduces substream-id to allow a client to receive updates to
+	multiple resources. HTTP/2 also provides a server-push facility to
+	allow a server to send asynchronous updates.</t>
+        <t indent="0" pn="section-3.3-2">Despite the two features of HTTP/2, this design chooses a design
+	compatible with HTTP/1.x for the simplicity of HTTP/1.x. A design
+	based on HTTP/2 may more likely need to be implemented using a more
+	complex HTTP/2 client library. In such a case, one approach for using
+	server push for updates is for the update stream server to send each
+	data update message as a separate server-push item and let the client
+	apply those updates as they arrive. An HTTP/2 client library may not
+	necessarily inform a client application when the server pushes a
+	resource. Instead, the library might cache the pushed resource and
+	only deliver it to the client when the client explicitly requests that
+	URI. Further, it is more likely that a design based on HTTP/2 may
+	encounter issues with a proxy between the client and the server, in
+	that server push is optional and can be disabled by any proxy between
+	the client and the server. This is not a problem for the intended use
+	of server push; eventually, the client will request those resources, so
+	disabling server push just adds a delay. But this means that Server
+	Push is not suitable for resources that the client does not know to
+	request.</t>
+        <t indent="0" pn="section-3.3-3">Thus, this design leaves a design based on HTTP/2 as a future work
+	and focuses on ALTO updates on HTTP/1.x and <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>.</t>
+      </section>
+      <section anchor="SSEOverview" numbered="true" removeInRFC="false" toc="include" pn="section-3.4">
+        <name slugifiedName="name-server-push-server-sent-eve">Server Push: Server-Sent Event</name>
+        <t indent="0" pn="section-3.4-1">Server-Sent Events (SSE) are techniques that can work with
+	HTTP/1.1. The following is a non-normative summary of SSE; see <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> for its normative definition.</t>
+        <t indent="0" pn="section-3.4-2">SSE enable a server to send new data to a client by "server push".
+        The client establishes an HTTP <xref target="RFC7230" format="default" sectionFormat="of" derivedContent="RFC7230"/> <xref target="RFC7231" format="default" sectionFormat="of" derivedContent="RFC7231"/> connection to the server and keeps the connection
+	open. The server continually sends messages. Each message has one or
+	more lines, where a line is terminated by a carriage return
+	immediately followed by a new line, 
+        a carriage return not immediately followed by a new line,
+        or a new line not immediately preceded by a carriage return.
+        A message is terminated by a blank line (two line terminators in a row).
+        </t>
+        <t indent="0" pn="section-3.4-3">Each line in a message is of the form "field-name: string
+	value". Lines with a blank field name (that is, lines that start with
+	a colon) are ignored, as are lines that do not have a colon. The
+	protocol defines three field names: event, id, and data. If a message
+	has more than one "data" line, the value of the data field is the
+	concatenation of the values on those lines. There can be only one
+	"event" and "id" line per message. The "data" field is required; the
+	others are optional.</t>
+        <t indent="0" pn="section-3.4-4"><xref target="sse-example" format="default" sectionFormat="of" derivedContent="Figure 1"/> is a sample SSE stream, starting with
+	the client request. The server sends three events and then closes the
+	stream.</t>
+        <figure anchor="sse-example" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-a-sample-sse-stream">A Sample SSE Stream</name>
+          <sourcecode markers="false" pn="section-3.4-5.1">
+  (Client request)
+  GET /stream HTTP/1.1
+  Host: example.com
+  Accept: text/event-stream
+
+  (Server response)
+  HTTP/1.1 200 OK
+  Connection: keep-alive
+  Content-Type: text/event-stream
+
+  event: start
+  id: 1
+  data: hello there
+
+  event: middle
+  id: 2
+  data: let's chat some more ...
+  data: and more and more and ...
+
+  event: end
+  id: 3
+  data: goodbye
+</sourcecode>
+        </figure>
+      </section>
+    </section>
+    <section anchor="Overview" numbered="true" removeInRFC="false" toc="include" pn="section-4">
+      <name slugifiedName="name-overview-of-approach-and-hi">Overview of Approach and High-Level Protocol Message Flow</name>
+      <t indent="0" pn="section-4-1">With the preceding background, this section now gives a non-normative
+      overview of the update mechanisms and message flow to be defined in
+      later sections of this document. <xref target="FigOverview" format="default" sectionFormat="of" derivedContent="Figure 2"/> gives the main components and
+      overall message flow.</t>
+      <figure anchor="FigOverview" align="left" suppress-title="false" pn="figure-2">
+        <name slugifiedName="name-alto-sse-architecture-and-m">ALTO SSE Architecture and Message Flow</name>
+        <artwork align="left" pn="section-4-2.1">
+ -------------------------------------------------------------------
+|                                                                   |
+|          +-------+         +-------+ 1. init request   +------+   |
+|          |       |         |       | &lt;--------------   |      |   |
+|          |       |         |       | --------------&gt;   |      |   |
+| 3.add/   |       |         |       | 1'. control URI   |      |   |
+| remove   |       |         |       |                   |      |   |
+| resource |Stream |         |Update |                   |      |   |
+  --------&gt;|Control| private |Stream | 2a. data update   |Client| --
+           |Server |&lt;-------&gt;|Server | messages          |      |
+  -------- |       |         |       | ---------------&gt;  |      | &lt;-
+| response |       |         |       | ---------------&gt;  |      |   |
+|          |       |         |       | 2b. control update|      |   |
+|          +-------+         +-------+ messages          +------+   |
+|                                                                   |
+ -------------------------------------------------------------------
+</artwork>
+      </figure>
+      <section anchor="USSMF" numbered="true" removeInRFC="false" toc="include" pn="section-4.1">
+        <name slugifiedName="name-update-stream-service-messa">Update Stream Service Message Flow</name>
+        <t indent="0" pn="section-4.1-1">
+        The building block of the update mechanism defined in this document is the
+        update stream service (defined in <xref target="UpdateStreamService" format="default" sectionFormat="of" derivedContent="Section 6"/>), where each update stream service is a
+	POST-mode service that provides update streams. 
+        </t>
+        <t indent="0" pn="section-4.1-2">
+        Note that the lines of the format "** ... **" are used to describe
+        message flows in this section and the following sections.
+        </t>
+        <dl newline="true" spacing="normal" indent="3" pn="section-4.1-3">
+          <dt pn="section-4.1-3.1">** Initial request: client -&gt; update server **:</dt>
+          <dd pn="section-4.1-3.2">
+            <t indent="0" pn="section-4.1-3.2.1">
+        When an ALTO client requests an update stream service,
+        the ALTO client establishes a persistent connection to the update
+	stream server and submits an initial update-stream request (defined in
+	<xref target="UpdateInput.media-type" format="default" sectionFormat="of" derivedContent="Section 6.5"/>), creating an update
+	stream. This initial request creating the update stream is labeled
+	"1. init request" in <xref target="FigOverview" format="default" sectionFormat="of" derivedContent="Figure 2"/>.</t>
+            <t indent="0" pn="section-4.1-3.2.2">
+        An update stream can provide updates to both GET-mode resources, such
+	as ALTO network and cost maps, and POST-mode resources, such as ALTO
+	endpoint property service. Also, to avoid creating too many update
+	streams, this design allows an ALTO client to use one update stream to
+	receive updates to multiple requests. In particular, the client may
+	request to receive updates for the same resource but with different
+	parameters for a POST-mode resource, in addition to being able to
+	consolidate updates for multiple resources into a single stream. 
+        The updates for each request is called a substream and hence the
+	update server needs an identifier to indicate the substream when
+	sending an update. To achieve this goal, the client 
+        assigns a unique substream-id when requesting updates to a resource in an update stream,
+        and the server puts the substream-id in each update.</t>
+          </dd>
+          <dt pn="section-4.1-3.3">** Data updates: update server -&gt; client **:</dt>
+          <dd pn="section-4.1-3.4">
+   The objective of an update stream is to continuously push (to an 
+   ALTO client) the data value changes for a set of resources, where the 
+   set of resources is specified by the ALTO client's requests. 
+
+	This document
+	refers to messages sending such data-value changes as data update
+	messages (defined in <xref target="ALTO.SSE.UpdateEvents" format="default" sectionFormat="of" derivedContent="Section 5.2"/>). Although
+	an update stream may update one or more requests, each data update
+	message updates only one request and is sent as a Server-Sent Event
+	(SSE), as defined by <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>. A data update message is
+	encoded either as a full replacement or as an incremental change. A
+	full replacement uses the JSON message format defined by the ALTO
+	protocol. There can be multiple encodings for incremental changes. The
+	current design supports incremental changes using JSON merge patch
+	<xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/> or JSON patch <xref target="RFC6902" format="default" sectionFormat="of" derivedContent="RFC6902"/> to
+	describe the changes of the resource. Future documents may define
+	additional mechanisms for incremental changes. The update stream
+	server decides when to send data update messages and whether to send
+	full replacements or incremental changes. These decisions can vary
+	from resource to resource and from update to update. Since the
+	transport is a design compatible with HTTP/1.x, data update messages
+	are delivered reliably and in order, and the lossless, sequential
+	delivery of its messages allows the server to know the exact state of
+	the client to compute the correct incremental updates. <xref target="FigOverview" format="default" sectionFormat="of" derivedContent="Figure 2"/> shows examples of data update messages (labeled
+	"2a. data update messages") in the overall message flow.</dd>
+          <dt pn="section-4.1-3.5">** Control updates: update server -&gt; client **:</dt>
+          <dd pn="section-4.1-3.6">
+       An update stream can run for a long time and hence there can be status
+       changes at the update stream server side during the lifetime of an
+       update stream; for example, the update stream server may encounter an
+       error or need to shut down for maintenance. To support a robust, flexible
+       protocol design, this document allows the update stream server to send
+       control update messages (defined in <xref target="ALTO.SSE.ControlEvents" format="default" sectionFormat="of" derivedContent="Section 5.3"/>) in addition to data update messages
+       to the ALTO client. <xref target="FigOverview" format="default" sectionFormat="of" derivedContent="Figure 2"/> shows that both data
+       updates and control updates can be sent by the server to the client
+       (labeled "2b. control update messages"). 
+        </dd>
+        </dl>
+      </section>
+      <section anchor="SCSMF" numbered="true" removeInRFC="false" toc="include" pn="section-4.2">
+        <name slugifiedName="name-stream-control-service-mess">Stream Control Service Message Flow</name>
+        <dl newline="true" spacing="normal" indent="3" pn="section-4.2-1">
+          <dt pn="section-4.2-1.1">** Stream control: client -&gt; stream control server **:</dt>
+          <dd pn="section-4.2-1.2">
+            <t indent="0" pn="section-4.2-1.2.1">In addition to control changes triggered from the update stream
+	  server side, in a flexible design, an ALTO client may initiate
+	  control changes as well, in particular, by adding or removing ALTO
+	  resources receiving updates. An ALTO client initiates such changes
+	  using the stream control service (defined in <xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>). Although one may use a design
+	  that the client uses as the same HTTP connection to send the control
+	  requests, it requires stronger server support, such as HTTP
+	  pipeline. For more flexibility, this document introduces stream
+	  control service. In particular, the update stream server of an
+	  update stream uses the first message to provide the URI of the
+	  stream control service (labeled "1': control URI" in <xref target="FigOverview" format="default" sectionFormat="of" derivedContent="Figure 2"/>).</t>
+            <t indent="0" pn="section-4.2-1.2.2">The ALTO client can then use the URI to ask the stream control
+	  server specified in the URI to request the update stream server to
+	  (1) send data update messages for additional resources, (2) stop
+	  sending data update messages for previously requested resources, or
+	  (3) gracefully stop and close the update stream altogether.</t>
+          </dd>
+        </dl>
+      </section>
+      <section anchor="SAMMF" numbered="true" removeInRFC="false" toc="include" pn="section-4.3">
+        <name slugifiedName="name-service-announcement-and-ma">Service Announcement and Management Message Flow</name>
+        <dl newline="true" spacing="normal" indent="3" pn="section-4.3-1">
+          <dt pn="section-4.3-1.1">** Service announcements: IRD server -&gt; client **:</dt>
+          <dd pn="section-4.3-1.2">An update server may provide any number of update stream services,
+	where each update stream may provide updates for a given subset of the
+	ALTO server's resources. An ALTO server's Information Resource
+	Directory (IRD) defines the update stream services and declares the
+	set of resources for which each update stream service provides
+	updates. The ALTO server selects the resource set for each update
+	stream service. It is recommended that if a resource depends on one or
+	more other resource(s) (indicated with the "uses" attribute defined in
+	<xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>), these other resource(s) should also be part
+	of that update stream. Thus, the update stream for a cost map should also 
+        provide updates for the network map on which that cost map depends.</dd>
+          <dt pn="section-4.3-1.3">** Service management (server) **:</dt>
+          <dd pn="section-4.3-1.4">An ALTO client may request any number of update streams
+	simultaneously. Because each update stream consumes resources on the
+	update stream server, an update stream server may require client
+	authorization and/or authentication, limit the number of open update
+	streams, close inactive streams, or redirect an ALTO client to another
+	update stream server.</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="ALTO.SSE.Events" numbered="true" removeInRFC="false" toc="include" pn="section-5">
+      <name slugifiedName="name-update-messages-data-update">Update Messages: Data Update and Control Update Messages</name>
+      <t indent="0" pn="section-5-1">This section defines the format of update messages sent from the
+      server to the client. It first defines the generic structure of update
+      messages (<xref target="ALTO.SSE.EventFormat" format="default" sectionFormat="of" derivedContent="Section 5.1"/>). It then defines the
+      details of the data update messages (<xref target="ALTO.SSE.UpdateEvents" format="default" sectionFormat="of" derivedContent="Section 5.2"/>) and the control update messages (<xref target="ALTO.SSE.ControlEvents" format="default" sectionFormat="of" derivedContent="Section 5.3"/>). These messages will be used in the
+      next two sections to define the update stream service (<xref target="UpdateStreamService" format="default" sectionFormat="of" derivedContent="Section 6"/>) and the stream control service (<xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>).</t>
+      <section anchor="ALTO.SSE.EventFormat" numbered="true" removeInRFC="false" toc="include" pn="section-5.1">
+        <name slugifiedName="name-generic-alto-update-message">Generic ALTO Update Message Structure</name>
+        <t indent="0" pn="section-5.1-1">Both data update and control update messages from the server to the
+	client have the same basic structure. Each message includes a data
+	field to provide data information, which is typically a JSON object,
+	and an event field preceding the data field, to specify the media type
+	indicating the encoding of the data field.</t>
+        <t indent="0" pn="section-5.1-2">A data update message needs additional information to identify the
+	ALTO data (object) to which the update message applies. To be generic,
+	this document uses a data-id to identify the ALTO data (object) to be
+	updated; see below.</t>
+        <t indent="0" pn="section-5.1-3">Hence, the event field of ALTO update message can include two
+	subfields (media-type and data-id), where the two subfields are
+	separated by a comma (',', U+002C):</t>
+        <sourcecode markers="false" pn="section-5.1-4">
+      media-type [ ',' data-id ]
+</sourcecode>
+        <t indent="0" pn="section-5.1-5">According to <xref target="RFC6838" sectionFormat="of" section="4.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6838#section-4.2" derivedContent="RFC6838"/>, the comma character is not allowed in a media-type
+	name so there is no ambiguity when decoding of the two subfields.
+
+        </t>
+        <t indent="0" pn="section-5.1-6">Note that an update message does not use the SSE "id" field.</t>
+      </section>
+      <section anchor="ALTO.SSE.UpdateEvents" numbered="true" removeInRFC="false" toc="include" pn="section-5.2">
+        <name slugifiedName="name-alto-data-update-message">ALTO Data Update Message</name>
+        <t indent="0" pn="section-5.2-1">A data update message is sent when a monitored resource changes. As
+	discussed in the preceding section, the event field of a data update
+	message includes two subfields: 'media-type' and 'data-id'.</t>
+        <t indent="0" pn="section-5.2-2">The 'media-type' subfield depends on whether the data update is a
+	complete specification of the identified data or an incremental patch
+	(e.g., a JSON merge patch or JSON patch), if possible, describing the
+	changes from the last version of the data. This document refers to
+	these as full replacement and incremental change, respectively. The
+	encoding of a full replacement is defined by its defining document
+	(e.g., network and cost map messages by <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>) and
+	uses the media type defined in that document. The encoding of JSON
+	merge patch is defined by <xref target="RFC7396" format="default" sectionFormat="of" derivedContent="RFC7396"/>, with the media
+	type "application/merge-patch+json"; the encoding of JSON patch is
+	defined by <xref target="RFC6902" format="default" sectionFormat="of" derivedContent="RFC6902"/>, with media type
+	"application/json-patch+json".</t>
+        <t indent="0" pn="section-5.2-3">The 'data-id' subfield identifies the ALTO data to which the data
+	update message applies.</t>
+        <t indent="0" pn="section-5.2-4">First, consider the case that the resource contains only a single
+	JSON object. For example, since an ALTO client can request data
+	updates for both a cost map resource (object) and its dependent
+	network map resource (object) in the same update stream, to
+	distinguish the updates, the client assigns a substream-id for each
+	resource receiving data updates. Substream-ids <bcp14>MUST</bcp14> be
+	unique within an update stream but need not be globally unique. A
+	substream-id is encoded as a JSON string with the same format as that
+	of the type ResourceID (<xref target="RFC7285" sectionFormat="of" section="10.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-10.2" derivedContent="RFC7285"/>). The type SubstreamID is used in this document to
+	indicate a string of this format. The substream-id of a single JSON
+	object is the 'data-id'.</t>
+        <t indent="0" pn="section-5.2-5">As an example, assume that the ALTO client assigns substream-id "1"
+	in its request to receive updates to the network map and substream-id
+	"2" to the cost map. Then, the substream-ids are the data-ids
+	indicating which objects will be updated. <xref target="alto-sse-example" format="default" sectionFormat="of" derivedContent="Figure 3"/> shows some examples of ALTO data update
+	messages: 
+
+        </t>
+        <figure anchor="alto-sse-example" align="left" suppress-title="false" pn="figure-3">
+          <name slugifiedName="name-examples-of-alto-data-updat">Examples of ALTO Data Update Messages</name>
+          <sourcecode markers="false" pn="section-5.2-6.1">
+  event: application/alto-networkmap+json,1
+  data: { ... full network map message ... }
+
+  event: application/alto-costmap+json,2
+  data: { ... full cost map message ... }
+
+  event: application/merge-patch+json,2
+  data: { ... JSON merge patch update for the cost map ... }
+</sourcecode>
+        </figure>
+        <t indent="0" pn="section-5.2-7">Next, consider the case that a resource may include multiple JSON
+	objects. This document considers the case that a resource may contain
+	multiple components (parts), and they are encoded using the media type
+	"multipart/related" <xref target="RFC2387" format="default" sectionFormat="of" derivedContent="RFC2387"/>. Each part of this
+	multipart response <bcp14>MUST</bcp14> be an HTTP message including a
+	Content-ID header and a JSON object body. Each component requiring the
+	update stream service (defined in <xref target="UpdateStreamService" format="default" sectionFormat="of" derivedContent="Section 6"/>) 
+        <bcp14>MUST</bcp14> be identified by a unique Content-ID to be defined
+	in its defining document. </t>
+        <t indent="0" pn="section-5.2-8">For a resource using the media type "multipart/related", the
+	'data-id' subfield <bcp14>MUST</bcp14> be the concatenation of the
+	substream-id, the '.' separator (U+002E), and the unique Content-ID, in
+	order.</t>
+      </section>
+      <section anchor="ALTO.SSE.ControlEvents" numbered="true" removeInRFC="false" toc="include" pn="section-5.3">
+        <name slugifiedName="name-alto-control-update-message">ALTO Control Update Message</name>
+        <t indent="0" pn="section-5.3-1">
+          Control update messages have the media type
+          "application/alto-updatestreamcontrol+json",
+          and the data is of type UpdateStreamControlEvent:
+        </t>
+        <sourcecode markers="false" pn="section-5.3-2">
+  object {
+     [String          control-uri;]
+     [SubstreamID     started&lt;1..*&gt;;]
+     [SubstreamID     stopped&lt;1..*&gt;;]
+     [String          description;]
+  } UpdateStreamControlEvent;
+</sourcecode>
+        <dl newline="true" spacing="normal" indent="3" pn="section-5.3-3">
+          <dt pn="section-5.3-3.1">control-uri:</dt>
+          <dd pn="section-5.3-3.2">the URI providing stream control for this update stream
+        (see <xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>).
+        The server sends a control update message notifying the client of the
+	control-uri. This control  
+        update message notifying the control-uri will be sent once and
+	<bcp14>MUST</bcp14> be the first event in an update stream. 
+        If the URI value is NULL, the update stream server does not support
+	stream control for this update stream; otherwise, the update stream
+	server provides stream control through the given URI.</dd>
+          <dt pn="section-5.3-3.3">started:</dt>
+          <dd pn="section-5.3-3.4">a list of substream-ids of resources. It notifies the ALTO client that
+	the update stream server will start sending data update messages for
+	each resource listed.</dd>
+          <dt pn="section-5.3-3.5">stopped:</dt>
+          <dd pn="section-5.3-3.6">
+        a list of substream-ids of resources. It notifies the ALTO client that
+	the update stream server will no longer send data update messages for
+	the listed resources. There can be multiple reasons for an update
+	stream server to stop sending data update messages for a resource,
+	including a request from the ALTO client using stream control (<xref target="UpdateStreamService.Response.Sequence" format="default" sectionFormat="of" derivedContent="Section 6.7.1"/>) or an internal
+	server event.</dd>
+          <dt pn="section-5.3-3.7">description:</dt>
+          <dd pn="section-5.3-3.8">
+        a non-normative, human-readable text providing an explanation for the
+        control event. When an update stream server stops sending data update
+        messages for a resource, it is <bcp14>RECOMMENDED</bcp14> that the update stream
+        server use the description field to provide details. There can be
+        multiple reasons that trigger a "stopped" event; see above. The
+        intention of this field is to provide a human-readable text for the
+        developer and/or the administrator to diagnose potential problems.</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="UpdateStreamService" numbered="true" removeInRFC="false" toc="include" pn="section-6">
+      <name slugifiedName="name-update-stream-service">Update Stream Service</name>
+      <t indent="0" pn="section-6-1">An update stream service returns a stream of update messages, as
+      defined in <xref target="ALTO.SSE.Events" format="default" sectionFormat="of" derivedContent="Section 5"/>. An ALTO server's IRD
+      (Information Resource Directory) <bcp14>MAY</bcp14> define one or more
+      update stream services, which ALTO clients use to request new update
+      stream instances. An IRD entry defining an update stream service
+      <bcp14>MUST</bcp14> define the media type, HTTP method, and capabilities
+      and uses as follows.</t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-6.1">
+        <name slugifiedName="name-media-type">Media Type</name>
+        <t indent="0" pn="section-6.1-1">
+        The media type of an ALTO update stream service is
+	"text/event-stream", as defined by <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>. 
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-6.2">
+        <name slugifiedName="name-http-method">HTTP Method</name>
+        <t indent="0" pn="section-6.2-1">An ALTO update stream service is requested using the HTTP POST
+	method.</t>
+      </section>
+      <section anchor="UpdateStreamService.Capabilities" numbered="true" removeInRFC="false" toc="include" pn="section-6.3">
+        <name slugifiedName="name-capabilities">Capabilities</name>
+        <t indent="0" pn="section-6.3-1">The capabilities are defined as an object of type
+	UpdateStreamCapabilities:</t>
+        <sourcecode markers="false" pn="section-6.3-2">
+  object {
+    IncrementalUpdateMediaTypes incremental-change-media-types;
+    Boolean                     support-stream-control;
+  } UpdateStreamCapabilities;
+
+  object-map {
+     ResourceID -&gt; String;
+  } IncrementalUpdateMediaTypes;
+</sourcecode>
+        <t indent="0" pn="section-6.3-3">If this update stream can provide data update messages with
+	incremental changes for a resource, the
+	"incremental-change-media-types" field has an entry for that
+	resource-id, and the value is the supported media types of the
+	incremental change separated by commas. Normally, this will be
+	"application/merge-patch+json", "application/json-patch+json", or
+	"application/merge-patch+json,application/json-patch+json", because,
+	as described in <xref target="ALTO.SSE.Events" format="default" sectionFormat="of" derivedContent="Section 5"/>, they are the only
+	incremental change types defined by this document. However, future
+	extensions may define other types of incremental changes.</t>
+        <t indent="0" pn="section-6.3-4">When choosing the media types to encode incremental changes for a
+	resource, the update stream server <bcp14>MUST</bcp14> consider the
+	limitations of the encoding. For example, when a JSON merge patch
+	specifies that the value of a field is null, its semantics are that
+	the field is removed from the target and hence the field is no longer
+	defined (i.e., undefined); see the MergePatch algorithm in <xref target="MergePatchOverview" format="default" sectionFormat="of" derivedContent="Section 3.1.1"/> on how null value is processed. This,
+	however, may not be the intended result for the resource, when null
+	and undefined have different semantics for the resource. In such a
+	case, the update stream server <bcp14>MUST</bcp14> choose JSON patch 
+	over JSON merge patch if JSON patch is indicated as a capability of
+	the update stream server. If the server does not support JSON patch to
+	handle such a case, the server then need to send a full
+	replacement.</t>
+        <t indent="0" pn="section-6.3-5">The "support-stream-control" field specifies whether the given update
+	stream supports stream control. If the "support-stream-control" field is
+	"true", the update stream server will use the stream control specified
+	in this document; otherwise, the update stream server may use other
+	mechanisms to provide the same functionality as stream control.</t>
+      </section>
+      <section anchor="UpdateStreamService.Uses" numbered="true" removeInRFC="false" toc="include" pn="section-6.4">
+        <name slugifiedName="name-uses">Uses</name>
+        <t indent="0" pn="section-6.4-1">
+        The "uses" attribute <bcp14>MUST</bcp14> be an array with the
+	resource-ids of every resource for which this update stream can
+	provide updates. Each resource specified in the "uses"
+	<bcp14>MUST</bcp14> support full replacement; the update stream server
+	can always send full replacement, and the ALTO client
+	<bcp14>MUST</bcp14> accept full replacement. 
+        </t>
+        <t indent="0" pn="section-6.4-2">
+        This set may be any subset of the ALTO server's resources
+        and may include resources defined in linked IRDs.
+        However, it is <bcp14>RECOMMENDED</bcp14> that the ALTO server selects a set
+        that is closed under the resource dependency relationship.
+        That is, if an update stream's "uses" set includes resource R1
+        and resource R1 depends on ("uses") resource R0, then
+        the update stream's "uses" set <bcp14>SHOULD</bcp14> include R0 as well as R1.
+        For example, an update stream for a cost map <bcp14>SHOULD</bcp14> also provide
+        updates for the network map upon which that cost map depends.
+        </t>
+      </section>
+      <section anchor="UpdateInput.media-type" numbered="true" removeInRFC="false" toc="include" pn="section-6.5">
+        <name slugifiedName="name-request-accept-input-parame">Request: Accept Input Parameters</name>
+        <t indent="0" pn="section-6.5-1">An ALTO client specifies the parameters for the new update stream
+	by sending an HTTP POST body with the media type
+	"application/alto-updatestreamparams+json". That body contains a JSON
+	object of type UpdateStreamReq, where:</t>
+        <sourcecode markers="false" pn="section-6.5-2">
+  object {
+     [AddUpdatesReq   add;]
+     [SubstreamID     remove&lt;0..*&gt;;]
+  } UpdateStreamReq;
+
+  object-map {
+     SubstreamID -&gt; AddUpdateReq;
+  } AddUpdatesReq;
+
+  object {
+     ResourceID   resource-id;
+     [JSONString  tag;]
+     [Boolean     incremental-changes;]
+     [Object      input;]
+  } AddUpdateReq;
+</sourcecode>
+        <dl newline="true" spacing="normal" indent="3" pn="section-6.5-3">
+          <dt pn="section-6.5-3.1">add:</dt>
+          <dd pn="section-6.5-3.2">Specifies the resources (and the parameters for the resources)
+	  for which the ALTO client wants updates. In the scope of the same
+	  update stream, the ALTO client <bcp14>MUST</bcp14> assign a
+	  substream-id that is unique in the scope of the update stream (<xref target="ALTO.SSE.UpdateEvents" format="default" sectionFormat="of" derivedContent="Section 5.2"/>) for each entry and use those
+	  substream-ids as the keys in the "add" field.</dd>
+          <dt pn="section-6.5-3.3">resource-id:</dt>
+          <dd pn="section-6.5-3.4">The resource-id of an ALTO resource and <bcp14>MUST</bcp14> be
+	  in the update stream's "uses" list (<xref target="UpdateStreamService.Uses" format="default" sectionFormat="of" derivedContent="Section 6.4"/>). If the resource-id is a
+	  GET-mode resource with a version tag (or "vtag"), as defined in
+	  Sections <xref target="RFC7285" sectionFormat="bare" section="6.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-6.3" derivedContent="RFC7285"/>
+	  and <xref target="RFC7285" sectionFormat="bare" section="10.3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-10.3" derivedContent="RFC7285"/> of
+	  <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>, and the ALTO client has
+	  previously retrieved a version of that resource from the update
+	  stream server, the ALTO client <bcp14>MAY</bcp14> set the "tag"
+	  field to the tag part of the client's version of that resource. If
+	  that version is not current, the update stream server
+	  <bcp14>MUST</bcp14> send a full replacement before sending any
+	  incremental changes, as described in <xref target="UpdateStreamService.Response.Sequence" format="default" sectionFormat="of" derivedContent="Section 6.7.1"/>. If that version is
+	  still current, the update stream server <bcp14>MAY</bcp14> omit the
+	  initial full replacement.</dd>
+          <dt pn="section-6.5-3.5">incremental-changes:</dt>
+          <dd pn="section-6.5-3.6">The ALTO client specifies whether it is willing to
+      receive incremental changes from the update stream server for this substream.
+      If the "incremental-changes" field is "true", the update stream server <bcp14>MAY</bcp14> send
+      incremental changes for this substream. In this case, the client <bcp14>MUST</bcp14>
+      support all incremental methods from the set announced in the server's
+      capabilities for this resource; 
+      see <xref target="UpdateStreamService.Capabilities" format="default" sectionFormat="of" derivedContent="Section 6.3"/> for the server's
+      announcement of potential incremental methods. If a client does not
+      support 
+      all incremental methods from the set announced in the server's capabilities,
+      the client can set "incremental-changes" to "false", and the update stream server then
+      <bcp14>MUST NOT</bcp14> send incremental changes for that substream. The default value for
+      "incremental-changes" is "true", so to suppress incremental changes, the
+      ALTO client <bcp14>MUST</bcp14> explicitly set "incremental-changes" to "false".
+      An alternative design of incremental-changes control
+      is a more fine-grained control, by allowing a client to select a subset of
+      incremental methods from the set announced in the server's capabilities. 
+      But this alternative design is not adopted in this document, because it adds
+      complexity to the server, which is more likely to be the bottleneck.
+      Note that
+      the ALTO client cannot suppress full replacement. When the ALTO client sets
+      "incremental-changes" to "false", the update
+      stream server
+      <bcp14>MUST</bcp14> send a full replacement instead of an incremental
+      change to the ALTO client. 
+      The
+      update stream server <bcp14>MAY</bcp14> wait until more changes are available and send
+      a single full replacement with those changes. Thus, an ALTO client that
+      declines to accept incremental changes may not get updates as quickly as
+      an ALTO client that does.
+      </dd>
+          <dt pn="section-6.5-3.7">input:</dt>
+          <dd pn="section-6.5-3.8">
+      If the resource is a POST-mode service that requires input, the
+      ALTO client <bcp14>MUST</bcp14> set the "input" field to a JSON object with the
+      parameters that the resource expects.
+      </dd>
+          <dt pn="section-6.5-3.9">remove:</dt>
+          <dd pn="section-6.5-3.10">
+      It is used in update stream control requests
+      (<xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>) and is not allowed
+      in the update stream request. The update stream server <bcp14>SHOULD</bcp14>
+      ignore this field if it is included in the request.
+      </dd>
+        </dl>
+        <t indent="0" pn="section-6.5-4">
+      If a request has any errors, the update stream server <bcp14>MUST NOT</bcp14> create an update stream. 
+      Also, the update stream server will send an error response to the ALTO client, as
+      specified in <xref target="UpdateStreamService.Response" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.
+        </t>
+      </section>
+      <section anchor="UpdateStreamService.Response" numbered="true" removeInRFC="false" toc="include" pn="section-6.6">
+        <name slugifiedName="name-response">Response</name>
+        <t indent="0" pn="section-6.6-1">
+If the update stream request has any errors, the update stream server
+<bcp14>MUST</bcp14> return an HTTP "400 Bad Request" to the ALTO client; the
+body of the response follows the generic ALTO error response format specified
+in <xref target="RFC7285" sectionFormat="of" section="8.5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-8.5.2" derivedContent="RFC7285"/>.  Hence, an
+example ALTO error response has the format:
+        </t>
+        <sourcecode markers="false" pn="section-6.6-2">
+       HTTP/1.1 400 Bad Request
+       Content-Length: 131
+       Content-Type: application/alto-error+json
+       Connection: Closed
+
+       {
+           "meta":{
+               "code":  "E_INVALID_FIELD_VALUE",
+               "field": "add/my-network-map/resource-id",
+               "value": "my-networkmap/#"
+           }
+       }
+</sourcecode>
+        <t indent="0" pn="section-6.6-3">Note that "field" and "value" are optional fields. If the "value"
+	field exists, the "field" field <bcp14>MUST</bcp14> exist.</t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.6-4">
+          <li pn="section-6.6-4.1">If an update stream request does not have an "add" field
+	  specifying one or more resources, the error code of the error
+	  message <bcp14>MUST</bcp14> be E_MISSING_FIELD and the "field" field
+	  <bcp14>SHOULD</bcp14> be "add". The update stream server
+	  <bcp14>MUST</bcp14> close the stream without sending any
+	  events.</li>
+          <li pn="section-6.6-4.2">If the "resource-id" field is invalid or is not associated with
+	  the update stream, the error code of the error message
+	  <bcp14>MUST</bcp14> be E_INVALID_FIELD_VALUE. The "field" field
+	  <bcp14>SHOULD</bcp14> be the full path of the "resource-id" field,
+	  and the "value" field <bcp14>SHOULD</bcp14> be the invalid
+	  resource-id. If there are more than one invalid resource-ids, the
+	  update stream server <bcp14>SHOULD</bcp14> pick one and return
+	  it. The update stream server <bcp14>MUST</bcp14> close the stream
+	  (i.e., TCP connection) without sending any events.</li>
+          <li pn="section-6.6-4.3">
+      If the resource is a POST-mode service that requires input, the client
+      <bcp14>MUST</bcp14> set the "input" field to a JSON object with the parameters that that
+      resource expects. If the "input" field is missing or invalid, the update
+      stream server
+      <bcp14>MUST</bcp14> return the same error response that that resource would
+      return for missing or invalid input (see <xref target="RFC7285" format="default" sectionFormat="of" derivedContent="RFC7285"/>).
+      In this case, the
+      update stream server <bcp14>MUST</bcp14> close the update stream without
+      sending any events. If the 
+      input for several POST-mode resources is missing or invalid, the update stream server
+      <bcp14>MUST</bcp14> pick one and return it.
+      </li>
+        </ul>
+        <t indent="0" pn="section-6.6-5">The response to a valid request is a stream of update
+	messages. <xref target="ALTO.SSE.Events" format="default" sectionFormat="of" derivedContent="Section 5"/> defines the update
+	messages, and <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/> defines how they are encoded into a
+	stream.</t>
+        <t indent="0" pn="section-6.6-6">An update stream server <bcp14>SHOULD</bcp14> send updates only
+	when the underlying values change. However, it may be difficult for an
+	update stream server to guarantee that in all circumstances. Therefore,
+	a client <bcp14>MUST NOT</bcp14> assume that an update message
+	represents an actual change.</t>
+      </section>
+      <section anchor="AddReq" numbered="true" removeInRFC="false" toc="include" pn="section-6.7">
+        <name slugifiedName="name-additional-requirements-on-">Additional Requirements on Update Stream Service</name>
+        <section anchor="UpdateStreamService.Response.Sequence" numbered="true" removeInRFC="false" toc="include" pn="section-6.7.1">
+          <name slugifiedName="name-event-sequence-requirements">Event Sequence Requirements</name>
+          <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-6.7.1-1">
+            <li pn="section-6.7.1-1.1">The first event <bcp14>MUST</bcp14> be a control update
+	    message with the URI of the update stream control service (see
+	    <xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>) for this update
+	    stream. Note that the value of the control-uri can be "null",
+	    indicating that there is no control stream service.</li>
+            <li pn="section-6.7.1-1.2">
+        As soon as possible, after the ALTO client initiates the connection, the
+        update stream server checks the "tag" field for each added update request.
+        If the "tag" field is not specified in an added update request, the update stream server
+        <bcp14>MUST</bcp14> first send a full replacement for the request. If the "tag" field
+        is specified, the client can accept incremental changes, and the server can
+        compute an incremental update based on the "tag" (the server needs to
+	ensure that for a POST resource with input, the "tag" should indicate
+	the correct result for different inputs); the update stream server 
+        <bcp14>MAY</bcp14> omit the initial full replacement.
+        </li>
+            <li pn="section-6.7.1-1.3">If this update stream provides updates for resource-ids R0 and R1
+	and if R1 depends on R0, then the update stream server
+	<bcp14>MUST</bcp14> send the update for R0 before sending the related
+	updates for R1. For example, suppose an update stream provides updates
+	to a network map and its dependent cost maps. When the network map
+	changes, the update stream server <bcp14>MUST</bcp14> send the network
+	map update before sending the cost map updates.</li>
+            <li pn="section-6.7.1-1.4">When the ALTO client uses the stream control service to stop
+	updates for one or more resources (<xref target="UpdateStreamController" format="default" sectionFormat="of" derivedContent="Section 7"/>), the ALTO client
+	<bcp14>MUST</bcp14> send a stream control request. The update stream
+	server <bcp14>MUST</bcp14> send a control update message whose
+	"stopped" field has the substream-ids of all stopped resources.</li>
+          </ul>
+        </section>
+        <section anchor="UpdateStream.Response.Consistency" numbered="true" removeInRFC="false" toc="include" pn="section-6.7.2">
+          <name slugifiedName="name-cross-stream-consistency-re">Cross-Stream Consistency Requirements</name>
+          <t indent="0" pn="section-6.7.2-1">If multiple ALTO clients create multiple update streams from the
+	  same update stream resource and with the same update request
+	  parameters (i.e., same resource and same input), the update stream
+	  server <bcp14>MUST</bcp14> send the same updates to all of
+	  them. However, the update stream server <bcp14>MAY</bcp14> pack data
+	  items into different patch events, as long as the net result of
+	  applying those updates is the same.</t>
+          <t indent="0" pn="section-6.7.2-2">
+          For example, suppose two different ALTO clients
+          create two different update streams for the same cost map,
+          and suppose the update stream server processes
+          three separate cost point updates
+          with a brief pause between each update.
+          The server <bcp14>MUST</bcp14> send all three new cost points to both clients.
+          But the update stream server <bcp14>MAY</bcp14> send a single patch event
+          (with all three cost points) to one ALTO client
+          while sending three separate patch events
+          (with one cost point per event) to the other ALTO client.
+          </t>
+          <t indent="0" pn="section-6.7.2-3">
+          An update stream server <bcp14>MAY</bcp14> offer several different update stream resources
+          that provide updates to the same underlying resource
+          (that is, a resource-id may appear in the "uses" field
+          of more than one update stream resource).
+          In this case, those update stream resources
+          <bcp14>MUST</bcp14> return the same update.
+          </t>
+        </section>
+        <section anchor="UpdateStreamService.Response.Multipart" numbered="true" removeInRFC="false" toc="include" pn="section-6.7.3">
+          <name slugifiedName="name-multipart-update-requiremen">Multipart Update Requirements</name>
+          <t indent="0" pn="section-6.7.3-1">This design allows any valid media type for full
+	  replacement. Hence, it supports ALTO resources using multipart to
+	  contain multiple JSON objects. This realizes the push benefit but
+	  not the incremental encoding benefit of SSE.</t>
+          <t indent="0" pn="section-6.7.3-2">
+            JSON patch and merge patch provide the incremental encoding benefit
+            but can be applied to only a single JSON object.  If an update stream
+            service supports a resource providing a multipart media type, which
+            we refer to as a multipart resource, then the update
+            stream service needs to handle the issue that the message of a full multipart
+            resource can include multiple JSON objects. To address the issue, when an
+            update stream service specifies that it supports JSON patch or merge patch incremental
+            updates for a multipart resource, the service <bcp14>MUST</bcp14> 
+            ensure that (1) each part of a multipart message is a single JSON object, 
+            (2) each part is specified by a static Content-ID in the initial full message, (3) each
+            data update event applies to only one part, and (4) each data update specifies
+            substream-id.content-id as the "event" field of the event, to identify the part
+            to be updated.
+          </t>
+        </section>
+      </section>
+      <section anchor="UpdateStreamService.keep-alive" numbered="true" removeInRFC="false" toc="include" pn="section-6.8">
+        <name slugifiedName="name-keep-alive-messages">Keep-Alive Messages</name>
+        <t indent="0" pn="section-6.8-1">
+          In an SSE stream, any line that starts with a colon (U+003A) character
+          is a comment, and an ALTO client <bcp14>MUST</bcp14> ignore that
+	  line <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>. 
+          As recommended in <xref target="SSE" format="default" sectionFormat="of" derivedContent="SSE"/>,
+          an update stream server <bcp14>SHOULD</bcp14> send a comment line
+	  (or an event) every 15 seconds 
+          to prevent ALTO clients and proxy servers from dropping the HTTP connection.
+          Note that
+   although TCP also provides a Keep-Alive function, the interval between 
+   TCP Keep-Alive messages can depend on the OS configuration and varies. 
+   The preceding recommended SSE Keep-Alive allows the SSE client to detect
+   the status of the update stream server with more certainty.
+        </t>
+      </section>
+    </section>
+    <section anchor="UpdateStreamController" numbered="true" removeInRFC="false" toc="include" pn="section-7">
+      <name slugifiedName="name-stream-control-service">Stream Control Service</name>
+      <t indent="0" pn="section-7-1">
+        A stream control service allows an ALTO client
+        to remove resources from the set of resources that
+        are monitored by an update stream or add additional resources
+        to that set. The service also allows an ALTO client
+        to gracefully shut down an update stream.
+      </t>
+      <t indent="0" pn="section-7-2">
+        When an update stream server creates a new update stream and if the
+	update stream server supports stream control for the update stream,
+	the update stream server creates a stream control service for that
+	update stream. 
+        An ALTO client uses the stream control service to remove resources
+        from the update stream instance
+        or to request updates for additional resources.
+        An ALTO client cannot obtain the stream control service through the IRD.
+        Instead, the first event that the update stream server sends to the ALTO client
+        has the URI for the associated stream control service
+        (see <xref target="ALTO.SSE.ControlEvents" format="default" sectionFormat="of" derivedContent="Section 5.3"/>).
+      </t>
+      <t indent="0" pn="section-7-3">
+        Each stream control request is an individual HTTP request.
+        The ALTO client <bcp14>MAY</bcp14> send multiple stream control requests
+        to the stream control server using the same HTTP connection.
+      </t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-7.1">
+        <name slugifiedName="name-uri">URI</name>
+        <t indent="0" pn="section-7.1-1">The URI for a stream control service, by itself,
+          <bcp14>MUST</bcp14> uniquely specify the
+          update stream instance that it controls.
+          The stream control server <bcp14>MUST NOT</bcp14> use other properties of an HTTP request,
+          such as cookies or the client's IP address,
+          to determine the update stream.
+          Furthermore, an update stream server <bcp14>MUST NOT</bcp14> reuse a control service URI
+          once the associated update stream has been closed.
+        </t>
+        <t indent="0" pn="section-7.1-2">
+          The ALTO client <bcp14>MUST</bcp14> evaluate a relative control URI
+	  reference <xref target="RFC3986" format="default" sectionFormat="of" derivedContent="RFC3986"/> 
+          (for example, a URI reference without a host or with a relative path)
+          in the context of the URI used to create the update stream.
+          The stream control service's host <bcp14>MAY</bcp14> be different
+	  from the update stream's host. 
+        </t>
+        <t indent="0" pn="section-7.1-3">
+          It is expected that there is an internal mechanism to map a stream control
+          URI to the unique update stream instance to be controlled. For example,
+          the update stream service may assign a unique, internal stream id to
+          each update stream instance. However, the exact 
+          mechanism is left to the update stream service provider. 
+        </t>
+        <t indent="0" pn="section-7.1-4">
+          To prevent an attacker from forging a stream control URI and
+          sending bogus requests to disrupt other update streams, the service
+          should consider two security issues. First, if http, not https, is
+          used, the stream control URI can be exposed to an on-path attacker.
+          To address this issue, in a setting where the path from the server
+          to the client can traverse such an attacker, the server <bcp14>SHOULD</bcp14> use
+          https. Second, even without direct exposure, an off-path attacker
+          may guess valid stream control URIs. To address this issue, the
+          server <bcp14>SHOULD</bcp14> choose stream control URIs with enough randomness to
+          make guessing difficult; the server <bcp14>SHOULD</bcp14> introduce mechanisms
+          that detect repeated guesses indicating an attack (e.g., keeping
+          track of the number of failed stream control attempts). Please see
+	  the W3C's "Good Practices for Capability URLs"
+          <eref target="https://www.w3.org/TR/capability-urls/" brackets="angle"/>.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-7.2">
+        <name slugifiedName="name-media-type-2">Media Type</name>
+        <t indent="0" pn="section-7.2-1">
+        An ALTO stream control response does not have
+        a specific media type.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-7.3">
+        <name slugifiedName="name-http-method-2">HTTP Method</name>
+        <t indent="0" pn="section-7.3-1">
+        An ALTO update stream control resource is requested using the HTTP POST method.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-7.4">
+        <name slugifiedName="name-ird-capabilities-uses">IRD Capabilities &amp; Uses</name>
+        <t indent="0" pn="section-7.4-1">
+          None (Stream control services do not appear in the IRD).
+        </t>
+      </section>
+      <section anchor="ControlStream.media-type" numbered="true" removeInRFC="false" toc="include" pn="section-7.5">
+        <name slugifiedName="name-request-accept-input-paramet">Request: Accept Input Parameters</name>
+        <t indent="0" pn="section-7.5-1">
+        A stream control service accepts the same input media
+        type and input parameters as the update stream service
+        (<xref target="UpdateInput.media-type" format="default" sectionFormat="of" derivedContent="Section 6.5"/>).
+        The only difference is that a stream control service
+        also accepts the "remove" field.
+        </t>
+        <t indent="0" pn="section-7.5-2">
+        If specified, the "remove" field is an array of substream-ids
+        the ALTO client previously added to this update stream.
+        An empty "remove" array is equivalent to a list
+        of all currently active resources; the update stream server responds
+        by removing all resources and closing the stream. 
+        </t>
+        <t indent="0" pn="section-7.5-3">
+        An ALTO client <bcp14>MAY</bcp14> use the "add" field to add additional resources.
+        The ALTO client <bcp14>MUST</bcp14> assign a unique substream-id to each additional
+        resource. Substream-ids <bcp14>MUST</bcp14> be unique over the lifetime
+        of this update stream; an ALTO client <bcp14>MUST NOT</bcp14> reuse
+        a previously removed substream-id. The processing of an "add" resource
+        is the same as discussed in Sections <xref target="UpdateInput.media-type" format="counter" sectionFormat="of" derivedContent="6.5"/> and <xref target="UpdateStreamService.Response" format="counter" sectionFormat="of" derivedContent="6.6"/>.
+        </t>
+        <t indent="0" pn="section-7.5-4">If a request has any errors, the update stream server <bcp14>MUST NOT</bcp14> add or remove any resources from the associated update
+	stream. Also, the stream control server will return an error response
+	to the client, as specified in <xref target="ControlStream.Response" format="default" sectionFormat="of" derivedContent="Section 7.6"/>.</t>
+      </section>
+      <section anchor="ControlStream.Response" numbered="true" removeInRFC="false" toc="include" pn="section-7.6">
+        <name slugifiedName="name-response-2">Response</name>
+        <t indent="0" pn="section-7.6-1">
+       The stream control server <bcp14>MUST</bcp14> process the "add" field before the
+       "remove" field. If the request removes all active resources without adding
+       any additional resources, the update stream server <bcp14>MUST</bcp14>
+       close the update stream. 
+       Thus, an update stream cannot have zero resources.
+        </t>
+        <t indent="0" pn="section-7.6-2">
+        If the request has any errors, the stream control server
+	<bcp14>MUST</bcp14> return
+       an HTTP "400 Bad Request" to the ALTO client. 
+   The body part of the
+   response follows the generic ALTO error response format specified 
+ in <xref target="RFC7285" sectionFormat="of" section="8.5.2" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-8.5.2" derivedContent="RFC7285"/>.
+      An error response has the same format as specified in
+      <xref target="UpdateStreamService.Response" format="default" sectionFormat="of" derivedContent="Section 6.6"/>. Detailed error code and
+      error
+      information are specified as below. 
+        </t>
+        <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-7.6-3">
+          <li pn="section-7.6-3.1">
+          If the "add" request does not satisfy the requirements in
+          <xref target="UpdateInput.media-type" format="default" sectionFormat="of" derivedContent="Section 6.5"/>, the stream control server <bcp14>MUST</bcp14>
+          return the ALTO error message defined in
+          <xref target="UpdateStreamService.Response" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.
+          </li>
+          <li pn="section-7.6-3.2">If any substream-id in the "remove" field was not added in a
+	  prior request, the error code of the error message
+	  <bcp14>MUST</bcp14> be E_INVALID_FIELD_VALUE, the "field" field
+	  <bcp14>SHOULD</bcp14> be "remove", and the "value" field
+	  <bcp14>SHOULD</bcp14> be an array of the invalid
+	  substream-ids. Thus, it is illegal to "add" and "remove" the same
+	  substream-id in the same request. However, it is legal to remove a
+	  substream-id twice. To support the preceding checking, the update
+	  stream server <bcp14>MUST</bcp14> keep track of previously used but
+	  now closed substream-ids.</li>
+          <li pn="section-7.6-3.3">
+          If any substream-id in the "add" field has been used before in this stream,
+          the error code of the error message <bcp14>MUST</bcp14> be E_INVALID_FIELD_VALUE, the
+  "field" field <bcp14>SHOULD</bcp14> be "add", and the "value" field <bcp14>SHOULD</bcp14> be
+  an array of invalid substream-ids.
+          </li>
+          <li pn="section-7.6-3.4">If the request has a non-empty "add" field and a "remove" field
+	  with an empty list of substream-ids (to replace all active resources
+	  with a new set, the client <bcp14>MUST</bcp14> explicitly enumerate
+	  the substream-ids to be removed), the error code of the error
+	  message <bcp14>MUST</bcp14> be E_INVALID_FIELD_VALUE, the "field"
+	  field <bcp14>SHOULD</bcp14> be "remove", and the "value" field
+	  <bcp14>SHOULD</bcp14> be an empty array.</li>
+        </ul>
+        <t indent="0" pn="section-7.6-4">
+        If the request is valid but the associated update stream has been
+        closed, then the stream control server <bcp14>MUST</bcp14> return an HTTP "404 Not
+        Found".
+        </t>
+        <t indent="0" pn="section-7.6-5">If the request is valid and the stream control server successfully
+	processes the request without error, the stream control server should
+	return either an HTTP "202 Accepted" response or an HTTP "204 No
+	Content" response. The difference is that for the latter case, the
+	stream control server is sure that the update stream server has also
+	processed the request. Regardless of a 202 or 204 HTTP response, the
+	final updates of related resources will be notified by the update
+	stream server using its control update message(s), due to the modular
+	design.</t>
+      </section>
+    </section>
+    <section anchor="Examples" numbered="true" removeInRFC="false" toc="include" pn="section-8">
+      <name slugifiedName="name-examples">Examples</name>
+      <section anchor="IRD.example" numbered="true" removeInRFC="false" toc="include" pn="section-8.1">
+        <name slugifiedName="name-example-ird-announcing-upda">Example: IRD Announcing Update Stream Services</name>
+        <t indent="0" pn="section-8.1-1">
+        Below is an example IRD announcing three
+        update stream services.
+        The first, which is named "update-my-costs", provides updates for the network map,
+        the "routingcost" and "hopcount" cost maps,
+        and a Filtered Cost Map resource.
+        The second, which is named "update-my-prop", provides updates to the
+	endpoint properties service. 
+        The third, which is named "update-my-pv", provides updates to a
+	nonstandard ALTO service returning a multipart response. 
+        </t>
+        <t indent="0" pn="section-8.1-2">
+      Note that in the "update-my-costs" update stream shown in the example
+      IRD, the update stream server uses JSON patch for network map, and it
+      uses JSON merge patch to update the other resources. Also, the update
+      stream will only provide full replacements for
+      "my-simple-filtered-cost-map". 
+        </t>
+        <t indent="0" pn="section-8.1-3">
+        Also, note that this IRD defines two Filtered Cost Map resources.
+        They use the same cost types,
+        but "my-filtered-cost-map" accepts cost constraint tests,
+        while "my-simple-filtered-cost-map" does not.
+        To avoid the issues discussed in <xref target="UpdateStreamService.FCMConsiderations" format="default" sectionFormat="of" derivedContent="Section 9.3"/>,
+        the update stream provides updates for the second
+        but not the first.
+        </t>
+        <t indent="0" pn="section-8.1-4">This IRD also announces a nonstandard ALTO service, which is named
+	"my-pv". This service accepts an extended endpoint cost request as an
+	input and returns a multipart response, including an endpoint cost
+	resource and a property map resource. This document does not rely on
+	any other design details of this new service. In this document, the
+	"my-pv" service is only used to illustrate how the update stream
+	service provides updates to an ALTO resource returning a multipart
+	response.</t>
+        <sourcecode type="json" markers="false" pn="section-8.1-5">
+  "my-network-map": {
+    "uri": "https://alto.example.com/networkmap",
+    "media-type": "application/alto-networkmap+json",
+  },
+  "my-routingcost-map": {
+    "uri": "https://alto.example.com/costmap/routingcost",
+    "media-type": "application/alto-costmap+json",
+    "uses": ["my-networkmap"],
+    "capabilities": {
+      "cost-type-names": ["num-routingcost"]
+    }
+  },
+  "my-hopcount-map": {
+    "uri": "https://alto.example.com/costmap/hopcount",
+    "media-type": "application/alto-costmap+json",
+    "uses": ["my-networkmap"],
+    "capabilities": {
+      "cost-type-names": ["num-hopcount"]
+    }
+  },
+  "my-filtered-cost-map": {
+    "uri": "https://alto.example.com/costmap/filtered/constraints",
+    "media-type": "application/alto-costmap+json",
+    "accepts": "application/alto-costmapfilter+json",
+    "uses": ["my-networkmap"],
+    "capabilities": {
+      "cost-type-names": ["num-routingcost", "num-hopcount"],
+      "cost-constraints": true
+    }
+  },
+  "my-simple-filtered-cost-map": {
+    "uri": "https://alto.example.com/costmap/filtered/simple",
+    "media-type": "application/alto-costmap+json",
+    "accepts": "application/alto-costmapfilter+json",
+    "uses": ["my-networkmap"],
+    "capabilities": {
+      "cost-type-names": ["num-routingcost", "num-hopcount"],
+      "cost-constraints": false
+    }
+  },
+  "my-props": {
+    "uri": "https://alto.example.com/properties",
+    "media-type": "application/alto-endpointprops+json",
+    "accepts": "application/alto-endpointpropparams+json",
+    "capabilities": {
+      "prop-types": ["priv:ietf-bandwidth"]
+    }
+  },
+  "my-pv": {
+    "uri": "https://alto.example.com/endpointcost/pv",
+    "media-type": "multipart/related;
+                   type=application/alto-endpointcost+json",
+    "accepts": "application/alto-endpointcostparams+json",
+    "capabilities": {
+      "cost-type-names": [ "path-vector" ],
+      "ane-properties": [ "maxresbw", "persistent-entities" ]
+    }
+  },
+  "update-my-costs": {
+    "uri": "https://alto.example.com/updates/costs",
+    "media-type": "text/event-stream",
+    "accepts": "application/alto-updatestreamparams+json",
+    "uses": [
+       "my-network-map",
+       "my-routingcost-map",
+       "my-hopcount-map",
+       "my-simple-filtered-cost-map"
+    ],
+    "capabilities": {
+      "incremental-change-media-types": {
+        "my-network-map": "application/json-patch+json",
+        "my-routingcost-map": "application/merge-patch+json",
+        "my-hopcount-map": "application/merge-patch+json"
+      },
+      "support-stream-control": true
+    }
+  },
+  "update-my-props": {
+    "uri": "https://alto.example.com/updates/properties",
+    "media-type": "text/event-stream",
+    "uses": [ "my-props" ],
+    "accepts": "application/alto-updatestreamparams+json",
+    "capabilities": {
+      "incremental-change-media-types": {
+        "my-props": "application/merge-patch+json"
+      },
+      "support-stream-control": true
+    }
+  },
+  "update-my-pv": {
+    "uri": "https://alto.example.com/updates/pv",
+    "media-type": "text/event-stream",
+    "uses": [ "my-pv" ],
+    "accepts": "application/alto-updatestreamparams+json",
+    "capabilities": {
+      "incremental-change-media-types": {
+        "my-pv": "application/merge-patch+json"
+      },
+      "support-stream-control": true
+    }
+  }
+</sourcecode>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-8.2">
+        <name slugifiedName="name-example-simple-network-and-">Example: Simple Network and Cost Map Updates</name>
+        <t indent="0" pn="section-8.2-1">
+        Given the update streams announced in the preceding example IRD, the
+	section below shows an example of an ALTO client's request and the
+	update stream server's immediate response, 
+        using the update stream resource "update-my-costs".
+        In the example, the ALTO client requests updates for the network map and
+        "routingcost" cost map but not for the "hopcount" cost map.
+        The ALTO client uses the ALTO server's resource-ids as the substream-ids.
+        Because the client does not provide a "tag" for the network map,
+        the update stream server must send a full replacement for the network map
+        as well as for the cost map.
+        The ALTO client does not set "incremental-changes" to "false",
+        so it defaults to "true".
+        Thus, the update stream server will send patch updates for the cost map and the network map.
+        </t>
+        <sourcecode markers="false" pn="section-8.2-2">
+  POST /updates/costs HTTP/1.1
+  Host: alto.example.com
+  Accept: text/event-stream,application/alto-error+json
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 155
+
+  { "add": {
+      "my-network-map": {
+        "resource-id": "my-network-map"
+        },
+      "my-routingcost-map": {
+        "resource-id": "my-routingcost-map"
+      }
+    }
+  }
+</sourcecode>
+        <sourcecode markers="false" pn="section-8.2-3">
+  HTTP/1.1 200 OK
+  Connection: keep-alive
+  Content-Type: text/event-stream
+
+  event: application/alto-updatestreamcontrol+json
+  data: {"control-uri":
+  data: "https://alto.example.com/updates/streams/3141592653589"}
+
+  event: application/alto-networkmap+json,my-network-map
+  data: {
+  data:   "meta" : {
+  data:     "vtag": {
+  data:       "resource-id" : "my-network-map",
+  data:         "tag" : "da65eca2eb7a10ce8b059740b0b2e3f8eb1d4785"
+  data:       }
+  data:     },
+  data:     "network-map" : {
+  data:       "PID1" : {
+  data:         "ipv4" : [ "192.0.2.0/24", "198.51.100.0/25" ]
+  data:       },
+  data:       "PID2" : {
+  data:         "ipv4" : [ "198.51.100.128/25" ]
+  data:       },
+  data:       "PID3" : {
+  data:         "ipv4" : [ "0.0.0.0/0" ],
+  data:         "ipv6" : [ "::/0" ]
+  data:       }
+  data:     }
+  data:   }
+  data: }
+
+  event: application/alto-costmap+json,my-routingcost-map
+  data: {
+  data:   "meta" : {
+  data:     "dependent-vtags" : [{
+  data:       "resource-id": "my-network-map",
+  data:       "tag": "da65eca2eb7a10ce8b059740b0b2e3f8eb1d4785"
+  data:     }],
+  data:     "cost-type" : {
+  data:       "cost-mode"  : "numerical",
+  data:       "cost-metric": "routingcost"
+  data:     },
+  data:     "vtag": {
+  data:       "resource-id" : "my-routingcost-map",
+  data:       "tag" : "3ee2cb7e8d63d9fab71b9b34cbf764436315542e"
+  data:     }
+  data:   },
+  data:   "cost-map" : {
+  data:     "PID1": { "PID1": 1,  "PID2": 5,  "PID3": 10 },
+  data:     "PID2": { "PID1": 5,  "PID2": 1,  "PID3": 15 },
+  data:     "PID3": { "PID1": 20, "PID2": 15  }
+  data:   }
+  data: }
+</sourcecode>
+        <t indent="0" pn="section-8.2-4">
+        After sending those events immediately,
+        the update stream server will send additional events
+        as the maps change. For example, the following
+        represents a small change to the cost map. PID1-&gt;PID2 is changed to
+	9 from 5, PID3-&gt;PID1 is no longer available, and PID3-&gt;PID3 is
+	now defined as 1: 
+        </t>
+        <sourcecode markers="false" pn="section-8.2-5">
+  event: application/merge-patch+json,my-routingcost-map
+  data: {
+  data:   "meta" : {
+  data:     "vtag": {
+  data:       "tag": "c0ce023b8678a7b9ec00324673b98e54656d1f6d"
+  data:     }
+  data:   },
+  data:   "cost-map": {
+  data:     "PID1" : { "PID2" : 9 },
+  data:     "PID3" : { "PID1" : null, "PID3" : 1 }
+  data:   }
+  data: }
+</sourcecode>
+        <t indent="0" pn="section-8.2-6">As another example, the following represents a change to the
+	network map: an ipv4 prefix "203.0.113.0/25" is added to PID1. It
+	triggers changes to the cost map. The update stream server chooses to
+	send an incremental change for the network map and send a full
+	replacement instead of an incremental change for the cost map: 
+        </t>
+        <sourcecode markers="false" pn="section-8.2-7">
+      event: application/json-patch+json,my-network-map
+      data: {
+      data:   {
+      data:     "op": "replace",
+      data:     "path": "/meta/vtag/tag",
+      data:     "value" :"a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+      data:   },
+      data:   {
+      data:     "op": "add",
+      data:     "path": "/network-map/PID1/ipv4/2",
+      data:     "value": "203.0.113.0/25"
+      data:   }
+      data: }
+
+      event: application/alto-costmap+json,my-routingcost-map
+      data: {
+      data:   "meta" : {
+      data:     "vtag": {
+      data:       "tag": "c0ce023b8678a7b9ec00324673b98e54656d1f6d"
+      data:     }
+      data:   },
+      data:   "cost-map" : {
+      data:     "PID1": { "PID1": 1,  "PID2": 3,  "PID3": 7 },
+      data:     "PID2": { "PID1": 12, "PID2": 1,  "PID3": 9 },
+      data:     "PID3": { "PID1": 14, "PID2": 8  }
+      data:   }
+      data: }
+</sourcecode>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-8.3">
+        <name slugifiedName="name-example-advanced-network-an">Example: Advanced Network and Cost Map Updates</name>
+        <t indent="0" pn="section-8.3-1">
+        This example is similar to the previous one,
+        except that the ALTO client requests updates for the "hopcount" cost map
+        as well as the "routingcost" cost map
+        and provides the current version tag of the network map,
+        so the update stream server is not required to send
+        the full network map data update message
+        at the beginning of the stream.
+        In this example, the client uses the substream-ids "net",
+        "routing", and "hops" for those resources.
+        The update stream server sends the stream control URI and the full cost maps,
+        followed by updates for the network map
+        and cost maps as they become available:
+        </t>
+        <sourcecode markers="false" pn="section-8.3-2">
+  POST /updates/costs HTTP/1.1
+  Host: alto.example.com
+  Accept: text/event-stream,application/alto-error+json
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 244
+
+  { "add": {
+      "net": {
+        "resource-id": "my-network-map",
+        "tag": "a10ce8b059740b0b2e3f8eb1d4785acd42231bfe"
+      },
+      "routing": {
+        "resource-id": "my-routingcost-map"
+      },
+      "hops": {
+        "resource-id": "my-hopcount-map"
+      }
+    }
+  }
+</sourcecode>
+        <sourcecode markers="false" pn="section-8.3-3">
+  HTTP/1.1 200 OK
+  Connection: keep-alive
+  Content-Type: text/event-stream
+
+  event: application/alto-updatestreamcontrol+json
+  data: {"control-uri":
+  data: "https://alto.example.com/updates/streams/2718281828459"}
+
+  event: application/alto-costmap+json,routing
+  data: { ... full routingcost cost map message ... }
+
+  event: application/alto-costmap+json,hops
+  data: { ... full hopcount cost map message ... }
+
+     (pause)
+
+  event: application/merge-patch+json,routing
+  data: {"cost-map": {"PID2" : {"PID3" : 31}}}
+
+  event: application/merge-patch+json,hops
+  data: {"cost-map": {"PID2" : {"PID3" : 4}}}
+</sourcecode>
+        <t indent="0" pn="section-8.3-4">
+        If the ALTO client wishes to stop receiving updates for the "hopcount"
+        cost map, the ALTO client can send a "remove" request
+        on the stream control URI:
+        </t>
+        <sourcecode markers="false" pn="section-8.3-5">
+  POST /updates/streams/2718281828459 HTTP/1.1
+  Host: alto.example.com
+  Accept: text/plain,application/alto-error+json
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 24
+
+  {
+    "remove": [ "hops" ]
+  }
+
+
+  HTTP/1.1 204 No Content
+  Content-Length: 0
+
+      (stream closed without sending data content)
+</sourcecode>
+        <t indent="0" pn="section-8.3-6">
+        The update stream server sends a "stopped" control update message on the
+        original request stream to inform the ALTO client
+        that updates are stopped for that resource:
+        </t>
+        <sourcecode markers="false" pn="section-8.3-7">
+  event: application/alto-updatestreamcontrol+json
+  data: {
+  data:   "stopped": ["hops"]
+  data: }
+</sourcecode>
+        <t indent="0" pn="section-8.3-8">Below is an example of an invalid stream control request. The
+	"remove" field of the request includes an undefined substream-id, and
+	the stream control server will return an error response to the ALTO
+	client.</t>
+        <sourcecode markers="false" pn="section-8.3-9">
+      POST /updates/streams/2718281828459 HTTP/1.1
+      Host: alto.example.com
+      Accept: text/plain,application/alto-error+json
+      Content-Type: application/alto-updatestreamparams+json
+      Content-Length: 31
+      {
+        "remove": [ "properties" ]
+      }
+
+      HTTP/1.1 400 Bad Request
+      Content-Length: 89
+      Content-Type: application/alto-error+json
+
+      {
+        "meta":{
+        "code": "E_INVALID_FIELD_VALUE",
+        "field": "remove",
+        "value": "properties"
+      }
+</sourcecode>
+        <t indent="0" pn="section-8.3-10">
+        If the ALTO client no longer needs any updates
+        and wishes to shut the update stream down gracefully,
+        the client can send a "remove" request
+        with an empty array:
+        </t>
+        <sourcecode markers="false" pn="section-8.3-11">
+  POST /updates/streams/2718281828459 HTTP/1.1
+  Host: alto.example.com
+  Accept: text/plain,application/alto-error+json
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 17
+
+  {
+    "remove": [ ]
+  }
+
+
+  HTTP/1.1 204 No Content
+  Content-Length: 0
+
+      (stream closed without sending data content)
+</sourcecode>
+        <t indent="0" pn="section-8.3-12">
+        The update stream server sends a final control update message on the
+        original request stream to inform the ALTO client
+        that all updates are stopped and then closes the stream:
+        </t>
+        <sourcecode markers="false" pn="section-8.3-13">
+  event: application/alto-updatestreamcontrol+json
+  data: {
+  data:   "stopped": ["net", "routing"]
+  data: }
+
+      (server closes stream)
+</sourcecode>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-8.4">
+        <name slugifiedName="name-example-endpoint-property-u">Example: Endpoint Property Updates</name>
+        <t indent="0" pn="section-8.4-1">
+        As another example, here is how an ALTO client can request updates
+        for the property "priv:ietf-bandwidth" for one set of endpoints
+        and "priv:ietf-load" for another.
+        The update stream server immediately sends full replacements
+        with the property values for all endpoints.
+        After that, the update stream server sends data update messages
+        for the individual endpoints as their property values change.
+        </t>
+        <sourcecode markers="false" pn="section-8.4-2">
+  POST /updates/properties HTTP/1.1
+  Host: alto.example.com
+  Accept: text/event-stream
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 511
+
+  { "add": {
+      "props-1": {
+        "resource-id": "my-props",
+        "input": {
+          "properties" : [ "priv:ietf-bandwidth" ],
+          "endpoints" : [
+            "ipv4:198.51.100.1",
+            "ipv4:198.51.100.2",
+            "ipv4:198.51.100.3"
+          ]
+        }
+      },
+      "props-2": {
+        "resource-id": "my-props",
+        "input": {
+          "properties" : [ "priv:ietf-load" ],
+          "endpoints" : [
+            "ipv6:2001:db8:100::1",
+            "ipv6:2001:db8:100::2",
+            "ipv6:2001:db8:100::3"
+          ]
+        }
+      }
+    }
+  }
+</sourcecode>
+        <sourcecode markers="false" pn="section-8.4-3">
+  HTTP/1.1 200 OK
+  Connection: keep-alive
+  Content-Type: text/event-stream
+
+  event: application/alto-updatestreamcontrol+json
+  data: {"control-uri":
+  data: "https://alto.example.com/updates/streams/1414213562373"}
+
+  event: application/alto-endpointprops+json,props-1
+  data: { "endpoint-properties": {
+  data:     "ipv4:198.51.100.1" : { "priv:ietf-bandwidth": "13" },
+  data:     "ipv4:198.51.100.2" : { "priv:ietf-bandwidth": "42" },
+  data:     "ipv4:198.51.100.3" : { "priv:ietf-bandwidth": "27" }
+  data:  } }
+
+  event: application/alto-endpointprops+json,props-2
+  data: { "endpoint-properties": {
+  data:     "ipv6:2001:db8:100::1" : { "priv:ietf-load": "8" },
+  data:     "ipv6:2001:db8:100::2" : { "priv:ietf-load": "2" },
+  data:     "ipv6:2001:db8:100::3" : { "priv:ietf-load": "9" }
+  data:  } }
+
+     (pause)
+
+  event: application/merge-patch+json,props-1
+  data: { "endpoint-properties":
+  data:   {"ipv4:198.51.100.1" : {"priv:ietf-bandwidth": "3"}}
+  data: }
+
+     (pause)
+
+  event: application/merge-patch+json,props-2
+  data: { "endpoint-properties":
+  data:   {"ipv6:2001:db8:100::3" : {"priv:ietf-load": "7"}}
+  data: }
+</sourcecode>
+        <t indent="0" pn="section-8.4-4">
+        If the ALTO client needs the "priv:ietf-bandwidth" property and
+        the "priv:ietf-load" property
+        for additional endpoints,
+        the ALTO client can send an "add" request
+        on the stream control URI:
+        </t>
+        <sourcecode markers="false" pn="section-8.4-5">
+  POST /updates/streams/1414213562373" HTTP/1.1
+  Host: alto.example.com
+  Accept: text/plain,application/alto-error+json
+  Content-Type: application/alto-updatestreamparams+json
+  Content-Length: 448
+
+  { "add": {
+      "props-3": {
+        "resource-id": "my-props",
+        "input": {
+          "properties" : [ "priv:ietf-bandwidth" ],
+          "endpoints" : [
+            "ipv4:198.51.100.4",
+            "ipv4:198.51.100.5"
+          ]
+        }
+      },
+      "props-4": {
+        "resource-id": "my-props",
+        "input": {
+          "properties" : [ "priv:ietf-load" ],
+          "endpoints" : [
+            "ipv6:2001:db8:100::4",
+            "ipv6:2001:db8:100::5"
+          ]
+        }
+      }
+    }
+  }
+
+
+  HTTP/1.1 204 No Content
+  Content-Length: 0
+
+      (stream closed without sending data content)
+</sourcecode>
+        <t indent="0" pn="section-8.4-6">
+        The update stream server sends full replacements
+        for the two new resources, followed by incremental
+        changes for all four requests as they arrive:
+        </t>
+        <sourcecode markers="false" pn="section-8.4-7">
+  event: application/alto-endpointprops+json,props-3
+  data: { "endpoint-properties": {
+  data:     "ipv4:198.51.100.4" : { "priv:ietf-bandwidth": "25" },
+  data:     "ipv4:198.51.100.5" : { "priv:ietf-bandwidth": "31" },
+  data:  } }
+
+  event: application/alto-endpointprops+json,props-4
+  data: { "endpoint-properties": {
+  data:     "ipv6:2001:db8:100::4" : { "priv:ietf-load": "6" },
+  data:     "ipv6:2001:db8:100::5" : { "priv:ietf-load": "4" },
+  data:  } }
+
+     (pause)
+
+  event: application/merge-patch+json,props-3
+  data: { "endpoint-properties":
+  data:   {"ipv4:198.51.100.5" : {"priv:ietf-bandwidth": "15"}}
+  data: }
+
+     (pause)
+
+  event: application/merge-patch+json,props-2
+  data: { "endpoint-properties":
+  data:   {"ipv6:2001:db8:100::2" : {"priv:ietf-load": "9"}}
+  data: }
+
+     (pause)
+
+  event: application/merge-patch+json,props-4
+  data: { "endpoint-properties":
+  data:   {"ipv6:2001:db8:100::4" : {"priv:ietf-load": "3"}}
+  data: }
+</sourcecode>
+      </section>
+      <section anchor="Multipart.Example" numbered="true" removeInRFC="false" toc="include" pn="section-8.5">
+        <name slugifiedName="name-example-multipart-message-u">Example: Multipart Message Updates</name>
+        <t indent="0" pn="section-8.5-1">
+        This example shows how an ALTO client can request a nonstandard ALTO
+	service returning a multipart response. The update stream server
+	immediately sends full replacements of the multipart response. After
+	that, the update stream server sends data update messages for the
+	individual parts of the response as the ALTO data (object) in each
+	part changes. 
+        </t>
+        <sourcecode markers="false" pn="section-8.5-2">
+   POST /updates/pv HTTP/1.1
+   Host: alto.example.com
+   Accept: text/event-stream
+   Content-Type: application/alto-updatestreamparams+json
+   Content-Length: 382
+
+   {
+     "add": {
+       "ecspvsub1": {
+         "resource-id": "my-pv",
+         "input": {
+           "cost-type": {
+             "cost-mode": "array",
+             "cost-metric": "ane-path"
+           },
+           "endpoints": {
+             "srcs": [ "ipv4:192.0.2.2" ],
+             "dsts": [ "ipv4:192.0.2.89", "ipv4:203.0.113.45" ]
+           },
+           "ane-properties": [ "maxresbw", "persistent-entities" ]
+         }
+       }
+     }
+   }
+</sourcecode>
+        <sourcecode markers="false" pn="section-8.5-3">
+   HTTP/1.1 200 OK
+   Connection: keep-alive
+   Content-Type: text/event-stream
+
+   event: application/alto-updatestreamcontrol+json
+   data: {"control-uri":
+   data:    "https://alto.example.com/updates/streams/1414"}
+
+   event: multipart/related;boundary=example-pv;
+          type=application/alto-endpointcost+json,ecspvsub1
+   data: --example-pv
+   data: Content-ID: ecsmap
+   data: Content-Type: application/alto-endpointcost+json
+   data:
+   data: { ... data (object) of an endpoint cost map ... }
+   data: --example-pv
+   data: Content-ID: propmap
+   data: Content-Type: application/alto-propmap+json
+   data:
+   data: { ... data (object) of a property map ... }
+   data: --example-pv--
+
+      (pause)
+
+   event: application/merge-patch+json,ecspvsub1.ecsmap
+   data: { ... merge patch for updates of ecspvsub1.ecsmap ... }
+
+   event: application/merge-patch+json,ecspvsub1.propmap
+   data: { ... merge patch for updates of ecspvsub1.propmap ... }
+</sourcecode>
+      </section>
+    </section>
+    <section anchor="OperationProcessingConsiderations" numbered="true" removeInRFC="false" toc="include" pn="section-9">
+      <name slugifiedName="name-operation-and-processing-co">Operation and Processing Considerations</name>
+      <section anchor="IncrUpdChoice" numbered="true" removeInRFC="false" toc="include" pn="section-9.1">
+        <name slugifiedName="name-considerations-for-choosing">Considerations for Choosing Data Update Messages</name>
+        <t indent="0" pn="section-9.1-1">
+            The update stream server should be cognizant of the effects of
+            its update schedule, which includes both the choice of timing
+            (i.e., when/what to trigger an update) and the choice of message
+            format (i.e., given an update, send a full replacement or an
+            incremental change). In particular, the update schedule can have
+            effects on both the overhead and the freshness of information. To
+            minimize overhead, the server may choose to batch a sequence of
+            updates for resources that frequently change by sending
+            cumulative updates or a full replacement after a while. The
+            update stream server should be cognizant that batching reduces
+            the freshness of information. The server should also consider the
+            effect of such delays on client behaviors (see below on client
+            timeout on waiting for updates of dependent resources).
+        </t>
+        <t indent="0" pn="section-9.1-2">
+          For incremental updates, this design allows both JSON patch and JSON
+	  merge patch for incremental changes. JSON merge patch is clearly
+	  superior to JSON patch for describing incremental changes to 
+          cost maps, endpoint costs, and endpoint properties.
+          For these data structures, JSON merge patch is more space efficient,
+	  as well as simpler to apply. There is no advantage allowing a server
+	  to use JSON patch for those resources. 
+        </t>
+        <t indent="0" pn="section-9.1-3">
+          The case is not as clear for incremental changes to network maps.
+        </t>
+        <t indent="0" pn="section-9.1-4">
+          First, consider small changes, such as moving a prefix from one PID to another.
+          JSON patch could encode that as a simple insertion and deletion,
+          while JSON merge patch would have to replace the entire array of prefixes
+          for both PIDs.
+          On the other hand, to process a JSON patch update,
+          the ALTO client would have to retain the indexes of the prefixes for each PID.
+          Logically, the prefixes in a PID are an unordered set,
+          not an array; aside from handling updates,
+          a client has no need to retain the array indexes of the prefixes.
+          Hence, to take advantage of JSON patch for network maps,
+          ALTO clients would have to retain additional, otherwise unnecessary, data.
+        </t>
+        <t indent="0" pn="section-9.1-5">
+          Second, consider more involved changes, such as removing half of the
+	  prefixes from a PID. JSON merge patch would send a new array for
+	  that PID, while JSON patch would have to send a list of remove
+	  operations and delete the prefix one by one. 
+        </t>
+        <t indent="0" pn="section-9.1-6">
+          Therefore, each update stream server may decide on its own whether
+	  to use JSON merge patch or JSON patch according to the changes in
+	  network maps. 
+        </t>
+      </section>
+      <section anchor="ClientActions" numbered="true" removeInRFC="false" toc="include" pn="section-9.2">
+        <name slugifiedName="name-considerations-for-client-p">Considerations for Client Processing Data Update Messages</name>
+        <t indent="0" pn="section-9.2-1">
+        In general, when an ALTO client receives a full replacement
+        for a resource, the ALTO client should replace the current version
+        with the new version.
+        When an ALTO client receives an incremental change
+        for a resource, the ALTO client should apply those patches
+        to the current version of the resource.
+        </t>
+        <t indent="0" pn="section-9.2-2">
+        However, because resources can depend on other resources
+        (e.g., cost maps depend on network maps),
+        an ALTO client <bcp14>MUST NOT</bcp14> use a dependent resource
+        if the resource on which it depends has changed.
+        There are at least two ways an ALTO client can do that.
+        The following paragraphs illustrate these techniques by referring to
+	network and cost map messages,
+        although these techniques apply to any dependent resources.
+        </t>
+        <t indent="0" pn="section-9.2-3">
+        Note that when a network map changes,
+        the update stream server <bcp14>MUST</bcp14> send the network map update message
+        before sending the updates for the dependent cost maps
+        (see <xref target="UpdateStreamService.Response.Sequence" format="default" sectionFormat="of" derivedContent="Section 6.7.1"/>).
+        </t>
+        <t indent="0" pn="section-9.2-4">
+        One approach is for the ALTO client to save
+        the network map update message in a buffer
+        and continue to use the previous network map
+        and the associated cost maps
+        until the ALTO client receives the update messages
+        for all dependent cost maps.
+        The ALTO client then applies all network and cost map updates atomically.
+        </t>
+        <t indent="0" pn="section-9.2-5">Alternatively, the ALTO client <bcp14>MAY</bcp14> update the
+	network map immediately. In this case, the cost maps using the network
+	map become invalid because they are inconsistent with the current
+	network map; hence, the ALTO client <bcp14>MUST</bcp14> mark each such
+	dependent cost map as temporarily invalid and <bcp14>MUST NOT</bcp14>
+	use each such cost map until the ALTO client receives a cost map
+	update message indicating that it is based on the new network map
+	version tag.</t>
+        <t indent="0" pn="section-9.2-6">The update stream server <bcp14>SHOULD</bcp14> send updates for
+	dependent resources (i.e., the cost maps in the preceding example) in
+	a timely fashion. However, if the ALTO client does not receive the
+	expected updates, a simple recovery method is that the ALTO client
+	closes the update stream connection, discards the dependent resources,
+	and reestablishes the update stream. The ALTO client
+	<bcp14>MAY</bcp14> retain the version tag of the last version of any
+	tagged resources and give those version tags when requesting the new
+	update stream. In this case, if a version is still current, the update
+	stream server will not resend that resource.</t>
+        <t indent="0" pn="section-9.2-7">
+        Although not as efficient as possible, this recovery method is simple and reliable.
+        </t>
+      </section>
+      <section anchor="UpdateStreamService.FCMConsiderations" numbered="true" removeInRFC="false" toc="include" pn="section-9.3">
+        <name slugifiedName="name-considerations-for-updates-">Considerations for Updates to Filtered Cost Maps</name>
+        <t indent="0" pn="section-9.3-1">If an update stream provides updates to a Filtered Cost Map that
+	allows constraint tests, then an ALTO  client <bcp14>MAY</bcp14>
+	request updates to a Filtered Cost Map request with a constraint
+	test. In this case, when a cost changes, the update stream server
+	<bcp14>MUST</bcp14> send an update if the new value satisfies the
+	test. If the new value does not, whether the update stream server
+	sends an update depends on whether the previous value satisfied the
+	test. If it did not, the update stream server <bcp14>SHOULD NOT</bcp14> send an update to the ALTO client. But if the previous
+	value did, then the update stream server <bcp14>MUST</bcp14> send an
+	update with a "null" value to inform the ALTO client that this cost no
+	longer satisfies the criteria.</t>
+        <t indent="0" pn="section-9.3-2">An update stream server can avoid having to handle such a
+	complicated behavior by offering update streams only for Filtered Cost
+	Maps that do not allow constraint tests.</t>
+      </section>
+      <section anchor="UpdateStreamService.OrdinalConsiderations" numbered="true" removeInRFC="false" toc="include" pn="section-9.4">
+        <name slugifiedName="name-considerations-for-updates-t">Considerations for Updates to Ordinal Mode Costs</name>
+        <t indent="0" pn="section-9.4-1">
+        For an ordinal mode cost map, a change to a single cost point
+        may require updating many other costs.
+        As an extreme example, suppose the lowest cost changes to the highest cost.
+        For a numerical mode cost map, only that one cost changes.
+        But for an ordinal mode cost map, every cost might change.
+        While this document allows an update stream server to offer incremental updates
+        for ordinal mode cost maps, update stream server implementors should be aware
+        that incremental updates for ordinal costs are more complicated
+        than for numerical costs, and ALTO clients should be aware that
+        small changes may result in large updates.
+        </t>
+        <t indent="0" pn="section-9.4-2">
+        An update stream server can avoid this complication
+        by only offering full replacements for ordinal cost maps.
+        </t>
+      </section>
+      <section anchor="UpdateStreamService.SSELineLengthConsiderations" numbered="true" removeInRFC="false" toc="include" pn="section-9.5">
+        <name slugifiedName="name-considerations-for-sse-text">Considerations for SSE Text Formatting and Processing</name>
+        <t indent="0" pn="section-9.5-1">
+        SSE was designed for events that consist of relatively small amounts
+	of line-oriented text data, and SSE clients frequently read input one
+	line at a time.  However, an update stream sends a full cost map as a
+	single events, and a cost map may involve megabytes, if not tens of
+	megabytes, of text. This has implications that the ALTO client and the
+	update stream server may consider. 
+        </t>
+        <t indent="0" pn="section-9.5-2">
+          First, some SSE client libraries read all data for an event into
+	  memory and then present it to the client as a character
+	  array. However, a client may not have enough memory to hold the
+	  entire JSON text for a large cost map.  Hence, an ALTO client
+	  <bcp14>SHOULD</bcp14> consider using an SSE library that presents
+	  the event data in manageable chunks, so the ALTO client can parse
+	  the cost map incrementally and store the underlying data in a more
+	  compact format. 
+        </t>
+        <t indent="0" pn="section-9.5-3">
+          Second, an SSE client library may use a low-level, generic socket
+	  read library that stores each line of an event data, just in case
+	  the higher-level parser may need the line delimiters as part of the
+	  protocol formatting. A server sending a complete cost map as a
+	  single line may then generate a multi-megabyte data "line", and such
+	  a long line may then require complex memory management at the
+	  client. It is <bcp14>RECOMMENDED</bcp14> that an update stream
+	  server limit the lengths of data lines. 
+        </t>
+        <t indent="0" pn="section-9.5-4">
+          Third, an SSE server may use a library, which may put line breaks in
+	  places that would have semantic consequences for the ALTO updates;
+	  see <xref target="FutureDesignConsiderations" format="default" sectionFormat="of" derivedContent="Section 11"/>. The update stream
+	  server implementation <bcp14>MUST</bcp14> ensure that no line breaks
+	  are introduced to change the semantics. 
+        </t>
+      </section>
+    </section>
+    <section anchor="Security" numbered="true" removeInRFC="false" toc="include" pn="section-10">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-10-1">
+        The security considerations (<xref target="RFC7285" sectionFormat="of" section="15" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15" derivedContent="RFC7285"/>) of the base protocol fully
+        apply to this extension. For example, the same authenticity and
+        integrity considerations (<xref target="RFC7285" sectionFormat="of" section="15.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.1" derivedContent="RFC7285"/>) still fully
+        apply; the same considerations for the privacy of ALTO users (<xref target="RFC7285" sectionFormat="of" section="15.4" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.4" derivedContent="RFC7285"/>) also still fully
+      apply.</t>
+      <t indent="0" pn="section-10-2">
+        The additional services (addition of update streams and stream
+        control URIs) provided by this extension extend the attack surface
+        described in <xref target="RFC7285" sectionFormat="of" section="15.1.1" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15.1.1" derivedContent="RFC7285"/>. Below, we 
+        discuss the additional risks and their remedies.
+      </t>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-10.1">
+        <name slugifiedName="name-update-stream-server-denial">Update Stream Server: Denial-of-Service Attacks</name>
+        <t indent="0" pn="section-10.1-1">
+        Allowing persistent update stream connections
+        enables a new class of Denial-of-Service attacks.
+        </t>
+        <t indent="0" pn="section-10.1-2">For the update stream server, an ALTO client might create an unreasonable
+        number of update stream connections
+        or add an unreasonable number of substream-ids
+        to one update stream.
+        </t>
+        <t indent="0" pn="section-10.1-3">
+        To avoid these attacks on the update stream server, the server <bcp14>SHOULD</bcp14> choose
+        to limit the number of active streams and
+        reject new requests when that threshold is reached.
+        An update stream server <bcp14>SHOULD</bcp14> also choose to limit the number of active
+        substream-ids on any given stream or limit the total
+        number of substream-ids used over the lifetime of a stream
+        and reject any stream control request
+        that would exceed those limits.
+        In these cases, the update stream server <bcp14>SHOULD</bcp14> return
+        the HTTP status "503 Service Unavailable".        
+        </t>
+        <t indent="0" pn="section-10.1-4">It is important to note that the preceding approaches are not the
+	only possibilities. For example, it may be possible for the update
+	stream server to use somewhat more clever logic involving IP
+	reputation, rate-limiting, and compartmentalization of the overall
+	threshold into smaller thresholds that apply to subsets of potential
+	clients.</t>
+        <t indent="0" pn="section-10.1-5">
+        While the preceding techniques prevent update stream DoS attacks from disrupting
+        an update stream server's other services, it does make it easier
+        for a DoS attack to disrupt the update stream service.
+        Therefore, an update stream server <bcp14>MAY</bcp14> prefer to restrict update stream
+        services to authorized clients, as discussed in <xref target="RFC7285" sectionFormat="of" section="15" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15" derivedContent="RFC7285"/>. 
+        </t>
+        <t indent="0" pn="section-10.1-6">
+        Alternatively, an update stream server <bcp14>MAY</bcp14> return
+        the HTTP status "307 Temporary Redirect"
+        to redirect the client to another ALTO server
+        that can better handle a large number of update streams.
+        </t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-10.2">
+        <name slugifiedName="name-alto-client-update-overload">ALTO Client: Update Overloading or Instability</name>
+        <t indent="0" pn="section-10.2-1">The availability of continuous updates can also cause overload for
+	an ALTO client, in particular, an ALTO client with limited processing
+	capabilities. The current design does not include any flow control
+	mechanisms for the client to reduce the update rates from the
+	server. Under overloading, the client <bcp14>MAY</bcp14> choose to
+	remove the information resources with high update rates.</t>
+        <t indent="0" pn="section-10.2-2">Also, under overloading, the client may no longer be able to detect
+	whether information is still fresh or has become stale. In such a
+	case, the client should be careful in how it uses the information to
+	avoid stability or efficiency issues.</t>
+      </section>
+      <section numbered="true" removeInRFC="false" toc="include" pn="section-10.3">
+        <name slugifiedName="name-stream-control-spoofed-cont">Stream Control: Spoofed Control Requests and Information Breakdown</name>
+        <t indent="0" pn="section-10.3-1">
+        An outside party that can read the update stream response
+        or that can observe stream control requests
+        can obtain the control URI and use that
+        to send a fraudulent "remove" requests,
+        thus disabling updates for the valid ALTO client.
+        This can be avoided by encrypting the update stream
+        and stream control requests
+        (see <xref target="RFC7285" sectionFormat="of" section="15" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15" derivedContent="RFC7285"/>).
+        Also, the update stream server echoes the "remove" requests
+        on the update stream, so the valid ALTO client can detect
+        unauthorized requests.
+        </t>
+        <t indent="0" pn="section-10.3-2">In general, as the architecture allows the possibility for the update 
+         stream server and the stream control server to be different entities, the
+         additional risks should be evaluated and remedied. For example, the 
+         private communication path between the servers may be attacked, resulting
+         in a risk of communications breakdown between them, as well as invalid or 
+         spoofed messages claiming to be on that private communications path. Proper
+         security mechanisms, including confidentiality, authenticity, and integrity
+         mechanisms, should be considered. 
+        </t>
+      </section>
+    </section>
+    <section anchor="FutureDesignConsiderations" numbered="true" removeInRFC="false" toc="include" pn="section-11">
+      <name slugifiedName="name-requirements-on-future-alto">Requirements on Future ALTO Services to Use This Design</name>
+      <t indent="0" pn="section-11-1">Although this design is quite flexible, it has underlying requirements.</t>
+      <t indent="0" pn="section-11-2">The key requirements are that (1) each data update message is for a
+      single resource and (2) an incremental change can be applied only to a
+      resource that is a single JSON object, as both JSON merge patch and JSON
+      patch can apply only to a single JSON object. Hence, if a future ALTO
+      resource can contain multiple objects, then either each individual
+      object also has a resource-id or an extension to this design is made. 
+      </t>
+      <t indent="0" pn="section-11-3">At the low-level encoding level, new line in SSE has its own
+      semantics. Hence, this design requires that resource encoding does not
+      include new lines that can be confused with SSE encoding. In particular,
+      the 
+      data update message <bcp14>MUST NOT</bcp14> include "event: " or "data:
+      " at a new line as part of data message. 
+      </t>
+      <t indent="0" pn="section-11-4">If an update stream provides updates to a Filtered Cost Map that
+      allows constraint tests, the requirements for such services are stated
+      in <xref target="UpdateStreamService.FCMConsiderations" format="default" sectionFormat="of" derivedContent="Section 9.3"/>. 
+      </t>
+    </section>
+    <section anchor="IANA" numbered="true" removeInRFC="false" toc="include" pn="section-12">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-12-1">
+        This document defines two new media types:
+        "application/alto-updatestreamparams+json",
+        as described in <xref target="UpdateInput.media-type" format="default" sectionFormat="of" derivedContent="Section 6.5"/>,
+        and "application/alto-updatestreamcontrol+json",
+        as described in <xref target="ALTO.SSE.ControlEvents" format="default" sectionFormat="of" derivedContent="Section 5.3"/>.
+        All other media types used in this document have already been registered,
+        either for ALTO, JSON merge patch, or JSON patch.
+      </t>
+      <section anchor="IANA.UpsateStreamParams" numbered="true" removeInRFC="false" toc="include" pn="section-12.1">
+        <name slugifiedName="name-application-alto-updatestre">application/alto-updatestreamparams+json Media Type</name>
+        <dl newline="false" spacing="normal" indent="3" pn="section-12.1-1">
+          <dt pn="section-12.1-1.1">Type name:</dt>
+          <dd pn="section-12.1-1.2">application</dd>
+          <dt pn="section-12.1-1.3">Subtype name:</dt>
+          <dd pn="section-12.1-1.4">alto-updatestreamparams+json</dd>
+          <dt pn="section-12.1-1.5">Required parameters:</dt>
+          <dd pn="section-12.1-1.6">N/A</dd>
+          <dt pn="section-12.1-1.7">Optional parameters:</dt>
+          <dd pn="section-12.1-1.8">N/A</dd>
+          <dt pn="section-12.1-1.9">Encoding considerations:</dt>
+          <dd pn="section-12.1-1.10">Encoding considerations are
+          identical to those specified for the "application/json" media type. See
+          <xref target="RFC8259" format="default" sectionFormat="of" derivedContent="RFC8259"/>.</dd>
+          <dt pn="section-12.1-1.11">Security considerations:</dt>
+          <dd pn="section-12.1-1.12">Security considerations relating
+          to the generation and consumption of ALTO Protocol messages are
+          discussed in <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 10"/> of RFC 8895
+          and <xref target="RFC7285" sectionFormat="of" section="15" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15" derivedContent="RFC7285"/>.</dd>
+          <dt pn="section-12.1-1.13">Interoperability considerations:</dt>
+          <dd pn="section-12.1-1.14">RFC 8895 specifies
+          format of conforming messages and the interpretation thereof.</dd>
+          <dt pn="section-12.1-1.15">Published specification:</dt>
+          <dd pn="section-12.1-1.16">
+            <xref target="UpdateInput.media-type" format="default" sectionFormat="of" derivedContent="Section 6.5"/>
+          of RFC 8895.</dd>
+          <dt pn="section-12.1-1.17">Applications that use this media type:</dt>
+          <dd pn="section-12.1-1.18">ALTO servers and
+          ALTO clients either stand alone or are embedded within other
+          applications.</dd>
+          <dt pn="section-12.1-1.19">Fragment identifier considerations:</dt>
+          <dd pn="section-12.1-1.20">N/A</dd>
+          <dt pn="section-12.1-1.21">Additional information:</dt>
+          <dd pn="section-12.1-1.22">
+            <t indent="0" pn="section-12.1-1.22.1"><br/></t>
+            <dl newline="false" spacing="normal" indent="3" pn="section-12.1-1.22.2">
+              <dt pn="section-12.1-1.22.2.1">Deprecated alias names for this type:</dt>
+              <dd pn="section-12.1-1.22.2.2">N/A</dd>
+              <dt pn="section-12.1-1.22.2.3">Magic number(s):</dt>
+              <dd pn="section-12.1-1.22.2.4">N/A</dd>
+              <dt pn="section-12.1-1.22.2.5">File extension(s):</dt>
+              <dd pn="section-12.1-1.22.2.6">RFC 8895 uses the media type
+            to refer to protocol messages and thus does not require a file
+            extension.</dd>
+              <dt pn="section-12.1-1.22.2.7">Macintosh file type code(s):</dt>
+              <dd pn="section-12.1-1.22.2.8">N/A</dd>
+            </dl>
+          </dd>
+          <dt pn="section-12.1-1.23">Person &amp; email address to contact for further information:</dt>
+          <dd pn="section-12.1-1.24">
+          See Authors' Addresses section.</dd>
+          <dt pn="section-12.1-1.25">Intended usage:</dt>
+          <dd pn="section-12.1-1.26">COMMON</dd>
+          <dt pn="section-12.1-1.27">Restrictions on usage:</dt>
+          <dd pn="section-12.1-1.28">N/A</dd>
+          <dt pn="section-12.1-1.29">Author:</dt>
+          <dd pn="section-12.1-1.30">See Authors' Addresses section.</dd>
+          <dt pn="section-12.1-1.31">Change controller:</dt>
+          <dd pn="section-12.1-1.32">Internet Engineering Task Force (mailto:iesg@ietf.org).</dd>
+        </dl>
+      </section>
+      <section anchor="IANA.UpsateStreamControl" numbered="true" removeInRFC="false" toc="include" pn="section-12.2">
+        <name slugifiedName="name-application-alto-updatestrea">application/alto-updatestreamcontrol+json Media Type</name>
+        <dl newline="false" spacing="normal" indent="3" pn="section-12.2-1">
+          <dt pn="section-12.2-1.1">Type name:</dt>
+          <dd pn="section-12.2-1.2">application</dd>
+          <dt pn="section-12.2-1.3">Subtype name:</dt>
+          <dd pn="section-12.2-1.4">alto-updatestreamcontrol+json</dd>
+          <dt pn="section-12.2-1.5">Required parameters:</dt>
+          <dd pn="section-12.2-1.6">N/A</dd>
+          <dt pn="section-12.2-1.7">Optional parameters:</dt>
+          <dd pn="section-12.2-1.8">N/A</dd>
+          <dt pn="section-12.2-1.9">Encoding considerations:</dt>
+          <dd pn="section-12.2-1.10">Encoding considerations are
+          identical to those specified for the "application/json" media type. See
+          <xref target="RFC8259" format="default" sectionFormat="of" derivedContent="RFC8259"/>.</dd>
+          <dt pn="section-12.2-1.11">Security considerations:</dt>
+          <dd pn="section-12.2-1.12">Security considerations relating
+          to the generation and consumption of ALTO Protocol messages are
+          discussed in <xref target="Security" format="default" sectionFormat="of" derivedContent="Section 10"/> of RFC 8895
+          and <xref target="RFC7285" sectionFormat="of" section="15" format="default" derivedLink="https://rfc-editor.org/rfc/rfc7285#section-15" derivedContent="RFC7285"/>.</dd>
+          <dt pn="section-12.2-1.13">Interoperability considerations:</dt>
+          <dd pn="section-12.2-1.14">RFC 8895 specifies
+          format of conforming messages and the interpretation thereof.</dd>
+          <dt pn="section-12.2-1.15">Published specification:</dt>
+          <dd pn="section-12.2-1.16">
+            <xref target="ALTO.SSE.ControlEvents" format="default" sectionFormat="of" derivedContent="Section 5.3"/>
+          of RFC 8895.</dd>
+          <dt pn="section-12.2-1.17">Applications that use this media type:</dt>
+          <dd pn="section-12.2-1.18">ALTO servers and
+          ALTO clients either stand alone or are embedded within other
+          applications.</dd>
+          <dt pn="section-12.2-1.19">Fragment identifier considerations:</dt>
+          <dd pn="section-12.2-1.20">N/A</dd>
+          <dt pn="section-12.2-1.21">Additional information:</dt>
+          <dd pn="section-12.2-1.22">
+            <t indent="0" pn="section-12.2-1.22.1"><br/></t>
+            <dl newline="false" spacing="normal" indent="3" pn="section-12.2-1.22.2">
+              <dt pn="section-12.2-1.22.2.1">Deprecated alias names for this type:</dt>
+              <dd pn="section-12.2-1.22.2.2">N/A</dd>
+              <dt pn="section-12.2-1.22.2.3">Magic number(s):</dt>
+              <dd pn="section-12.2-1.22.2.4">N/A</dd>
+              <dt pn="section-12.2-1.22.2.5">File extension(s):</dt>
+              <dd pn="section-12.2-1.22.2.6">RFC 8895 uses the media type
+            to refer to protocol messages and thus does not require a file
+            extension.</dd>
+              <dt pn="section-12.2-1.22.2.7">Macintosh file type code(s):</dt>
+              <dd pn="section-12.2-1.22.2.8">N/A</dd>
+            </dl>
+          </dd>
+          <dt pn="section-12.2-1.23">Person &amp; email address to contact for further information:</dt>
+          <dd pn="section-12.2-1.24">
+          See Authors' Addresses section.</dd>
+          <dt pn="section-12.2-1.25">Intended usage:</dt>
+          <dd pn="section-12.2-1.26">COMMON</dd>
+          <dt pn="section-12.2-1.27">Restrictions on usage:</dt>
+          <dd pn="section-12.2-1.28">N/A</dd>
+          <dt pn="section-12.2-1.29">Author:</dt>
+          <dd pn="section-12.2-1.30">See Authors' Addresses section.</dd>
+          <dt pn="section-12.2-1.31">Change controller:</dt>
+          <dd pn="section-12.2-1.32">Internet Engineering Task Force (mailto:iesg@ietf.org).</dd>
+        </dl>
+      </section>
+    </section>
+    <section anchor="DesignDecisions" numbered="true" removeInRFC="false" toc="include" pn="section-13">
+      <name slugifiedName="name-appendix-design-decision-no">Appendix: Design Decision: Not Allowing Stream Restart</name>
+      <t indent="0" pn="section-13-1">
+        If an update stream is closed accidentally,
+        when the ALTO client reconnects, the update stream server must
+        resend the full maps.
+        This is clearly inefficient.
+        To avoid that inefficiency,
+        the SSE specification allows an update stream server to assign an id
+        to each event. When an ALTO client reconnects,
+        the ALTO client can present the id of the last successfully
+        received event, and the update stream server restarts with the
+        next event.
+      </t>
+      <t indent="0" pn="section-13-2">
+        However, that mechanism adds additional complexity.
+        The update stream server must save SSE messages in a buffer
+        in case ALTO clients reconnect.
+        But that mechanism will never be perfect:
+        If the ALTO client waits too long to reconnect
+        or if the ALTO client sends an invalid ID,
+        then the update stream server will have to resend the complete maps anyway.
+      </t>
+      <t indent="0" pn="section-13-3">
+        Furthermore, this is unlikely to be a problem in practice.
+        ALTO clients who want continuous updates for large resources,
+        such as full network and cost maps,
+        are likely to be things like P2P trackers.
+        These ALTO clients will be well connected to the network;
+        they will rarely drop connections.
+      </t>
+      <t indent="0" pn="section-13-4">
+        Mobile devices certainly can and do drop connections
+        and will have to reconnect.
+        But mobile devices will not need continuous updates
+        for multi-megabyte cost maps.
+        If mobile devices need continuous updates at all,
+        they will need them for small queries,
+        such as the costs from a small set of media servers
+        from which the device can stream the currently playing movie.
+        If the mobile device drops the connection and reestablishes the update stream,
+        the update stream server will have to retransmit only a small amount
+        of redundant data.
+      </t>
+      <t indent="0" pn="section-13-5">
+        In short, using event ids to avoid resending the full map
+        adds a considerable amount of complexity to avoid a situation that
+        is very rare. The complexity is not worth the benefit.
+      </t>
+      <t indent="0" pn="section-13-6">
+        The update stream service does allow the ALTO client
+        to specify the tag of the last received version of any tagged
+        resource, and if that is still current, the update stream server need not
+        retransmit the full resource.
+        Hence, ALTO clients can use this to avoid retransmitting full network maps.
+        Cost maps are not tagged, so this will not work for them.
+        Of course, the ALTO protocol could be extended by adding version tags
+        to cost maps, which would solve the retransmission-on-reconnect problem.
+        However, adding tags to cost maps might add a new set of complications.
+      </t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-14">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-14.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC2387" target="https://www.rfc-editor.org/info/rfc2387" quoteTitle="true" derivedAnchor="RFC2387">
+          <front>
+            <title>The MIME Multipart/Related Content-type</title>
+            <author initials="E." surname="Levinson" fullname="E. Levinson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1998" month="August"/>
+            <abstract>
+              <t indent="0">This document defines the Multipart/Related content-type and provides examples of its use.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="2387"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2387"/>
+        </reference>
+        <reference anchor="RFC3986" target="https://www.rfc-editor.org/info/rfc3986" quoteTitle="true" derivedAnchor="RFC3986">
+          <front>
+            <title>Uniform Resource Identifier (URI): Generic Syntax</title>
+            <author initials="T." surname="Berners-Lee" fullname="T. Berners-Lee">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Fielding" fullname="R. Fielding">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="L." surname="Masinter" fullname="L. Masinter">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2005" month="January"/>
+            <abstract>
+              <t indent="0">A Uniform Resource Identifier (URI) is a compact sequence of characters that identifies an abstract or physical resource.  This specification defines the generic URI syntax and a process for resolving URI references that might be in relative form, along with guidelines and security considerations for the use of URIs on the Internet.  The URI syntax defines a grammar that is a superset of all valid URIs, allowing an implementation to parse the common components of a URI reference without knowing the scheme-specific requirements of every possible identifier.  This specification does not define a generative grammar for URIs; that task is performed by the individual specifications of each URI scheme.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="66"/>
+          <seriesInfo name="RFC" value="3986"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3986"/>
+        </reference>
+        <reference anchor="RFC6838" target="https://www.rfc-editor.org/info/rfc6838" quoteTitle="true" derivedAnchor="RFC6838">
+          <front>
+            <title>Media Type Specifications and Registration Procedures</title>
+            <author initials="N." surname="Freed" fullname="N. Freed">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Klensin" fullname="J. Klensin">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Hansen" fullname="T. Hansen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="January"/>
+            <abstract>
+              <t indent="0">This document defines procedures for the specification and registration of media types for use in HTTP, MIME, and other Internet protocols.  This memo documents an Internet Best Current Practice.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="13"/>
+          <seriesInfo name="RFC" value="6838"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6838"/>
+        </reference>
+        <reference anchor="RFC6902" target="https://www.rfc-editor.org/info/rfc6902" quoteTitle="true" derivedAnchor="RFC6902">
+          <front>
+            <title>JavaScript Object Notation (JSON) Patch</title>
+            <author initials="P." surname="Bryan" fullname="P. Bryan" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Nottingham" fullname="M. Nottingham" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2013" month="April"/>
+            <abstract>
+              <t indent="0">JSON Patch defines a JSON document structure for expressing a sequence of operations to apply to a JavaScript Object Notation (JSON) document; it is suitable for use with the HTTP PATCH method. The "application/json-patch+json" media type is used to identify such patch documents.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6902"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6902"/>
+        </reference>
+        <reference anchor="RFC7285" target="https://www.rfc-editor.org/info/rfc7285" quoteTitle="true" derivedAnchor="RFC7285">
+          <front>
+            <title>Application-Layer Traffic Optimization (ALTO) Protocol</title>
+            <author initials="R." surname="Alimi" fullname="R. Alimi" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Penno" fullname="R. Penno" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="Y." surname="Yang" fullname="Y. Yang" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kiesel" fullname="S. Kiesel">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Previdi" fullname="S. Previdi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Roome" fullname="W. Roome">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Shalunov" fullname="S. Shalunov">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Woundy" fullname="R. Woundy">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="September"/>
+            <abstract>
+              <t indent="0">Applications using the Internet already have access to some topology information of Internet Service Provider (ISP) networks.  For example, views to Internet routing tables at Looking Glass servers are available and can be practically downloaded to many network application clients.  What is missing is knowledge of the underlying network topologies from the point of view of ISPs.  In other words, what an ISP prefers in terms of traffic optimization -- and a way to distribute it.</t>
+              <t indent="0">The Application-Layer Traffic Optimization (ALTO) services defined in this document provide network information (e.g., basic network location structure and preferences of network paths) with the goal of modifying network resource consumption patterns while maintaining or improving application performance.  The basic information of ALTO is based on abstract maps of a network.  These maps provide a simplified view, yet enough information about a network for applications to effectively utilize them.  Additional services are built on top of the maps.</t>
+              <t indent="0">This document describes a protocol implementing the ALTO services. Although the ALTO services would primarily be provided by ISPs, other entities, such as content service providers, could also provide ALTO services.  Applications that could use the ALTO services are those that have a choice to which end points to connect.  Examples of such applications are peer-to-peer (P2P) and content delivery networks.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7285"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7285"/>
+        </reference>
+        <reference anchor="RFC7396" target="https://www.rfc-editor.org/info/rfc7396" quoteTitle="true" derivedAnchor="RFC7396">
+          <front>
+            <title>JSON Merge Patch</title>
+            <author initials="P." surname="Hoffman" fullname="P. Hoffman">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Snell" fullname="J. Snell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="October"/>
+            <abstract>
+              <t indent="0">This specification defines the JSON merge patch format and processing rules.  The merge patch format is primarily intended for use with the HTTP PATCH method as a means of describing a set of modifications to a target resource's content.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7396"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7396"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259" quoteTitle="true" derivedAnchor="RFC8259">
+          <front>
+            <title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author initials="T." surname="Bray" fullname="T. Bray" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="December"/>
+            <abstract>
+              <t indent="0">JavaScript Object Notation (JSON) is a lightweight, text-based, language-independent data interchange format.  It was derived from the ECMAScript Programming Language Standard.  JSON defines a small set of formatting rules for the portable representation of structured data.</t>
+              <t indent="0">This document removes inconsistencies with other specifications of JSON, repairs specification errors, and offers experience-based interoperability guidance.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8259"/>
+        </reference>
+        <reference anchor="SSE" target="https://www.w3.org/TR/eventsource/" quoteTitle="true" derivedAnchor="SSE">
+          <front>
+            <title>Server-Sent Events</title>
+            <author initials="I." surname="Hickson" fullname="Ian Hickson"/>
+            <date month="February" year="2015"/>
+          </front>
+          <refcontent>W3C Recommendation</refcontent>
+        </reference>
+      </references>
+      <references pn="section-14.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC4960" target="https://www.rfc-editor.org/info/rfc4960" quoteTitle="true" derivedAnchor="RFC4960">
+          <front>
+            <title>Stream Control Transmission Protocol</title>
+            <author initials="R." surname="Stewart" fullname="R. Stewart" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2007" month="September"/>
+            <abstract>
+              <t indent="0">This document obsoletes RFC 2960 and RFC 3309.  It describes the Stream Control Transmission Protocol (SCTP).  SCTP is designed to transport Public Switched Telephone Network (PSTN) signaling messages over IP networks, but is capable of broader applications.</t>
+              <t indent="0">SCTP is a reliable transport protocol operating on top of a connectionless packet network such as IP.  It offers the following services to its users:</t>
+              <t indent="0">--  acknowledged error-free non-duplicated transfer of user data,</t>
+              <t indent="0">--  data fragmentation to conform to discovered path MTU size,</t>
+              <t indent="0">--  sequenced delivery of user messages within multiple streams, with an option for order-of-arrival delivery of individual user messages,</t>
+              <t indent="0">--  optional bundling of multiple user messages into a single SCTP packet, and</t>
+              <t indent="0">--  network-level fault tolerance through supporting of multi-homing at either or both ends of an association.</t>
+              <t indent="0"> The design of SCTP includes appropriate congestion avoidance behavior and resistance to flooding and masquerade attacks.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="4960"/>
+          <seriesInfo name="DOI" value="10.17487/RFC4960"/>
+        </reference>
+        <reference anchor="RFC5789" target="https://www.rfc-editor.org/info/rfc5789" quoteTitle="true" derivedAnchor="RFC5789">
+          <front>
+            <title>PATCH Method for HTTP</title>
+            <author initials="L." surname="Dusseault" fullname="L. Dusseault">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Snell" fullname="J. Snell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2010" month="March"/>
+            <abstract>
+              <t indent="0">Several applications extending the Hypertext Transfer Protocol (HTTP) require a feature to do partial resource modification.  The existing HTTP PUT method only allows a complete replacement of a document. This proposal adds a new HTTP method, PATCH, to modify an existing HTTP resource.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5789"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5789"/>
+        </reference>
+        <reference anchor="RFC7230" target="https://www.rfc-editor.org/info/rfc7230" quoteTitle="true" derivedAnchor="RFC7230">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Message Syntax and Routing</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless application-level protocol for distributed, collaborative, hypertext information systems.  This document provides an overview of HTTP architecture and its associated terminology, defines the "http" and "https" Uniform Resource Identifier (URI) schemes, defines the HTTP/1.1 message syntax and parsing requirements, and describes related security concerns for implementations.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7230"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7230"/>
+        </reference>
+        <reference anchor="RFC7231" target="https://www.rfc-editor.org/info/rfc7231" quoteTitle="true" derivedAnchor="RFC7231">
+          <front>
+            <title>Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content</title>
+            <author initials="R." surname="Fielding" fullname="R. Fielding" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="J." surname="Reschke" fullname="J. Reschke" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2014" month="June"/>
+            <abstract>
+              <t indent="0">The Hypertext Transfer Protocol (HTTP) is a stateless \%application- level protocol for distributed, collaborative, hypertext information systems.  This document defines the semantics of HTTP/1.1 messages, as expressed by request methods, request header fields, response status codes, and response header fields, along with the payload of messages (metadata and body content) and mechanisms for content negotiation.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7231"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7231"/>
+        </reference>
+        <reference anchor="RFC7540" target="https://www.rfc-editor.org/info/rfc7540" quoteTitle="true" derivedAnchor="RFC7540">
+          <front>
+            <title>Hypertext Transfer Protocol Version 2 (HTTP/2)</title>
+            <author initials="M." surname="Belshe" fullname="M. Belshe">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Peon" fullname="R. Peon">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Thomson" fullname="M. Thomson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2015" month="May"/>
+            <abstract>
+              <t indent="0">This specification describes an optimized expression of the semantics of the Hypertext Transfer Protocol (HTTP), referred to as HTTP version 2 (HTTP/2).  HTTP/2 enables a more efficient use of network resources and a reduced perception of latency by introducing header field compression and allowing multiple concurrent exchanges on the same connection.  It also introduces unsolicited push of representations from servers to clients.</t>
+              <t indent="0">This specification is an alternative to, but does not obsolete, the HTTP/1.1 message syntax.  HTTP's existing semantics remain unchanged.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7540"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7540"/>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" anchor="Acknowledgments" removeInRFC="false" toc="include" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t indent="0" pn="section-appendix.a-1">Thank you to <contact fullname="Dawn Chen"/> (Tongji University),
+      <contact fullname="Shawn Lin"/> (Tongji University), and <contact fullname="Xiao Shi"/> (Yale University) for their contributions to an
+      earlier version of this document.</t>
+    </section>
+    <section numbered="false" anchor="Contributors" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-contributors">Contributors</name>
+      <t indent="0" pn="section-appendix.b-1">Sections <xref target="Terms" format="counter" sectionFormat="of" derivedContent="2"/>, <xref target="ALTO.SSE.EventFormat" format="counter" sectionFormat="of" derivedContent="5.1"/>, <xref target="ALTO.SSE.UpdateEvents" format="counter" sectionFormat="of" derivedContent="5.2"/>, and <xref target="Multipart.Example" format="counter" sectionFormat="of" derivedContent="8.5"/>
+      of this document are based on contributions from <contact fullname="Jingxuan Jensen Zhang"/>, and he is considered an author.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.c">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="W." surname="Roome" fullname="Wendy Roome">
+        <organization abbrev="Nokia Bell Labs" showOnFrontPage="true">Nokia Bell Labs (Retired)</organization>
+        <address>
+          <postal>
+            <street>124 Burlington Rd</street>
+            <city>Murray Hill</city>
+            <region>NJ</region>
+            <code>07974</code>
+            <country>United States of America</country>
+          </postal>
+          <phone>+1-908-464-6975</phone>
+          <email>wendy@wdroome.com</email>
+        </address>
+      </author>
+      <author fullname="Y. Richard Yang" initials="Y." surname="Yang">
+        <organization showOnFrontPage="true">Yale University</organization>
+        <address>
+          <postal>
+            <street>51 Prospect St</street>
+            <city>New Haven</city>
+            <region>CT</region>
+            <country>United States of America</country>
+          </postal>
+          <email>yry@cs.yale.edu</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

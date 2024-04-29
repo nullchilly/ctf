@@ -1,0 +1,1142 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-sidrops-6486bis-11" indexInclude="true" ipr="trust200902" number="9286" obsoletes="6486" prepTime="2022-06-30T13:02:13" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-sidrops-6486bis-11" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc9286" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="RPKI Manifests">Manifests for the Resource Public Key Infrastructure (RPKI)</title>
+    <seriesInfo name="RFC" value="9286" stream="IETF"/>
+    <author initials="R." surname="Austein" fullname="Rob Austein">
+      <organization showOnFrontPage="true">Arrcus, Inc.</organization>
+      <address>
+        <email>sra@hactrn.net</email>
+      </address>
+    </author>
+    <author initials="G." surname="Huston" fullname="Geoff Huston">
+      <organization showOnFrontPage="true">APNIC</organization>
+      <address>
+        <postal>
+          <street>6 Cordelia St</street>
+          <city>South Brisbane</city>
+          <code>QLD 4101</code>
+          <country>Australia</country>
+        </postal>
+        <email>gih@apnic.net</email>
+      </address>
+    </author>
+    <author initials="S." surname="Kent" fullname="Stephen Kent">
+      <organization showOnFrontPage="true">Independent</organization>
+      <address>
+        <email>kent@alum.mit.edu</email>
+      </address>
+    </author>
+    <author initials="M." surname="Lepinski" fullname="Matt Lepinski">
+      <organization showOnFrontPage="true">New College Florida</organization>
+      <address>
+        <postal>
+          <street>5800 Bay Shore Rd.</street>
+          <city>Sarasota</city>
+          <region>FL</region>
+          <code>34243</code>
+          <country>United States of America</country>
+        </postal>
+        <email>mlepinski@ncf.edu</email>
+      </address>
+    </author>
+    <date month="06" year="2022"/>
+    <area>ops</area>
+    <workgroup>sidrops</workgroup>
+    <abstract pn="section-abstract">
+      <t indent="0" pn="section-abstract-1">
+   This document defines a "manifest" for use in the Resource Public Key Infrastructure (RPKI).
+   A manifest is a signed object (file) that contains a listing of all the signed objects (files) in the repository publication point (directory) associated with an authority responsible for publishing in the repository.
+   For each certificate, Certificate Revocation List (CRL), or other type of signed objects issued by the authority that are published at this repository publication point, the manifest contains both the name of the file containing the object and a hash of the file content.
+   Manifests are intended to enable a relying party (RP) to detect certain forms of attacks against a repository.
+   Specifically, if an RP checks a manifest's contents against the signed objects retrieved from a repository publication point, then the RP can detect replay attacks, and unauthorized in-flight modification or deletion of signed objects.
+   This document obsoletes RFC 6486.
+      </t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t indent="0" pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t indent="0" pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc9286" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t indent="0" pn="section-boilerplate.2-1">
+            Copyright (c) 2022 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t indent="0" pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t indent="0" keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t indent="0" keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-scope">Manifest Scope</xref></t>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t indent="0" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-signing">Manifest Signing</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t indent="0" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-definition">Manifest Definition</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2">
+              <li pn="section-toc.1-1.4.2.1">
+                <t indent="0" pn="section-toc.1-1.4.2.1.1"><xref derivedContent="4.1" format="counter" sectionFormat="of" target="section-4.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-econtenttype">eContentType</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.2">
+                <t indent="0" pn="section-toc.1-1.4.2.2.1"><xref derivedContent="4.2" format="counter" sectionFormat="of" target="section-4.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-econtent">eContent</xref></t>
+                <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.4.2.2.2">
+                  <li pn="section-toc.1-1.4.2.2.2.1">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.1.1"><xref derivedContent="4.2.1" format="counter" sectionFormat="of" target="section-4.2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest">Manifest</xref></t>
+                  </li>
+                  <li pn="section-toc.1-1.4.2.2.2.2">
+                    <t indent="0" pn="section-toc.1-1.4.2.2.2.2.1"><xref derivedContent="4.2.2" format="counter" sectionFormat="of" target="section-4.2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-names-in-fileandhash-object">Names in FileAndHash Objects</xref></t>
+                  </li>
+                </ul>
+              </li>
+              <li pn="section-toc.1-1.4.2.3">
+                <t indent="0" pn="section-toc.1-1.4.2.3.1"><xref derivedContent="4.3" format="counter" sectionFormat="of" target="section-4.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-content-type-attribute">Content-Type Attribute</xref></t>
+              </li>
+              <li pn="section-toc.1-1.4.2.4">
+                <t indent="0" pn="section-toc.1-1.4.2.4.1"><xref derivedContent="4.4" format="counter" sectionFormat="of" target="section-4.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-validation">Manifest Validation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t indent="0" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-generation">Manifest Generation</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t indent="0" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-generation-procedu">Manifest Generation Procedure</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t indent="0" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-considerations-for-manifest">Considerations for Manifest Generation</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t indent="0" pn="section-toc.1-1.6.1"><xref derivedContent="6" format="counter" sectionFormat="of" target="section-6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-relying-party-processing-of">Relying Party Processing of Manifests</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.6.2">
+              <li pn="section-toc.1-1.6.2.1">
+                <t indent="0" pn="section-toc.1-1.6.2.1.1"><xref derivedContent="6.1" format="counter" sectionFormat="of" target="section-6.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-manifest-processing-overvie">Manifest Processing Overview</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.2">
+                <t indent="0" pn="section-toc.1-1.6.2.2.1"><xref derivedContent="6.2" format="counter" sectionFormat="of" target="section-6.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-acquiring-a-manifest-for-a-">Acquiring a Manifest for a CA</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.3">
+                <t indent="0" pn="section-toc.1-1.6.2.3.1"><xref derivedContent="6.3" format="counter" sectionFormat="of" target="section-6.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-detecting-stale-and-or-prem">Detecting Stale and/or Prematurely Issued Manifests</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.4">
+                <t indent="0" pn="section-toc.1-1.6.2.4.1"><xref derivedContent="6.4" format="counter" sectionFormat="of" target="section-6.4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-acquiring-files-referenced-">Acquiring Files Referenced by a Manifest</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.5">
+                <t indent="0" pn="section-toc.1-1.6.2.5.1"><xref derivedContent="6.5" format="counter" sectionFormat="of" target="section-6.5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-matching-file-names-and-has">Matching File Names and Hashes</xref></t>
+              </li>
+              <li pn="section-toc.1-1.6.2.6">
+                <t indent="0" pn="section-toc.1-1.6.2.6.1"><xref derivedContent="6.6" format="counter" sectionFormat="of" target="section-6.6"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-failed-fetches">Failed Fetches</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t indent="0" pn="section-toc.1-1.7.1"><xref derivedContent="7" format="counter" sectionFormat="of" target="section-7"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-publication-repositories">Publication Repositories</xref></t>
+          </li>
+          <li pn="section-toc.1-1.8">
+            <t indent="0" pn="section-toc.1-1.8.1"><xref derivedContent="8" format="counter" sectionFormat="of" target="section-8"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.9">
+            <t indent="0" pn="section-toc.1-1.9.1"><xref derivedContent="9" format="counter" sectionFormat="of" target="section-9"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.10">
+            <t indent="0" pn="section-toc.1-1.10.1"><xref derivedContent="10" format="counter" sectionFormat="of" target="section-10"/>. <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.10.2">
+              <li pn="section-toc.1-1.10.2.1">
+                <t indent="0" pn="section-toc.1-1.10.2.1.1"><xref derivedContent="10.1" format="counter" sectionFormat="of" target="section-10.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.10.2.2">
+                <t indent="0" pn="section-toc.1-1.10.2.2.1"><xref derivedContent="10.2" format="counter" sectionFormat="of" target="section-10.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.11">
+            <t indent="0" pn="section-toc.1-1.11.1"><xref derivedContent="Appendix A" format="default" sectionFormat="of" target="section-appendix.a"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-asn1-module">ASN.1 Module</xref></t>
+          </li>
+          <li pn="section-toc.1-1.12">
+            <t indent="0" pn="section-toc.1-1.12.1"><xref derivedContent="Appendix B" format="default" sectionFormat="of" target="section-appendix.b"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-changes-since-rfc-6486">Changes since RFC 6486</xref></t>
+          </li>
+          <li pn="section-toc.1-1.13">
+            <t indent="0" pn="section-toc.1-1.13.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.c"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgements">Acknowledgements</xref></t>
+          </li>
+          <li pn="section-toc.1-1.14">
+            <t indent="0" pn="section-toc.1-1.14.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.d"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="sect-1" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t indent="0" pn="section-1-1">
+   The Resource Public Key Infrastructure (RPKI) <xref target="RFC6480" format="default" sectionFormat="of" derivedContent="RFC6480"/> makes use of a distributed repository system <xref target="RFC6481" format="default" sectionFormat="of" derivedContent="RFC6481"/> to make available a variety of objects needed by relying parties (RPs).
+   Because all of the objects stored in the repository system are digitally signed by the entities that created them, attacks that modify these published objects are detectable by RPs.
+   However, digital signatures alone provide no protection against attacks that substitute "stale" versions of signed objects (i.e., objects that were valid and have not yet expired, but have since been superseded), or in-flight attacks that remove an object that should be present in the repository.
+   To assist in the detection of such attacks, RPKI repository systems make use of a signed object called a "manifest".
+      </t>
+      <t indent="0" pn="section-1-2">
+    A manifest is a signed object that enumerates all the signed objects (files) in the repository publication point (directory) that are associated with an authority responsible for publishing at that publication point.
+    Each manifest contains both the name of the file containing the object and a hash of the file content, for every signed object issued by an authority that is published at the authority's repository publication point.
+    A manifest is intended to allow an RP to detect unauthorized object removal or the substitution of stale versions of objects at a publication point.
+    A manifest also is intended to allow an RP to detect similar outcomes that may result from an on-path attack during the retrieval of objects from the repository.
+    Manifests are intended to be used in Certification Authority (CA) publication points in repositories (directories containing files that are subordinate certificates and Certificate Revocation Lists (CRLs) issued by this CA and other signed objects that are verified by End-Entity (EE) certificates issued by this CA).
+      </t>
+      <t indent="0" pn="section-1-3">
+   Manifests are modeled on CRLs, as the issues involved in detecting
+   stale manifests and potential attacks using manifest replays, etc.,
+   are similar to those for CRLs.  The syntax of the manifest payload
+   differs from CRLs, since RPKI repositories contain objects not
+   covered by CRLs, e.g., digitally signed objects, such as Route
+   Origin Authorizations (ROAs) <xref target="RFC6482" format="default" sectionFormat="of" derivedContent="RFC6482"/>.</t>
+      <t indent="0" pn="section-1-4">This document obsoletes <xref target="RFC6486" format="default" sectionFormat="of" derivedContent="RFC6486"/>.</t>
+      <section anchor="sect-1.1" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t indent="0" pn="section-1.1-1">The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+        "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>",
+        "<bcp14>SHALL NOT</bcp14>", "<bcp14>SHOULD</bcp14>",
+        "<bcp14>SHOULD NOT</bcp14>",
+        "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+        "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document
+        are to be interpreted as described in BCP 14
+        <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only
+        when, they appear in all capitals, as shown here.</t>
+      </section>
+    </section>
+    <section anchor="sect-2" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-manifest-scope">Manifest Scope</name>
+      <t indent="0" pn="section-2-1">
+   A manifest associated with a CA's repository publication point
+   contains a list of:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-2-2">
+        <li pn="section-2-2.1">the set of (non-expired, non-revoked) certificates issued and
+      published by this CA,</li>
+        <li pn="section-2-2.2">the most recent CRL issued by this CA, and</li>
+        <li pn="section-2-2.3">all published signed objects that are verifiable using EE
+      certificates <xref target="RFC6487" format="default" sectionFormat="of" derivedContent="RFC6487"/> issued by this CA (other than the manifest itself).</li>
+      </ul>
+      <t indent="0" pn="section-2-3">
+   Every RPKI signed object includes, in the Cryptographic Message
+   Syntax (CMS) <xref target="RFC5652" format="default" sectionFormat="of" derivedContent="RFC5652"/> wrapper of the object, the EE certificate used
+   to verify it <xref target="RFC6488" format="default" sectionFormat="of" derivedContent="RFC6488"/>.  Thus, there is no requirement to separately
+   publish that EE certificate at the CA's repository publication point.</t>
+      <t indent="0" pn="section-2-4">
+   Where multiple CA instances share a common publication point, as can
+   occur when a CA performs a key-rollover operation <xref target="RFC6489" format="default" sectionFormat="of" derivedContent="RFC6489"/>, the
+   repository publication point will contain multiple manifests.  In
+   this case, each manifest describes only the collection of published
+   products of its associated CA instance.</t>
+    </section>
+    <section anchor="sect-3" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-manifest-signing">Manifest Signing</name>
+      <t indent="0" pn="section-3-1">
+   A CA's manifest is verified using an EE certificate.  The
+   SubjectInfoAccess (SIA) field of this EE certificate contains the
+   accessMethod Object Identifier (OID) of id-ad-signedObject.</t>
+      <t indent="0" pn="section-3-2">
+   The CA <bcp14>MUST</bcp14> sign only one manifest with each generated private key and <bcp14>MUST</bcp14> generate a new key pair for each new version of the manifest.
+   An associated EE certificate used in this fashion is termed a "one-time-use" EE certificate (see <xref target="RFC6487" sectionFormat="of" section="3" format="default" derivedLink="https://rfc-editor.org/rfc/rfc6487#section-3" derivedContent="RFC6487"/>).</t>
+    </section>
+    <section anchor="sect-4" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-manifest-definition">Manifest Definition</name>
+      <t indent="0" pn="section-4-1">
+   A manifest is an RPKI signed object, as specified in <xref target="RFC6488" format="default" sectionFormat="of" derivedContent="RFC6488"/>.  The
+   RPKI signed object template requires specification of the following
+   data elements in the context of the manifest structure.</t>
+      <section anchor="sect-4.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.1">
+        <name slugifiedName="name-econtenttype">eContentType</name>
+        <t indent="0" pn="section-4.1-1">
+   The eContentType for a manifest is defined as id-ct-rpkiManifest and
+   has the numerical OID of 1.2.840.113549.1.9.16.1.26.</t>
+        <sourcecode type="asn.1" markers="false" pn="section-4.1-2">
+   id-smime OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840)
+                             rsadsi(113549) pkcs(1) pkcs9(9) 16 }
+
+   id-ct OBJECT IDENTIFIER ::= { id-smime 1 }
+
+   id-ct-rpkiManifest OBJECT IDENTIFIER ::= { id-ct 26 }
+</sourcecode>
+      </section>
+      <section anchor="sect-4.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.2">
+        <name slugifiedName="name-econtent">eContent</name>
+        <t indent="0" pn="section-4.2-1">
+   The content of a manifest is ASN.1 encoded using the Distinguished
+   Encoding Rules (DER) <xref target="X.690" format="default" sectionFormat="of" derivedContent="X.690"/>.  The content of a manifest is defined
+   as follows:</t>
+        <sourcecode type="asn.1" markers="false" pn="section-4.2-2">
+    Manifest ::= SEQUENCE {
+     version     [0] INTEGER DEFAULT 0,
+     manifestNumber  INTEGER (0..MAX),
+     thisUpdate      GeneralizedTime,
+     nextUpdate      GeneralizedTime,
+     fileHashAlg     OBJECT IDENTIFIER,
+     fileList        SEQUENCE SIZE (0..MAX) OF FileAndHash
+     }
+
+   FileAndHash ::=     SEQUENCE {
+     file            IA5String,
+     hash            BIT STRING
+  }
+</sourcecode>
+        <section anchor="sect-4.2.1" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.1">
+          <name slugifiedName="name-manifest">Manifest</name>
+          <t indent="0" pn="section-4.2.1-1">
+   The manifestNumber, thisUpdate, and nextUpdate fields are modeled
+   after the corresponding fields in X.509 CRLs (see <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/>).
+   Analogous to CRLs, a manifest is nominally current until the time
+   specified in nextUpdate or until a manifest is issued with a greater
+   manifest number, whichever comes first.</t>
+          <t indent="0" pn="section-4.2.1-2">
+   Because a "one-time-use" EE certificate is employed to verify a manifest, the EE certificate <bcp14>MUST</bcp14> be issued with a validity period that coincides with the interval from thisUpdate to nextUpdate in the manifest, to prevent needless growth of the CA's CRL.
+          </t>
+          <t indent="0" pn="section-4.2.1-3">
+   The data elements of the manifest structure are defined as follows:</t>
+          <dl newline="true" spacing="normal" indent="3" pn="section-4.2.1-4">
+            <dt pn="section-4.2.1-4.1">version:</dt>
+            <dd pn="section-4.2.1-4.2">
+	The version number of this version of the manifest specification
+      <bcp14>MUST</bcp14> be 0.
+	</dd>
+            <dt pn="section-4.2.1-4.3">manifestNumber:</dt>
+            <dd pn="section-4.2.1-4.4">
+              <t indent="0" pn="section-4.2.1-4.4.1">
+	This field is an integer that is incremented (by 1) each time a new
+      manifest is issued for a given publication point.  This field
+      allows an RP to detect gaps in a sequence of published manifests.
+              </t>
+              <t indent="0" pn="section-4.2.1-4.4.2">
+      As the manifest is modeled on the CRL specification, the manifestNumber is analogous to the CRLNumber, and the guidance in <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/> for CRLNumber values is appropriate as to the range of number values that can be used for the manifestNumber.
+      Manifest numbers can be expected to contain long integers.
+      Manifest verifiers <bcp14>MUST</bcp14> be able to process number values up to 20 octets.
+      Conforming manifest issuers <bcp14>MUST NOT</bcp14> use number values longer than 20 octets.
+      The issuer <bcp14>MUST</bcp14> increase the value of this field monotonically for each newly generated manifest.
+      Each RP <bcp14>MUST</bcp14> verify that a purported "new" manifest contains a higher manifestNumber than previously validated manifests.
+      If the purported "new" manifest contains a manifestNumber value equal to or lower than manifestNumber values of previously validated manifests, the RP <bcp14>SHOULD</bcp14> use locally cached versions of objects, as described in <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.
+              </t>
+            </dd>
+            <dt pn="section-4.2.1-4.5">thisUpdate:</dt>
+            <dd pn="section-4.2.1-4.6">
+      This field contains the time when the manifest was created.
+      This field has the same format constraints as specified in <xref target="RFC5280" format="default" sectionFormat="of" derivedContent="RFC5280"/> for the CRL field of the same name.
+      The issuer <bcp14>MUST</bcp14> ensure that the value of this field is more recent than any previously generated manifest.
+      Each RP <bcp14>MUST</bcp14> verify that this field value is greater (more recent) than the most recent manifest it has validated.
+      If this field in a purported "new" manifest is smaller (less recent) than previously validated manifests, the RP <bcp14>SHOULD</bcp14> use locally cached versions of objects, as described in <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.
+	</dd>
+            <dt pn="section-4.2.1-4.7">nextUpdate:</dt>
+            <dd pn="section-4.2.1-4.8">
+              <t indent="0" pn="section-4.2.1-4.8.1">
+	This field contains the time at which the next scheduled manifest
+      will be issued.  The value of nextUpdate <bcp14>MUST</bcp14> be later than the
+      value of thisUpdate.  The specification of the GeneralizedTime
+      value is the same as required for the thisUpdate field.
+              </t>
+              <t indent="0" pn="section-4.2.1-4.8.2">
+	If the authority alters any of the items that it has published in
+      the repository publication point, then the authority <bcp14>MUST</bcp14> issue a
+      new manifest. Even if no changes are made to objects at a 
+      publication point, a new manifest <bcp14>MUST</bcp14> be issued before the nextUpdate 
+      time. Each manifest encompasses a CRL, and the nextUpdate field of the manifest <bcp14>SHOULD</bcp14> match
+      that of the CRL's nextUpdate field, as the manifest will be reissued when a new CRL is published. 
+      When a new manifest is issued before the time specified in nextUpdate of the
+      current manifest, the CA <bcp14>MUST</bcp14> also issue a new CRL that revokes
+      the EE certificate corresponding to the old manifest.
+              </t>
+            </dd>
+            <dt pn="section-4.2.1-4.9">fileHashAlg:</dt>
+            <dd pn="section-4.2.1-4.10">
+	This field contains the OID of the hash algorithm used to hash the
+      files that the authority has placed into the repository.  The hash
+      algorithm used <bcp14>MUST</bcp14> conform to the RPKI Algorithms and Key Size
+      Profile specification <xref target="RFC7935" format="default" sectionFormat="of" derivedContent="RFC7935"/>.
+	</dd>
+            <dt pn="section-4.2.1-4.11">fileList:</dt>
+            <dd pn="section-4.2.1-4.12">
+	This field is a sequence of FileAndHash objects.  There is one
+      FileAndHash entry for each currently valid signed object that has
+      been published by the authority (at this publication point).  Each
+      FileAndHash is an ordered pair consisting of the name of the file
+      in the repository publication point (directory) that contains the
+      object in question and a hash of the file's contents.
+	</dd>
+          </dl>
+        </section>
+        <section anchor="sect-4.2.2" numbered="true" toc="include" removeInRFC="false" pn="section-4.2.2">
+          <name slugifiedName="name-names-in-fileandhash-object">Names in FileAndHash Objects</name>
+          <t indent="0" pn="section-4.2.2-1">
+   Names that appear in the fileList <bcp14>MUST</bcp14> consist of one or more
+   characters chosen from the set a-z, A-Z, 0-9, - (HYPHEN), or _ (UNDERSCORE), followed by a single . (DOT), followed by a three-
+   letter extension.  The extension <bcp14>MUST</bcp14> be one of those enumerated in
+   the "RPKI Repository Name Schemes" registry maintained by IANA
+   <xref target="IANA-NAMING" format="default" sectionFormat="of" derivedContent="IANA-NAMING"/>.</t>
+          <t indent="0" pn="section-4.2.2-2">
+   As an example, 'vixxBTS_TVXQ-2pmGOT7.cer' is a valid file name.</t>
+          <t indent="0" pn="section-4.2.2-3">
+   The example above contains a mix of uppercase and lowercase characters in the file name. CAs and RPs <bcp14>MUST</bcp14> be able to perform filesystem operations in a case-sensitive, case-preserving manner.</t>
+        </section>
+      </section>
+      <section anchor="sect-4.3" numbered="true" toc="include" removeInRFC="false" pn="section-4.3">
+        <name slugifiedName="name-content-type-attribute">Content-Type Attribute</name>
+        <t indent="0" pn="section-4.3-1">
+   The mandatory content-type attribute <bcp14>MUST</bcp14> have its attrValues field
+   set to the same OID as eContentType.  This OID is id-ct-rpkiManifest
+   and has the numerical value of 1.2.840.113549.1.9.16.1.26.</t>
+      </section>
+      <section anchor="sect-4.4" numbered="true" toc="include" removeInRFC="false" pn="section-4.4">
+        <name slugifiedName="name-manifest-validation">Manifest Validation</name>
+        <t indent="0" pn="section-4.4-1">
+   To determine whether a manifest is valid, the RP <bcp14>MUST</bcp14> perform the
+   following checks in addition to those specified in <xref target="RFC6488" format="default" sectionFormat="of" derivedContent="RFC6488"/>:</t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-4.4-2"><li pn="section-4.4-2.1" derivedCounter="1.">The eContentType in the EncapsulatedContentInfo is id-ad-
+       rpkiManifest (OID 1.2.840.113549.1.9.16.1.26).</li>
+          <li pn="section-4.4-2.2" derivedCounter="2.">The version of the rpkiManifest is 0.</li>
+          <li pn="section-4.4-2.3" derivedCounter="3.">In the rpkiManifest, thisUpdate precedes nextUpdate.</li>
+        </ol>
+        <t indent="0" pn="section-4.4-3">Note: Although the thisUpdate and nextUpdate fields in the manifest eContent <bcp14>MUST</bcp14> match the corresponding fields in the CRL associated with the manifest, RPs <bcp14>MUST NOT</bcp14> reject a manifest solely because these fields are not identical.</t>
+        <t indent="0" pn="section-4.4-4">
+   If the above procedure indicates that the manifest is invalid, then
+   the manifest <bcp14>MUST</bcp14> be discarded and treated as though no manifest were
+   present.</t>
+      </section>
+    </section>
+    <section anchor="sect-5" numbered="true" toc="include" removeInRFC="false" pn="section-5">
+      <name slugifiedName="name-manifest-generation">Manifest Generation</name>
+      <section anchor="sect-5.1" numbered="true" toc="include" removeInRFC="false" pn="section-5.1">
+        <name slugifiedName="name-manifest-generation-procedu">Manifest Generation Procedure</name>
+        <t indent="0" pn="section-5.1-1">
+   For a CA publication point in the RPKI repository system, a CA <bcp14>MUST</bcp14>
+   perform the following steps to generate a manifest:</t>
+        <ol spacing="normal" type="1" indent="adaptive" start="1" pn="section-5.1-2"><li pn="section-5.1-2.1" derivedCounter="1.">Generate a new key pair for use in a "one-time-use" EE certificate.</li>
+          <li pn="section-5.1-2.2" derivedCounter="2.">
+            <t indent="0" pn="section-5.1-2.2.1">Issue an EE certificate for this key pair. The CA <bcp14>MUST</bcp14> revoke the EE certificate used for the manifest being replaced.
+            </t>
+            <t indent="0" pn="section-5.1-2.2.2">
+	This EE certificate <bcp14>MUST</bcp14> have an SIA extension access description
+       field with an accessMethod OID value of id-ad-signedObject, where
+       the associated accessLocation references the publication point of
+       the manifest as an object URL. (RPs are required to verify both of these syntactic constraints.)
+            </t>
+            <t indent="0" pn="section-5.1-2.2.3">
+	This EE certificate <bcp14>MUST</bcp14> describe its Internet Number Resources
+       (INRs) using the "inherit" attribute, rather than an explicit
+       description of a resource set (see <xref target="RFC3779" format="default" sectionFormat="of" derivedContent="RFC3779"/>). (RPs are required to verify this.)
+            </t>
+            <t indent="0" pn="section-5.1-2.2.4">
+    The validity interval of the EE certificate <bcp14>MUST</bcp14> exactly match the thisUpdate and nextUpdate times specified in the manifest's eContent.
+    (An RP <bcp14>MUST NOT</bcp14> consider misalignment of the validity interval in and of itself to be an error.)
+            </t>
+          </li>
+          <li pn="section-5.1-2.3" derivedCounter="3.">The EE certificate <bcp14>MUST NOT</bcp14> be published in the authority's
+       repository publication point.</li>
+          <li pn="section-5.1-2.4" derivedCounter="4.">
+            <t indent="0" pn="section-5.1-2.4.1">Construct the manifest content.</t>
+            <t indent="0" pn="section-5.1-2.4.2">
+	The manifest content is described in <xref target="sect-4.2.1" format="default" sectionFormat="of" derivedContent="Section 4.2.1"/>.  The
+       manifest's fileList includes the file name and hash pair for each
+       object issued by this CA that has been published at this
+       repository publication point (directory).  The collection of
+       objects to be included in the manifest includes all certificates
+       issued by this CA that are published at the CA's repository
+       publication point, the most recent CRL issued by the CA, and all
+       objects verified by EE certificates that were issued by this CA
+       that are published at this repository publication point. (Sections <xref target="sect-6.1" format="counter" sectionFormat="of" derivedContent="6.1"/> through <xref target="sect-6.5" format="counter" sectionFormat="of" derivedContent="6.5"/> describe the checks that an RP <bcp14>MUST</bcp14> perform in support of the manifest content noted here.)
+            </t>
+            <t indent="0" pn="section-5.1-2.4.3">
+	Note that the manifest does not include a self reference (i.e.,
+       its own file name and hash), since it would be impossible to
+       compute the hash of the manifest itself prior to it being signed.
+            </t>
+          </li>
+          <li pn="section-5.1-2.5" derivedCounter="5.">
+         Encapsulate the manifest content using the CMS SignedData content type (as specified in <xref target="sect-4" format="default" sectionFormat="of" derivedContent="Section 4"/>), sign the manifest using the private key corresponding to the subject key contained in the EE certificate, and publish the manifest in the repository system publication point that is described by the manifest.
+         (RPs are required to verify the CMS signature.)
+       </li>
+          <li pn="section-5.1-2.6" derivedCounter="6.">Because the key pair is to be used only once, the private key
+        associated with this key pair <bcp14>MUST</bcp14> now be destroyed.</li>
+        </ol>
+      </section>
+      <section anchor="sect-5.2" numbered="true" toc="include" removeInRFC="false" pn="section-5.2">
+        <name slugifiedName="name-considerations-for-manifest">Considerations for Manifest Generation</name>
+        <t indent="0" pn="section-5.2-1">
+   A new manifest <bcp14>MUST</bcp14> be issued and published before the
+   nextUpdate time.</t>
+        <t indent="0" pn="section-5.2-2">
+   An authority <bcp14>MUST</bcp14> issue a new manifest in conjunction with the
+   finalization of changes made to objects in the publication point.  If any named objects in the publication point are replaced, 
+   the authority <bcp14>MUST</bcp14> ensure that the file hash for each replaced object is updated accordingly in the new manifest. Additionally, the authority <bcp14>MUST</bcp14> revoke the certificate associated with each replaced object (other than a CRL), if it is not expired.  An
+   authority <bcp14>MAY</bcp14> perform a number of object operations on a publication
+   repository within the scope of a repository change before issuing a
+   single manifest that covers all the operations within the scope of
+   this change.  Repository operators <bcp14>MUST</bcp14> implement some form of
+   repository update procedure that mitigates, to the extent possible,
+   the risk that RPs that are performing retrieval operations on the
+   repository are exposed to inconsistent, transient, intermediate
+   states during updates to the repository publication point (directory)
+   and the associated manifest.</t>
+        <t indent="0" pn="section-5.2-3">
+   Since the manifest object URL is included in the SIA of issued
+   certificates, a new manifest <bcp14>MUST NOT</bcp14> invalidate the manifest object
+   URL of previously issued certificates.  This implies that the
+   manifest's publication name in the repository, in the form of an
+   object URL, is unchanged across manifest generation cycles.</t>
+        <t indent="0" pn="section-5.2-4">
+   When a CA entity is performing a key rollover, the entity <bcp14>MAY</bcp14> choose
+   to have two CA instances simultaneously publishing into the same
+   repository publication point.  In this case, there will be one
+   manifest associated with each active CA instance that is publishing
+   into the common repository publication point (directory).</t>
+      </section>
+    </section>
+    <section anchor="sect-6" numbered="true" toc="include" removeInRFC="false" pn="section-6">
+      <name slugifiedName="name-relying-party-processing-of">Relying Party Processing of Manifests</name>
+      <t indent="0" pn="section-6-1">Each RP <bcp14>MUST</bcp14> use the current manifest of a CA to control addition of listed files to the set of signed objects the RP employs for validating basic RPKI objects: certificates, ROAs, and CRLs. Any files not listed on the manifest <bcp14>MUST NOT</bcp14> be used for validation of these objects. However, files not listed on a manifest <bcp14>MAY</bcp14> be employed to validate other signed objects, if the profile of the object type explicitly states that such behavior is allowed (or required). Note that relying on files not listed in a manifest may allow an attacker to effect substitution attacks against such objects.</t>
+      <t indent="0" pn="section-6-2">As noted earlier, manifests are designed to allow an RP to detect manipulation of
+           repository data, errors by a CA or repository manager, and/or active
+           attacks on the communication channel between an RP and a repository.
+           Unless all of the files enumerated in a manifest can be obtained by
+           an RP during a fetch operation, the fetch is considered to have
+           failed and the RP <bcp14>MUST</bcp14> retry the fetch later.</t>
+      <t indent="0" pn="section-6-3">
+   <xref target="RFC6480" format="default" sectionFormat="of" derivedContent="RFC6480"/> suggests (but does not mandate) that the RPKI model employ
+   fetches that are incremental, e.g., an RP transfers files from a
+   publication point only if they are new/changed since the previous,
+   successful fetch represented in the RP's local cache.  This document
+   avoids language that relies on details of the underlying file
+   transfer mechanism employed by an RP and a publication point to
+   effect this operation.  Thus, the term "fetch" refers to an operation
+   that attempts to acquire the full set of files at a publication
+   point, consistent with the id-ad-rpkiManifest URI extracted from a CA
+   certificate's SIA (see below).</t>
+      <t indent="0" pn="section-6-4">
+        If a fetch fails, it is assumed that a subsequent fetch will resolve
+           problems encountered during the fetch.  Until such time as a
+           successful fetch is executed, an RP <bcp14>SHOULD</bcp14> use cached data from a
+           previous, successful fetch.  This response is intended to prevent an
+           RP from misinterpreting data associated with a publication point and
+           thus possibly treating invalid routes as valid, or vice versa.</t>
+      <t indent="0" pn="section-6-5">
+        The processing described below is designed to cause all RPs with
+           access to the same local cache and RPKI repository data to acquire
+           the same set of validated repository files. It does not ensure that
+           the RPs will achieve the same results with regard to validation of
+           RPKI data, since that depends on how each RP resolves any conflicts
+           that may arise in processing the retrieved files. Moreover, in
+           operation, different RPs will access repositories at different times,
+           and some RPs may experience local cache failures, so there is no
+           guarantee that all RPs will achieve the same results with regard to
+           acquisition or validation of RPKI data.</t>
+      <t indent="0" pn="section-6-6">
+        
+        Note also that there is a "chicken and egg" relationship between the
+           manifest and the CRL for a given CA instance.  If the EE certificate
+           for the current manifest is revoked, i.e., it appears in the current
+           CRL, then the CA or publication point manager has made a serious
+           error.  In this case, the fetch has failed; proceed to <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.
+           Similarly, if the CRL is not listed on a valid, current manifest,
+           acquired during a fetch, the fetch has failed; proceed to
+           <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>, because the CRL is considered missing.</t>
+      <section anchor="sect-6.1" numbered="true" toc="include" removeInRFC="false" pn="section-6.1">
+        <name slugifiedName="name-manifest-processing-overvie">Manifest Processing Overview</name>
+        <t indent="0" pn="section-6.1-1">
+        For a given publication point, an RP <bcp14>MUST</bcp14> perform a series of tests
+           to determine which signed object files at the publication point are
+           acceptable.  The tests described below (Sections <xref target="sect-6.2" format="counter" sectionFormat="of" derivedContent="6.2"/> through <xref target="sect-6.5" format="counter" sectionFormat="of" derivedContent="6.5"/>)
+           are to be performed using the manifest identified by the id-ad-
+           rpkiManifest URI extracted from a CA certificate's SIA.  All of the
+           files referenced by the manifest <bcp14>MUST</bcp14> be located at the
+           publication point specified by the id-ad-caRepository URI from the
+           (same) CA certificate's SIA.  The manifest and the files it
+           references <bcp14>MUST</bcp14> reside at the same publication point.  If an RP
+           encounters any files that appear on a manifest but do not reside at
+           the same publication point as the manifest, the RP <bcp14>MUST</bcp14> treat the
+           fetch as failed, and a warning <bcp14>MUST</bcp14> be issued (see <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>
+           below).</t>
+        <t indent="0" pn="section-6.1-2">
+        Note that, during CA key rollover <xref target="RFC6489" format="default" sectionFormat="of" derivedContent="RFC6489"/>, signed objects for two
+           or more different CA instances will appear at the same publication
+           point.  Manifest processing is to be performed separately for each CA
+           instance, guided by the SIA id-ad-rpkiManifest URI in each CA
+           certificate.</t>
+      </section>
+      <section anchor="sect-6.2" numbered="true" toc="include" removeInRFC="false" pn="section-6.2">
+        <name slugifiedName="name-acquiring-a-manifest-for-a-">Acquiring a Manifest for a CA</name>
+        <t indent="0" pn="section-6.2-1">
+   
+   The RP <bcp14>MUST</bcp14> fetch the manifest identified by the SIA id-ad-
+      rpkiManifest URI in the CA certificate.  If an RP cannot retrieve a
+      manifest using this URI or if the manifest is not valid
+      (<xref target="sect-4.4" format="default" sectionFormat="of" derivedContent="Section 4.4"/>), an RP <bcp14>MUST</bcp14> treat this as a failed fetch; proceed
+      to <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>. Otherwise, proceed to <xref target="sect-6.3" format="default" sectionFormat="of" derivedContent="Section 6.3"/>.</t>
+      </section>
+      <section anchor="sect-6.3" numbered="true" toc="include" removeInRFC="false" pn="section-6.3">
+        <name slugifiedName="name-detecting-stale-and-or-prem">Detecting Stale and/or Prematurely Issued Manifests</name>
+        <t indent="0" pn="section-6.3-1">
+        The RP <bcp14>MUST</bcp14> check that the current time (translated to UTC) is
+           between thisUpdate and nextUpdate.  If the current time lies within
+           this interval, proceed to <xref target="sect-6.4" format="default" sectionFormat="of" derivedContent="Section 6.4"/>.  If the current time is
+           earlier than thisUpdate, the CA may have made an error or the RP's local notion of time may be in error. The RP <bcp14>MUST</bcp14> treat this as a failed fetch; proceed to <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.  If the current time is
+           later than nextUpdate, then the manifest is stale; the RP <bcp14>MUST</bcp14> treat this as a failed
+           fetch. Proceed to <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>. Otherwise, proceed to <xref target="sect-6.4" format="default" sectionFormat="of" derivedContent="Section 6.4"/>.</t>
+      </section>
+      <section anchor="sect-6.4" numbered="true" toc="include" removeInRFC="false" pn="section-6.4">
+        <name slugifiedName="name-acquiring-files-referenced-">Acquiring Files Referenced by a Manifest</name>
+        <t indent="0" pn="section-6.4-1">
+   
+   The RP <bcp14>MUST</bcp14> acquire all of the files enumerated in the manifest
+      (fileList) from the publication point. If there are files listed in
+      the manifest that cannot be retrieved from the publication point, the
+      RP <bcp14>MUST</bcp14> treat this as a failed fetch. Proceed to <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>. Otherwise,
+      proceed to <xref target="sect-6.5" format="default" sectionFormat="of" derivedContent="Section 6.5"/>.</t>
+      </section>
+      <section anchor="sect-6.5" numbered="true" toc="include" removeInRFC="false" pn="section-6.5">
+        <name slugifiedName="name-matching-file-names-and-has">Matching File Names and Hashes</name>
+        <t indent="0" pn="section-6.5-1">
+   
+   The RP <bcp14>MUST</bcp14> verify that the hash value of each file listed in the
+      manifest matches the value obtained by hashing the file acquired from
+      the publication point.  If the computed hash value of a file listed
+      on the manifest does not match the hash value contained in the
+      manifest, then the fetch has failed, and the RP <bcp14>MUST</bcp14> respond accordingly. Proceed to
+      <xref target="sect-6.6" format="default" sectionFormat="of" derivedContent="Section 6.6"/>.</t>
+      </section>
+      <section anchor="sect-6.6" numbered="true" toc="include" removeInRFC="false" pn="section-6.6">
+        <name slugifiedName="name-failed-fetches">Failed Fetches</name>
+        <t indent="0" pn="section-6.6-1">
+        If a fetch fails for any of the reasons cited in Sections <xref target="sect-6.2" format="counter" sectionFormat="of" derivedContent="6.2"/> through <xref target="sect-6.5" format="counter" sectionFormat="of" derivedContent="6.5"/>, the RP <bcp14>MUST</bcp14> issue a warning indicating the reason(s) for termination of processing with regard to this CA instance.
+        It is <bcp14>RECOMMENDED</bcp14> that a human operator be notified of this warning.
+        </t>
+        <t indent="0" pn="section-6.6-2">
+        Termination of processing means that the RP <bcp14>SHOULD</bcp14> continue to use cached versions of the objects associated with this CA instance, until such time as they become stale or they can be replaced by objects from a successful fetch.
+        This implies that the RP <bcp14>MUST NOT</bcp14> try to acquire and validate subordinate signed objects, e.g., subordinate CA certificates, until the next interval when the RP is scheduled to fetch and process data for this CA instance.
+        </t>
+      </section>
+    </section>
+    <section anchor="sect-7" numbered="true" toc="include" removeInRFC="false" pn="section-7">
+      <name slugifiedName="name-publication-repositories">Publication Repositories</name>
+      <t indent="0" pn="section-7-1">
+   The RPKI publication system model requires that every publication
+   point be associated with one or more CAs and be non-empty.  Upon
+   creation of the publication point associated with a CA, the CA <bcp14>MUST</bcp14>
+   create and publish a manifest as well as a CRL.  A CA's manifest will
+   always contain at least one entry, i.e., a CRL issued by the CA <xref target="RFC6481" format="default" sectionFormat="of" derivedContent="RFC6481"/>, corresponding to the scope of this manifest.</t>
+      <t indent="0" pn="section-7-2">
+   Every published signed object in the RPKI <xref target="RFC6488" format="default" sectionFormat="of" derivedContent="RFC6488"/> is published in
+   the repository publication point of the CA that issued the EE
+   certificate, and is listed in the manifest associated with that CA
+   certificate.</t>
+    </section>
+    <section anchor="sect-8" numbered="true" toc="include" removeInRFC="false" pn="section-8">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t indent="0" pn="section-8-1">
+   Manifests provide an additional level of protection for RPKI RPs.
+   Manifests can assist an RP in determining if a repository object has
+   been deleted, occluded, or otherwise removed from view, or if a
+   publication of a newer version of an object has been suppressed (and
+   an older version of the object has been substituted).</t>
+      <t indent="0" pn="section-8-2">
+   Manifests cannot repair the effects of such forms of corruption of
+   repository retrieval operations.  However, a manifest enables an RP
+   to determine if a locally maintained copy of a repository is a
+   complete and up-to-date copy, even when the repository retrieval
+   operation is conducted over an insecure channel.  In cases where the
+   manifest and the retrieved repository contents differ, the manifest
+   can assist in determining which repository objects form the
+   difference set in terms of missing, extraneous, or superseded
+   objects.</t>
+      <t indent="0" pn="section-8-3">
+   The signing structure of a manifest and the use of the nextUpdate
+   value allow an RP to determine if the manifest itself is the subject
+   of attempted alteration.  The requirement for every repository
+   publication point to contain at least one manifest allows an RP to
+   determine if the manifest itself has been occluded from view.  Such
+   attacks against the manifest are detectable within the time frame of
+   the regular schedule of manifest updates.  Forms of replay attacks
+   within finer-grained time frames are not necessarily detectable by
+   the manifest structure.</t>
+    </section>
+    <section anchor="sect-9" numbered="true" toc="include" removeInRFC="false" pn="section-9">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t indent="0" pn="section-9-1">
+ The "RPKI Signed Objects" registry was originally created and populated 
+ by <xref target="RFC6488" format="default" sectionFormat="of" derivedContent="RFC6488"/>.  The "RPKI Repository 
+ Name Schemes" registry was created by <xref target="RFC6481" format="default" sectionFormat="of" derivedContent="RFC6481"/> and 
+ created four of the initial three-letter file name extensions. 
+ IANA has updated the reference for the "Manifest" row in the "RPKI Signed Objects" 
+ registry to point to this document.
+      </t>
+      <t indent="0" pn="section-9-2">
+IANA has also updated the following entries to refer to this document instead of RFC 6486:</t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-9-3">
+        <li pn="section-9-3.1">id-mod-rpkiManifest (60) in the "SMI Security for S/MIME Module Identifier (1.2.840.113549.1.9.16.0)" registry</li>
+        <li pn="section-9-3.2">id-ct-rpkiManifest (26) in the "SMI Security for S/MIME CMS Content Type (1.2.840.113549.1.9.16.1)" registry</li>
+        <li pn="section-9-3.3">the "Security considerations" entry in the application media type registration for rpki-manifest</li>
+      </ul>
+      <t indent="0" pn="section-9-4">No other actions are required.</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-10">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-10.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="IANA-NAMING" target="https://www.iana.org/assignments/rpki/" quoteTitle="true" derivedAnchor="IANA-NAMING">
+          <front>
+            <title>RPKI Repository Name Schemes</title>
+            <author>
+              <organization showOnFrontPage="true">IANA</organization>
+            </author>
+            <date/>
+          </front>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t indent="0">In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC5280" target="https://www.rfc-editor.org/info/rfc5280" quoteTitle="true" derivedAnchor="RFC5280">
+          <front>
+            <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+            <author initials="D." surname="Cooper" fullname="D. Cooper">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Santesson" fullname="S. Santesson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Farrell" fullname="S. Farrell">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Boeyen" fullname="S. Boeyen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Polk" fullname="W. Polk">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="May"/>
+            <abstract>
+              <t indent="0">This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5280"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5280"/>
+        </reference>
+        <reference anchor="RFC6481" target="https://www.rfc-editor.org/info/rfc6481" quoteTitle="true" derivedAnchor="RFC6481">
+          <front>
+            <title>A Profile for Resource Certificate Repository Structure</title>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Loomans" fullname="R. Loomans">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Michaelson" fullname="G. Michaelson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a profile for the structure of the Resource Public Key Infrastructure (RPKI) distributed repository.  Each individual repository publication point is a directory that contains files that correspond to X.509/PKIX Resource Certificates, Certificate Revocation Lists and signed objects.  This profile defines the object (file) naming scheme, the contents of repository publication points (directories), and a suggested internal structure of a local repository cache that is intended to facilitate synchronization across a distributed collection of repository publication points and to facilitate certification path construction.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6481"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6481"/>
+        </reference>
+        <reference anchor="RFC6482" target="https://www.rfc-editor.org/info/rfc6482" quoteTitle="true" derivedAnchor="RFC6482">
+          <front>
+            <title>A Profile for Route Origin Authorizations (ROAs)</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Kong" fullname="D. Kong">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a standard profile for Route Origin Authorizations (ROAs).  A ROA is a digitally signed object that provides a means of verifying that an IP address block holder has authorized an Autonomous System (AS) to originate routes to one or more prefixes within the address block.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6482"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6482"/>
+        </reference>
+        <reference anchor="RFC6487" target="https://www.rfc-editor.org/info/rfc6487" quoteTitle="true" derivedAnchor="RFC6487">
+          <front>
+            <title>A Profile for X.509 PKIX Resource Certificates</title>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Michaelson" fullname="G. Michaelson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Loomans" fullname="R. Loomans">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a standard profile for X.509 certificates for the purpose of supporting validation of assertions of "right-of-use" of Internet Number Resources (INRs).  The certificates issued under this profile are used to convey the issuer's authorization of the subject to be regarded as the current holder of a "right-of-use" of the INRs that are described in the certificate.  This document contains the normative specification of Certificate and Certificate Revocation List (CRL) syntax in the Resource Public Key Infrastructure (RPKI).  This document also specifies profiles for the format of certificate requests and specifies the Relying Party RPKI certificate path validation procedure.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6487"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6487"/>
+        </reference>
+        <reference anchor="RFC6488" target="https://www.rfc-editor.org/info/rfc6488" quoteTitle="true" derivedAnchor="RFC6488">
+          <front>
+            <title>Signed Object Template for the Resource Public Key Infrastructure (RPKI)</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="A." surname="Chi" fullname="A. Chi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a generic profile for signed objects used in the Resource Public Key Infrastructure (RPKI).  These RPKI signed objects make use of Cryptographic Message Syntax (CMS) as a standard encapsulation format.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6488"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6488"/>
+        </reference>
+        <reference anchor="RFC7935" target="https://www.rfc-editor.org/info/rfc7935" quoteTitle="true" derivedAnchor="RFC7935">
+          <front>
+            <title>The Profile for Algorithms and Key Sizes for Use in the Resource Public Key Infrastructure</title>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Michaelson" fullname="G. Michaelson" role="editor">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2016" month="August"/>
+            <abstract>
+              <t indent="0">This document specifies the algorithms, algorithms' parameters, asymmetric key formats, asymmetric key size, and signature format for the Resource Public Key Infrastructure (RPKI) subscribers that generate digital signatures on certificates, Certificate Revocation Lists (CRLs), Cryptographic Message Syntax (CMS) signed objects and certification requests as well as for the relying parties (RPs) that verify these digital signatures.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="7935"/>
+          <seriesInfo name="DOI" value="10.17487/RFC7935"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t indent="0">RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+        <reference anchor="X.690" target="https://www.itu.int/rec/T-REC-X.690-202102-I/en" quoteTitle="true" derivedAnchor="X.690">
+          <front>
+            <title>Information technology - ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)</title>
+            <author>
+              <organization showOnFrontPage="true">International Telecommunication Union</organization>
+            </author>
+            <date month="February" year="2021"/>
+          </front>
+          <refcontent>ITU-T Recommendation X.690</refcontent>
+        </reference>
+      </references>
+      <references pn="section-10.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="RFC3779" target="https://www.rfc-editor.org/info/rfc3779" quoteTitle="true" derivedAnchor="RFC3779">
+          <front>
+            <title>X.509 Extensions for IP Addresses and AS Identifiers</title>
+            <author initials="C." surname="Lynn" fullname="C. Lynn">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Seo" fullname="K. Seo">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2004" month="June"/>
+            <abstract>
+              <t indent="0">This document defines two X.509 v3 certificate extensions.  The first binds a list of IP address blocks, or prefixes, to the subject of a certificate.  The second binds a list of autonomous system identifiers to the subject of a certificate.  These extensions may be used to convey the authorization of the subject to use the IP addresses and autonomous system identifiers contained in the extensions.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="3779"/>
+          <seriesInfo name="DOI" value="10.17487/RFC3779"/>
+        </reference>
+        <reference anchor="RFC5652" target="https://www.rfc-editor.org/info/rfc5652" quoteTitle="true" derivedAnchor="RFC5652">
+          <front>
+            <title>Cryptographic Message Syntax (CMS)</title>
+            <author initials="R." surname="Housley" fullname="R. Housley">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2009" month="September"/>
+            <abstract>
+              <t indent="0">This document describes the Cryptographic Message Syntax (CMS).  This syntax is used to digitally sign, digest, authenticate, or encrypt arbitrary message content.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="STD" value="70"/>
+          <seriesInfo name="RFC" value="5652"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5652"/>
+        </reference>
+        <reference anchor="RFC6480" target="https://www.rfc-editor.org/info/rfc6480" quoteTitle="true" derivedAnchor="RFC6480">
+          <front>
+            <title>An Infrastructure to Support Secure Internet Routing</title>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document describes an architecture for an infrastructure to support improved security of Internet routing.  The foundation of this architecture is a Resource Public Key Infrastructure (RPKI) that represents the allocation hierarchy of IP address space and Autonomous System (AS) numbers; and a distributed repository system for storing and disseminating the data objects that comprise the RPKI, as well as other signed objects necessary for improved routing security.  As an initial application of this architecture, the document describes how a legitimate holder of IP address space can explicitly and verifiably authorize one or more ASes to originate routes to that address space.  Such verifiable authorizations could be used, for example, to more securely construct BGP route filters.   This document is not an Internet Standards Track specification; it is published for informational purposes.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6480"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6480"/>
+        </reference>
+        <reference anchor="RFC6486" target="https://www.rfc-editor.org/info/rfc6486" quoteTitle="true" derivedAnchor="RFC6486">
+          <front>
+            <title>Manifests for the Resource Public Key Infrastructure (RPKI)</title>
+            <author initials="R." surname="Austein" fullname="R. Austein">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Lepinski" fullname="M. Lepinski">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document defines a "manifest" for use in the Resource Public Key Infrastructure (RPKI).  A manifest is a signed object (file) that contains a listing of all the signed objects (files) in the repository publication point (directory) associated with an authority responsible for publishing in the repository.  For each certificate, Certificate Revocation List (CRL), or other type of signed objects issued by the authority that are published at this repository publication point, the manifest contains both the name of the file containing the object and a hash of the file content.  Manifests are intended to enable a relying party (RP) to detect certain forms of attacks against a repository.  Specifically, if an RP checks a manifest's contents against the signed objects retrieved from a repository publication point, then the RP can detect "stale" (valid) data and deletion of signed objects.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="6486"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6486"/>
+        </reference>
+        <reference anchor="RFC6489" target="https://www.rfc-editor.org/info/rfc6489" quoteTitle="true" derivedAnchor="RFC6489">
+          <front>
+            <title>Certification Authority (CA) Key Rollover in the Resource Public Key Infrastructure (RPKI)</title>
+            <author initials="G." surname="Huston" fullname="G. Huston">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="G." surname="Michaelson" fullname="G. Michaelson">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Kent" fullname="S. Kent">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2012" month="February"/>
+            <abstract>
+              <t indent="0">This document describes how a Certification Authority (CA) in the Resource Public Key Infrastructure (RPKI) performs a planned rollover of its key pair.  This document also notes the implications of this key rollover procedure for relying parties (RPs).  In general, RPs are expected to maintain a local cache of the objects that have been published in the RPKI repository, and thus the way in which a CA performs key rollover impacts RPs.  This memo documents an Internet  Best Current Practice.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="174"/>
+          <seriesInfo name="RFC" value="6489"/>
+          <seriesInfo name="DOI" value="10.17487/RFC6489"/>
+        </reference>
+      </references>
+    </references>
+    <section anchor="sect-a" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-asn1-module">ASN.1 Module</name>
+      <sourcecode type="asn.1" markers="false" pn="section-appendix.a-1">
+    RPKIManifest { iso(1) member-body(2) us(840) rsadsi(113549)
+                   pkcs(1) pkcs9(9) smime(16) mod(0) 60 }
+</sourcecode>
+      <sourcecode type="asn.1" markers="false" pn="section-appendix.a-2">
+DEFINITIONS EXPLICIT TAGS ::=
+   BEGIN
+
+   -- EXPORTS ALL --
+
+   IMPORTS
+
+     CONTENT-TYPE
+     FROM CryptographicMessageSyntax-2010 -- in RFC 6268
+       { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
+         pkcs-9(9) smime(16) modules(0) id-mod-cms-2009(58) } ;
+
+   -- Manifest Content Type
+
+   ct-rpkiManifest CONTENT-TYPE ::=
+       { TYPE Manifest IDENTIFIED BY id-ct-rpkiManifest }
+
+   id-smime OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+       us(840) rsadsi(113549) pkcs(1) pkcs9(9) 16 }
+
+   id-ct OBJECT IDENTIFIER ::= { id-smime 1 }
+
+   id-ct-rpkiManifest OBJECT IDENTIFIER ::= { id-ct 26 }
+
+   Manifest ::= SEQUENCE {
+      version        [0] INTEGER DEFAULT 0,
+      manifestNumber     INTEGER (0..MAX),
+      thisUpdate         GeneralizedTime,
+      nextUpdate         GeneralizedTime,
+      fileHashAlg        OBJECT IDENTIFIER,
+      fileList           SEQUENCE SIZE (0..MAX) OF FileAndHash
+      }
+
+   FileAndHash ::= SEQUENCE {
+      file  IA5String,
+      hash  BIT STRING
+      }
+
+   END
+</sourcecode>
+    </section>
+    <section anchor="sect-b" numbered="true" toc="include" removeInRFC="false" pn="section-appendix.b">
+      <name slugifiedName="name-changes-since-rfc-6486">Changes since RFC 6486</name>
+      <t indent="0" pn="section-appendix.b-1">
+       In 2019, it came to light that multiple RP implementations
+       were in a vulnerable position, possibly due to perceived ambiguity in
+       the original <xref target="RFC6486" format="default" sectionFormat="of" derivedContent="RFC6486"/> specification.
+       This document attempts to clarify the innovative concept and application
+       of RPKI manifests in light of real-world deployment experience in the
+       global Internet routing system, to avoid future problematic cases.
+      </t>
+      <t indent="0" pn="section-appendix.b-2">
+      The following list summarizes the changes between RFC 6486 and this document:
+      </t>
+      <ul spacing="normal" bare="false" empty="false" indent="3" pn="section-appendix.b-3">
+        <li pn="section-appendix.b-3.1">
+          Forbidding "sequential-use" EE certificates and instead mandating "one-time-use"
+          EE certificates.
+       </li>
+        <li pn="section-appendix.b-3.2">
+	 Clarifying that manifest EE certificates are to be issued with a validity
+	 period that coincides with the interval specified in the manifest
+         eContent, which coincides with the CRL's thisUpdate and nextUpdate.
+       </li>
+        <li pn="section-appendix.b-3.3">
+         Clarifying that the manifestNumber is monotonically incremented in steps of 1.
+       </li>
+        <li pn="section-appendix.b-3.4">
+	 Recommending that CA issuers include the applicable CRL's nextUpdate
+         with the manifest's nextUpdate.
+       </li>
+        <li pn="section-appendix.b-3.5">
+	 Constraining the set of valid characters in FileAndHash file names.
+       </li>
+        <li pn="section-appendix.b-3.6">
+         Clarifying that an RP unable to obtain the full set of files listed
+         on a manifest is considered to be in a failure state, in which case cached data
+         from a previous attempt should be used (if available).
+       </li>
+        <li pn="section-appendix.b-3.7">
+         Clarifying the requirement for a current CRL to be present, listed,
+         and verified. 
+       </li>
+        <li pn="section-appendix.b-3.8">
+         Removing the notion of "local policy".
+       </li>
+      </ul>
+    </section>
+    <section anchor="sect-10" numbered="false" toc="include" removeInRFC="false" pn="section-appendix.c">
+      <name slugifiedName="name-acknowledgements">Acknowledgements</name>
+      <t indent="0" pn="section-appendix.c-1">
+   The authors would like to acknowledge the contributions from <contact fullname="George Michaelson"/> and <contact fullname="Randy Bush"/> in the preparation of the manifest specification.
+   Additionally, the authors would like to thank <contact fullname="Mark Reynolds"/> and <contact fullname="Christopher Small"/> for assistance in clarifying manifest validation and RP behavior.
+   The authors also wish to thank <contact fullname="Tim Bruijnzeels"/>, <contact fullname="Job Snijders"/>, <contact fullname="Oleg Muravskiy"/>, <contact fullname="Sean Turner"/>, <contact fullname="Adianto Wibisono"/>, <contact fullname="Murray Kucherawy"/>, <contact fullname="Francesca Palombini"/>, <contact fullname="Roman Danyliw"/>, <contact fullname="Lars Eggert"/>, <contact fullname="Robert Wilton"/>, and <contact fullname="Benjamin Kaduk"/> for their helpful review of this document.</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.d">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author initials="R." surname="Austein" fullname="Rob Austein">
+        <organization showOnFrontPage="true">Arrcus, Inc.</organization>
+        <address>
+          <email>sra@hactrn.net</email>
+        </address>
+      </author>
+      <author initials="G." surname="Huston" fullname="Geoff Huston">
+        <organization showOnFrontPage="true">APNIC</organization>
+        <address>
+          <postal>
+            <street>6 Cordelia St</street>
+            <city>South Brisbane</city>
+            <code>QLD 4101</code>
+            <country>Australia</country>
+          </postal>
+          <email>gih@apnic.net</email>
+        </address>
+      </author>
+      <author initials="S." surname="Kent" fullname="Stephen Kent">
+        <organization showOnFrontPage="true">Independent</organization>
+        <address>
+          <email>kent@alum.mit.edu</email>
+        </address>
+      </author>
+      <author initials="M." surname="Lepinski" fullname="Matt Lepinski">
+        <organization showOnFrontPage="true">New College Florida</organization>
+        <address>
+          <postal>
+            <street>5800 Bay Shore Rd.</street>
+            <city>Sarasota</city>
+            <region>FL</region>
+            <code>34243</code>
+            <country>United States of America</country>
+          </postal>
+          <email>mlepinski@ncf.edu</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>

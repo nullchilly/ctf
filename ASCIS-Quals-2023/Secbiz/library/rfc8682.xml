@@ -1,0 +1,774 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude" version="3" category="std" consensus="true" docName="draft-ietf-tsvwg-tinymt32-06" indexInclude="true" ipr="trust200902" number="8682" prepTime="2020-01-14T14:59:26" scripts="Common,Latin" sortRefs="true" submissionType="IETF" symRefs="true" tocDepth="3" tocInclude="true" xml:lang="en">
+  <link href="https://datatracker.ietf.org/doc/draft-ietf-tsvwg-tinymt32-06" rel="prev"/>
+  <link href="https://dx.doi.org/10.17487/rfc8682" rel="alternate"/>
+  <link href="urn:issn:2070-1721" rel="alternate"/>
+  <front>
+    <title abbrev="TinyMT32 PRNG">TinyMT32 Pseudorandom Number Generator (PRNG)</title>
+    <seriesInfo name="RFC" value="8682" stream="IETF"/>
+    <author fullname="Mutsuo Saito" initials="M" surname="Saito">
+      <organization showOnFrontPage="true">Hiroshima University</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <country>Japan</country>
+        </postal>
+        <email>saito@math.sci.hiroshima-u.ac.jp</email>
+      </address>
+    </author>
+    <author fullname="Makoto Matsumoto" initials="M" surname="Matsumoto">
+      <organization showOnFrontPage="true">Hiroshima University</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <country>Japan</country>
+        </postal>
+        <email>m-mat@math.sci.hiroshima-u.ac.jp</email>
+      </address>
+    </author>
+    <author fullname="Vincent Roca" initials="V" surname="Roca" role="editor">
+      <organization showOnFrontPage="true">INRIA</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <code/>
+          <extaddr>Univ. Grenoble Alpes</extaddr>
+          <country>France</country>
+        </postal>
+        <email>vincent.roca@inria.fr</email>
+      </address>
+    </author>
+    <author fullname="Emmanuel Baccelli" initials="E" surname="Baccelli">
+      <organization showOnFrontPage="true">INRIA</organization>
+      <address>
+        <postal>
+          <street/>
+          <city/>
+          <code/>
+          <country>France</country>
+        </postal>
+        <email>emmanuel.baccelli@inria.fr</email>
+      </address>
+    </author>
+    <date month="01" year="2020"/>
+    <workgroup>TSVWG</workgroup>
+    <abstract pn="section-abstract">
+      <t pn="section-abstract-1">
+This document describes the TinyMT32 Pseudorandom Number Generator (PRNG), which produces 32-bit pseudorandom unsigned integers and aims at having a simple-to-use and deterministic solution.
+This PRNG is a small-sized variant of the Mersenne Twister (MT) PRNG.
+The main advantage of TinyMT32 over MT is the use of a small internal state, compatible with most target platforms that include embedded devices, while keeping reasonably good randomness that represents a significant improvement compared to the Park-Miller Linear Congruential PRNG.
+However, neither the TinyMT nor MT PRNG is meant to be used for cryptographic applications.
+</t>
+    </abstract>
+    <boilerplate>
+      <section anchor="status-of-memo" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.1">
+        <name slugifiedName="name-status-of-this-memo">Status of This Memo</name>
+        <t pn="section-boilerplate.1-1">
+            This is an Internet Standards Track document.
+        </t>
+        <t pn="section-boilerplate.1-2">
+            This document is a product of the Internet Engineering Task Force
+            (IETF).  It represents the consensus of the IETF community.  It has
+            received public review and has been approved for publication by
+            the Internet Engineering Steering Group (IESG).  Further
+            information on Internet Standards is available in Section 2 of 
+            RFC 7841.
+        </t>
+        <t pn="section-boilerplate.1-3">
+            Information about the current status of this document, any
+            errata, and how to provide feedback on it may be obtained at
+            <eref target="https://www.rfc-editor.org/info/rfc8682" brackets="none"/>.
+        </t>
+      </section>
+      <section anchor="copyright" numbered="false" removeInRFC="false" toc="exclude" pn="section-boilerplate.2">
+        <name slugifiedName="name-copyright-notice">Copyright Notice</name>
+        <t pn="section-boilerplate.2-1">
+            Copyright (c) 2020 IETF Trust and the persons identified as the
+            document authors. All rights reserved.
+        </t>
+        <t pn="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<eref target="https://trustee.ietf.org/license-info" brackets="none"/>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Simplified BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Simplified BSD License.
+        </t>
+      </section>
+    </boilerplate>
+    <toc>
+      <section anchor="toc" numbered="false" removeInRFC="false" toc="exclude" pn="section-toc.1">
+        <name slugifiedName="name-table-of-contents">Table of Contents</name>
+        <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1">
+          <li pn="section-toc.1-1.1">
+            <t keepWithNext="true" pn="section-toc.1-1.1.1"><xref derivedContent="1" format="counter" sectionFormat="of" target="section-1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-introduction">Introduction</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.1.2">
+              <li pn="section-toc.1-1.1.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.1.2.1.1"><xref derivedContent="1.1" format="counter" sectionFormat="of" target="section-1.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-requirements-language">Requirements Language</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.2">
+            <t keepWithNext="true" pn="section-toc.1-1.2.1"><xref derivedContent="2" format="counter" sectionFormat="of" target="section-2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tinymt32-prng-specification">TinyMT32 PRNG Specification</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.2.2">
+              <li pn="section-toc.1-1.2.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.1.1"><xref derivedContent="2.1" format="counter" sectionFormat="of" target="section-2.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tinymt32-source-code">TinyMT32 Source Code</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.2.1"><xref derivedContent="2.2" format="counter" sectionFormat="of" target="section-2.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-tinymt32-usage">TinyMT32 Usage</xref></t>
+              </li>
+              <li pn="section-toc.1-1.2.2.3">
+                <t keepWithNext="true" pn="section-toc.1-1.2.2.3.1"><xref derivedContent="2.3" format="counter" sectionFormat="of" target="section-2.3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-specific-implementation-val">Specific Implementation Validation and Deterministic Behavior</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.3">
+            <t keepWithNext="true" pn="section-toc.1-1.3.1"><xref derivedContent="3" format="counter" sectionFormat="of" target="section-3"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-security-considerations">Security Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.4">
+            <t keepWithNext="true" pn="section-toc.1-1.4.1"><xref derivedContent="4" format="counter" sectionFormat="of" target="section-4"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-iana-considerations">IANA Considerations</xref></t>
+          </li>
+          <li pn="section-toc.1-1.5">
+            <t keepWithNext="true" pn="section-toc.1-1.5.1"><xref derivedContent="5" format="counter" sectionFormat="of" target="section-5"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-references">References</xref></t>
+            <ul bare="true" empty="true" indent="2" spacing="compact" pn="section-toc.1-1.5.2">
+              <li pn="section-toc.1-1.5.2.1">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.1.1"><xref derivedContent="5.1" format="counter" sectionFormat="of" target="section-5.1"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-normative-references">Normative References</xref></t>
+              </li>
+              <li pn="section-toc.1-1.5.2.2">
+                <t keepWithNext="true" pn="section-toc.1-1.5.2.2.1"><xref derivedContent="5.2" format="counter" sectionFormat="of" target="section-5.2"/>.  <xref derivedContent="" format="title" sectionFormat="of" target="name-informative-references">Informative References</xref></t>
+              </li>
+            </ul>
+          </li>
+          <li pn="section-toc.1-1.6">
+            <t keepWithNext="true" pn="section-toc.1-1.6.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.a"/><xref derivedContent="" format="title" sectionFormat="of" target="name-acknowledgments">Acknowledgments</xref></t>
+          </li>
+          <li pn="section-toc.1-1.7">
+            <t keepWithNext="true" pn="section-toc.1-1.7.1"><xref derivedContent="" format="none" sectionFormat="of" target="section-appendix.b"/><xref derivedContent="" format="title" sectionFormat="of" target="name-authors-addresses">Authors' Addresses</xref></t>
+          </li>
+        </ul>
+      </section>
+    </toc>
+  </front>
+  <middle>
+    <section anchor="introduction" numbered="true" toc="include" removeInRFC="false" pn="section-1">
+      <name slugifiedName="name-introduction">Introduction</name>
+      <t pn="section-1-1">
+This document specifies the TinyMT32 PRNG as a specialization of the
+reference implementation version 1.1 (2015/04/24) by Mutsuo Saito and Makoto
+Matsumoto from Hiroshima University, which can be found at <xref target="TinyMT-web" format="default" sectionFormat="of" derivedContent="TinyMT-web"/> (the TinyMT website) and <xref target="TinyMT-dev" format="default" sectionFormat="of" derivedContent="TinyMT-dev"/>
+(the GitHub site).
+This specialization aims at having a simple-to-use and deterministic PRNG, as explained below.
+However, the TinyMT32 PRNG is not meant to be used for cryptographic applications.
+</t>
+      <t pn="section-1-2">
+TinyMT is a new, small-sized variant of the Mersenne
+Twister (MT) PRNG introduced in 2011 <xref target="MT98" format="default" sectionFormat="of" derivedContent="MT98"/>.
+This document focuses on the TinyMT32 variant (rather than TinyMT64) of the TinyMT PRNG, which outputs 32-bit unsigned integers.
+</t>
+      <t pn="section-1-3">
+The purpose of TinyMT is not to replace the Mersenne Twister: TinyMT has a far shorter period (2<sup>127</sup> - 1) than MT.
+The merit of TinyMT is in the small size of the 127-bit internal state, far smaller than the 19937 bits of MT.
+
+The outputs of TinyMT satisfy several statistical tests for non-cryptographic randomness, including BigCrush
+in TestU01 <xref target="TestU01" format="default" sectionFormat="of" derivedContent="TestU01"/> and AdaptiveCrush <xref target="AdaptiveCrush" format="default" sectionFormat="of" derivedContent="AdaptiveCrush"/>, leaving it well placed
+for non-cryptographic usage, especially given the small size of its internal state
+(see <xref target="TinyMT-web" format="default" sectionFormat="of" derivedContent="TinyMT-web"/>).
+
+From this point of view, TinyMT32 represents a major improvement with respect
+to the Park-Miller Linear Congruential PRNG (e.g., as specified in <xref target="RFC5170" format="default" sectionFormat="of" derivedContent="RFC5170"/>), which suffers from several known
+limitations (see, for instance, <xref target="PTVF92" format="default" sectionFormat="of" derivedContent="PTVF92"/>,
+Section 7.1, p. 279 and <xref target="RFC8681" sectionFormat="comma" section="B" format="default" derivedLink="https://rfc-editor.org/rfc/rfc8681#appendix-B" derivedContent="RFC8681"/>).
+</t>
+      <t pn="section-1-4">
+The TinyMT32 PRNG initialization depends, among other things, on a parameter set, namely (mat1, mat2, tmat).
+In order to facilitate the use of this PRNG and to make the sequence of pseudorandom numbers depend only on the seed value, this specification requires the use of a specific parameter set (see <xref target="tinymt32_source_code" format="default" sectionFormat="of" derivedContent="Section 2.1"/>).
+This is a major difference with respect to the implementation version 1.1
+(2015/04/24), which leaves this parameter set unspecified.
+</t>
+      <t pn="section-1-5">
+Finally, the determinism of this PRNG for a given seed has been carefully checked (see <xref target="tinymt32_validation" format="default" sectionFormat="of" derivedContent="Section 2.3"/>).
+This means that the same sequence of pseudorandom numbers should be generated, no matter the target execution platform and compiler, for a given initial seed value.
+This determinism can be a key requirement, as is the case with <xref target="RFC8681" format="default" sectionFormat="of" derivedContent="RFC8681"/>, which normatively depends on this specification.
+</t>
+      <section anchor="definitionsAndAbbreviations" numbered="true" toc="include" removeInRFC="false" pn="section-1.1">
+        <name slugifiedName="name-requirements-language">Requirements Language</name>
+        <t pn="section-1.1-1">
+    The key words "<bcp14>MUST</bcp14>", "<bcp14>MUST NOT</bcp14>",
+    "<bcp14>REQUIRED</bcp14>", "<bcp14>SHALL</bcp14>", "<bcp14>SHALL NOT</bcp14>",
+    "<bcp14>SHOULD</bcp14>", "<bcp14>SHOULD NOT</bcp14>",
+    "<bcp14>RECOMMENDED</bcp14>", "<bcp14>NOT RECOMMENDED</bcp14>",
+    "<bcp14>MAY</bcp14>", and "<bcp14>OPTIONAL</bcp14>" in this document are to be
+    interpreted as described in BCP 14 <xref target="RFC2119" format="default" sectionFormat="of" derivedContent="RFC2119"/> <xref target="RFC8174" format="default" sectionFormat="of" derivedContent="RFC8174"/> when, and only when, they appear in all capitals, as
+    shown here.
+        </t>
+      </section>
+    </section>
+    <section anchor="tinymt32_specs" numbered="true" toc="include" removeInRFC="false" pn="section-2">
+      <name slugifiedName="name-tinymt32-prng-specification">TinyMT32 PRNG Specification</name>
+      <section anchor="tinymt32_source_code" numbered="true" toc="include" removeInRFC="false" pn="section-2.1">
+        <name slugifiedName="name-tinymt32-source-code">TinyMT32 Source Code</name>
+        <t pn="section-2.1-1">
+The TinyMT32 PRNG must be initialized with a parameter set that needs to be well chosen.
+In this specification, for the sake of simplicity, the following parameter set <bcp14>MUST</bcp14> be used:
+</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-2.1-2">
+          <li pn="section-2.1-2.1">mat1 = 0x8f7011ee = 2406486510</li>
+          <li pn="section-2.1-2.2">mat2 = 0xfc78ff1f = 4235788063</li>
+          <li pn="section-2.1-2.3">tmat = 0x3793fdff = 932445695</li>
+        </ul>
+        <t pn="section-2.1-3">
+This parameter set is the first entry of the precalculated parameter sets in tinymt32dc/tinymt32dc.0.1048576.txt by Kenji Rikitake, available at <xref target="TinyMT-params" format="default" sectionFormat="of" derivedContent="TinyMT-params"/>.
+This is also the parameter set used in <xref target="KR12" format="default" sectionFormat="of" derivedContent="KR12"/>.
+</t>
+        <t pn="section-2.1-4">
+The TinyMT32 PRNG reference implementation is reproduced in <xref target="fig_tinymt32" format="default" sectionFormat="of" derivedContent="Figure 1"/>.
+This is a C language implementation written for C99 <xref target="C99" format="default" sectionFormat="of" derivedContent="C99"/>.
+This reference implementation differs from the original source code as follows:
+</t>
+        <ul spacing="normal" bare="false" empty="false" pn="section-2.1-5">
+          <li pn="section-2.1-5.1">The original authors, who are coauthors of this document, have
+	  granted IETF
+the rights to publish this version with a license and copyright that are in
+accordance with BCP 78 and the IETF Trust's Legal Provisions Relating to IETF
+Documents (http://trustee.ietf.org/license-info).</li>
+          <li pn="section-2.1-5.2">The source code initially spread over the tinymt32.h and tinymt32.c files has been merged.</li>
+          <li pn="section-2.1-5.3">The unused parts of the original source code have been removed.
+	   This is the case of the tinymt32_init_by_array() alternative initialization function.
+	   This is also the case of the period_certification() function after having checked it is not required with the chosen parameter set.</li>
+          <li pn="section-2.1-5.4">The unused constants TINYMT32_MEXP and TINYMT32_MUL have been removed.</li>
+          <li pn="section-2.1-5.5">The appropriate parameter set has been added to the initialization function.</li>
+          <li pn="section-2.1-5.6">The function order has been changed.</li>
+          <li pn="section-2.1-5.7">Certain internal variables have been renamed for compactness purposes.</li>
+          <li pn="section-2.1-5.8">The const qualifier has been added to the constant definitions.</li>
+          <li pn="section-2.1-5.9">The code that was dependent on the representation of negative integers by 2's complements has been replaced by a more portable version.</li>
+        </ul>
+        <figure anchor="fig_tinymt32" align="left" suppress-title="false" pn="figure-1">
+          <name slugifiedName="name-tinymt32-reference-implemen">TinyMT32 Reference Implementation</name>
+          <sourcecode name="" type="c" markers="true" pn="section-2.1-6.1">
+/**
+ * Tiny Mersenne Twister: only 127-bit internal state.
+ * Derived from the reference implementation version 1.1 (2015/04/24)
+ * by Mutsuo Saito (Hiroshima University) and Makoto Matsumoto
+ * (Hiroshima University).
+ */
+#include &lt;stdint.h&gt;
+
+/**
+ * tinymt32 internal state vector and parameters
+ */
+typedef struct {
+    uint32_t status[4];
+    uint32_t mat1;
+    uint32_t mat2;
+    uint32_t tmat;
+} tinymt32_t;
+
+static void tinymt32_next_state (tinymt32_t* s);
+static uint32_t tinymt32_temper (tinymt32_t* s);
+
+/**
+ * Parameter set to use for this IETF specification. Don't change.
+ * This parameter set is the first entry of the precalculated
+ * parameter sets in tinymt32dc/tinymt32dc.0.1048576.txt by
+ * Kenji Rikitake, available at:
+ *    https://github.com/jj1bdx/tinymtdc-longbatch/.
+ * It is also the parameter set used in:
+ *    Rikitake, K., "TinyMT pseudo random number generator for
+ *    Erlang", Proceedings of the 11th ACM SIGPLAN Erlang Workshop,
+ *    September 2012.
+ */
+const uint32_t  TINYMT32_MAT1_PARAM = UINT32_C(0x8f7011ee);
+const uint32_t  TINYMT32_MAT2_PARAM = UINT32_C(0xfc78ff1f);
+const uint32_t  TINYMT32_TMAT_PARAM = UINT32_C(0x3793fdff);
+
+/**
+ * This function initializes the internal state array with a
+ * 32-bit unsigned integer seed.
+ * @param s     pointer to tinymt internal state.
+ * @param seed  a 32-bit unsigned integer used as a seed.
+ */
+void tinymt32_init (tinymt32_t* s, uint32_t seed)
+{
+    const uint32_t    MIN_LOOP = 8;
+    const uint32_t    PRE_LOOP = 8;
+    s-&gt;status[0] = seed;
+    s-&gt;status[1] = s-&gt;mat1 = TINYMT32_MAT1_PARAM;
+    s-&gt;status[2] = s-&gt;mat2 = TINYMT32_MAT2_PARAM;
+    s-&gt;status[3] = s-&gt;tmat = TINYMT32_TMAT_PARAM;
+    for (int i = 1; i &lt; MIN_LOOP; i++) {
+        s-&gt;status[i &amp; 3] ^= i + UINT32_C(1812433253)
+            * (s-&gt;status[(i - 1) &amp; 3]
+               ^ (s-&gt;status[(i - 1) &amp; 3] &gt;&gt; 30));
+    }
+    /*
+     * NB: The parameter set of this specification warrants
+     * that none of the possible 2^^32 seeds leads to an
+     * all-zero 127-bit internal state. Therefore, the
+     * period_certification() function of the original
+     * TinyMT32 source code has been safely removed. If
+     * another parameter set is used, this function will
+     * have to be reintroduced here.
+     */
+    for (int i = 0; i &lt; PRE_LOOP; i++) {
+        tinymt32_next_state(s);
+    }
+}
+
+/**
+ * This function outputs a 32-bit unsigned integer from
+ * the internal state.
+ * @param s     pointer to tinymt internal state.
+ * @return      32-bit unsigned integer r (0 &lt;= r &lt; 2^32).
+ */
+uint32_t tinymt32_generate_uint32 (tinymt32_t* s)
+{
+    tinymt32_next_state(s);
+    return tinymt32_temper(s);
+}
+
+/**
+ * Internal tinymt32 constants and functions.
+ * Users should not call these functions directly.
+ */
+const uint32_t  TINYMT32_SH0 = 1;
+const uint32_t  TINYMT32_SH1 = 10;
+const uint32_t  TINYMT32_SH8 = 8;
+const uint32_t  TINYMT32_MASK = UINT32_C(0x7fffffff);
+
+/**
+ * This function changes the internal state of tinymt32.
+ * @param s     pointer to tinymt internal state.
+ */
+static void tinymt32_next_state (tinymt32_t* s)
+{
+    uint32_t x;
+    uint32_t y;
+
+    y = s-&gt;status[3];
+    x = (s-&gt;status[0] &amp; TINYMT32_MASK)
+        ^ s-&gt;status[1]
+        ^ s-&gt;status[2];
+    x ^= (x &lt;&lt; TINYMT32_SH0);
+    y ^= (y &gt;&gt; TINYMT32_SH0) ^ x;
+    s-&gt;status[0] = s-&gt;status[1];
+    s-&gt;status[1] = s-&gt;status[2];
+    s-&gt;status[2] = x ^ (y &lt;&lt; TINYMT32_SH1);
+    s-&gt;status[3] = y;
+    /*
+     * The if (y &amp; 1) {...} block below replaces:
+     *     s-&gt;status[1] ^= -((int32_t)(y &amp; 1)) &amp; s-&gt;mat1;
+     *     s-&gt;status[2] ^= -((int32_t)(y &amp; 1)) &amp; s-&gt;mat2;
+     * The adopted code is equivalent to the original code
+     * but does not depend on the representation of negative
+     * integers by 2's complements. It is therefore more
+     * portable but includes an if branch, which may slow
+     * down the generation speed.
+     */
+    if (y &amp; 1) {
+         s-&gt;status[1] ^= s-&gt;mat1;
+         s-&gt;status[2] ^= s-&gt;mat2;
+     }
+}
+
+/**
+ * This function outputs a 32-bit unsigned integer from
+ * the internal state.
+ * @param s     pointer to tinymt internal state.
+ * @return      32-bit unsigned pseudorandom number.
+ */
+static uint32_t tinymt32_temper (tinymt32_t* s)
+{
+    uint32_t t0, t1;
+    t0 = s-&gt;status[3];
+    t1 = s-&gt;status[0] + (s-&gt;status[2] &gt;&gt; TINYMT32_SH8);
+    t0 ^= t1;
+    /*
+     * The if (t1 &amp; 1) {...} block below replaces:
+     *     t0 ^= -((int32_t)(t1 &amp; 1)) &amp; s-&gt;tmat;
+     * The adopted code is equivalent to the original code
+     * but does not depend on the representation of negative
+     * integers by 2's complements. It is therefore more
+     * portable but includes an if branch, which may slow
+     * down the generation speed.
+     */
+    if (t1 &amp; 1) {
+        t0 ^= s-&gt;tmat;
+    }
+    return t0;
+}
+</sourcecode>
+        </figure>
+      </section>
+      <section anchor="tinymt32_usage" numbered="true" toc="include" removeInRFC="false" pn="section-2.2">
+        <name slugifiedName="name-tinymt32-usage">TinyMT32 Usage</name>
+        <t pn="section-2.2-1">
+This PRNG <bcp14>MUST</bcp14> first be initialized with the following function:
+</t>
+        <ul empty="true" spacing="normal" bare="false" pn="section-2.2-2">
+          <li pn="section-2.2-2.1">void   tinymt32_init (tinymt32_t* s, uint32_t seed);</li>
+        </ul>
+        <t pn="section-2.2-3">
+It takes as input a 32-bit unsigned integer used as a seed (note that value 0 is permitted by TinyMT32).
+This function also takes as input a pointer to an instance of a tinymt32_t
+structure that needs to be allocated by the caller but is left uninitialized.
+This structure will then be updated by the various TinyMT32 functions in order to keep the internal state of the PRNG.
+The use of this structure admits several instances of this PRNG to be used in parallel, each of them having its own instance of the structure.
+</t>
+        <t pn="section-2.2-4">
+Then, each time a new 32-bit pseudorandom unsigned integer between 0 and 2<sup>32</sup> - 1 inclusive is needed, the following function is used:
+</t>
+        <ul empty="true" spacing="normal" bare="false" pn="section-2.2-5">
+          <li pn="section-2.2-5.1">uint32_t tinymt32_generate_uint32 (tinymt32_t * s);</li>
+        </ul>
+        <t pn="section-2.2-6">
+Of course, the tinymt32_t structure must be left unchanged by the caller between successive calls to this function.
+</t>
+      </section>
+      <section anchor="tinymt32_validation" numbered="true" toc="include" removeInRFC="false" pn="section-2.3">
+        <name slugifiedName="name-specific-implementation-val">Specific Implementation Validation and Deterministic Behavior</name>
+        <t pn="section-2.3-1">
+For a given seed, PRNG determinism can be a requirement (e.g., with <xref target="RFC8681" format="default" sectionFormat="of" derivedContent="RFC8681"/>).
+Consequently, any implementation of the TinyMT32 PRNG in line with this specification <bcp14>MUST</bcp14> have the same output as that provided by the reference implementation of <xref target="fig_tinymt32" format="default" sectionFormat="of" derivedContent="Figure 1"/>.
+In order to increase the compliancy confidence, this document proposes the following criteria.
+Using a seed value of 1, the first 50 values returned by tinymt32_generate_uint32(s) as 32-bit unsigned integers
+are equal to the values provided in <xref target="fig_tinymt32_out" format="default" sectionFormat="of" derivedContent="Figure 2"/>, which
+are to be read line by line.
+Note that these values come from the tinymt/check32.out.txt file provided by the PRNG authors to validate implementations
+of TinyMT32 as part of the MersenneTwister-Lab/TinyMT GitHub repository.
+</t>
+        <figure anchor="fig_tinymt32_out" align="left" suppress-title="false" pn="figure-2">
+          <name slugifiedName="name-first-50-decimal-values-to-">First 50 decimal values (to be read per line) returned by tinymt32_generate_uint32(s) as 32-bit unsigned integers, with a seed value of 1</name>
+          <artwork name="" type="" align="left" alt="" pn="section-2.3-2.1">
+2545341989  981918433 3715302833 2387538352 3591001365 
+3820442102 2114400566 2196103051 2783359912  764534509 
+ 643179475 1822416315  881558334 4207026366 3690273640 
+3240535687 2921447122 3984931427 4092394160   44209675 
+2188315343 2908663843 1834519336 3774670961 3019990707 
+4065554902 1239765502 4035716197 3412127188  552822483 
+ 161364450  353727785  140085994  149132008 2547770827 
+4064042525 4078297538 2057335507  622384752 2041665899 
+2193913817 1080849512   33160901  662956935  642999063 
+3384709977 1723175122 3866752252  521822317 2292524454
+</artwork>
+        </figure>
+        <t pn="section-2.3-3">
+In particular, the deterministic behavior of the <xref target="fig_tinymt32" format="default" sectionFormat="of" derivedContent="Figure 1"/> source code has been checked across several platforms:
+high-end laptops running 64-bit Mac OS X and Linux/Ubuntu;
+a board featuring a 32-bit ARM Cortex-A15 and running 32-bit Linux/Ubuntu;
+several embedded cards featuring either an ARM Cortex-M0+, a Cortex-M3, or a Cortex-M4 32-bit microcontroller, all of them running RIOT <xref target="Baccelli18" format="default" sectionFormat="of" derivedContent="Baccelli18"/>;
+two low-end embedded cards featuring either a 16-bit microcontroller (TI MSP430) or an 8-bit microcontroller (Arduino ATMEGA2560), both of them running RIOT.
+</t>
+        <t pn="section-2.3-4">
+This specification only outputs 32-bit unsigned pseudorandom numbers and does not try to map this output to a smaller integer range (e.g., between 10 and 49 inclusive).
+If a specific use case needs such a mapping, it will have to provide its own function.
+In that case, if PRNG determinism is also required, the use of a floating point
+(single or double precision) to perform this mapping should probably be
+avoided, as these calculations may lead to different rounding errors across different target platforms.
+Great care should also be taken to not introduce biases in the randomness of the mapped output (which may be the case with some mapping algorithms) incompatible with the use-case requirements.
+The details of how to perform such a mapping are out of scope of this document.
+</t>
+      </section>
+    </section>
+    <section anchor="SecurityConsiderations" numbered="true" toc="include" removeInRFC="false" pn="section-3">
+      <name slugifiedName="name-security-considerations">Security Considerations</name>
+      <t pn="section-3-1">
+The authors do not believe the present specification generates specific
+security risks per se. However, the TinyMT and MT PRNG must not be used for
+cryptographic applications.
+</t>
+    </section>
+    <section anchor="iana" numbered="true" toc="include" removeInRFC="false" pn="section-4">
+      <name slugifiedName="name-iana-considerations">IANA Considerations</name>
+      <t pn="section-4-1">
+This document has no IANA actions.
+</t>
+    </section>
+  </middle>
+  <back>
+    <references pn="section-5">
+      <name slugifiedName="name-references">References</name>
+      <references pn="section-5.1">
+        <name slugifiedName="name-normative-references">Normative References</name>
+        <reference anchor="C99" quoteTitle="true" derivedAnchor="C99">
+          <front>
+            <title>Programming languages - C: C99, correction 3:2007</title>
+            <seriesInfo name="ISO/IEC" value="9899:1999/Cor 3:2007"/>
+            <author>
+              <organization showOnFrontPage="true">International Organization for Standardization</organization>
+            </author>
+            <date month="November" year="2007"/>
+          </front>
+        </reference>
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119" quoteTitle="true" derivedAnchor="RFC2119">
+          <front>
+            <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author initials="S." surname="Bradner" fullname="S. Bradner">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1997" month="March"/>
+            <abstract>
+              <t>In many standards track documents several words are used to signify the requirements in the specification.  These words are often capitalized. This document defines these words as they should be interpreted in IETF documents.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+          <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+        </reference>
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174" quoteTitle="true" derivedAnchor="RFC8174">
+          <front>
+            <title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author initials="B." surname="Leiba" fullname="B. Leiba">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2017" month="May"/>
+            <abstract>
+              <t>RFC 2119 specifies common key words that may be used in protocol  specifications.  This document aims to reduce the ambiguity by clarifying that only UPPERCASE usage of the key words have the  defined special meanings.</t>
+            </abstract>
+          </front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+          <seriesInfo name="DOI" value="10.17487/RFC8174"/>
+        </reference>
+      </references>
+      <references pn="section-5.2">
+        <name slugifiedName="name-informative-references">Informative References</name>
+        <reference anchor="AdaptiveCrush" target="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/ADAPTIVE" quoteTitle="true" derivedAnchor="AdaptiveCrush">
+          <front>
+            <title>Automation of Statistical Tests on Randomness to Obtain Clearer Conclusion</title>
+            <seriesInfo name="DOI" value="10.1007/978-3-642-04107-5_26"/>
+            <author initials="H." surname="Haramoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="November" year="2009"/>
+          </front>
+          <refcontent>Monte Carlo and Quasi-Monte Carlo Methods 2008</refcontent>
+        </reference>
+        <reference anchor="Baccelli18" quoteTitle="true" target="https://doi.org/10.1109/JIOT.2018.2815038" derivedAnchor="Baccelli18">
+          <front>
+            <title>RIOT: An Open Source Operating System for Low-End Embedded Devices in the IoT</title>
+            <seriesInfo name="DOI" value="10.1109/JIOT.2018.2815038"/>
+            <author initials="E." surname="Baccelli">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Gundogan">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="O." surname="Hahm">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="P." surname="Kietzmann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M. S." surname="Lenders">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="H." surname="Petersen">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="K." surname="Schleiser">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T. C." surname="Schmidt">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="M." surname="Wahlisch">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="December" year="2018"/>
+          </front>
+          <refcontent>IEEE Internet of Things Journal, Volume 5, Issue 6</refcontent>
+        </reference>
+        <reference anchor="KR12" quoteTitle="true" target="https://doi.org/10.1145/2364489.2364504" derivedAnchor="KR12">
+          <front>
+            <title>TinyMT pseudo random number generator for Erlang</title>
+            <seriesInfo name="DOI" value="10.1145/2364489.2364504"/>
+            <author initials="K." surname="Rikitake">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="September" year="2012"/>
+          </front>
+          <refcontent>Proceedings of the 11th ACM SIGPLAN Erlang Workshop, pp. 67-72</refcontent>
+        </reference>
+        <reference anchor="MT98" quoteTitle="true" target="https://doi.org/10.1145/272991.272995" derivedAnchor="MT98">
+          <front>
+            <title>Mersenne twister: A 623-dimensionally equidistributed uniform pseudo-random number generator</title>
+            <seriesInfo name="DOI" value="10.1145/272991.272995"/>
+            <author initials="M." surname="Matsumoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="T." surname="Nishimura">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="1998"/>
+          </front>
+          <refcontent>ACM Transactions on Modeling and Computer Simulation (TOMACS), Volume 8, Issue 1, pp. 3-30</refcontent>
+        </reference>
+        <reference anchor="PTVF92" quoteTitle="true" derivedAnchor="PTVF92">
+          <front>
+            <title>Numerical recipes in C (2nd ed.): the art of scientific computing</title>
+            <seriesInfo name="ISBN" value="0-521-43108-5"/>
+            <author initials="W." surname="Press">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="S." surname="Teukolsky">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="W." surname="Vetterling">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B." surname="Flannery">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="1992"/>
+          </front>
+          <refcontent>Cambridge University Press</refcontent>
+        </reference>
+        <reference anchor="RFC5170" target="https://www.rfc-editor.org/info/rfc5170" quoteTitle="true" derivedAnchor="RFC5170">
+          <front>
+            <title>Low Density Parity Check (LDPC) Staircase and Triangle Forward Error Correction (FEC) Schemes</title>
+            <author initials="V." surname="Roca" fullname="V. Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="C." surname="Neumann" fullname="C. Neumann">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="D." surname="Furodet" fullname="D. Furodet">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date year="2008" month="June"/>
+            <abstract>
+              <t>This document describes two Fully-Specified Forward Error Correction (FEC) Schemes, Low Density Parity Check (LDPC) Staircase and LDPC Triangle, and their application to the reliable delivery of data objects on the packet erasure channel (i.e., a communication path where packets are either received without any corruption or discarded during transmission).  These systematic FEC codes belong to the well- known class of "Low Density Parity Check" codes, and are large block FEC codes in the sense of RFC 3453.  [STANDARDS-TRACK]</t>
+            </abstract>
+          </front>
+          <seriesInfo name="RFC" value="5170"/>
+          <seriesInfo name="DOI" value="10.17487/RFC5170"/>
+        </reference>
+        <reference anchor="RFC8681" target="https://www.rfc-editor.org/info/rfc8681" quoteTitle="true" derivedAnchor="RFC8681">
+          <front>
+            <title>Sliding Window Random Linear Code (RLC) Forward Erasure Correction (FEC) Schemes for FECFRAME</title>
+            <seriesInfo name="RFC" value="8681"/>
+            <seriesInfo name="DOI" value="10.17487/RFC8681"/>
+            <author initials="V" surname="Roca" fullname="Vincent Roca">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="B" surname="Teibi" fullname="Belkacem Teibi">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="January" year="2020"/>
+          </front>
+        </reference>
+        <reference anchor="TestU01" target="http://simul.iro.umontreal.ca/testu01/tu01.html" quoteTitle="true" derivedAnchor="TestU01">
+          <front>
+            <title>TestU01: A C library for empirical testing of random number generators</title>
+            <seriesInfo name="DOI" value="10.1145/1268776.1268777"/>
+            <author initials="P." surname="L'Ecuyer">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author initials="R." surname="Simard">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <date month="August" year="2007"/>
+          </front>
+          <refcontent>ACM Transactions on Mathematical Software (TOMS), Volume 33, Issue 4, Article 22</refcontent>
+        </reference>
+        <reference anchor="TinyMT-dev" target="https://github.com/MersenneTwister-Lab/TinyMT" quoteTitle="true" derivedAnchor="TinyMT-dev">
+          <front>
+            <title>Tiny Mersenne Twister (TinyMT)</title>
+            <seriesInfo name="commit" value="9d7ca3c"/>
+            <author/>
+            <date month="March" year="2018"/>
+          </front>
+        </reference>
+        <reference anchor="TinyMT-params" target="https://github.com/jj1bdx/tinymtdc-longbatch" quoteTitle="true" derivedAnchor="TinyMT-params">
+          <front>
+            <title>TinyMT pre-calculated parameter list</title>
+            <seriesInfo name="commit" value="30079eb"/>
+            <author/>
+            <date month="March" year="2013"/>
+          </front>
+        </reference>
+        <reference anchor="TinyMT-web" target="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/TINYMT/" quoteTitle="true" derivedAnchor="TinyMT-web">
+          <front>
+            <title>Tiny Mersenne Twister (TinyMT)</title>
+            <author fullname="Mutsuo Saito" initials="M" surname="Saito">
+              <organization showOnFrontPage="true"/>
+            </author>
+            <author fullname="Makoto Matsumoto" initials="M" surname="Matsumoto">
+              <organization showOnFrontPage="true"/>
+            </author>
+          </front>
+        </reference>
+      </references>
+    </references>
+    <section numbered="false" toc="include" removeInRFC="false" pn="section-appendix.a">
+      <name slugifiedName="name-acknowledgments">Acknowledgments</name>
+      <t pn="section-appendix.a-1">
+The authors would like to thank Belkacem Teibi, with whom we explored TinyMT32
+specificities when looking to an alternative to the Park-Miller Linear
+Congruential PRNG.  The authors would also like to thank Carl Wallace; Stewart
+Bryant; Greg Skinner; Mike Heard; the three TSVWG chairs, Wesley Eddy (our
+shepherd), David Black, and Gorry Fairhurst; as well as Spencer Dawkins and
+Mirja Kuehlewind.  Last but not least, the authors are really grateful to the
+IESG members, in particular Benjamin Kaduk, Eric Rescorla, Adam Roach, Roman
+Danyliw, Barry Leiba, Martin Vigoureux, and Eric Vyncke for their highly
+valuable feedback that greatly contributed to improving this specification.
+</t>
+    </section>
+    <section anchor="authors-addresses" numbered="false" removeInRFC="false" toc="include" pn="section-appendix.b">
+      <name slugifiedName="name-authors-addresses">Authors' Addresses</name>
+      <author fullname="Mutsuo Saito" initials="M" surname="Saito">
+        <organization showOnFrontPage="true">Hiroshima University</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <country>Japan</country>
+          </postal>
+          <email>saito@math.sci.hiroshima-u.ac.jp</email>
+        </address>
+      </author>
+      <author fullname="Makoto Matsumoto" initials="M" surname="Matsumoto">
+        <organization showOnFrontPage="true">Hiroshima University</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <country>Japan</country>
+          </postal>
+          <email>m-mat@math.sci.hiroshima-u.ac.jp</email>
+        </address>
+      </author>
+      <author fullname="Vincent Roca" initials="V" surname="Roca" role="editor">
+        <organization showOnFrontPage="true">INRIA</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <code/>
+            <extaddr>Univ. Grenoble Alpes</extaddr>
+            <country>France</country>
+          </postal>
+          <email>vincent.roca@inria.fr</email>
+        </address>
+      </author>
+      <author fullname="Emmanuel Baccelli" initials="E" surname="Baccelli">
+        <organization showOnFrontPage="true">INRIA</organization>
+        <address>
+          <postal>
+            <street/>
+            <city/>
+            <code/>
+            <country>France</country>
+          </postal>
+          <email>emmanuel.baccelli@inria.fr</email>
+        </address>
+      </author>
+    </section>
+  </back>
+</rfc>
